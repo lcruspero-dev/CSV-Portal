@@ -1,0 +1,16 @@
+# Ignore node_modules folder
+node_modules/
+Signature_uploads/
+uploads/
+avatar/
+
+# Ignore environment files
+.env
+
+# Ignore log files
+logs/
+*.log
+
+# Ignore build and dependency directories
+dist/
+vendor/
