@@ -79,5 +79,5 @@ app.disable("x-powered-by");
  * This method is identical to Node’s http.Server.listen().
  */
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Server is running on port http://localhost:${PORT}`);
 });

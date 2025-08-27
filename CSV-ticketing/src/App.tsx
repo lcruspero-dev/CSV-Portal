@@ -32,6 +32,7 @@ import AdminTimeRecordEdit from "./pages/timeTracker/EditTime";
 import ScheduleAndAttendance from "./pages/timeTracker/ScheduleAndAttendance";
 import TimeTracker from "./pages/timeTracker/TimeTracker";
 import ProtectedRoute2 from "./utils/protectedRoutes";
+import Payroll from "./pages/payroll/payroll";
 function App() {
   return (
     <AuthProvider>
@@ -61,6 +62,7 @@ function App() {
               <Route path="/exportdata" element={<ExportData />} />
               <Route path="/timetracker" element={<TimeTracker />} />
               <Route path="/exporttimetracker" element={<ExportDataTime />} />
+              <Route path="/payroll" element={<Payroll />} />
               <Route
                 path="/resetuserpassword"
                 element={<AdminResetPassword />}

@@ -31,6 +31,7 @@ import {
   Ticket,
   UserPlus,
   Users,
+  BadgeDollarSign
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -74,6 +75,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
           title: "Time Tracker",
           path: "/timetracker",
           icon: <Clock className="h-5 w-5" />,
+        },
+        {
+          title: "Payroll",
+          path: "/payroll",
+          icon: <BadgeDollarSign className="h-5 w-5" />,
         },
       ],
     },
