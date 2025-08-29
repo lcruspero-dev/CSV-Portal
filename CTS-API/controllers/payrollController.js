@@ -154,3 +154,80 @@ exports.processPayroll = async (req, res) => {
         return res.status(500).json({ status: "Error", message: err.message });
     }
 };
+
+// GET Payroll by User
+exports.getPayrollByUser = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const payroll = await Payroll.findOne({ "payrollRate.userId": userId });
+
+        if (!payroll) {
+            return res.status(404).json({
+                status: "Error",
+                message: `No payroll record found for user ${userId}`,
+            });
+        }
+
+        return res.status(200).json({
+            status: "Success",
+            payroll,
+        });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ status: "Error", message: err.message });
+    }
+};
+
+// UPDATE Payroll (e.g., bonuses, allowances, deductions)
+exports.updatePayroll = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const updates = req.body; // { grossSalary: { performanceBonus: 1000 } }
+
+        const payroll = await Payroll.findOneAndUpdate(
+            { "payrollRate.userId": userId },
+            { $set: updates },
+            { new: true }
+        );
+
+        if (!payroll) {
+            return res.status(404).json({
+                status: "Error",
+                message: `No payroll record found for user ${userId}`,
+            });
+        }
+
+        return res.status(200).json({
+            status: "Success",
+            message: "Payroll updated successfully",
+            payroll,
+        });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ status: "Error", message: err.message });
+    }
+};
+
+// DELETE Payroll
+exports.deletePayroll = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        const payroll = await Payroll.findOneAndDelete({ "payrollRate.userId": userId });
+
+        if (!payroll) {
+            return res.status(404).json({
+                status: "Error",
+                message: `No payroll record found for user ${userId}`,
+            });
+        }
+
+        return res.status(200).json({
+            status: "Success",
+            message: "Payroll deleted successfully",
+        });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ status: "Error", message: err.message });
+    }
+};

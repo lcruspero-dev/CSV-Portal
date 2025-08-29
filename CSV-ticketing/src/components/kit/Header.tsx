@@ -85,8 +85,7 @@ const Header: React.FC = () => {
         const response = await UserProfileAPI.getProfile();
         if (response.data?.avatar) {
           setAvatarUrl(
-            `${import.meta.env.VITE_UPLOADFILES_URL}/avatars/${
-              response.data.avatar
+            `${import.meta.env.VITE_UPLOADFILES_URL}/avatars/${response.data.avatar
             }`
           );
         }
@@ -152,7 +151,7 @@ const Header: React.FC = () => {
             {isAuthenticated && user ? (
               <div className="flex items-center space-x-4">
                 <span className="text-1xl drop-shadow-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#1638df] to-[#192fb4]">
-                  Welcome, {user.name}
+                  Welcome, {user.name}dadsa
                 </span>
                 {user.isAdmin && (
                   <div className="pr-4">
@@ -200,14 +199,14 @@ const Header: React.FC = () => {
                     {(user.isAdmin ||
                       user.role === "TM" ||
                       user.role === "TL") && (
-                      <DropdownMenuItem
-                        onClick={() => navigate("/schedule-and-attendance")}
-                        className="cursor-pointer"
-                      >
-                        <NotebookPenIcon className="mr-2 h-4 w-4" />
-                        <span>Shift & Attendance</span>
-                      </DropdownMenuItem>
-                    )}
+                        <DropdownMenuItem
+                          onClick={() => navigate("/schedule-and-attendance")}
+                          className="cursor-pointer"
+                        >
+                          <NotebookPenIcon className="mr-2 h-4 w-4" />
+                          <span>Shift & Attendance</span>
+                        </DropdownMenuItem>
+                      )}
                     <DropdownMenuItem
                       onClick={handleChangePassword}
                       className="cursor-pointer"
