@@ -20,21 +20,22 @@ const Lock = mongoose.model(
   })
 );
 
-// Run daily at 3 AM PHT (19:00 UTC)
 const runLeaveAccrual = async () => {
   let lock = null;
 
   try {
-    // Acquire lock
+    // Try to acquire a lock
     lock = await Lock.findOneAndUpdate(
       { jobName: "leaveAccrual", isLocked: false },
       { isLocked: true, lockedAt: new Date() },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
-    if (!lock) {
+    if (!lock || lock.isLocked === false) {
       const existingLock = await Lock.findOne({ jobName: "leaveAccrual" });
-      console.warn(`Job already locked since ${existingLock.lockedAt}`);
+      console.warn(
+        `Leave accrual job skipped — already locked since ${existingLock?.lockedAt}`
+      );
       return { success: false, message: "Job already running" };
     }
 
@@ -47,12 +48,12 @@ const runLeaveAccrual = async () => {
     const todayPHT = getTodayPHT();
     const endOfDayPHT = new Date(todayPHT.setHours(23, 59, 59, 999));
 
-    // Find active employees due for accrual (comparing PHT dates)
+    // Find active employees due for accrual
     const employees = await EmployeeLeave.find({
       nextAccrualDate: {
         $lte: zonedTimeToUtc(endOfDayPHT, PH_TIMEZONE),
       },
-      isActive: true, // Only include active employees
+      isActive: true,
     });
 
     let updatedCount = 0;
@@ -67,14 +68,6 @@ const runLeaveAccrual = async () => {
           startingLeaveCredit: accrualResult.startingLeaveCredit,
           lastAccrualDate: accrualResult.lastAccrualDate,
           nextAccrualDate: accrualResult.nextAccrualDate,
-          // $push: {
-          //   history: accrualResult.historyEntry || {
-          //     date: new Date(),
-          //     action: "monthly accrual",
-          //     amount: accrualResult.accruedDays,
-          //     description: `Automatic accrual after ${accrualResult.months} month(s)`,
-          //   },
-          // },
         };
 
         updates.push({
@@ -114,22 +107,20 @@ const runLeaveAccrual = async () => {
       timestamp: new Date(),
     };
   } finally {
-    // Release lock
-    if (lock) {
-      await Lock.findOneAndUpdate(
-        { jobName: "leaveAccrual" },
-        { isLocked: false, releasedAt: new Date() }
-      );
-    }
+    // Always release the lock
+    await Lock.findOneAndUpdate(
+      { jobName: "leaveAccrual" },
+      { isLocked: false, releasedAt: new Date() }
+    );
   }
 };
 
-// 3 AM PHT = 19:00 UTC (previous day)
-cron.schedule("0 19 * * *", () => runLeaveAccrual(), {
-  timezone: "UTC",
+// Schedule: run daily at 3:00 AM Asia/Manila
+cron.schedule("0 3 * * *", () => runLeaveAccrual(), {
+  timezone: "Asia/Manila",
 });
 
-console.log("Leave accrual job scheduled to run daily at 3 AM PHT");
+console.log("Leave accrual job scheduled to run daily at 3 AM Asia/Manila");
 
 // Manual execution
 const manualRun = async () => {
