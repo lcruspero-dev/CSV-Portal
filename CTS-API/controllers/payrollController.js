@@ -1,4 +1,3 @@
-// controllers/payrollController.js
 const Payroll = require("../models/payroll");
 
 // CREATE Payroll Record
