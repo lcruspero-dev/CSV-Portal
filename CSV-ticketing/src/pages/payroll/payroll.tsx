@@ -41,13 +41,34 @@ export interface Payroll {
 
 // ✅ Define payroll columns
 const payrollColumns: ColumnDef<Payroll>[] = [
-    { accessorKey: "giveName", header: "First Name" },
-    { accessorKey: "middleName", header: "Middle Name" },
-    { accessorKey: "surName", header: "Last Name" },
-    { accessorKey: "email", header: "Email" },
-    { accessorKey: "shift", header: "Shift" },
-    { accessorKey: "position", header: "Position" },
-    { accessorKey: "category", header: "Category" },
+    {
+        accessorKey: "giveName",
+        header: "First Name"
+    },
+    {
+        accessorKey: "middleName",
+        header: "Middle Name"
+    },
+    {
+        accessorKey: "surName",
+        header: "Last Name"
+    },
+    {
+        accessorKey: "email",
+        header: "Email"
+    },
+    {
+        accessorKey: "shift",
+        header: "Shift"
+    },
+    {
+        accessorKey: "position",
+        header: "Position"
+    },
+    {
+        accessorKey: "category",
+        header: "Category"
+    },
     {
         accessorKey: "hireDate",
         header: "Hire Date",
