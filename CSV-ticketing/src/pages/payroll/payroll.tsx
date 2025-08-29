@@ -1,52 +1,149 @@
+// src/pages/payroll/PayrollPage.tsx
 import { useEffect, useState } from "react"
-import { columns, type Payroll } from "@/components/kit/column"
-import PayrollTable from "@/components/kit/payrollTable"
-import BackButton from "@/components/kit/BackButton"
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table"
 
-const Payroll = () => {
+import {
+    type ColumnDef,
+    flexRender,
+    getCoreRowModel,
+    useReactTable,
+} from "@tanstack/react-table"
+
+import BackButton from "@/components/kit/BackButton"
+import { payrollAPI } from "@/API/endpoint"
+
+// ✅ Define Payroll type
+export interface Payroll {
+    id: string
+    giveName: string
+    middleName: string
+    surName: string
+    email: string
+    shift: string
+    position: string
+    category: string
+    hireDate: Date
+    dob: Date
+    bankAcc: number
+    tin: number
+    sss: number
+    hdmf: number
+    monthRate: number
+    dailyRate: number
+}
+
+// ✅ Define payroll columns
+const payrollColumns: ColumnDef<Payroll>[] = [
+    { accessorKey: "giveName", header: "First Name" },
+    { accessorKey: "middleName", header: "Middle Name" },
+    { accessorKey: "surName", header: "Last Name" },
+    { accessorKey: "email", header: "Email" },
+    { accessorKey: "shift", header: "Shift" },
+    { accessorKey: "position", header: "Position" },
+    { accessorKey: "category", header: "Category" },
+    {
+        accessorKey: "hireDate",
+        header: "Hire Date",
+        cell: ({ row }) => new Date(row.original.hireDate).toLocaleDateString(),
+    },
+    {
+        accessorKey: "dob",
+        header: "Date of Birth",
+        cell: ({ row }) => new Date(row.original.dob).toLocaleDateString(),
+    },
+    { accessorKey: "bankAcc", header: "Bank Account" },
+    { accessorKey: "tin", header: "TIN" },
+    { accessorKey: "sss", header: "SSS" },
+    { accessorKey: "hdmf", header: "HDMF" },
+    { accessorKey: "monthRate", header: "Monthly Rate" },
+    { accessorKey: "dailyRate", header: "Daily Rate" },
+]
+
+// ✅ Reusable table
+interface PayrollTableProps {
+    columns: ColumnDef<Payroll, any>[]
+    data: Payroll[]
+}
+const PayrollTable = ({ columns, data }: PayrollTableProps) => {
+    const table = useReactTable({
+        data,
+        columns,
+        getCoreRowModel: getCoreRowModel(),
+    })
+
+    return (
+        <section className="w-full">
+            <Table className="border rounded-xl shadow-sm">
+                <TableHeader>
+                    {table.getHeaderGroups().map((headerGroup) => (
+                        <TableRow key={headerGroup.id}>
+                            {headerGroup.headers.map((header) => (
+                                <TableHead key={header.id}>
+                                    {header.isPlaceholder
+                                        ? null
+                                        : flexRender(
+                                            header.column.columnDef.header,
+                                            header.getContext()
+                                        )}
+                                </TableHead>
+                            ))}
+                        </TableRow>
+                    ))}
+                </TableHeader>
+                <TableBody>
+                    {table.getRowModel().rows?.length ? (
+                        table.getRowModel().rows.map((row) => (
+                            <TableRow key={row.id}>
+                                {row.getVisibleCells().map((cell) => (
+                                    <TableCell key={cell.id}>
+                                        {flexRender(
+                                            cell.column.columnDef.cell,
+                                            cell.getContext()
+                                        )}
+                                    </TableCell>
+                                ))}
+                            </TableRow>
+                        ))
+                    ) : (
+                        <TableRow>
+                            <TableCell
+                                colSpan={columns.length}
+                                className="h-24 text-center"
+                            >
+                                No payroll records found.
+                            </TableCell>
+                        </TableRow>
+                    )}
+                </TableBody>
+            </Table>
+        </section>
+    )
+}
+
+// ✅ Page that fetches payrolls
+const PayrollPage = () => {
     const [data, setData] = useState<Payroll[]>([])
+    const [loading, setLoading] = useState(true)
 
     useEffect(() => {
         const fetchData = async () => {
-            const result: Payroll[] = [
-                {
-                    id: "728ed52f",
-                    giveName: "Leester",
-                    middleName: "Q.",
-                    surName: "Cruspero",
-                    email: "lcruspero@csvnow.com",
-                    shift: "Monday-Friday",
-                    position: "IT Specialist",
-                    category: "Regular",
-                    hireDate: new Date("2021-03-15"),
-                    dob: new Date("1995-06-20"),
-                    bankAcc: 1234567890,
-                    tin: 123456789,
-                    sss: 33242,
-                    hdmf: 3242423,
-                    monthRate: 3453,
-                    dailyRate: 567
-                },
-                {
-                    id: "829ed53a",
-                    giveName: "Joriz",
-                    middleName: "D.",
-                    surName: "Cabrera",
-                    email: "jcabrera@csvnow.com",
-                    shift: "Tuesday-Saturday",
-                    position: "IT Specialist",
-                    category: "Probationary",
-                    hireDate: new Date("2022-01-10"),
-                    dob: new Date("1997-11-05"),
-                    bankAcc: 9876543210,
-                    tin: 987654321,
-                    sss: 556677,
-                    hdmf: 9988776,
-                    monthRate: 4200,
-                    dailyRate: 600
-                },
-            ]
-            setData(result)
+            try {
+                const res = await payrollAPI.getAllPayrolls()
+                if (res.data?.status === "Success") {
+                    setData(res.data.payrolls || (res.data.payroll ? [res.data.payroll] : []))
+                }
+            } catch (error) {
+                console.error("Error fetching payroll:", error)
+            } finally {
+                setLoading(false)
+            }
         }
 
         fetchData()
@@ -55,9 +152,14 @@ const Payroll = () => {
     return (
         <div className="w-full mx-auto py-10">
             <BackButton />
-            <PayrollTable columns={columns} data={data} />
+
+            {loading ? (
+                <p className="text-center py-4">Loading payroll records...</p>
+            ) : (
+                <PayrollTable columns={payrollColumns} data={data} />
+            )}
         </div>
     )
 }
 
-export default Payroll
+export default PayrollPage

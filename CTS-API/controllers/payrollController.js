@@ -1,3 +1,4 @@
+// controllers/payrollController.js
 const Payroll = require("../models/payroll");
 
 // CREATE Payroll Record
@@ -49,7 +50,7 @@ exports.processPayroll = async (req, res) => {
         const { userId, regularDays, absentDays, minsLate, otData, holidayData, ndHours, cutOff } = req.body;
 
         let payroll = await Payroll.findOne({ "payrollRate.userId": userId });
-        if (!payroll || !payroll.payrollRate) {
+        if (!payroll) {
             return res.status(404).json({
                 status: "Error",
                 message: `No payroll record found for user ${userId}`,
@@ -59,16 +60,18 @@ exports.processPayroll = async (req, res) => {
         const hourlyRate = payroll.payrollRate.hourlyRate;
         const dailyRate = payroll.payrollRate.dailyRate;
 
-        /** 1. Basic Pay */
+        // 1. Basic Pay
         payroll.pay.basicPay = dailyRate * (regularDays || 0);
 
-        /** 2. Absences */
+        // 2. Absence Deduction
         const absenceDeduction = (absentDays || 0) * dailyRate;
 
-        /** 3. Late Deduction */
+        // 3. Late Deduction
         const lateDeduction = ((minsLate || 0) / 60) * hourlyRate;
 
-        /** 4. Holidays */
+        // 4. Holidays
+        payroll.holidays.regHolidayPay = 0;
+        payroll.holidays.speHolidayPay = 0;
         let holidayPay = 0;
         for (let h of holidayData || []) {
             let multiplier = 1;
@@ -83,7 +86,7 @@ exports.processPayroll = async (req, res) => {
             if (h.type === "special") payroll.holidays.speHolidayPay += pay;
         }
 
-        /** 5. Overtime */
+        // 5. Overtime
         let totalOT = 0;
         for (let ot of otData || []) {
             let multiplier = 1;
@@ -100,13 +103,13 @@ exports.processPayroll = async (req, res) => {
         }
         payroll.totalOvertime.totalOvertime = totalOT;
 
-        /** 6. Night Differential */
+        // 6. Night Differential
         const ndPay = (ndHours || 0) * hourlyRate * 0.1;
         payroll.totalSupplementary.nightDiffHours = ndHours || 0;
         payroll.totalSupplementary.nightDiffPay = ndPay;
         payroll.totalSupplementary.totalSupplementaryIncome = ndPay;
 
-        /** 7. Gross Salary */
+        // 7. Gross Salary
         payroll.grossSalary.grossSalary =
             payroll.pay.basicPay -
             absenceDeduction -
@@ -118,7 +121,7 @@ exports.processPayroll = async (req, res) => {
             payroll.grossSalary.performanceBonus +
             payroll.grossSalary.nonTaxableAllowance;
 
-        /** 8. Deductions (split by cutoff) */
+        // 8. Deductions (split by cutoff)
         let sss = payroll.totalDeductions.sssEmployeeShare;
         let phic = payroll.totalDeductions.phicEmployeeShare;
         let hdmf = payroll.totalDeductions.hdmfEmployeeShare;
@@ -138,7 +141,7 @@ exports.processPayroll = async (req, res) => {
             payroll.totalDeductions.hdmfLoan +
             payroll.totalDeductions.wisp;
 
-        /** 9. Grand Total */
+        // 9. Net Pay (Grand Total)
         payroll.grandtotal.grandtotal =
             payroll.grossSalary.grossSalary - payroll.totalDeductions.totalDeductions;
 
@@ -182,7 +185,7 @@ exports.getPayrollByUser = async (req, res) => {
 exports.updatePayroll = async (req, res) => {
     try {
         const { userId } = req.params;
-        const updates = req.body; // { grossSalary: { performanceBonus: 1000 } }
+        const updates = req.body;
 
         const payroll = await Payroll.findOneAndUpdate(
             { "payrollRate.userId": userId },
@@ -212,7 +215,6 @@ exports.updatePayroll = async (req, res) => {
 exports.deletePayroll = async (req, res) => {
     try {
         const { userId } = req.params;
-
         const payroll = await Payroll.findOneAndDelete({ "payrollRate.userId": userId });
 
         if (!payroll) {
@@ -225,6 +227,22 @@ exports.deletePayroll = async (req, res) => {
         return res.status(200).json({
             status: "Success",
             message: "Payroll deleted successfully",
+        });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ status: "Error", message: err.message });
+    }
+};
+
+// GET ALL Payrolls
+exports.getAllPayrolls = async (req, res) => {
+    try {
+        const payrolls = await Payroll.find();
+
+        return res.status(200).json({
+            status: "Success",
+            count: payrolls.length,
+            payrolls,
         });
     } catch (err) {
         console.error(err);

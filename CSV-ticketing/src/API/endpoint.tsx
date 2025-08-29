@@ -3,6 +3,14 @@ import axios from "axios";
 
 export const baseURL = import.meta.env.VITE_BASE_URL;
 
+export interface PayrollPayload {
+  userId: string;
+  basicSalary: number;
+  allowances?: number;
+  deductions?: number;
+  overtimePay?: number;
+}
+
 const apiHelper = async (endpoint: string, method: string, body?: object) => {
   const userLogin = JSON.parse(localStorage.getItem("user")!);
   const headers = {
@@ -223,4 +231,18 @@ export const LeaveCreditAPI = {
   getLeaveCreditById: () => apiHelper(`/api/leave/my/leave-credits`, "GET"),
   updateLeaveCredit: (id: string, body: object) =>
     apiHelper(`/api/leave/${id}`, "PUT", body),
+};
+
+export const payrollAPI = {
+  createPayroll: (body: PayrollPayload) =>
+    apiHelper("/api/payroll/create", "POST", body),
+  processPayroll: (body: PayrollPayload) =>
+    apiHelper("/api/payroll/process", "POST", body),
+  getAllPayrolls: () => apiHelper("/api/payroll/", "GET"),
+  getPayrollByUser: (userId: string) =>
+    apiHelper(`/api/payroll/${userId}`, "GET"),
+  updatePayroll: (userId: string, body: Partial<PayrollPayload>) =>
+    apiHelper(`/api/payroll/${userId}`, "PUT", body),
+  deletePayroll: (userId: string) =>
+    apiHelper(`/api/payroll/${userId}`, "DELETE"),
 };
