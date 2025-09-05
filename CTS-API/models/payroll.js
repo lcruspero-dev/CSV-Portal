@@ -1,9 +1,5 @@
 const mongoose = require("mongoose");
 
-/**
- * Payroll Rate Schema
- * Stores the employee’s standard salary rates
- */
 const payrollRateSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -15,19 +11,13 @@ const payrollRateSchema = new mongoose.Schema({
         required: true,
     },
     dailyRate: {
-        type: Number,
-        required: true,
+        type: Number
     },
     hourlyRate: {
-        type: Number,
-        required: true,
+        type: Number
     },
 });
 
-/**
- * Pay Schema
- * Stores computed basic pay for the payroll period
- */
 const paySchema = new mongoose.Schema({
     basicPay: {
         type: Number,
@@ -35,10 +25,7 @@ const paySchema = new mongoose.Schema({
     },
 });
 
-/**
- * Work Days Schema
- * Tracks employee attendance (worked days, absences, lates)
- */
+
 const workDaysSchema = new mongoose.Schema({
     regularDays: {
         type: Number, // count of days worked
@@ -54,10 +41,7 @@ const workDaysSchema = new mongoose.Schema({
     },
 });
 
-/**
- * Holidays Schema
- * Tracks holiday counts and corresponding pays
- */
+
 const holidaysSchema = new mongoose.Schema({
     regHoliday: {
         type: Number, // count of regular holidays
@@ -77,10 +61,7 @@ const holidaysSchema = new mongoose.Schema({
     },
 });
 
-/**
- * Lates & Absences Schema
- * Stores deductions related to absences and late/undertime
- */
+
 const latesAndAbsentSchema = new mongoose.Schema({
     absentDays: {
         type: Number,
@@ -100,10 +81,7 @@ const latesAndAbsentSchema = new mongoose.Schema({
     },
 });
 
-/**
- * Salary Adjustments Schema
- * Handles unpaid time and salary increases/adjustments
- */
+
 const salaryAdjustmentsSchema = new mongoose.Schema({
     unpaid: {
         type: Number,
@@ -119,10 +97,7 @@ const salaryAdjustmentsSchema = new mongoose.Schema({
     },
 });
 
-/**
- * Overtime Schema
- * Tracks overtime work, rest day OT, and holiday OT (with pay)
- */
+
 const totalOvertimeSchema = new mongoose.Schema(
     {
         overtimeAdjustND: {
@@ -208,10 +183,7 @@ const totalOvertimeSchema = new mongoose.Schema(
     }
 );
 
-/**
- * Supplementary Income Schema
- * Tracks night differential and ND adjustments with OT/holidays
- */
+
 const totalSupplementary = new mongoose.Schema(
     {
         nightDiffHours: {
@@ -261,10 +233,7 @@ const totalSupplementary = new mongoose.Schema(
     }
 );
 
-/**
- * Gross Salary Schema
- * Contains allowances, bonuses, and gross salary amount
- */
+
 const grossSalarySchema = new mongoose.Schema(
     {
         nonTaxableAllowance: {
@@ -282,10 +251,6 @@ const grossSalarySchema = new mongoose.Schema(
     }
 )
 
-/**
- * Deductions Schema
- * Stores statutory contributions, loans, and taxes
- */
 const totalDeductionsSchema = new mongoose.Schema(
     {
         sssEmployeeShare: {
@@ -293,7 +258,7 @@ const totalDeductionsSchema = new mongoose.Schema(
             default: 0,
         },
         wisp: {
-            type: Number,
+            type: Number,               
             default: 0
         },
         totalSSScontribution: {
@@ -336,10 +301,6 @@ const totalDeductionsSchema = new mongoose.Schema(
     }
 )
 
-/**
- * Grand Total Schema
- * Stores the final computed take-home pay
- */
 const grandtotalSchema = new mongoose.Schema(
     {
         grandtotal: {
@@ -349,10 +310,6 @@ const grandtotalSchema = new mongoose.Schema(
     }
 )
 
-/**
- * Main Payroll Schema
- * Combines all payroll-related subdocuments
- */
 const payrollSchema = new mongoose.Schema({
     payrollRate: payrollRateSchema,
     pay: paySchema,

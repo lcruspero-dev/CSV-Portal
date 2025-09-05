@@ -28,6 +28,15 @@ const createUserProfile = async (req, res) => {
   }
 };
 
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await UserProfile.find();
+    res.status(200).json(users); // <-- returns array
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching users", error });
+  }
+};
+
 // Get User Profile by User ID
 const getUserProfile = async (req, res) => {
   try {
@@ -126,4 +135,5 @@ module.exports = {
   getUserProfileById,
   getAllUserAvatar,
   adminUpdateUserProfile,
+  getAllUsers
 };

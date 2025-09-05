@@ -1,23 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const payroll = require('../controllers/payrollController');
+const {
+    processPayroll,
+    getAllPayrolls,
+    getPayrollByUser,
+    deletePayroll
+} = require('../controllers/payrollController');
 
-// CREATE
-router.post("/create", payroll.createPayroll);
+router.post("/process", processPayroll);
 
-// PROCESS (compute payroll)
-router.post("/process", payroll.processPayroll);
+router.get("/", getAllPayrolls);
 
-// GET ALL
-router.get("/", payroll.getAllPayrolls);
+router.get("/:id", getPayrollByUser);
 
-// GET by userId
-router.get("/:userId", payroll.getPayrollByUser);
-
-// UPDATE by userId
-router.put("/:userId", payroll.updatePayroll);
-
-// DELETE by userId
-router.delete("/:userId", payroll.deletePayroll);
+router.delete("/:id", deletePayroll);
 
 module.exports = router;

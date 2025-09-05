@@ -162,6 +162,7 @@ export const NteAPI = {
 export const UserProfileAPI = {
   createProfile: (body: object) => apiHelper("/api/userprofiles", "POST", body),
   getProfile: () => apiHelper("/api/userprofiles", "GET"),
+  getAllUsers: () => apiHelper("/api/userprofiles", "GET"),
   updateProfile: (body: object) => apiHelper("/api/userprofiles", "PUT", body),
   deleteProfile: () => apiHelper("/api/userprofiles", "DELETE"),
   getProfileById: (id: any) => apiHelper(`/api/userprofiles/${id}`, "GET"),
@@ -234,8 +235,6 @@ export const LeaveCreditAPI = {
 };
 
 export const payrollAPI = {
-  createPayroll: (body: PayrollPayload) =>
-    apiHelper("/api/payroll/create", "POST", body),
   processPayroll: (body: PayrollPayload) =>
     apiHelper("/api/payroll/process", "POST", body),
   getAllPayrolls: () => apiHelper("/api/payroll/", "GET"),
