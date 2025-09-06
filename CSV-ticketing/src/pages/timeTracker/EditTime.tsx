@@ -112,6 +112,11 @@ const calculateTotalHours = (
   let lunchTimeSeconds = 0;
   let secondBreakTimeSeconds = 0;
 
+  // Calculate time to deduct from total hours
+  let breakDeductionSeconds = 0;
+  let lunchDeductionSeconds = 0;
+  let secondBreakDeductionSeconds = 0;
+
   // First break calculation
   if (record.breakStart && record.breakEnd) {
     let breakStartSeconds = convertToSeconds(record.breakStart);
@@ -122,8 +127,11 @@ const calculateTotalHours = (
         breakEndSeconds += 24 * 3600;
       }
       const totalBreakSeconds = breakEndSeconds - breakStartSeconds;
+      // Calculate actual break time for display
+      breakTimeSeconds = totalBreakSeconds;
       // Only deduct if break is more than 15 minutes (900 seconds)
-      breakTimeSeconds = totalBreakSeconds > 900 ? totalBreakSeconds - 900 : 0;
+      breakDeductionSeconds =
+        totalBreakSeconds > 900 ? totalBreakSeconds - 900 : 0;
     }
   }
 
@@ -136,9 +144,10 @@ const calculateTotalHours = (
       if (lunchEndSeconds < lunchStartSeconds) {
         lunchEndSeconds += 24 * 3600;
       }
-      const totalLunchSeconds = lunchEndSeconds - lunchStartSeconds;
-      // Only deduct if lunch is more than 15 minutes (900 seconds)
-      lunchTimeSeconds = totalLunchSeconds > 900 ? totalLunchSeconds - 900 : 0;
+      // Calculate actual lunch time for display
+      lunchTimeSeconds = lunchEndSeconds - lunchStartSeconds;
+      // Always deduct full lunch time
+      lunchDeductionSeconds = lunchTimeSeconds;
     }
   }
 
@@ -153,16 +162,18 @@ const calculateTotalHours = (
       }
       const totalSecondBreakSeconds =
         secondBreakEndSeconds - secondBreakStartSeconds;
+      // Calculate actual second break time for display
+      secondBreakTimeSeconds = totalSecondBreakSeconds;
       // Only deduct if second break is more than 15 minutes (900 seconds)
-      secondBreakTimeSeconds =
+      secondBreakDeductionSeconds =
         totalSecondBreakSeconds > 900 ? totalSecondBreakSeconds - 900 : 0;
     }
   }
 
   const totalWorkSeconds = outTotalSeconds - inTotalSeconds;
-  const totalBreakSeconds =
-    breakTimeSeconds + lunchTimeSeconds + secondBreakTimeSeconds;
-  const netWorkSeconds = Math.max(0, totalWorkSeconds - totalBreakSeconds);
+  const totalDeductionSeconds =
+    breakDeductionSeconds + lunchDeductionSeconds + secondBreakDeductionSeconds;
+  const netWorkSeconds = Math.max(0, totalWorkSeconds - totalDeductionSeconds);
 
   // Convert to hours with 2 decimal places, ensuring non-negative values
   const totalHours = (netWorkSeconds / 3600).toFixed(2);
@@ -176,6 +187,24 @@ const calculateTotalHours = (
     totalLunchTime,
     totalSecondBreakTime,
   };
+};
+
+// Helper function to convert hours to minutes format
+const formatHoursToMinutes = (hoursString: string): string => {
+  const hours = parseFloat(hoursString);
+  if (isNaN(hours)) return "0 minutes";
+
+  const totalMinutes = Math.round(hours * 60);
+  const hoursPart = Math.floor(totalMinutes / 60);
+  const minutesPart = totalMinutes % 60;
+
+  if (hoursPart === 0) {
+    return `${minutesPart} minutes`;
+  } else if (minutesPart === 0) {
+    return `${hoursPart} hours`;
+  } else {
+    return `${hoursPart}h ${minutesPart}m`;
+  }
 };
 
 const employeeGroupOptions = [
@@ -587,6 +616,9 @@ const AdminTimeRecordEdit: React.FC = () => {
                   </div>
                   <div>
                     <Label>Total Hours</Label>
+                    <span className="text-red-300 text-xs ml-2">
+                      * {formatHoursToMinutes(editingRecord.totalHours)}
+                    </span>
                     <Input
                       type="text"
                       value={editingRecord.totalHours}
@@ -595,6 +627,12 @@ const AdminTimeRecordEdit: React.FC = () => {
                   </div>
                   <div>
                     <Label>Total Break Time</Label>
+                    <span className="text-red-300 text-xs ml-2">
+                      *{" "}
+                      {formatHoursToMinutes(
+                        editingRecord.totalBreakTime || "0.00"
+                      )}
+                    </span>
                     <Input
                       type="text"
                       value={editingRecord.totalBreakTime || "0.00"}
@@ -603,6 +641,12 @@ const AdminTimeRecordEdit: React.FC = () => {
                   </div>
                   <div>
                     <Label>Total Lunch Time</Label>
+                    <span className="text-red-300 text-xs ml-2">
+                      *{" "}
+                      {formatHoursToMinutes(
+                        editingRecord.totalLunchTime || "0.00"
+                      )}
+                    </span>
                     <Input
                       type="text"
                       value={editingRecord.totalLunchTime || "0.00"}
@@ -611,6 +655,12 @@ const AdminTimeRecordEdit: React.FC = () => {
                   </div>
                   <div>
                     <Label>Total Second Break Time</Label>
+                    <span className="text-red-300 text-xs ml-2">
+                      *{" "}
+                      {formatHoursToMinutes(
+                        editingRecord.totalSecondBreakTime || "0.00"
+                      )}
+                    </span>
                     <Input
                       type="text"
                       value={editingRecord.totalSecondBreakTime || "0.00"}

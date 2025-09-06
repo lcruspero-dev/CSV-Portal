@@ -804,6 +804,31 @@ export const AttendanceTracker: React.FC = () => {
     return actions;
   };
 
+  // Helper function to convert hours to minutes format
+  const formatHoursToMinutes = (hoursString: string): string => {
+    // Handle null/undefined/empty values
+    if (!hoursString || hoursString === "0" || hoursString === "0.00") {
+      return "-";
+    }
+
+    const hours = parseFloat(hoursString);
+    if (isNaN(hours) || hours === 0) {
+      return "-";
+    }
+
+    const totalMinutes = Math.round(hours * 60);
+    const hoursPart = Math.floor(totalMinutes / 60);
+    const minutesPart = totalMinutes % 60;
+
+    if (hoursPart === 0) {
+      return `${minutesPart}m`;
+    } else if (minutesPart === 0) {
+      return `${hoursPart}h`;
+    } else {
+      return `${hoursPart}h ${minutesPart}m`;
+    }
+  };
+
   if (isLoadingInitial) {
     return (
       <div className="flex justify-center items-start w-full pt-4">
@@ -813,7 +838,7 @@ export const AttendanceTracker: React.FC = () => {
   }
 
   return (
-    <Card className="w-full max-w-4xl mx-auto">
+    <Card className="w-full max-w-6xl mx-auto">
       <CardHeader className="relative">
         <div className="absolute right-6 top-6">
           {" "}
@@ -1040,35 +1065,40 @@ export const AttendanceTracker: React.FC = () => {
                             <TableCell>
                               {entry.timeOut || "In Progress"}
                             </TableCell>
-                            <TableCell>{entry.totalHours || "-"}</TableCell>
                             <TableCell>
-                              {entry.totalBreakTime
-                                ? `${Math.round(
-                                    entry.totalBreakTime * 60
-                                  )} min.`
-                                : "-"}
+                              {formatHoursToMinutes(
+                                String(entry.totalHours || "")
+                              )}
                             </TableCell>
                             <TableCell>
-                              {entry.totalSecondBreakTime
-                                ? `${Math.round(
-                                    entry.totalSecondBreakTime * 60
-                                  )} min.`
-                                : "-"}
+                              {formatHoursToMinutes(
+                                String(entry.totalBreakTime || "")
+                              )}
                             </TableCell>
                             <TableCell>
-                              {entry.totalLunchTime
-                                ? `${Math.round(
-                                    entry.totalLunchTime * 60
-                                  )} min.`
-                                : "-"}
+                              {formatHoursToMinutes(
+                                String(entry.totalSecondBreakTime || "")
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {formatHoursToMinutes(
+                                String(entry.totalLunchTime || "")
+                              )}
                             </TableCell>
                             <TableCell>{entry.shift}</TableCell>
-                            <TableCell>{entry.notes || "-"}</TableCell>
+                            <TableCell>
+                              <div
+                                className="truncate max-w-[100px] 2xl:max-w-[150px] text-ellipsis overflow-hidden"
+                                title={entry.notes || ""}
+                              >
+                                {entry.notes || "-"}
+                              </div>
+                            </TableCell>
                           </TableRow>
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={8} className="text-center py-4">
+                          <TableCell colSpan={9} className="text-center py-4">
                             No attendance records found
                           </TableCell>
                         </TableRow>
