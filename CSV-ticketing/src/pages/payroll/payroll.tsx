@@ -19,7 +19,6 @@ import PayrollModal, { Payroll } from "@/components/kit/payrollModal";
 import { payrollAPI } from "@/API/endpoint";
 
 // ================= Payroll Columns =================
-// ================= Payroll Columns =================
 const payrollColumns: ColumnDef<Payroll>[] = [
     { accessorKey: "employee.email", header: "Email", meta: { sticky: true, width: 200 } },
     { accessorKey: "employee.fullName", header: "Full Name", meta: { sticky: true, width: 200 } },
