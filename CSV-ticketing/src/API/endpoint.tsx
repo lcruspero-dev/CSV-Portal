@@ -241,7 +241,7 @@ export const payrollAPI = {
   getPayrollByUser: (userId: string) =>
     apiHelper(`/api/payroll/${userId}`, "GET"),
   updatePayroll: (userId: string, body: Partial<PayrollPayload>) =>
-    apiHelper(`/api/payroll/${userId}`, "PUT", body),
+    apiHelper(`/api/payroll/update/${userId}`, "PUT", body),
   deletePayroll: (userId: string) =>
     apiHelper(`/api/payroll/${userId}`, "DELETE"),
 };

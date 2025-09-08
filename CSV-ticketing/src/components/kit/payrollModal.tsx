@@ -15,7 +15,7 @@ export interface Payroll {
         userId: string;
         fullName: string;
         position: string;
-        emailAddress: string;
+        email: string;
     };
     payrollRate?: {
         userId: string;
@@ -149,7 +149,7 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                 userId: selectedUser._id,
                 fullName: `${selectedUser.firstName} ${selectedUser.lastName}`,
                 position: selectedUser.jobPosition,
-                email: selectedUser.emailAddress,
+                email: selectedUser.email,
             },
             payrollRate: {
                 userId: selectedUser._id,
@@ -259,6 +259,7 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                     <DialogHeader>
                         <DialogTitle>Create Payroll</DialogTitle>
                     </DialogHeader>
+
                     {/* Employee Select */}
                     <div className="mb-6">
                         <label className="text-sm font-medium">Select Employee</label>
@@ -276,13 +277,13 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                                 <option key={emp._id} value={emp._id}>
                                     {emp.firstName} {emp.lastName}
                                     ({emp.jobPosition})
-                                    {emp.emailAddress}
+                                    {emp.email}
                                 </option>
                             ))}
                         </select>
                     </div>
                     {/* Form Fields Grouped */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 py-4">
+                    <div className="grid grid-cols-3 md:grid-cols-4 gap-4 py-4">
                         {/* Existing fields */}
                         {formFields.map((key) => (
                             <div key={key} className="flex flex-col">

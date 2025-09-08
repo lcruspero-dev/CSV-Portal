@@ -4,10 +4,13 @@ const {
     processPayroll,
     getAllPayrolls,
     getPayrollByUser,
-    deletePayroll
+    deletePayroll,
+    updatePayroll
 } = require('../controllers/payrollController');
 
 router.post("/process", processPayroll);
+
+router.put("/update/:id", updatePayroll);
 
 router.get("/", getAllPayrolls);
 
@@ -16,3 +19,4 @@ router.get("/:id", getPayrollByUser);
 router.delete("/:id", deletePayroll);
 
 module.exports = router;
+    

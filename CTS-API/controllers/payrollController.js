@@ -1,7 +1,5 @@
 const Payroll = require("../models/payroll");
-const UserProfile = require("../models/userProfileModel")
 
-// Helper to recursively update nested objects
 function deepUpdate(doc, updates) {
     for (const key in updates) {
         if (
@@ -175,3 +173,35 @@ exports.getAllPayrolls = async (req, res) => {
         return res.status(500).json({ status: "Error", message: err.message });
     }
 };
+
+exports.updatePayroll = async (req, res) => {
+
+    try {
+        const { id } = req.params;
+        const updates = req.body;
+
+        let payroll = await Payroll.findOne({ "payrollRate.userId": id });
+
+        if (!payroll) {
+            return res.status(404).json({
+                status: "Error",
+                message: `No payroll record found for user ${id}`,
+            });
+        }
+
+        deepUpdate(payroll, updates);
+        computePayroll(payroll);
+        await payroll.save();
+
+        return res.status(201).json({
+            status: "Success",
+            message: "Payroll updated successfully"
+        });
+    } catch (error) {
+        console.error(`Payroll update failed for user ${id}:`, error);
+        return res.status(500).json({
+            status: "Error",
+            message: error.message
+        });
+    }
+}
