@@ -92,7 +92,7 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
         if (!selectedUser) return;
 
         const monthlyRate = form.monthlyRate || 0;
-        const dailyRate = monthlyRate / 26;
+        const dailyRate = monthlyRate / 26; 
         const hourlyRate = dailyRate / 8;
 
         const basicPay = form.regularDays * dailyRate;

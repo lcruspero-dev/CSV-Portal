@@ -190,7 +190,7 @@ const PayrollPage = () => {
 const handleUpdate = (updated: Payroll) => {
   const recomputed = computePayroll(updated);
   setData((prev) => prev.map((p) => (p.id === recomputed.id ? recomputed : p)));
-  setSelectedPayroll(null); // close modal after update
+  setSelectedPayroll(null); 
 };
 
   return (
@@ -210,9 +210,14 @@ const handleUpdate = (updated: Payroll) => {
       </div>
 
       {/* ✅ Update Modal appears when a row is clicked */}
-      {selectedPayroll && (
-        <UpdatePayrollModal payroll={selectedPayroll} onUpdated={handleUpdate} />
-      )}
+     {selectedPayroll && (
+  <UpdatePayrollModal 
+    open={!!selectedPayroll} 
+    onOpenChange={() => setSelectedPayroll(null)} 
+    payroll={selectedPayroll} 
+    onUpdated={handleUpdate} 
+  />
+)}
     </section>
   );
 };
