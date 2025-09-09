@@ -28,13 +28,31 @@ function computePayroll(payroll) {
     const speHoliday = payroll.holidays?.speHoliday || 0;
     const regularOT = payroll.totalOvertime?.regularOT || 0;
     const restDayOT = payroll.totalOvertime?.restDayOtHours || 0;
+    const restDayOTExcess = payroll.totalOvertime?.restDayOtHoursExcess || 0;
+    const regularHolidayWorked = payroll.totalOvertime?.regularHolidayWorked || 0;
+    const regularHolidayWorkedExcess = payroll.totalOvertime?.regularHolidayWorkedExcess || 0;
+    const specialHolidayWorked = payroll.totalOvertime?.specialHolidayWorked || 0;
+    const specialHolidayWorkedOT = payroll.totalOvertime?.specialHolidayWorkedOT || 0;
+    const specialHolidayRDworkedHours = payroll.totalOvertime?.specialHolidayRDworkedHours || 0;
+    const specialHolidayRDworkedOT = payroll.totalOvertime?.specialHolidayRDworkedOT || 0;
     const ndHours = payroll.totalSupplementary?.nightDiffHours || 0;
+    const regOTnightDiffHours = payroll.totalSupplementary?.regOTnightDiffHours || 0;
+    const restDayNDhours = payroll.totalSupplementary?.restDayNDhours || 0;
+    const regHolNDHours = payroll.totalSupplementary?.regHolNDHours || 0;
+    const specialHolidayNDhours = payroll.totalSupplementary?.specialHolidayNDhours || 0;
     const unpaidDays = payroll.salaryAdjustments?.unpaid || 0;
     const salaryIncrease = payroll.salaryAdjustments?.increase || 0;
 
     const sss = payroll.totalDeductions?.sssEmployeeShare || 0;
     const phic = payroll.totalDeductions?.phicEmployeeShare || 0;
     const hdmf = payroll.totalDeductions?.hdmfEmployeeShare || 0;
+    const wisp = payroll.totalDeductions?.wisp || 0;
+    const totalSSScontribution = payroll.totalDeductions?.totalSSScontribution || 0;
+    const nonTaxableIncome = payroll.totalDeductions?.nonTaxableIncome || 0;
+    const taxableIncome = payroll.totalDeductions?.taxableIncome || 0;
+    const withHoldingTax = payroll.totalDeductions?.withHoldingTax || 0;
+    const sssSalaryLoan = payroll.totalDeductions?.sssSalaryLoan || 0;
+    const hdmfLoan = payroll.totalDeductions?.hdmfLoan || 0;
 
     // Basic Pay
     const basicPay = regularDays * dailyRate;
@@ -50,18 +68,33 @@ function computePayroll(payroll) {
     // Overtime
     const regularOTpay = regularOT * hourlyRate * 1.25;
     const restDayOtPay = restDayOT * hourlyRate * 1.3;
+    const restDayOtExcessPay = restDayOTExcess * hourlyRate * 1.5;
+    const regularHolidayWorkedPay = regularHolidayWorked * dailyRate * 2;
+    const regularHolidayWorkedExcessPay = regularHolidayWorkedExcess * hourlyRate * 2.6;
+    const specialHolidayWorkedPay = specialHolidayWorked * dailyRate * 1.3;
+    const specialHolidayWorkedOTpay = specialHolidayWorkedOT * hourlyRate * 1.69;
+    const specialHolidayRDworkedPay = specialHolidayRDworkedHours * hourlyRate * 1.69;
+    const specialHolidayRDworkedOTpay = specialHolidayRDworkedOT * hourlyRate * 2;
 
     // Night Differential
     const nightDiffPay = ndHours * hourlyRate * 0.1;
+    const regOTnightDiffPay = regOTnightDiffHours * hourlyRate * 0.1;
+    const restDayNDPay = restDayNDhours * hourlyRate * 0.1;
+    const regHolNDpay = regHolNDHours * hourlyRate * 0.1;
+    const specialHolidayNDpay = specialHolidayNDhours * hourlyRate * 0.1;
 
     // Salary Adjustments
     const unpaidAmount = unpaidDays * dailyRate;
 
     // Gross & Deductions
     const grossSalary =
-        basicPay + regHolidayPay + speHolidayPay + regularOTpay + restDayOtPay + nightDiffPay + salaryIncrease;
+        basicPay + regHolidayPay + speHolidayPay + regularOTpay + restDayOtPay + restDayOtExcessPay +
+        regularHolidayWorkedPay + regularHolidayWorkedExcessPay + specialHolidayWorkedPay + specialHolidayWorkedOTpay +
+        specialHolidayRDworkedPay + specialHolidayRDworkedOTpay + nightDiffPay + regOTnightDiffPay +
+        restDayNDPay + regHolNDpay + specialHolidayNDpay + salaryIncrease;
 
-    const totalDeductions = amountAbsent + amountMinLateUT + unpaidAmount + sss + phic + hdmf;
+    const totalDeductions = amountAbsent + amountMinLateUT + unpaidAmount + sss + phic + hdmf + wisp + 
+        totalSSScontribution + nonTaxableIncome + taxableIncome + withHoldingTax + sssSalaryLoan + hdmfLoan;
 
     const netPay = grossSalary - totalDeductions;
 
@@ -70,10 +103,42 @@ function computePayroll(payroll) {
     payroll.holidays = { ...payroll.holidays, regHolidayPay, speHolidayPay };
     payroll.latesAndAbsent = { ...payroll.latesAndAbsent, amountAbsent, amountMinLateUT };
     payroll.salaryAdjustments = { ...payroll.salaryAdjustments, unpaidAmount };
-    payroll.totalOvertime = { ...payroll.totalOvertime, regularOTpay, restDayOtPay };
-    payroll.totalSupplementary = { ...payroll.totalSupplementary, nightDiffPay };
+    payroll.totalOvertime = { 
+        ...payroll.totalOvertime, 
+        regularOTpay, 
+        restDayOtPay, 
+        restDayOtExcessPay,
+        regularHolidayWorkedPay,
+        regularHolidayWorkedExcessPay,
+        specialHolidayWorkedPay,
+        specialHolidayWorkedOTpay,
+        specialHolidayRDworkedPay,
+        specialHolidayRDworkedOTpay,
+        totalOvertime: regularOTpay + restDayOtPay + restDayOtExcessPay + regularHolidayWorkedPay + 
+            regularHolidayWorkedExcessPay + specialHolidayWorkedPay + specialHolidayWorkedOTpay + 
+            specialHolidayRDworkedPay + specialHolidayRDworkedOTpay
+    };
+    payroll.totalSupplementary = { 
+        ...payroll.totalSupplementary, 
+        nightDiffPay,
+        regOTnightDiffPay,
+        restDayNDPay,
+        regHolNDpay,
+        specialHolidayNDpay,
+        totalSupplementaryIncome: nightDiffPay + regOTnightDiffPay + restDayNDPay + regHolNDpay + specialHolidayNDpay
+    };
     payroll.grossSalary = { grossSalary, nonTaxableAllowance: 0, performanceBonus: 0 };
-    payroll.totalDeductions = { ...payroll.totalDeductions, totalDeductions };
+    payroll.totalDeductions = { 
+        ...payroll.totalDeductions, 
+        totalDeductions,
+        wisp,
+        totalSSScontribution,
+        nonTaxableIncome,
+        taxableIncome,
+        withHoldingTax,
+        sssSalaryLoan,
+        hdmfLoan
+    };
     payroll.grandtotal = { grandtotal: netPay };
 
     return payroll;

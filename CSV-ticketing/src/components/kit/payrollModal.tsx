@@ -75,6 +75,23 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
         restDayNDhours: 0,
         regHolNDHours: 0,
         specialHolidayNDhours: 0,
+        // Deductions
+        sssEmployeeShare: 0,
+        phicEmployeeShare: 0,
+        hdmfEmployeeShare: 0,
+        wisp: 0,
+        totalSSScontribution: 0,
+        nonTaxableIncome: 0,
+        taxableIncome: 0,
+        withHoldingTax: 0,
+        sssSalaryLoan: 0,
+        hdmfLoan: 0,
+        // Salary Adjustments
+        unpaid: 0,
+        increase: 0,
+        // Gross Salary
+        nonTaxableAllowance: 0,
+        performanceBonus: 0,
     });
 
     const [payrollPreview, setPayrollPreview] = useState<Payroll | null>(null);
@@ -151,9 +168,16 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
             regOTnightDiffPay +
             restDayNDPay +
             regHolNDPay +
-            specialHolidayNDpay;
+            specialHolidayNDpay +
+            form.increase +
+            form.nonTaxableAllowance +
+            form.performanceBonus;
 
-        const totalDeductions = absentDeduction + lateDeduction;
+        const totalDeductions = absentDeduction + lateDeduction + 
+            form.sssEmployeeShare + form.phicEmployeeShare + form.hdmfEmployeeShare +
+            form.wisp + form.totalSSScontribution + form.nonTaxableIncome + 
+            form.taxableIncome + form.withHoldingTax + form.sssSalaryLoan + form.hdmfLoan +
+            (form.unpaid * dailyRate);
         const netPay = grossSalary - totalDeductions;
 
         setPayrollPreview({
@@ -209,7 +233,11 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                     specialHolidayRDworkedPay +
                     specialHolidayRDworkedOTpay,
             },
-            salaryAdjustments: { unpaid: 0, unpaidAmount: 0, increase: 0 },
+            salaryAdjustments: { 
+                unpaid: form.unpaid, 
+                unpaidAmount: form.unpaid * dailyRate, 
+                increase: form.increase 
+            },
             totalSupplementary: {
                 nightDiffHours: form.ndHours,
                 nightDiffPay,
@@ -228,19 +256,23 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                     regHolNDPay +
                     specialHolidayNDpay,
             },
-            grossSalary: { grossSalary, nonTaxableAllowance: 0, performanceBonus: 0 },
+            grossSalary: { 
+                grossSalary, 
+                nonTaxableAllowance: form.nonTaxableAllowance, 
+                performanceBonus: form.performanceBonus 
+            },
             totalDeductions: {
                 totalDeductions,
-                sssEmployeeShare: 0,
-                wisp: 0,
-                totalSSScontribution: 0,
-                phicEmployeeShare: 0,
-                hdmfEmployeeShare: 0,
-                nonTaxableIncome: 0,
-                taxableIncome: grossSalary,
-                withHoldingTax: 0,
-                sssSalaryLoan: 0,
-                hdmfLoan: 0,
+                sssEmployeeShare: form.sssEmployeeShare,
+                wisp: form.wisp,
+                totalSSScontribution: form.totalSSScontribution,
+                phicEmployeeShare: form.phicEmployeeShare,
+                hdmfEmployeeShare: form.hdmfEmployeeShare,
+                nonTaxableIncome: form.nonTaxableIncome,
+                taxableIncome: form.taxableIncome,
+                withHoldingTax: form.withHoldingTax,
+                sssSalaryLoan: form.sssSalaryLoan,
+                hdmfLoan: form.hdmfLoan,
             },
             grandtotal: { grandtotal: netPay },
         });
@@ -307,65 +339,145 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                             </div>
                         ))}
 
-                        {/* Added Deductions */}
+                        {/* Deductions - Editable */}
                         <div className="flex flex-col">
-                            <label className="text-sm font-semibold">
-                                SSS Employee Share
-                            </label>
+                            <label className="text-sm font-semibold">SSS Employee Share</label>
                             <input
                                 type="number"
-                                value={payrollPreview?.totalDeductions?.sssEmployeeShare ?? 0}
-                                readOnly
-                                className="border rounded px-2 py-1 bg-gray-100"
+                                name="sssEmployeeShare"
+                                value={form.sssEmployeeShare}
+                                onChange={handleChange}
+                                className="border rounded px-2 py-1"
                             />
                         </div>
                         <div className="flex flex-col">
-                            <label className="text-sm font-semibold">
-                                PhilHealth Employee Share
-                            </label>
+                            <label className="text-sm font-semibold">PhilHealth Employee Share</label>
                             <input
                                 type="number"
-                                value={payrollPreview?.totalDeductions?.phicEmployeeShare ?? 0}
-                                readOnly
-                                className="border rounded px-2 py-1 bg-gray-100"
+                                name="phicEmployeeShare"
+                                value={form.phicEmployeeShare}
+                                onChange={handleChange}
+                                className="border rounded px-2 py-1"
                             />
                         </div>
                         <div className="flex flex-col">
-                            <label className="text-sm font-semibold">
-                                Pag-IBIG Employee Share
-                            </label>
+                            <label className="text-sm font-semibold">Pag-IBIG Employee Share</label>
                             <input
                                 type="number"
-                                value={payrollPreview?.totalDeductions?.hdmfEmployeeShare ?? 0}
-                                readOnly
-                                className="border rounded px-2 py-1 bg-gray-100"
+                                name="hdmfEmployeeShare"
+                                value={form.hdmfEmployeeShare}
+                                onChange={handleChange}
+                                className="border rounded px-2 py-1"
                             />
                         </div>
                         <div className="flex flex-col">
-                            <label className="text-sm font-semibold">SSS Loan</label>
+                            <label className="text-sm font-semibold">WISP</label>
                             <input
                                 type="number"
-                                value={payrollPreview?.totalDeductions?.sssSalaryLoan ?? 0}
-                                readOnly
-                                className="border rounded px-2 py-1 bg-gray-100"
+                                name="wisp"
+                                value={form.wisp}
+                                onChange={handleChange}
+                                className="border rounded px-2 py-1"
                             />
                         </div>
                         <div className="flex flex-col">
-                            <label className="text-sm font-semibold">HDMF Loan</label>
+                            <label className="text-sm font-semibold">Total SSS Contribution</label>
                             <input
                                 type="number"
-                                value={payrollPreview?.totalDeductions?.hdmfLoan ?? 0}
-                                readOnly
-                                className="border rounded px-2 py-1 bg-gray-100"
+                                name="totalSSScontribution"
+                                value={form.totalSSScontribution}
+                                onChange={handleChange}
+                                className="border rounded px-2 py-1"
+                            />
+                        </div>
+                        <div className="flex flex-col">
+                            <label className="text-sm font-semibold">Non-Taxable Income</label>
+                            <input
+                                type="number"
+                                name="nonTaxableIncome"
+                                value={form.nonTaxableIncome}
+                                onChange={handleChange}
+                                className="border rounded px-2 py-1"
+                            />
+                        </div>
+                        <div className="flex flex-col">
+                            <label className="text-sm font-semibold">Taxable Income</label>
+                            <input
+                                type="number"
+                                name="taxableIncome"
+                                value={form.taxableIncome}
+                                onChange={handleChange}
+                                className="border rounded px-2 py-1"
                             />
                         </div>
                         <div className="flex flex-col">
                             <label className="text-sm font-semibold">Withholding Tax</label>
                             <input
                                 type="number"
-                                value={payrollPreview?.totalDeductions?.withHoldingTax ?? 0}
-                                readOnly
-                                className="border rounded px-2 py-1 bg-gray-100"
+                                name="withHoldingTax"
+                                value={form.withHoldingTax}
+                                onChange={handleChange}
+                                className="border rounded px-2 py-1"
+                            />
+                        </div>
+                        <div className="flex flex-col">
+                            <label className="text-sm font-semibold">SSS Salary Loan</label>
+                            <input
+                                type="number"
+                                name="sssSalaryLoan"
+                                value={form.sssSalaryLoan}
+                                onChange={handleChange}
+                                className="border rounded px-2 py-1"
+                            />
+                        </div>
+                        <div className="flex flex-col">
+                            <label className="text-sm font-semibold">HDMF Loan</label>
+                            <input
+                                type="number"
+                                name="hdmfLoan"
+                                value={form.hdmfLoan}
+                                onChange={handleChange}
+                                className="border rounded px-2 py-1"
+                            />
+                        </div>
+                        <div className="flex flex-col">
+                            <label className="text-sm font-semibold">Unpaid Days</label>
+                            <input
+                                type="number"
+                                name="unpaid"
+                                value={form.unpaid}
+                                onChange={handleChange}
+                                className="border rounded px-2 py-1"
+                            />
+                        </div>
+                        <div className="flex flex-col">
+                            <label className="text-sm font-semibold">Salary Increase</label>
+                            <input
+                                type="number"
+                                name="increase"
+                                value={form.increase}
+                                onChange={handleChange}
+                                className="border rounded px-2 py-1"
+                            />
+                        </div>
+                        <div className="flex flex-col">
+                            <label className="text-sm font-semibold">Non-Taxable Allowance</label>
+                            <input
+                                type="number"
+                                name="nonTaxableAllowance"
+                                value={form.nonTaxableAllowance}
+                                onChange={handleChange}
+                                className="border rounded px-2 py-1"
+                            />
+                        </div>
+                        <div className="flex flex-col">
+                            <label className="text-sm font-semibold">Performance Bonus</label>
+                            <input
+                                type="number"
+                                name="performanceBonus"
+                                value={form.performanceBonus}
+                                onChange={handleChange}
+                                className="border rounded px-2 py-1"
                             />
                         </div>
                     </div>

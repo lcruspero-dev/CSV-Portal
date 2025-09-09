@@ -37,6 +37,13 @@ const formSections = [
     fields: [
       { path: "totalOvertime.regularOT", label: "Regular OT Hours" },
       { path: "totalOvertime.restDayOtHours", label: "Rest Day OT Hours" },
+      { path: "totalOvertime.restDayOtHoursExcess", label: "Rest Day OT Excess Hours" },
+      { path: "totalOvertime.regularHolidayWorked", label: "Regular Holiday Worked" },
+      { path: "totalOvertime.regularHolidayWorkedExcess", label: "Regular Holiday Worked Excess" },
+      { path: "totalOvertime.specialHolidayWorked", label: "Special Holiday Worked" },
+      { path: "totalOvertime.specialHolidayWorkedOT", label: "Special Holiday Worked OT" },
+      { path: "totalOvertime.specialHolidayRDworkedHours", label: "Special Holiday RD Worked Hours" },
+      { path: "totalOvertime.specialHolidayRDworkedOT", label: "Special Holiday RD Worked OT" },
     ],
   },
   {
@@ -49,25 +56,49 @@ const formSections = [
     ],
   },
   {
-    title: "Contributions",
+    title: "Night Differential",
     fields: [
-      { path: "totalDeductions.sssEmployeeShare", label: "SSS" },
-      { path: "totalDeductions.phicEmployeeShare", label: "PhilHealth" },
-      { path: "totalDeductions.hdmfEmployeeShare", label: "Pag-IBIG" },
+      { path: "totalSupplementary.nightDiffHours", label: "Night Diff Hours" },
+      { path: "totalSupplementary.regOTnightDiffHours", label: "Reg OT Night Diff Hours" },
+      { path: "totalSupplementary.restDayNDhours", label: "Rest Day Night Diff Hours" },
+      { path: "totalSupplementary.regHolNDHours", label: "Reg Holiday Night Diff Hours" },
+      { path: "totalSupplementary.specialHolidayNDhours", label: "Special Holiday Night Diff Hours" },
+    ],
+  },
+  {
+    title: "Deductions",
+    fields: [
+      { path: "totalDeductions.sssEmployeeShare", label: "SSS Employee Share" },
+      { path: "totalDeductions.phicEmployeeShare", label: "PhilHealth Employee Share" },
+      { path: "totalDeductions.hdmfEmployeeShare", label: "Pag-IBIG Employee Share" },
+      { path: "totalDeductions.wisp", label: "WISP" },
+      { path: "totalDeductions.totalSSScontribution", label: "Total SSS Contribution" },
+      { path: "totalDeductions.nonTaxableIncome", label: "Non-Taxable Income" },
+      { path: "totalDeductions.taxableIncome", label: "Taxable Income" },
       { path: "totalDeductions.withHoldingTax", label: "Withholding Tax" },
+      { path: "totalDeductions.sssSalaryLoan", label: "SSS Salary Loan" },
+      { path: "totalDeductions.hdmfLoan", label: "HDMF Loan" },
     ],
   },
   {
     title: "Salary Adjustments",
     fields: [
+      { path: "salaryAdjustments.unpaid", label: "Unpaid Days" },
       { path: "salaryAdjustments.unpaidAmount", label: "Unpaid Amount" },
       { path: "salaryAdjustments.increase", label: "Salary Increase" },
     ],
   },
   {
+    title: "Gross Salary",
+    fields: [
+      { path: "grossSalary.nonTaxableAllowance", label: "Non-Taxable Allowance" },
+      { path: "grossSalary.performanceBonus", label: "Performance Bonus" },
+      { path: "grossSalary.grossSalary", label: "Gross Salary" },
+    ],
+  },
+  {
     title: "Totals (Computed)",
     fields: [
-      { path: "grossSalary.grossSalary", label: "Gross Salary" },
       { path: "grandtotal.grandtotal", label: "Net Pay" },
     ],
   },
