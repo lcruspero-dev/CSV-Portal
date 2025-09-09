@@ -1,4 +1,7 @@
-import { payrollAPI, UserProfileAPI } from "@/API/endpoint";
+import { 
+    payrollAPI, 
+    UserProfileAPI 
+} from "@/API/endpoint";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -9,14 +12,20 @@ import {
 } from "@/components/ui/dialog";
 import React, { useEffect, useState } from "react";
 
+export interface UserProfile {
+    _id: string;             // MongoDB document ID
+    userId: string;
+    firstName: string;
+    middleName?: string;     // optional
+    lastName: string;
+    jobPosition: string;
+    email: string;           // fixed from emailAddress → email
+    fullName?: string;       // optional convenience field
+}
+
 export interface Payroll {
-    id?: string;
-    employee: {
-        userId: string;
-        fullName: string;
-        position: string;
-        email: string;
-    };
+    _id?: string;
+    employee: UserProfile & { email?: string; fullName?: string; position?: string };
     payrollRate?: {
         userId: string;
         monthlyRate: number;
@@ -82,6 +91,9 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
         fetchUsers();
     }, []);
 
+    console.log('Selected User:', selectedUser);
+
+    // Handle form input changes
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setForm((prev) => ({ ...prev, [name]: Number(value) }));
@@ -146,13 +158,12 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
 
         setPayrollPreview({
             employee: {
-                userId: selectedUser._id,
+                ...selectedUser, // now includes firstName, lastName, email, etc.
                 fullName: `${selectedUser.firstName} ${selectedUser.lastName}`,
                 position: selectedUser.jobPosition,
-                email: selectedUser.email,
             },
             payrollRate: {
-                userId: selectedUser._id,
+                userId: selectedUser.userId || selectedUser._id,
                 monthlyRate,
                 dailyRate,
                 hourlyRate,
@@ -275,9 +286,7 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                             <option value="">-- Choose Employee --</option>
                             {employees.map((emp) => (
                                 <option key={emp._id} value={emp._id}>
-                                    {emp.firstName} {emp.lastName}
-                                    ({emp.jobPosition})
-                                    {emp.email}
+                                    {emp.firstName} {emp.lastName} ({emp.jobPosition})
                                 </option>
                             ))}
                         </select>
@@ -453,8 +462,7 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                                         </li>
                                         <li>
                                             <b>Regular OT Pay:</b>{" "}
-                                            {payrollPreview.totalOvertime?.regularOTpay?.toFixed(2) ??
-                                                0}
+                                            {payrollPreview.totalOvertime?.regularOTpay?.toFixed(2) ?? 0}
                                         </li>
                                         <li>
                                             <b>Rest Day OT Hours:</b>{" "}
@@ -462,14 +470,11 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                                         </li>
                                         <li>
                                             <b>Rest Day OT Pay:</b>{" "}
-                                            {payrollPreview.totalOvertime?.restDayOtPay?.toFixed(2) ??
-                                                0}
+                                            {payrollPreview.totalOvertime?.restDayOtPay?.toFixed(2) ?? 0}
                                         </li>
                                         <li>
                                             <b>Total OT Pay:</b>{" "}
-                                            {payrollPreview.totalOvertime?.totalOvertime?.toFixed(
-                                                2
-                                            ) ?? 0}
+                                            {payrollPreview.totalOvertime?.totalOvertime?.toFixed(2) ?? 0}
                                         </li>
                                     </ul>
                                 </div>
@@ -484,15 +489,11 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                                         </li>
                                         <li>
                                             <b>Night Diff Pay:</b>{" "}
-                                            {payrollPreview.totalSupplementary?.nightDiffPay?.toFixed(
-                                                2
-                                            ) ?? 0}
+                                            {payrollPreview.totalSupplementary?.nightDiffPay?.toFixed(2) ?? 0}
                                         </li>
                                         <li>
                                             <b>Total Supplementary:</b>{" "}
-                                            {payrollPreview.totalSupplementary?.totalSupplementaryIncome?.toFixed(
-                                                2
-                                            ) ?? 0}
+                                            {payrollPreview.totalSupplementary?.totalSupplementaryIncome?.toFixed(2) ?? 0}
                                         </li>
                                     </ul>
                                 </div>
@@ -502,77 +503,30 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                                     <h4 className="font-semibold mb-2">Deductions</h4>
                                     <ul>
                                         <li>
+                                            <b>Total Deductions:</b>{" "}
+                                            {payrollPreview.totalDeductions?.totalDeductions?.toFixed(2) ?? 0}
+                                        </li>
+                                        <li>
                                             <b>SSS:</b>{" "}
-                                            {payrollPreview.totalDeductions?.sssEmployeeShare?.toFixed(
-                                                2
-                                            ) ?? 0}
+                                            {payrollPreview.totalDeductions?.sssEmployeeShare?.toFixed(2) ?? 0}
                                         </li>
                                         <li>
                                             <b>PhilHealth:</b>{" "}
-                                            {payrollPreview.totalDeductions?.phicEmployeeShare?.toFixed(
-                                                2
-                                            ) ?? 0}
+                                            {payrollPreview.totalDeductions?.phicEmployeeShare?.toFixed(2) ?? 0}
                                         </li>
                                         <li>
                                             <b>Pag-IBIG:</b>{" "}
-                                            {payrollPreview.totalDeductions?.hdmfEmployeeShare?.toFixed(
-                                                2
-                                            ) ?? 0}
-                                        </li>
-                                        <li>
-                                            <b>SSS Loan:</b>{" "}
-                                            {payrollPreview.totalDeductions?.sssSalaryLoan?.toFixed(
-                                                2
-                                            ) ?? 0}
-                                        </li>
-                                        <li>
-                                            <b>HDMF Loan:</b>{" "}
-                                            {payrollPreview.totalDeductions?.hdmfLoan?.toFixed(2) ??
-                                                0}
-                                        </li>
-                                        <li>
-                                            <b>Withholding Tax:</b>{" "}
-                                            {payrollPreview.totalDeductions?.withHoldingTax?.toFixed(
-                                                2
-                                            ) ?? 0}
-                                        </li>
-                                        <li>
-                                            <b>Non-Taxable:</b>{" "}
-                                            {payrollPreview.totalDeductions?.nonTaxableIncome?.toFixed(
-                                                2
-                                            ) ?? 0}
-                                        </li>
-                                        <li>
-                                            <b>Taxable:</b>{" "}
-                                            {payrollPreview.totalDeductions?.taxableIncome?.toFixed(
-                                                2
-                                            ) ?? 0}
-                                        </li>
-                                        <li>
-                                            <b>Total Deductions:</b>{" "}
-                                            {payrollPreview.totalDeductions?.totalDeductions?.toFixed(
-                                                2
-                                            ) ?? 0}
+                                            {payrollPreview.totalDeductions?.hdmfEmployeeShare?.toFixed(2) ?? 0}
                                         </li>
                                     </ul>
                                 </div>
 
-                                {/* Salary Summary */}
+                                {/* Net Pay */}
                                 <div>
-                                    <h4 className="font-semibold mb-2">Salary Summary</h4>
+                                    <h4 className="font-semibold mb-2">Net Pay</h4>
                                     <ul>
                                         <li>
-                                            <b>Gross Salary:</b>{" "}
-                                            {payrollPreview.grossSalary?.grossSalary?.toFixed(2) ?? 0}
-                                        </li>
-                                        <li>
-                                            <b>Total Deductions:</b>{" "}
-                                            {payrollPreview.totalDeductions?.totalDeductions?.toFixed(
-                                                2
-                                            ) ?? 0}
-                                        </li>
-                                        <li>
-                                            <b>Net Pay:</b>{" "}
+                                            <b>Grand Total:</b>{" "}
                                             {payrollPreview.grandtotal?.grandtotal?.toFixed(2) ?? 0}
                                         </li>
                                     </ul>
@@ -580,11 +534,8 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                             </div>
                         </div>
                     )}
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setOpen(false)}>
-                            Cancel
-                        </Button>
-                        <Button onClick={handleCreate}>Generate</Button>
+                    <DialogFooter className="mt-6">
+                        <Button onClick={handleCreate}>Save Payroll</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

@@ -14,9 +14,9 @@ router.put("/update/:id", updatePayroll);
 
 router.get("/", getAllPayrolls);
 
-router.get("/:id", getPayrollByUser);
+router.get("/:userId", getPayrollByUser);
 
-router.delete("/:id", deletePayroll);
+router.delete("/:userId", deletePayroll);
 
 module.exports = router;
     

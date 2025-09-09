@@ -6,18 +6,15 @@ const employeeSchema = new mongoose.Schema({
     required: true,
     ref: "User",
   },
+  email: {
+    type: String,
+  },
   fullName: {
     type: String,
-    required: true,
   },
   position: {
     type: String,
-    required: true,
-  },
-  email: {
-    type: String,
-    required: true,
-  },
+  }
 });
 
 const payrollRateSchema = new mongoose.Schema({
@@ -326,5 +323,8 @@ const payrollSchema = new mongoose.Schema({
   totalDeductions: totalDeductionsSchema,
   grandtotal: grandtotalSchema,
 });
+
+// Ensure one payroll per user
+payrollSchema.index({ "payrollRate.userId": 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model("Payroll", payrollSchema);

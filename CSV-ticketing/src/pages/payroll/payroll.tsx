@@ -189,8 +189,8 @@ const PayrollPage = () => {
 
 const handleUpdate = (updated: Payroll) => {
   const recomputed = computePayroll(updated);
-  setData((prev) => prev.map((p) => (p.id === recomputed.id ? recomputed : p)));
-  setSelectedPayroll(null); 
+  setData((prev) => prev.map((p) => ((p as any)._id === (recomputed as any)._id ? recomputed : p)));
+  setSelectedPayroll(null);
 };
 
   return (
@@ -202,7 +202,13 @@ const handleUpdate = (updated: Payroll) => {
 
       <div className="flex justify-between mb-6">
         <BackButton />
-        <PayrollModal onAdd={(p) => setData((prev) => [...prev, p])} />
+        <PayrollModal onAdd={(p) =>
+          setData((prev) => {
+            const id = (p as any)._id;
+            const exists = prev.some((x) => (x as any)._id === id);
+            return exists ? prev.map((x) => ((x as any)._id === id ? p : x)) : [...prev, p];
+          })
+        } />
       </div>
 
       <div className="bg-white rounded-sm border border-gray-200 p-4">
@@ -212,7 +218,7 @@ const handleUpdate = (updated: Payroll) => {
       {/* ✅ Update Modal appears when a row is clicked */}
      {selectedPayroll && (
   <UpdatePayrollModal 
-    open={!!selectedPayroll} 
+    open={!selectedPayroll} 
     onOpenChange={() => setSelectedPayroll(null)} 
     payroll={selectedPayroll} 
     onUpdated={handleUpdate} 

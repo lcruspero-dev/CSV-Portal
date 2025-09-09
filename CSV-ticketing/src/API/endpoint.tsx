@@ -4,7 +4,7 @@ import axios from "axios";
 export const baseURL = import.meta.env.VITE_BASE_URL;
 
 export interface PayrollPayload {
-  userId: string;
+  id: string;
   basicSalary: number;
   allowances?: number;
   deductions?: number;
@@ -238,10 +238,10 @@ export const payrollAPI = {
   processPayroll: (body: PayrollPayload) =>
     apiHelper("/api/payroll/process", "POST", body),
   getAllPayrolls: () => apiHelper("/api/payroll/", "GET"),
-  getPayrollByUser: (userId: string) =>
-    apiHelper(`/api/payroll/${userId}`, "GET"),
-  updatePayroll: (userId: string, body: Partial<PayrollPayload>) =>
-    apiHelper(`/api/payroll/update/${userId}`, "PUT", body),
-  deletePayroll: (userId: string) =>
-    apiHelper(`/api/payroll/${userId}`, "DELETE"),
+  getPayrollByUser: (id: string) =>
+    apiHelper(`/api/payroll/${id}`, "GET"),
+  updatePayroll: (id: string, body: Partial<PayrollPayload>) =>
+    apiHelper(`/api/payroll/update/${id}`, "PUT", body),
+  deletePayroll: (id: string) =>
+    apiHelper(`/api/payroll/${id}`, "DELETE"),
 };

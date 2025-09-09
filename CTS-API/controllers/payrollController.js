@@ -1,4 +1,5 @@
 const Payroll = require("../models/payroll");
+const UserProfile = require("../models/userProfileModel");
 
 function deepUpdate(doc, updates) {
     for (const key in updates) {
@@ -95,10 +96,31 @@ exports.processPayroll = async (req, res) => {
             deepUpdate(payroll, req.body);
         }
 
+        // Enrich employee info from UserProfile if missing or incomplete
+        if (payrollRate?.userId) {
+            const profile = await UserProfile.findOne({ userId: payrollRate.userId }).lean();
+            if (profile) {
+                const fullName = `${profile.firstName || ""} ${profile.lastName || ""}`.trim();
+                payroll.employee = payroll.employee || {};
+                payroll.employee.userId = payrollRate.userId;
+                payroll.employee.email = profile.emailAddress || profile.email || payroll.employee.email;
+                payroll.employee.fullName = fullName || payroll.employee.fullName;
+                payroll.employee.position = profile.jobPosition || profile.position || payroll.employee.position;
+            }
+        }
+
         // Compute all payroll fields
         computePayroll(payroll);
 
-        await payroll.save();
+        // Attempt save; handle duplicate key gracefully
+        try {
+            await payroll.save();
+        } catch (e) {
+            if (e && e.code === 11000) {
+                return res.status(409).json({ status: "Error", message: "Payroll already exists for this user" });
+            }
+            throw e;
+        }
 
         return res.status(payroll.isNew ? 201 : 200).json({
             status: "Success",
@@ -175,33 +197,18 @@ exports.getAllPayrolls = async (req, res) => {
 };
 
 exports.updatePayroll = async (req, res) => {
+  try {
+    const { id } = req.params;   // ✅ get payrollId from URL
+    const updatedPayroll = await Payroll.findByIdAndUpdate(id, req.body, { new: true });
 
-    try {
-        const { id } = req.params;
-        const updates = req.body;
-
-        let payroll = await Payroll.findOne({ "payrollRate.userId": id });
-
-        if (!payroll) {
-            return res.status(404).json({
-                status: "Error",
-                message: `No payroll record found for user ${id}`,
-            });
-        }
-
-        deepUpdate(payroll, updates);
-        computePayroll(payroll);
-        await payroll.save();
-
-        return res.status(201).json({
-            status: "Success",
-            message: "Payroll updated successfully"
-        });
-    } catch (error) {
-        console.error(`Payroll update failed for user ${id}:`, error);
-        return res.status(500).json({
-            status: "Error",
-            message: error.message
-        });
+    if (!updatedPayroll) {
+      return res.status(404).json({ status: "Error", message: `No payroll record found for ID ${id}` });
     }
-}
+
+    res.json(updatedPayroll);
+  } catch (error) {
+    console.error(`Payroll update failed for payroll ${req.params.id}:`, error); // ✅ use req.params.id
+    res.status(500).json({ status: "Error", message: "Payroll update failed", error });
+  }
+};
+
