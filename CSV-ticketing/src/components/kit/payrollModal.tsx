@@ -14,14 +14,14 @@ import {
 import React, { useEffect, useState } from "react";
 
 export interface UserProfile {
-    _id: string;             // MongoDB document ID
+    _id: string;             
     userId: string;
     firstName: string;
-    middleName?: string;     // optional
+    middleName?: string;    
     lastName: string;
     jobPosition: string;
-    email: string;           // fixed from emailAddress → email
-    fullName?: string;       // optional convenience field
+    email: string;          
+    fullName?: string;       
 }
 
 export interface Payroll {
@@ -183,7 +183,7 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
 
         setPayrollPreview({
             employee: {
-                ...selectedUser, // now includes firstName, lastName, email, etc.
+                ...selectedUser, 
                 fullName: `${selectedUser.firstName} ${selectedUser.lastName}`,
                 position: selectedUser.jobPosition,
             },
@@ -643,7 +643,7 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                                             {payrollPreview.grandtotal?.grandtotal?.toFixed(2) ?? 0}
                                         </li>
                                     </ul>
-                                </div>
+                                </div>                                
                             </div>
                         </div>
                     )}
