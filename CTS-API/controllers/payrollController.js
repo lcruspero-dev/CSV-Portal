@@ -34,6 +34,11 @@ function computePayroll(payroll) {
     const sss = payroll.totalDeductions?.sssEmployeeShare || 0;
     const phic = payroll.totalDeductions?.phicEmployeeShare || 0;
     const hdmf = payroll.totalDeductions?.hdmfEmployeeShare || 0;
+    const wisp = payroll.totalDeductions?.wisp || 0;
+    const totalSSScontribution = payroll.totalDeductions?.totalSSScontribution || 0;
+    const withHoldingTax = payroll.totalDeductions?.withHoldingTax || 0;
+    const sssSalaryLoan = payroll.totalDeductions?.sssSalaryLoan || 0;
+    const hdmfLoan = payroll.totalDeductions?.hdmfLoan || 0;
 
     // Basic Pay
     const basicPay = regularDays * dailyRate;
@@ -60,8 +65,9 @@ function computePayroll(payroll) {
     const grossSalary =
         basicPay + regHolidayPay + speHolidayPay + regularOTpay + restDayOtPay + nightDiffPay + salaryIncrease;
 
+    // Total deductions (exclude incomes like nonTaxableIncome/taxableIncome)
     const totalDeductions = amountAbsent + amountMinLateUT + unpaidAmount + sss + phic + hdmf + wisp + 
-        totalSSScontribution + nonTaxableIncome + taxableIncome + withHoldingTax + sssSalaryLoan + hdmfLoan;
+        totalSSScontribution + withHoldingTax + sssSalaryLoan + hdmfLoan;
 
     const netPay = grossSalary - totalDeductions;
 
@@ -94,6 +100,17 @@ exports.processPayroll = async (req, res) => {
             payroll = new Payroll(req.body);
         } else {
             deepUpdate(payroll, req.body);
+        }
+
+        // Backfill employee email if missing, from request body or linked profile fields
+        if (payroll.employee) {
+            const incomingEmp = req.body.employee || {};
+            payroll.employee.email =
+                payroll.employee.email ||
+                incomingEmp.email ||
+                incomingEmp.emailAddress ||
+                incomingEmp.personalEmail ||
+                "";
         }
 
         // Compute all payroll fields

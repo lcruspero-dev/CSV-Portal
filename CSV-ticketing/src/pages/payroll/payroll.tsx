@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   Table,
   TableBody,
@@ -63,22 +65,28 @@ const payrollColumns: ColumnDef<Payroll>[] = [
 
 // ================= Sticky Column Helper =================
 const getStickyStyle = (index: number, items: any[]) => {
+  const getDef = (item: any) => item?.column?.columnDef ?? item?.columnDef ?? {};
   let leftOffset = 0;
   for (let i = 0; i < index; i++) {
-    const prevCol = items[i].column.columnDef;
-    if (prevCol.meta?.sticky) leftOffset += prevCol.meta.width || 150;
+    const prevDef = getDef(items[i]);
+    if (prevDef?.meta?.sticky) leftOffset += prevDef.meta.width || 150;
   }
-  const current = items[index].column.columnDef;
-  if (current.meta?.sticky) {
+  const currentDef = getDef(items[index]);
+  if (currentDef?.meta?.sticky) {
     return {
       className: "sticky bg-white z-10 border-r",
-      style: { left: leftOffset, minWidth: current.meta.width || 150 },
+      style: { left: leftOffset, minWidth: currentDef.meta.width || 150 },
     };
   }
   return {};
 };
 
-// ================= Payroll Table =================
+// helper for nested paths (e.g., "a.b.c")
+const getByPath = (obj: any, path: string): any => {
+  return path.split(".").reduce((acc, key) => (acc ? acc[key] : undefined), obj);
+};
+
+{/** Payroll Table */}
 const PayrollTable = ({
   columns,
   data,
@@ -89,6 +97,31 @@ const PayrollTable = ({
   onRowClick: (payroll: Payroll) => void;
 }) => {
   const table = useReactTable({ data, columns, getCoreRowModel: getCoreRowModel() });
+  const leafColumns = table.getAllLeafColumns();
+  const { columnTotals, columnIsNumeric } = useMemo(() => {
+    const totals: Array<number | null> = [];
+    const isNumeric: boolean[] = [];
+    leafColumns.forEach((col) => {
+      const accessorKey = (col.columnDef as any).accessorKey as string | undefined;
+      if (!accessorKey) {
+        totals.push(null);
+        isNumeric.push(false);
+        return;
+      }
+      const numeric = data.some((row) => typeof getByPath(row as any, accessorKey) === "number");
+      isNumeric.push(numeric);
+      if (!numeric) {
+        totals.push(null);
+        return;
+      }
+      const sum = data.reduce((acc, row) => {
+        const value = getByPath(row as any, accessorKey);
+        return acc + (typeof value === "number" ? value : 0);
+      }, 0);
+      totals.push(sum);
+    });
+    return { columnTotals: totals, columnIsNumeric: isNumeric };
+  }, [data, leafColumns]);
 
   return (
     <section className="w-full overflow-x-auto">
@@ -109,7 +142,8 @@ const PayrollTable = ({
         </TableHeader>
         <TableBody>
           {table.getRowModel().rows.length ? (
-            table.getRowModel().rows.map((row) => (
+            <>
+            {table.getRowModel().rows.map((row) => (
               <TableRow
                 key={row.id}
                 className="cursor-pointer hover:bg-gray-50"
@@ -129,7 +163,21 @@ const PayrollTable = ({
                   );
                 })}
               </TableRow>
-            ))
+            ))}
+            {/* Totals footer per column */}
+            <TableRow className="bg-gray-50">
+              {leafColumns.map((col, i) => {
+                const stickyProps = getStickyStyle(i, leafColumns as any);
+                const total = columnTotals[i];
+                const isNum = columnIsNumeric[i];
+                return (
+                  <TableCell key={col.id} className="border font-semibold" {...stickyProps}>
+                    {i === 0 ? "Grand Total" : isNum && typeof total === "number" ? total.toFixed(2) : ""}
+                  </TableCell>
+                );
+              })}
+            </TableRow>
+            </>
           ) : (
             <TableRow>
               <TableCell colSpan={columns.length} className="h-24 text-center">
@@ -170,16 +218,19 @@ const computePayroll = (p: Payroll): Payroll => {
 };
 
 
-// ================= Main Page =================
+{/** Payroll Main Page */}
 const PayrollPage = () => {
   const [data, setData] = useState<Payroll[]>([]);
   const [selectedPayroll, setSelectedPayroll] = useState<Payroll | null>(null);
+  const [positionFilter, setPositionFilter] = useState<string>("All");
+  const [filterOpen, setFilterOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchPayrolls = async () => {
       try {
         const res = await payrollAPI.getAllPayrolls();
-        setData(Array.isArray(res.data.payrolls) ? res.data.payrolls : []);
+        const list = Array.isArray(res.data.payrolls) ? res.data.payrolls : [];
+        setData(list.map((p) => computePayroll(p)));
       } catch (err) {
         console.error(err);
       }
@@ -193,6 +244,12 @@ const handleUpdate = (updated: Payroll) => {
   setSelectedPayroll(null);
 };
 
+  const filteredData = useMemo(() => {
+    if (positionFilter === "All") return data;
+    const target = positionFilter.toLowerCase();
+    return data.filter((p) => (p.employee?.position || "").toLowerCase() === target);
+  }, [data, positionFilter]);
+
   return (
     <section className="w-full mx-auto py-12 px-6">
       <article className="text-center mb-8">
@@ -200,30 +257,65 @@ const handleUpdate = (updated: Payroll) => {
         <h3 className="text-lg text-gray-600">Payroll Register</h3>
       </article>
 
-      <div className="flex justify-between mb-6">
+      <div className="flex justify-between items-center gap-4 mb-6">
         <BackButton />
-        <PayrollModal onAdd={(p) =>
+        <div className="flex items-center gap-3">
+          <PayrollModal onAdd={(p) =>
           setData((prev) => {
             const id = (p as any)._id;
             const exists = prev.some((x) => (x as any)._id === id);
             return exists ? prev.map((x) => ((x as any)._id === id ? p : x)) : [...prev, p];
           })
         } />
+          <Button variant="outline" onClick={() => setFilterOpen(true)}>Filter</Button>
+        </div>
       </div>
 
       <div className="bg-white rounded-sm border border-gray-200 p-4">
-        <PayrollTable columns={payrollColumns} data={data} onRowClick={setSelectedPayroll} />
+        <PayrollTable columns={payrollColumns} data={filteredData} onRowClick={setSelectedPayroll} />
       </div>
 
-      {/* ✅ Update Modal appears when a row is clicked */}
-     {selectedPayroll && (
-  <UpdatePayrollModal 
-    open={!selectedPayroll} 
-    onOpenChange={() => setSelectedPayroll(null)} 
-    payroll={selectedPayroll} 
-    onUpdated={handleUpdate} 
-  />
-)}
+      {/* Right-side Filter Sidebar */}
+      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
+        <SheetContent side="right" className="sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle>Filter Payroll</SheetTitle>
+          </SheetHeader>
+          <div className="mt-4 space-y-6">
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-gray-700">Job Position</label>
+              <select
+                value={positionFilter}
+                onChange={(e) => setPositionFilter(e.target.value)}
+                className="border rounded px-2 py-2 text-sm"
+              >
+                <option value="All">All</option>
+                <option value="Accounting">Accounting</option>
+                <option value="IT Specialist">IT</option>
+                <option value="HR">HR</option>
+                <option value="CSR">CSR</option>
+              </select>
+            </div>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => { setPositionFilter("All"); }}>Reset</Button>
+              <Button onClick={() => setFilterOpen(false)}>Apply</Button>
+            </div>
+            <h4 className="text-xs text-gray-500 italic">
+              Filter by accounts In Progress
+            </h4>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Update Modal appears when a row is clicked */}
+      {selectedPayroll && (
+        <UpdatePayrollModal
+          open={true}
+          onOpenChange={(o) => !o && setSelectedPayroll(null)}
+          payroll={selectedPayroll}
+          onUpdated={handleUpdate}
+        />
+      )}
     </section>
   );
 };
