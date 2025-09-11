@@ -55,6 +55,10 @@ const workDaysSchema = new mongoose.Schema({
     type: Number, // total minutes late
     required: true,
   },
+  totalHoursWorked: {
+    type: Number, // total hours worked from time tracker
+    default: 0,
+  },
 });
 
 const holidaysSchema = new mongoose.Schema({

@@ -1,6 +1,33 @@
 const e = require("express");
 const EmployeeTime = require("../models/employeeTimeModel");
 const mongoose = require("mongoose");
+const { autoUpdatePayrollFromTimeTracker } = require("./payrollController");
+
+// Helper function to trigger payroll update
+const triggerPayrollUpdate = async (employeeId, date) => {
+  try {
+    // Calculate date range for the current month
+    const currentDate = new Date(date);
+    const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+
+    // Format dates as strings (MM/DD/YYYY)
+    const formatDate = (date) => {
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${month}/${day}/${year}`;
+    };
+
+    const startDate = formatDate(startOfMonth);
+    const endDate = formatDate(endOfMonth);
+
+    // Auto-update payroll
+    await autoUpdatePayrollFromTimeTracker(employeeId, startDate, endDate);
+  } catch (error) {
+    console.error('Error triggering payroll update:', error);
+  }
+};
 
 const getEmployeeTimes = async (_req, res) => {
   try {
@@ -181,6 +208,11 @@ const updateEmployeeTimeOut = async (req, res) => {
       return res.status(404).json({ message: "Employee time not found" });
     }
 
+    // Trigger payroll update when time out is recorded
+    if (timeOut) {
+      await triggerPayrollUpdate(req.user._id, employeeTime.date);
+    }
+
     res.status(200).json(employeeTime);
   } catch (error) {
     console.log(error);
@@ -214,9 +246,8 @@ const searchByNameAndDate = async (req, res) => {
 
     // Convert the date format from 'YYYY-MM-DD' to 'MM/DD/YYYY'
     const parsedDate = new Date(date);
-    const formattedDate = `${
-      parsedDate.getMonth() + 1
-    }/${parsedDate.getDate()}/${parsedDate.getFullYear()}`;
+    const formattedDate = `${parsedDate.getMonth() + 1
+      }/${parsedDate.getDate()}/${parsedDate.getFullYear()}`;
 
     let query = { date: formattedDate };
 

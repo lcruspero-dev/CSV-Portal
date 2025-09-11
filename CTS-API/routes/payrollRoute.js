@@ -5,18 +5,21 @@ const {
     getAllPayrolls,
     getPayrollByUser,
     deletePayroll,
-    updatePayroll
+    updatePayroll,
+    calculatePayrollFromTimeTracker
 } = require('../controllers/payrollController');
+const { protect } = require('../middleware/authMiddleware');
 
-router.post("/process", processPayroll);
+router.post("/process", protect, processPayroll);
 
-router.put("/update/:id", updatePayroll);
+router.post("/calculate-from-time-tracker", protect, calculatePayrollFromTimeTracker);
 
-router.get("/", getAllPayrolls);
+router.put("/update/:id", protect, updatePayroll);
 
-router.get("/:userId", getPayrollByUser);
+router.get("/", protect, getAllPayrolls);
 
-router.delete("/:userId", deletePayroll);
+router.get("/:userId", protect, getPayrollByUser);
+
+router.delete("/:userId", protect, deletePayroll);
 
 module.exports = router;
-    

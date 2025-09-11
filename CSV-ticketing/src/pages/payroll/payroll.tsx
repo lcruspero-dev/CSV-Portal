@@ -19,6 +19,7 @@ import {
 import BackButton from "@/components/kit/BackButton";
 import PayrollModal, { Payroll } from "@/components/kit/payrollModal";
 import UpdatePayrollModal from "@/components/kit/payrollUpdateModal";
+import DynamicPayrollModal from "@/components/kit/DynamicPayrollModal";
 import { payrollAPI } from "@/API/endpoint";
 
 // ================= Payroll Columns =================
@@ -33,6 +34,7 @@ const payrollColumns: ColumnDef<Payroll>[] = [
   { accessorKey: "workDays.regularDays", header: "Regular Days" },
   { accessorKey: "workDays.absentDays", header: "Absent Days" },
   { accessorKey: "workDays.minsLate", header: "Minutes Late" },
+  { accessorKey: "workDays.totalHoursWorked", header: "Hours Worked" },
   { accessorKey: "holidays.regHolidayPay", header: "Reg Holiday Pay" },
   { accessorKey: "holidays.speHolidayPay", header: "Special Holiday Pay" },
   { accessorKey: "totalOvertime.regularOTpay", header: "Regular OT Pay" },
@@ -86,7 +88,7 @@ const getByPath = (obj: any, path: string): any => {
   return path.split(".").reduce((acc, key) => (acc ? acc[key] : undefined), obj);
 };
 
-{/** Payroll Table */}
+{/** Payroll Table */ }
 const PayrollTable = ({
   columns,
   data,
@@ -143,40 +145,40 @@ const PayrollTable = ({
         <TableBody>
           {table.getRowModel().rows.length ? (
             <>
-            {table.getRowModel().rows.map((row) => (
-              <TableRow
-                key={row.id}
-                className="cursor-pointer hover:bg-gray-50"
-                onClick={() => onRowClick(row.original)} 
-              >
-                {row.getVisibleCells().map((cell, i) => {
-                  const stickyProps = getStickyStyle(i, row.getVisibleCells());
-                  const value = cell.getValue() ?? 0;
+              {table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  className="cursor-pointer hover:bg-gray-50"
+                  onClick={() => onRowClick(row.original)}
+                >
+                  {row.getVisibleCells().map((cell, i) => {
+                    const stickyProps = getStickyStyle(i, row.getVisibleCells());
+                    const value = cell.getValue() ?? 0;
+                    return (
+                      <TableCell key={cell.id} className="border" {...stickyProps}>
+                        {typeof value === "number"
+                          ? value.toFixed(2)
+                          : typeof value === "string"
+                            ? value
+                            : ""}
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              ))}
+              {/* Totals footer per column */}
+              <TableRow className="bg-gray-50">
+                {leafColumns.map((col, i) => {
+                  const stickyProps = getStickyStyle(i, leafColumns as any);
+                  const total = columnTotals[i];
+                  const isNum = columnIsNumeric[i];
                   return (
-                    <TableCell key={cell.id} className="border" {...stickyProps}>
-                      {typeof value === "number"
-                        ? value.toFixed(2)
-                        : typeof value === "string"
-                        ? value
-                        : ""}
+                    <TableCell key={col.id} className="border font-semibold" {...stickyProps}>
+                      {i === 0 ? "Grand Total" : isNum && typeof total === "number" ? total.toFixed(2) : ""}
                     </TableCell>
                   );
                 })}
               </TableRow>
-            ))}
-            {/* Totals footer per column */}
-            <TableRow className="bg-gray-50">
-              {leafColumns.map((col, i) => {
-                const stickyProps = getStickyStyle(i, leafColumns as any);
-                const total = columnTotals[i];
-                const isNum = columnIsNumeric[i];
-                return (
-                  <TableCell key={col.id} className="border font-semibold" {...stickyProps}>
-                    {i === 0 ? "Grand Total" : isNum && typeof total === "number" ? total.toFixed(2) : ""}
-                  </TableCell>
-                );
-              })}
-            </TableRow>
             </>
           ) : (
             <TableRow>
@@ -218,12 +220,13 @@ const computePayroll = (p: Payroll): Payroll => {
 };
 
 
-{/** Payroll Main Page */}
+{/** Payroll Main Page */ }
 const PayrollPage = () => {
   const [data, setData] = useState<Payroll[]>([]);
   const [selectedPayroll, setSelectedPayroll] = useState<Payroll | null>(null);
   const [positionFilter, setPositionFilter] = useState<string>("All");
   const [filterOpen, setFilterOpen] = useState<boolean>(false);
+  const [dynamicResults, setDynamicResults] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchPayrolls = async () => {
@@ -235,14 +238,20 @@ const PayrollPage = () => {
         console.error(err);
       }
     };
-    fetchPayrolls();    
+    fetchPayrolls();
   }, []);
 
-const handleUpdate = (updated: Payroll) => {
-  const recomputed = computePayroll(updated);
-  setData((prev) => prev.map((p) => ((p as any)._id === (recomputed as any)._id ? recomputed : p)));
-  setSelectedPayroll(null);
-};
+  const handleUpdate = (updated: Payroll) => {
+    const recomputed = computePayroll(updated);
+    setData((prev) => prev.map((p) => ((p as any)._id === (recomputed as any)._id ? recomputed : p)));
+    setSelectedPayroll(null);
+  };
+
+  const handleDynamicCalculation = (result: any) => {
+    setDynamicResults((prev) => [...prev, result]);
+    // Refresh the main payroll data
+    fetchPayrolls();
+  };
 
   const filteredData = useMemo(() => {
     if (positionFilter === "All") return data;
@@ -261,15 +270,38 @@ const handleUpdate = (updated: Payroll) => {
         <BackButton />
         <div className="flex items-center gap-3">
           <PayrollModal onAdd={(p) =>
-          setData((prev) => {
-            const id = (p as any)._id;
-            const exists = prev.some((x) => (x as any)._id === id);
-            return exists ? prev.map((x) => ((x as any)._id === id ? p : x)) : [...prev, p];
-          })
-        } />
+            setData((prev) => {
+              const id = (p as any)._id;
+              const exists = prev.some((x) => (x as any)._id === id);
+              return exists ? prev.map((x) => ((x as any)._id === id ? p : x)) : [...prev, p];
+            })
+          } />
+          <DynamicPayrollModal onCalculate={handleDynamicCalculation} />
           <Button variant="outline" onClick={() => setFilterOpen(true)}>Filter</Button>
         </div>
       </div>
+
+      {/* Dynamic Calculation Results */}
+      {dynamicResults.length > 0 && (
+        <div className="mb-6 bg-blue-50 rounded-lg border border-blue-200 p-4">
+          <h3 className="text-lg font-semibold text-blue-900 mb-4">Recent Dynamic Calculations</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {dynamicResults.slice(-3).map((result, index) => (
+              <div key={index} className="bg-white rounded-lg p-4 border border-blue-200">
+                <h4 className="font-medium text-blue-900 mb-2">
+                  {result.dateRange.startDate} - {result.dateRange.endDate}
+                </h4>
+                <div className="space-y-1 text-sm">
+                  <p><span className="font-medium">Hours Worked:</span> {Math.round(result.timeTrackerData.totalHoursWorked * 10) / 10}h</p>
+                  <p><span className="font-medium">Days Worked:</span> {result.timeTrackerData.regularDays}</p>
+                  <p><span className="font-medium">Break Time:</span> {Math.round(result.timeTrackerData.totalBreakTime * 10) / 10}h</p>
+                  <p><span className="font-medium">Net Pay:</span> ₱{(result.payroll.grandtotal?.grandtotal || 0).toFixed(2)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-sm border border-gray-200 p-4">
         <PayrollTable columns={payrollColumns} data={filteredData} onRowClick={setSelectedPayroll} />

@@ -2,6 +2,7 @@
 import { ScheduleAndAttendanceAPI, timer } from "@/API/endpoint";
 import BackButton from "@/components/kit/BackButton";
 import { ViewScheduleButton } from "@/components/kit/ViewScheduleButton";
+import TimeTrackerPayrollIntegration from "@/components/kit/TimeTrackerPayrollIntegration";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -219,22 +220,19 @@ export const AttendanceTracker: React.FC = () => {
 
       if (isOnBreak) {
         const breakStartTime = new Date(
-          `${currentEntry.dateBreakStart || currentEntry.date} ${
-            currentEntry.breakStart
+          `${currentEntry.dateBreakStart || currentEntry.date} ${currentEntry.breakStart
           }`
         ).getTime();
         diffMs = currentTime - breakStartTime;
       } else if (isOnSecondBreak) {
         const secondBreakStartTime = new Date(
-          `${currentEntry.dateSecondBreakStart || currentEntry.date} ${
-            currentEntry.secondBreakStart
+          `${currentEntry.dateSecondBreakStart || currentEntry.date} ${currentEntry.secondBreakStart
           }`
         ).getTime();
         diffMs = currentTime - secondBreakStartTime;
       } else if (isOnLunch) {
         const lunchStartTime = new Date(
-          `${currentEntry.dateLunchStart || currentEntry.date} ${
-            currentEntry.lunchStart
+          `${currentEntry.dateLunchStart || currentEntry.date} ${currentEntry.lunchStart
           }`
         ).getTime();
         diffMs = currentTime - lunchStartTime;
@@ -247,13 +245,11 @@ export const AttendanceTracker: React.FC = () => {
         let totalLunchMs = 0;
         if (currentEntry.lunchStart && currentEntry.lunchEnd) {
           const lunchStart = new Date(
-            `${currentEntry.dateLunchStart || currentEntry.date} ${
-              currentEntry.lunchStart
+            `${currentEntry.dateLunchStart || currentEntry.date} ${currentEntry.lunchStart
             }`
           );
           const lunchEnd = new Date(
-            `${currentEntry.dateLunchEnd || currentEntry.date} ${
-              currentEntry.lunchEnd
+            `${currentEntry.dateLunchEnd || currentEntry.date} ${currentEntry.lunchEnd
             }`
           );
 
@@ -838,323 +834,330 @@ export const AttendanceTracker: React.FC = () => {
   }
 
   return (
-    <Card className="w-full max-w-6xl mx-auto">
-      <CardHeader className="relative">
-        <div className="absolute right-6 top-6">
-          {" "}
-          {/* Position the button in top right */}
-          <ViewScheduleButton />
-        </div>
-        <CardTitle className="flex items-center justify-center">
-          <Clock className="mr-2" /> Time Tracker
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="absolute left-40 top-24 text-xs">
-          <BackButton />
-        </div>
-        <div className="flex flex-col space-y-4">
-          <div className="flex flex-col items-center space-y-4">
-            {currentEntry.breakStart && !currentEntry.breakEnd ? (
-              <div className="text-4xl font-bold tracking-tighter text-red-600 text-center">
-                <p className="text-base text-black tracking-wide">
-                  BREAK TIME{" "}
-                </p>
-                {formatElapsedTime(elapsedTime)}
-              </div>
-            ) : currentEntry.secondBreakStart &&
-              !currentEntry.secondBreakEnd ? (
-              <div className="text-4xl font-bold tracking-tighter text-red-600 text-center">
-                <p className="text-base text-black tracking-wide">
-                  SECOND BREAK TIME{" "}
-                </p>
-                {formatElapsedTime(elapsedTime)}
-              </div>
-            ) : currentEntry.lunchStart && !currentEntry.lunchEnd ? (
-              <div className="text-4xl font-bold tracking-tighter text-red-600 text-center">
-                <p className="text-base text-black tracking-wide">
-                  LUNCH TIME{" "}
-                </p>
-                {formatElapsedTime(elapsedTime)}
-              </div>
-            ) : (
-              <div
-                className={`mb-2 text-4xl font-bold tracking-tighter text-center text-green-700 ${
-                  isTimeIn ? "" : "hidden"
-                }`}
-              >
-                <p className="text-base text-black tracking-wide">
-                  RUNNING TIME{" "}
-                </p>
-                {formatElapsedTime(elapsedTime)}
-              </div>
-            )}
-
-            <div className="flex justify-center space-x-4">
-              {!isTimeIn ? (
-                <Button
-                  onClick={handleTimeIn}
-                  className="flex items-center"
-                  disabled={isLoadingTimeIn}
-                >
-                  {isLoadingTimeIn ? (
-                    <LoadingSpinner />
-                  ) : (
-                    <LogIn className="mr-2 h-4 w-4" />
-                  )}
-                  Log In
-                </Button>
+    <div className="w-full max-w-7xl mx-auto space-y-6">
+      <Card>
+        <CardHeader className="relative">
+          <div className="absolute right-6 top-6">
+            {" "}
+            {/* Position the button in top right */}
+            <ViewScheduleButton />
+          </div>
+          <CardTitle className="flex items-center justify-center">
+            <Clock className="mr-2" /> Time Tracker
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="absolute left-40 top-24 text-xs">
+            <BackButton />
+          </div>
+          <div className="flex flex-col space-y-4">
+            <div className="flex flex-col items-center space-y-4">
+              {currentEntry.breakStart && !currentEntry.breakEnd ? (
+                <div className="text-4xl font-bold tracking-tighter text-red-600 text-center">
+                  <p className="text-base text-black tracking-wide">
+                    BREAK TIME{" "}
+                  </p>
+                  {formatElapsedTime(elapsedTime)}
+                </div>
+              ) : currentEntry.secondBreakStart &&
+                !currentEntry.secondBreakEnd ? (
+                <div className="text-4xl font-bold tracking-tighter text-red-600 text-center">
+                  <p className="text-base text-black tracking-wide">
+                    SECOND BREAK TIME{" "}
+                  </p>
+                  {formatElapsedTime(elapsedTime)}
+                </div>
+              ) : currentEntry.lunchStart && !currentEntry.lunchEnd ? (
+                <div className="text-4xl font-bold tracking-tighter text-red-600 text-center">
+                  <p className="text-base text-black tracking-wide">
+                    LUNCH TIME{" "}
+                  </p>
+                  {formatElapsedTime(elapsedTime)}
+                </div>
               ) : (
-                <>
-                  <Select
-                    value={selectedAction || undefined}
-                    onValueChange={handleActionChange}
+                <div
+                  className={`mb-2 text-4xl font-bold tracking-tighter text-center text-green-700 ${isTimeIn ? "" : "hidden"
+                    }`}
+                >
+                  <p className="text-base text-black tracking-wide">
+                    RUNNING TIME{" "}
+                  </p>
+                  {formatElapsedTime(elapsedTime)}
+                </div>
+              )}
+
+              <div className="flex justify-center space-x-4">
+                {!isTimeIn ? (
+                  <Button
+                    onClick={handleTimeIn}
+                    className="flex items-center"
+                    disabled={isLoadingTimeIn}
                   >
-                    <SelectTrigger className="w-40">
-                      <SelectValue />
-                      {selectedAction ? null : "Select Action"}
-                    </SelectTrigger>
-                    <SelectContent>
-                      {getAvailableActions().map((action) => (
-                        <SelectItem key={action.value} value={action.value}>
-                          {action.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {selectedAction && (
-                    <Button
-                      onClick={handleConfirmAction}
-                      className="flex items-center text-sm"
-                      disabled={
-                        isLoadingBreakStart ||
-                        isLoadingBreakEnd ||
-                        isLoadingSecondBreakStart ||
-                        isLoadingSecondBreakEnd ||
-                        isLoadingLunchStart ||
-                        isLoadingLunchEnd ||
-                        isLoadingTimeOut
-                      }
+                    {isLoadingTimeIn ? (
+                      <LoadingSpinner />
+                    ) : (
+                      <LogIn className="mr-2 h-4 w-4" />
+                    )}
+                    Log In
+                  </Button>
+                ) : (
+                  <>
+                    <Select
+                      value={selectedAction || undefined}
+                      onValueChange={handleActionChange}
                     >
-                      Confirm
-                    </Button>
+                      <SelectTrigger className="w-40">
+                        <SelectValue />
+                        {selectedAction ? null : "Select Action"}
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getAvailableActions().map((action) => (
+                          <SelectItem key={action.value} value={action.value}>
+                            {action.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {selectedAction && (
+                      <Button
+                        onClick={handleConfirmAction}
+                        className="flex items-center text-sm"
+                        disabled={
+                          isLoadingBreakStart ||
+                          isLoadingBreakEnd ||
+                          isLoadingSecondBreakStart ||
+                          isLoadingSecondBreakEnd ||
+                          isLoadingLunchStart ||
+                          isLoadingLunchEnd ||
+                          isLoadingTimeOut
+                        }
+                      >
+                        Confirm
+                      </Button>
+                    )}
+                    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Log Out</DialogTitle>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="notes" className="text-right">
+                              Notes (Optional)
+                            </Label>
+                            <Input
+                              id="notes"
+                              className="col-span-3"
+                              placeholder="Add any notes about your work day"
+                            />
+                          </div>
+                          <div className="flex justify-end">
+                            <Button
+                              onClick={() => {
+                                const notesInput = document.getElementById(
+                                  "notes"
+                                ) as HTMLInputElement;
+                                handleTimeOut({
+                                  notes: notesInput?.value,
+                                });
+                              }}
+                              disabled={isLoadingTimeOut}
+                            >
+                              {isLoadingTimeOut ? <LoadingSpinner /> : null}
+                              Confirm Log Out
+                            </Button>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </>
+                )}
+              </div>
+
+              {isTimeIn && (
+                <div className="text-center p-4 bg-muted rounded-lg text-sm">
+                  <p className="font-semibold">Current Session</p>
+
+                  {currentEntry.date && <p>Date: {currentEntry.date}</p>}
+                  {currentEntry.timeIn && <p>Time In: {currentEntry.timeIn}</p>}
+                  {currentEntry.shift && <p>Shift: {currentEntry.shift}</p>}
+                  {currentEntry.breakStart && (
+                    <p>Break Started: {currentEntry.breakStart}</p>
                   )}
-                  <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Log Out</DialogTitle>
-                      </DialogHeader>
-                      <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="notes" className="text-right">
-                            Notes (Optional)
-                          </Label>
-                          <Input
-                            id="notes"
-                            className="col-span-3"
-                            placeholder="Add any notes about your work day"
-                          />
-                        </div>
-                        <div className="flex justify-end">
-                          <Button
-                            onClick={() => {
-                              const notesInput = document.getElementById(
-                                "notes"
-                              ) as HTMLInputElement;
-                              handleTimeOut({
-                                notes: notesInput?.value,
-                              });
-                            }}
-                            disabled={isLoadingTimeOut}
-                          >
-                            {isLoadingTimeOut ? <LoadingSpinner /> : null}
-                            Confirm Log Out
-                          </Button>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </>
+                  {currentEntry.breakEnd && (
+                    <p>Break Ended: {currentEntry.breakEnd}</p>
+                  )}
+
+                  {currentEntry.totalBreakTime !== undefined &&
+                    currentEntry.totalBreakTime !== null && (
+                      <p>
+                        Total Break Time:{" "}
+                        {Math.round(currentEntry.totalBreakTime * 60)} min.
+                      </p>
+                    )}
+                  {currentEntry.secondBreakStart && (
+                    <p>Second Break Started: {currentEntry.secondBreakStart}</p>
+                  )}
+                  {currentEntry.secondBreakEnd && (
+                    <p>Second Break Ended: {currentEntry.secondBreakEnd}</p>
+                  )}
+                  {currentEntry.totalSecondBreakTime !== undefined &&
+                    currentEntry.totalSecondBreakTime !== null && (
+                      <p>
+                        Total Second Break Time:{" "}
+                        {Math.round(currentEntry.totalSecondBreakTime * 60)} min.
+                      </p>
+                    )}
+
+                  {currentEntry.lunchStart && (
+                    <p>Lunch Started: {currentEntry.lunchStart}</p>
+                  )}
+                  {currentEntry.lunchEnd && (
+                    <p>Lunch Ended: {currentEntry.lunchEnd}</p>
+                  )}
+
+                  {currentEntry.totalLunchTime !== undefined &&
+                    currentEntry.totalLunchTime !== null && (
+                      <p>
+                        Total Lunch Time:{" "}
+                        {Math.round(currentEntry.totalLunchTime * 60)} min.
+                      </p>
+                    )}
+                </div>
               )}
             </div>
 
-            {isTimeIn && (
-              <div className="text-center p-4 bg-muted rounded-lg text-sm">
-                <p className="font-semibold">Current Session</p>
-
-                {currentEntry.date && <p>Date: {currentEntry.date}</p>}
-                {currentEntry.timeIn && <p>Time In: {currentEntry.timeIn}</p>}
-                {currentEntry.shift && <p>Shift: {currentEntry.shift}</p>}
-                {currentEntry.breakStart && (
-                  <p>Break Started: {currentEntry.breakStart}</p>
-                )}
-                {currentEntry.breakEnd && (
-                  <p>Break Ended: {currentEntry.breakEnd}</p>
-                )}
-
-                {currentEntry.totalBreakTime !== undefined &&
-                  currentEntry.totalBreakTime !== null && (
-                    <p>
-                      Total Break Time:{" "}
-                      {Math.round(currentEntry.totalBreakTime * 60)} min.
-                    </p>
-                  )}
-                {currentEntry.secondBreakStart && (
-                  <p>Second Break Started: {currentEntry.secondBreakStart}</p>
-                )}
-                {currentEntry.secondBreakEnd && (
-                  <p>Second Break Ended: {currentEntry.secondBreakEnd}</p>
-                )}
-                {currentEntry.totalSecondBreakTime !== undefined &&
-                  currentEntry.totalSecondBreakTime !== null && (
-                    <p>
-                      Total Second Break Time:{" "}
-                      {Math.round(currentEntry.totalSecondBreakTime * 60)} min.
-                    </p>
-                  )}
-
-                {currentEntry.lunchStart && (
-                  <p>Lunch Started: {currentEntry.lunchStart}</p>
-                )}
-                {currentEntry.lunchEnd && (
-                  <p>Lunch Ended: {currentEntry.lunchEnd}</p>
-                )}
-
-                {currentEntry.totalLunchTime !== undefined &&
-                  currentEntry.totalLunchTime !== null && (
-                    <p>
-                      Total Lunch Time:{" "}
-                      {Math.round(currentEntry.totalLunchTime * 60)} min.
-                    </p>
-                  )}
-              </div>
-            )}
-          </div>
-
-          <Card className="w-full">
-            <CardHeader>
-              <CardTitle>Time Tracker History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoadingHistory ? (
-                <div className="flex justify-center py-8">
-                  <LoadingSpinner />
-                </div>
-              ) : (
-                <>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Log In</TableHead>
-                        <TableHead>Log Out</TableHead>
-                        <TableHead>Total Hours</TableHead>
-                        <TableHead>Break Time</TableHead>
-                        <TableHead>Second Break Time</TableHead>
-                        <TableHead>Lunch Time</TableHead>
-                        <TableHead>Shift</TableHead>
-                        <TableHead>Notes</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {currentEntries.length > 0 ? (
-                        currentEntries.map((entry, index) => (
-                          <TableRow key={entry.id || `entry-${index}`}>
-                            <TableCell>{entry.date}</TableCell>
-                            <TableCell>{entry.timeIn}</TableCell>
-                            <TableCell>
-                              {entry.timeOut || "In Progress"}
-                            </TableCell>
-                            <TableCell>
-                              {formatHoursToMinutes(
-                                String(entry.totalHours || "")
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {formatHoursToMinutes(
-                                String(entry.totalBreakTime || "")
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {formatHoursToMinutes(
-                                String(entry.totalSecondBreakTime || "")
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {formatHoursToMinutes(
-                                String(entry.totalLunchTime || "")
-                              )}
-                            </TableCell>
-                            <TableCell>{entry.shift}</TableCell>
-                            <TableCell>
-                              <div
-                                className="truncate max-w-[100px] 2xl:max-w-[150px] text-ellipsis overflow-hidden"
-                                title={entry.notes || ""}
-                              >
-                                {entry.notes || "-"}
-                              </div>
+            <Card className="w-full">
+              <CardHeader>
+                <CardTitle>Time Tracker History</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoadingHistory ? (
+                  <div className="flex justify-center py-8">
+                    <LoadingSpinner />
+                  </div>
+                ) : (
+                  <>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Log In</TableHead>
+                          <TableHead>Log Out</TableHead>
+                          <TableHead>Total Hours</TableHead>
+                          <TableHead>Break Time</TableHead>
+                          <TableHead>Second Break Time</TableHead>
+                          <TableHead>Lunch Time</TableHead>
+                          <TableHead>Shift</TableHead>
+                          <TableHead>Notes</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {currentEntries.length > 0 ? (
+                          currentEntries.map((entry, index) => (
+                            <TableRow key={entry.id || `entry-${index}`}>
+                              <TableCell>{entry.date}</TableCell>
+                              <TableCell>{entry.timeIn}</TableCell>
+                              <TableCell>
+                                {entry.timeOut || "In Progress"}
+                              </TableCell>
+                              <TableCell>
+                                {formatHoursToMinutes(
+                                  String(entry.totalHours || "")
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {formatHoursToMinutes(
+                                  String(entry.totalBreakTime || "")
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {formatHoursToMinutes(
+                                  String(entry.totalSecondBreakTime || "")
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {formatHoursToMinutes(
+                                  String(entry.totalLunchTime || "")
+                                )}
+                              </TableCell>
+                              <TableCell>{entry.shift}</TableCell>
+                              <TableCell>
+                                <div
+                                  className="truncate max-w-[100px] 2xl:max-w-[150px] text-ellipsis overflow-hidden"
+                                  title={entry.notes || ""}
+                                >
+                                  {entry.notes || "-"}
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={9} className="text-center py-4">
+                              No attendance records found
                             </TableCell>
                           </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={9} className="text-center py-4">
-                            No attendance records found
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                        )}
+                      </TableBody>
+                    </Table>
 
-                  {/* Pagination */}
-                  {totalPages > 0 && (
-                    <div className="mt-4 flex justify-end items-end text-xs">
-                      <Pagination>
-                        <PaginationContent>
-                          <PaginationItem>
-                            <PaginationPrevious
-                              onClick={() => handlePageChange(currentPage - 1)}
-                              className={
-                                currentPage === 1
-                                  ? "pointer-events-none opacity-50"
-                                  : "cursor-pointer"
-                              }
-                            />
-                          </PaginationItem>
-
-                          {getPageNumbers().map((pageNumber) => (
-                            <PaginationItem key={pageNumber}>
-                              <PaginationLink
-                                onClick={() => handlePageChange(pageNumber)}
-                                isActive={currentPage === pageNumber}
-                                className="cursor-pointer text-xs"
-                              >
-                                {pageNumber}
-                              </PaginationLink>
+                    {/* Pagination */}
+                    {totalPages > 0 && (
+                      <div className="mt-4 flex justify-end items-end text-xs">
+                        <Pagination>
+                          <PaginationContent>
+                            <PaginationItem>
+                              <PaginationPrevious
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                className={
+                                  currentPage === 1
+                                    ? "pointer-events-none opacity-50"
+                                    : "cursor-pointer"
+                                }
+                              />
                             </PaginationItem>
-                          ))}
 
-                          <PaginationItem>
-                            <PaginationNext
-                              onClick={() => handlePageChange(currentPage + 1)}
-                              className={
-                                currentPage === totalPages
-                                  ? "pointer-events-none opacity-50"
-                                  : "cursor-pointer"
-                              }
-                            />
-                          </PaginationItem>
-                        </PaginationContent>
-                      </Pagination>
-                    </div>
-                  )}
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </CardContent>
-    </Card>
+                            {getPageNumbers().map((pageNumber) => (
+                              <PaginationItem key={pageNumber}>
+                                <PaginationLink
+                                  onClick={() => handlePageChange(pageNumber)}
+                                  isActive={currentPage === pageNumber}
+                                  className="cursor-pointer text-xs"
+                                >
+                                  {pageNumber}
+                                </PaginationLink>
+                              </PaginationItem>
+                            ))}
+
+                            <PaginationItem>
+                              <PaginationNext
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                className={
+                                  currentPage === totalPages
+                                    ? "pointer-events-none opacity-50"
+                                    : "cursor-pointer"
+                                }
+                              />
+                            </PaginationItem>
+                          </PaginationContent>
+                        </Pagination>
+                      </div>
+                    )}
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Payroll Integration Component */}
+      <TimeTrackerPayrollIntegration
+        userId={JSON.parse(localStorage.getItem("user")!)._id}
+        currentEntry={currentEntry}
+      />
+    </div>
   );
 };
 

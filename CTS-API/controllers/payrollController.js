@@ -66,7 +66,7 @@ function computePayroll(payroll) {
         basicPay + regHolidayPay + speHolidayPay + regularOTpay + restDayOtPay + nightDiffPay + salaryIncrease;
 
     // Total deductions (exclude incomes like nonTaxableIncome/taxableIncome)
-    const totalDeductions = amountAbsent + amountMinLateUT + unpaidAmount + sss + phic + hdmf + wisp + 
+    const totalDeductions = amountAbsent + amountMinLateUT + unpaidAmount + sss + phic + hdmf + wisp +
         totalSSScontribution + withHoldingTax + sssSalaryLoan + hdmfLoan;
 
     const netPay = grossSalary - totalDeductions;
@@ -193,18 +193,18 @@ exports.getAllPayrolls = async (req, res) => {
 };
 
 exports.updatePayroll = async (req, res) => {
-  try {
-    const { id } = req.params;   // ✅ get payrollId from URL
-    const updatedPayroll = await Payroll.findByIdAndUpdate(id, req.body, { new: true });
+    try {
+        const { id } = req.params;   // ✅ get payrollId from URL
+        const updatedPayroll = await Payroll.findByIdAndUpdate(id, req.body, { new: true });
 
-    if (!updatedPayroll) {
-      return res.status(404).json({ status: "Error", message: `No payroll record found for ID ${id}` });
+        if (!updatedPayroll) {
+            return res.status(404).json({ status: "Error", message: `No payroll record found for ID ${id}` });
+        }
+
+        res.json(updatedPayroll);
+    } catch (error) {
+        console.error(`Payroll update failed for payroll ${req.params.id}:`, error);
+        res.status(500).json({ status: "Error", message: "Payroll update failed", error });
     }
-
-    res.json(updatedPayroll);
-  } catch (error) {
-    console.error(`Payroll update failed for payroll ${req.params.id}:`, error); 
-    res.status(500).json({ status: "Error", message: "Payroll update failed", error });
-  }
 };
 

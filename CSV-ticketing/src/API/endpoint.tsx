@@ -244,4 +244,10 @@ export const payrollAPI = {
     apiHelper(`/api/payroll/update/${id}`, "PUT", body),
   deletePayroll: (id: string) =>
     apiHelper(`/api/payroll/${id}`, "DELETE"),
+  calculateFromTimeTracker: (body: {
+    userId: string;
+    startDate: string;
+    endDate: string;
+    payrollRate?: any;
+  }) => apiHelper("/api/payroll/calculate-from-time-tracker", "POST", body),
 };
