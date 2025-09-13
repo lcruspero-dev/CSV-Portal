@@ -151,7 +151,7 @@ const Header: React.FC = () => {
             {isAuthenticated && user ? (
               <div className="flex items-center space-x-4">
                 <span className="text-1xl drop-shadow-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#1638df] to-[#192fb4]">
-                  Welcome, {user.name}dadsa
+                  Welcome, {user.name}
                 </span>
                 {user.isAdmin && (
                   <div className="pr-4">
