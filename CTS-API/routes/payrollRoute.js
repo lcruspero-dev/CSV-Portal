@@ -1,18 +1,18 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 const {
-    processPayroll,
-    getAllPayrolls,
-    getPayrollByUser,
-    deletePayroll,
-    updatePayroll,
-    calculatePayrollFromTimeTracker
-} = require('../controllers/payrollController');
-const { protect } = require('../middleware/authMiddleware');
+  processPayroll,
+  getAllPayrolls,
+  getPayrollByUser,
+  deletePayroll,
+  updatePayroll,
+  calculatePayrollFromTimeTracker,
+} = require("../controllers/payrollController");
+const { protect } = require("../middleware/authMiddleware");
 
 router.post("/process", protect, processPayroll);
 
-router.post("/calculate-from-time-tracker", protect, calculatePayrollFromTimeTracker);
+// router.post("/calculate-from-time-tracker", protect, calculatePayrollFromTimeTracker);
 
 router.put("/update/:id", protect, updatePayroll);
 

@@ -85,7 +85,8 @@ const Header: React.FC = () => {
         const response = await UserProfileAPI.getProfile();
         if (response.data?.avatar) {
           setAvatarUrl(
-            `${import.meta.env.VITE_UPLOADFILES_URL}/avatars/${response.data.avatar
+            `${import.meta.env.VITE_UPLOADFILES_URL}/avatars/${
+              response.data.avatar
             }`
           );
         }
@@ -199,14 +200,14 @@ const Header: React.FC = () => {
                     {(user.isAdmin ||
                       user.role === "TM" ||
                       user.role === "TL") && (
-                        <DropdownMenuItem
-                          onClick={() => navigate("/schedule-and-attendance")}
-                          className="cursor-pointer"
-                        >
-                          <NotebookPenIcon className="mr-2 h-4 w-4" />
-                          <span>Shift & Attendance</span>
-                        </DropdownMenuItem>
-                      )}
+                      <DropdownMenuItem
+                        onClick={() => navigate("/schedule-and-attendance")}
+                        className="cursor-pointer"
+                      >
+                        <NotebookPenIcon className="mr-2 h-4 w-4" />
+                        <span>Shift & Attendance</span>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem
                       onClick={handleChangePassword}
                       className="cursor-pointer"

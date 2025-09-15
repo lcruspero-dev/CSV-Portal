@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { payrollAPI } from "@/API/endpoint";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -7,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { payrollAPI } from "@/API/endpoint";
+import { useEffect, useMemo, useState } from "react";
 import type { Payroll } from "./payrollModal";
 
 interface Props {
@@ -16,6 +17,11 @@ interface Props {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
+
+type PayrollPayload = Payroll & {
+  _id?: string;
+  basicSalary: number;
+};
 
 const formSections = [
   {
@@ -39,13 +45,34 @@ const formSections = [
     fields: [
       { path: "totalOvertime.regularOT", label: "Regular OT Hours" },
       { path: "totalOvertime.restDayOtHours", label: "Rest Day OT Hours" },
-      { path: "totalOvertime.restDayOtHoursExcess", label: "Rest Day OT Excess Hours" },
-      { path: "totalOvertime.regularHolidayWorked", label: "Regular Holiday Worked" },
-      { path: "totalOvertime.regularHolidayWorkedExcess", label: "Regular Holiday Worked Excess" },
-      { path: "totalOvertime.specialHolidayWorked", label: "Special Holiday Worked" },
-      { path: "totalOvertime.specialHolidayWorkedOT", label: "Special Holiday Worked OT" },
-      { path: "totalOvertime.specialHolidayRDworkedHours", label: "Special Holiday RD Worked Hours" },
-      { path: "totalOvertime.specialHolidayRDworkedOT", label: "Special Holiday RD Worked OT" },
+      {
+        path: "totalOvertime.restDayOtHoursExcess",
+        label: "Rest Day OT Excess Hours",
+      },
+      {
+        path: "totalOvertime.regularHolidayWorked",
+        label: "Regular Holiday Worked",
+      },
+      {
+        path: "totalOvertime.regularHolidayWorkedExcess",
+        label: "Regular Holiday Worked Excess",
+      },
+      {
+        path: "totalOvertime.specialHolidayWorked",
+        label: "Special Holiday Worked",
+      },
+      {
+        path: "totalOvertime.specialHolidayWorkedOT",
+        label: "Special Holiday Worked OT",
+      },
+      {
+        path: "totalOvertime.specialHolidayRDworkedHours",
+        label: "Special Holiday RD Worked Hours",
+      },
+      {
+        path: "totalOvertime.specialHolidayRDworkedOT",
+        label: "Special Holiday RD Worked OT",
+      },
     ],
   },
   {
@@ -61,20 +88,41 @@ const formSections = [
     title: "Night Differential",
     fields: [
       { path: "totalSupplementary.nightDiffHours", label: "Night Diff Hours" },
-      { path: "totalSupplementary.regOTnightDiffHours", label: "Reg OT Night Diff Hours" },
-      { path: "totalSupplementary.restDayNDhours", label: "Rest Day Night Diff Hours" },
-      { path: "totalSupplementary.regHolNDHours", label: "Reg Holiday Night Diff Hours" },
-      { path: "totalSupplementary.specialHolidayNDhours", label: "Special Holiday Night Diff Hours" },
+      {
+        path: "totalSupplementary.regOTnightDiffHours",
+        label: "Reg OT Night Diff Hours",
+      },
+      {
+        path: "totalSupplementary.restDayNDhours",
+        label: "Rest Day Night Diff Hours",
+      },
+      {
+        path: "totalSupplementary.regHolNDHours",
+        label: "Reg Holiday Night Diff Hours",
+      },
+      {
+        path: "totalSupplementary.specialHolidayNDhours",
+        label: "Special Holiday Night Diff Hours",
+      },
     ],
   },
   {
     title: "Deductions",
     fields: [
       { path: "totalDeductions.sssEmployeeShare", label: "SSS Employee Share" },
-      { path: "totalDeductions.phicEmployeeShare", label: "PhilHealth Employee Share" },
-      { path: "totalDeductions.hdmfEmployeeShare", label: "Pag-IBIG Employee Share" },
+      {
+        path: "totalDeductions.phicEmployeeShare",
+        label: "PhilHealth Employee Share",
+      },
+      {
+        path: "totalDeductions.hdmfEmployeeShare",
+        label: "Pag-IBIG Employee Share",
+      },
       { path: "totalDeductions.wisp", label: "WISP" },
-      { path: "totalDeductions.totalSSScontribution", label: "Total SSS Contribution" },
+      {
+        path: "totalDeductions.totalSSScontribution",
+        label: "Total SSS Contribution",
+      },
       { path: "totalDeductions.nonTaxableIncome", label: "Non-Taxable Income" },
       { path: "totalDeductions.taxableIncome", label: "Taxable Income" },
       { path: "totalDeductions.withHoldingTax", label: "Withholding Tax" },
@@ -93,26 +141,32 @@ const formSections = [
   {
     title: "Gross Salary",
     fields: [
-      { path: "grossSalary.nonTaxableAllowance", label: "Non-Taxable Allowance" },
+      {
+        path: "grossSalary.nonTaxableAllowance",
+        label: "Non-Taxable Allowance",
+      },
       { path: "grossSalary.performanceBonus", label: "Performance Bonus" },
       { path: "grossSalary.grossSalary", label: "Gross Salary" },
     ],
   },
   {
     title: "Totals (Computed)",
-    fields: [
-      { path: "grandtotal.grandtotal", label: "Net Pay" },
-    ],
+    fields: [{ path: "grandtotal.grandtotal", label: "Net Pay" }],
   },
 ];
 
-
-const UpdatePayrollModal = ({ payroll, onUpdated, open, onOpenChange }: Props) => {
+const UpdatePayrollModal = ({
+  payroll,
+  onUpdated,
+  open,
+  onOpenChange,
+}: Props) => {
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = typeof open === "boolean";
   const isOpen = isControlled ? (open as boolean) : internalOpen;
   const setOpen = (next: boolean) => {
     if (isControlled) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
       onOpenChange && onOpenChange(next);
     } else {
       setInternalOpen(next);
@@ -151,9 +205,7 @@ const UpdatePayrollModal = ({ payroll, onUpdated, open, onOpenChange }: Props) =
 
   const handleUpdate = async () => {
     try {
-      // build payload with recomputed derived values so backend reflects changes immediately
-      const payload: Payroll = {
-        ...formData,
+      const payload: Partial<PayrollPayload> = {
         pay: { basicPay: preview.basicPay },
         holidays: {
           ...(formData.holidays as any),
@@ -197,7 +249,7 @@ const UpdatePayrollModal = ({ payroll, onUpdated, open, onOpenChange }: Props) =
           totalDeductions: preview.totalDeductions,
         } as any,
         grandtotal: { grandtotal: preview.netPay } as any,
-      } as Payroll;
+      };
 
       const res = await payrollAPI.updatePayroll((payroll as any)._id, payload);
       if (onUpdated) onUpdated(res.data);
@@ -212,8 +264,8 @@ const UpdatePayrollModal = ({ payroll, onUpdated, open, onOpenChange }: Props) =
 
   const preview = useMemo(() => {
     const monthlyRate = formData.payrollRate?.monthlyRate ?? 0;
-    const dailyRate = formData.payrollRate?.dailyRate ?? (monthlyRate / 26);
-    const hourlyRate = formData.payrollRate?.hourlyRate ?? (dailyRate / 8);
+    const dailyRate = formData.payrollRate?.dailyRate ?? monthlyRate / 26;
+    const hourlyRate = formData.payrollRate?.hourlyRate ?? dailyRate / 8;
 
     const regularDays = formData.workDays?.regularDays ?? 0;
     const absentDays = formData.workDays?.absentDays ?? 0;
@@ -222,11 +274,11 @@ const UpdatePayrollModal = ({ payroll, onUpdated, open, onOpenChange }: Props) =
     const regHolidayDays = formData.holidays?.regHoliday ?? 0;
     const speHolidayDays = formData.holidays?.speHoliday ?? 0;
 
-    const ot = formData.totalOvertime ?? {} as any;
-    const supp = formData.totalSupplementary ?? {} as any;
-    const adj = formData.salaryAdjustments ?? {} as any;
-    const gross = formData.grossSalary ?? {} as any;
-    const ded = formData.totalDeductions ?? {} as any;
+    const ot = formData.totalOvertime ?? ({} as any);
+    const supp = formData.totalSupplementary ?? ({} as any);
+    const adj = formData.salaryAdjustments ?? ({} as any);
+    const gross = formData.grossSalary ?? ({} as any);
+    const ded = formData.totalDeductions ?? ({} as any);
 
     const basicPay = round2(regularDays * dailyRate);
     const absentDeduction = round2(absentDays * dailyRate);
@@ -237,60 +289,83 @@ const UpdatePayrollModal = ({ payroll, onUpdated, open, onOpenChange }: Props) =
 
     const regularOTpay = round2((ot.regularOT ?? 0) * hourlyRate * 1.25);
     const restDayOtPay = round2((ot.restDayOtHours ?? 0) * hourlyRate * 1.3);
-    const restDayOtExcessPay = round2((ot.restDayOtHoursExcess ?? 0) * hourlyRate * 1.5);
-    const regularHolidayWorkedPay = round2((ot.regularHolidayWorked ?? 0) * dailyRate * 2);
-    const regularHolidayWorkedExcessPay = round2((ot.regularHolidayWorkedExcess ?? 0) * hourlyRate * 2.6);
-    const specialHolidayWorkedPay = round2((ot.specialHolidayWorked ?? 0) * dailyRate * 1.3);
-    const specialHolidayWorkedOTpay = round2((ot.specialHolidayWorkedOT ?? 0) * hourlyRate * 1.69);
-    const specialHolidayRDworkedPay = round2((ot.specialHolidayRDworkedHours ?? 0) * hourlyRate * 1.69);
-    const specialHolidayRDworkedOTpay = round2((ot.specialHolidayRDworkedOT ?? 0) * hourlyRate * 2);
+    const restDayOtExcessPay = round2(
+      (ot.restDayOtHoursExcess ?? 0) * hourlyRate * 1.5
+    );
+    const regularHolidayWorkedPay = round2(
+      (ot.regularHolidayWorked ?? 0) * dailyRate * 2
+    );
+    const regularHolidayWorkedExcessPay = round2(
+      (ot.regularHolidayWorkedExcess ?? 0) * hourlyRate * 2.6
+    );
+    const specialHolidayWorkedPay = round2(
+      (ot.specialHolidayWorked ?? 0) * dailyRate * 1.3
+    );
+    const specialHolidayWorkedOTpay = round2(
+      (ot.specialHolidayWorkedOT ?? 0) * hourlyRate * 1.69
+    );
+    const specialHolidayRDworkedPay = round2(
+      (ot.specialHolidayRDworkedHours ?? 0) * hourlyRate * 1.69
+    );
+    const specialHolidayRDworkedOTpay = round2(
+      (ot.specialHolidayRDworkedOT ?? 0) * hourlyRate * 2
+    );
 
     const nightDiffPay = round2((supp.nightDiffHours ?? 0) * hourlyRate * 0.1);
-    const regOTnightDiffPay = round2((supp.regOTnightDiffHours ?? 0) * hourlyRate * 0.1);
+    const regOTnightDiffPay = round2(
+      (supp.regOTnightDiffHours ?? 0) * hourlyRate * 0.1
+    );
     const restDayNDPay = round2((supp.restDayNDhours ?? 0) * hourlyRate * 0.1);
     const regHolNDPay = round2((supp.regHolNDHours ?? 0) * hourlyRate * 0.1);
-    const specialHolidayNDpay = round2((supp.specialHolidayNDhours ?? 0) * hourlyRate * 0.1);
+    const specialHolidayNDpay = round2(
+      (supp.specialHolidayNDhours ?? 0) * hourlyRate * 0.1
+    );
 
     const totalOvertime = round2(
       regularOTpay +
-      restDayOtPay +
-      restDayOtExcessPay +
-      regularHolidayWorkedPay +
-      regularHolidayWorkedExcessPay +
-      specialHolidayWorkedPay +
-      specialHolidayWorkedOTpay +
-      specialHolidayRDworkedPay +
-      specialHolidayRDworkedOTpay);
+        restDayOtPay +
+        restDayOtExcessPay +
+        regularHolidayWorkedPay +
+        regularHolidayWorkedExcessPay +
+        specialHolidayWorkedPay +
+        specialHolidayWorkedOTpay +
+        specialHolidayRDworkedPay +
+        specialHolidayRDworkedOTpay
+    );
 
     const totalSupplementaryIncome = round2(
-      nightDiffPay + regOTnightDiffPay + restDayNDPay + regHolNDPay + specialHolidayNDpay
+      nightDiffPay +
+        regOTnightDiffPay +
+        restDayNDPay +
+        regHolNDPay +
+        specialHolidayNDpay
     );
 
     const grossSalary = round2(
       basicPay +
-      regHolidayPay +
-      speHolidayPay +
-      totalOvertime +
-      totalSupplementaryIncome +
-      (adj.increase ?? 0) +
-      (gross.nonTaxableAllowance ?? 0) +
-      (gross.performanceBonus ?? 0)
+        regHolidayPay +
+        speHolidayPay +
+        totalOvertime +
+        totalSupplementaryIncome +
+        (adj.increase ?? 0) +
+        (gross.nonTaxableAllowance ?? 0) +
+        (gross.performanceBonus ?? 0)
     );
 
     const unpaidAmount = round2((adj.unpaid ?? 0) * dailyRate);
 
     const totalDeductions = round2(
       absentDeduction +
-      lateDeduction +
-      (ded.sssEmployeeShare ?? 0) +
-      (ded.phicEmployeeShare ?? 0) +
-      (ded.hdmfEmployeeShare ?? 0) +
-      (ded.wisp ?? 0) +
-      (ded.totalSSScontribution ?? 0) +
-      (ded.withHoldingTax ?? 0) +
-      (ded.sssSalaryLoan ?? 0) +
-      (ded.hdmfLoan ?? 0) +
-      unpaidAmount
+        lateDeduction +
+        (ded.sssEmployeeShare ?? 0) +
+        (ded.phicEmployeeShare ?? 0) +
+        (ded.hdmfEmployeeShare ?? 0) +
+        (ded.wisp ?? 0) +
+        (ded.totalSSScontribution ?? 0) +
+        (ded.withHoldingTax ?? 0) +
+        (ded.sssSalaryLoan ?? 0) +
+        (ded.hdmfLoan ?? 0) +
+        unpaidAmount
     );
 
     const netPay = round2(grossSalary - totalDeductions);
@@ -379,61 +454,111 @@ const UpdatePayrollModal = ({ payroll, onUpdated, open, onOpenChange }: Props) =
                   <div>
                     <h4 className="font-semibold mb-1">Employee Info</h4>
                     <ul>
-                      <li><b>Full Name:</b> {formData.employee?.fullName}</li>
-                      <li><b>Email:</b> {formData.employee?.email}</li>
-                      <li><b>Position:</b> {formData.employee?.position}</li>
+                      <li>
+                        <b>Full Name:</b> {formData.employee?.fullName}
+                      </li>
+                      <li>
+                        <b>Email:</b> {formData.employee?.email}
+                      </li>
+                      <li>
+                        <b>Position:</b> {formData.employee?.position}
+                      </li>
                     </ul>
                   </div>
                   <div>
                     <h4 className="font-semibold mb-1">Payroll Rate</h4>
                     <ul>
-                      <li><b>Monthly:</b> {preview.monthlyRate.toFixed(2)}</li>
-                      <li><b>Daily:</b> {preview.dailyRate.toFixed(2)}</li>
-                      <li><b>Hourly:</b> {preview.hourlyRate.toFixed(2)}</li>
+                      <li>
+                        <b>Monthly:</b> {preview.monthlyRate.toFixed(2)}
+                      </li>
+                      <li>
+                        <b>Daily:</b> {preview.dailyRate.toFixed(2)}
+                      </li>
+                      <li>
+                        <b>Hourly:</b> {preview.hourlyRate.toFixed(2)}
+                      </li>
                     </ul>
                   </div>
                   <div>
                     <h4 className="font-semibold mb-1">Work Days</h4>
                     <ul>
-                      <li><b>Regular Days:</b> {formData.workDays?.regularDays ?? 0}</li>
-                      <li><b>Absent Days:</b> {formData.workDays?.absentDays ?? 0}</li>
-                      <li><b>Minutes Late:</b> {formData.workDays?.minsLate ?? 0}</li>
+                      <li>
+                        <b>Regular Days:</b>{" "}
+                        {formData.workDays?.regularDays ?? 0}
+                      </li>
+                      <li>
+                        <b>Absent Days:</b> {formData.workDays?.absentDays ?? 0}
+                      </li>
+                      <li>
+                        <b>Minutes Late:</b> {formData.workDays?.minsLate ?? 0}
+                      </li>
                     </ul>
                   </div>
                   <div>
                     <h4 className="font-semibold mb-1">Holidays</h4>
                     <ul>
-                      <li><b>Reg Holiday Pay:</b> {preview.regHolidayPay.toFixed(2)}</li>
-                      <li><b>Spe Holiday Pay:</b> {preview.speHolidayPay.toFixed(2)}</li>
+                      <li>
+                        <b>Reg Holiday Pay:</b>{" "}
+                        {preview.regHolidayPay.toFixed(2)}
+                      </li>
+                      <li>
+                        <b>Spe Holiday Pay:</b>{" "}
+                        {preview.speHolidayPay.toFixed(2)}
+                      </li>
                     </ul>
                   </div>
                   <div>
                     <h4 className="font-semibold mb-1">Overtime</h4>
                     <ul>
-                      <li><b>Regular OT Pay:</b> {preview.regularOTpay.toFixed(2)}</li>
-                      <li><b>Rest Day OT Pay:</b> {preview.restDayOtPay.toFixed(2)}</li>
-                      <li><b>Total OT Pay:</b> {preview.totalOvertime.toFixed(2)}</li>
+                      <li>
+                        <b>Regular OT Pay:</b> {preview.regularOTpay.toFixed(2)}
+                      </li>
+                      <li>
+                        <b>Rest Day OT Pay:</b>{" "}
+                        {preview.restDayOtPay.toFixed(2)}
+                      </li>
+                      <li>
+                        <b>Total OT Pay:</b> {preview.totalOvertime.toFixed(2)}
+                      </li>
                     </ul>
                   </div>
                   <div>
                     <h4 className="font-semibold mb-1">Supplementary</h4>
                     <ul>
-                      <li><b>Night Diff Pay:</b> {preview.nightDiffPay.toFixed(2)}</li>
-                      <li><b>Total Supplementary:</b> {preview.totalSupplementaryIncome.toFixed(2)}</li>
+                      <li>
+                        <b>Night Diff Pay:</b> {preview.nightDiffPay.toFixed(2)}
+                      </li>
+                      <li>
+                        <b>Total Supplementary:</b>{" "}
+                        {preview.totalSupplementaryIncome.toFixed(2)}
+                      </li>
                     </ul>
                   </div>
                   <div>
                     <h4 className="font-semibold mb-1">Deductions</h4>
                     <ul>
-                      <li><b>Absent Deduction:</b> {preview.absentDeduction.toFixed(2)}</li>
-                      <li><b>Late Deduction:</b> {preview.lateDeduction.toFixed(2)}</li>
-                      <li><b>Unpaid Amount:</b> {preview.unpaidAmount.toFixed(2)}</li>
-                      <li><b>Total Deductions:</b> {preview.totalDeductions.toFixed(2)}</li>
+                      <li>
+                        <b>Absent Deduction:</b>{" "}
+                        {preview.absentDeduction.toFixed(2)}
+                      </li>
+                      <li>
+                        <b>Late Deduction:</b>{" "}
+                        {preview.lateDeduction.toFixed(2)}
+                      </li>
+                      <li>
+                        <b>Unpaid Amount:</b> {preview.unpaidAmount.toFixed(2)}
+                      </li>
+                      <li>
+                        <b>Total Deductions:</b>{" "}
+                        {preview.totalDeductions.toFixed(2)}
+                      </li>
                     </ul>
                   </div>
                   <div>
                     <h4 className="font-semibold mb-1">Net Pay</h4>
-                    <div className="text-base font-semibold">{preview.netPay.toFixed(2)}</div>
+                    <div className="text-base font-semibold">
+                      {preview.netPay.toFixed(2)}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -447,7 +572,6 @@ const UpdatePayrollModal = ({ payroll, onUpdated, open, onOpenChange }: Props) =
             </Button>
             <Button onClick={handleUpdate}>Save Changes</Button>
           </div>
-
         </DialogContent>
       </Dialog>
     </>

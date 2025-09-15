@@ -25,13 +25,7 @@ const app = express();
 app.use(express.json());
 
 const corsOptions = {
-  origin: [
-    "http://localhost:5000",
-    "http://localhost:3000",
-    "http://localhost:5174",
-    "https://ticketing-system-puce.vercel.app",
-    "http://172.16.7.98:3000",
-  ],
+  origin: "*",
   credentials: true,
   optionsSuccessStatus: 200,
 };
@@ -59,7 +53,7 @@ app.use("/api/surveys", require("./routes/surveyRoutes"));
 app.use("/api/ntes", require("./routes/nteRoutes"));
 app.use("/api/userProfiles", require("./routes/userProfileRoutes"));
 app.use("/api/leave", require("./routes/leaveRoutes"));
-app.use("/api/payroll", require('./routes/payrollRoute.js'))
+app.use("/api/payroll", require("./routes/payrollRoute.js"));
 
 // Serve frontend time
 

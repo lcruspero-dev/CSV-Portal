@@ -2,7 +2,6 @@
 import { ScheduleAndAttendanceAPI, timer } from "@/API/endpoint";
 import BackButton from "@/components/kit/BackButton";
 import { ViewScheduleButton } from "@/components/kit/ViewScheduleButton";
-import TimeTrackerPayrollIntegration from "@/components/kit/TimeTrackerPayrollIntegration";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -220,19 +219,22 @@ export const AttendanceTracker: React.FC = () => {
 
       if (isOnBreak) {
         const breakStartTime = new Date(
-          `${currentEntry.dateBreakStart || currentEntry.date} ${currentEntry.breakStart
+          `${currentEntry.dateBreakStart || currentEntry.date} ${
+            currentEntry.breakStart
           }`
         ).getTime();
         diffMs = currentTime - breakStartTime;
       } else if (isOnSecondBreak) {
         const secondBreakStartTime = new Date(
-          `${currentEntry.dateSecondBreakStart || currentEntry.date} ${currentEntry.secondBreakStart
+          `${currentEntry.dateSecondBreakStart || currentEntry.date} ${
+            currentEntry.secondBreakStart
           }`
         ).getTime();
         diffMs = currentTime - secondBreakStartTime;
       } else if (isOnLunch) {
         const lunchStartTime = new Date(
-          `${currentEntry.dateLunchStart || currentEntry.date} ${currentEntry.lunchStart
+          `${currentEntry.dateLunchStart || currentEntry.date} ${
+            currentEntry.lunchStart
           }`
         ).getTime();
         diffMs = currentTime - lunchStartTime;
@@ -245,11 +247,13 @@ export const AttendanceTracker: React.FC = () => {
         let totalLunchMs = 0;
         if (currentEntry.lunchStart && currentEntry.lunchEnd) {
           const lunchStart = new Date(
-            `${currentEntry.dateLunchStart || currentEntry.date} ${currentEntry.lunchStart
+            `${currentEntry.dateLunchStart || currentEntry.date} ${
+              currentEntry.lunchStart
             }`
           );
           const lunchEnd = new Date(
-            `${currentEntry.dateLunchEnd || currentEntry.date} ${currentEntry.lunchEnd
+            `${currentEntry.dateLunchEnd || currentEntry.date} ${
+              currentEntry.lunchEnd
             }`
           );
 
@@ -876,8 +880,9 @@ export const AttendanceTracker: React.FC = () => {
                 </div>
               ) : (
                 <div
-                  className={`mb-2 text-4xl font-bold tracking-tighter text-center text-green-700 ${isTimeIn ? "" : "hidden"
-                    }`}
+                  className={`mb-2 text-4xl font-bold tracking-tighter text-center text-green-700 ${
+                    isTimeIn ? "" : "hidden"
+                  }`}
                 >
                   <p className="text-base text-black tracking-wide">
                     RUNNING TIME{" "}
@@ -1005,7 +1010,8 @@ export const AttendanceTracker: React.FC = () => {
                     currentEntry.totalSecondBreakTime !== null && (
                       <p>
                         Total Second Break Time:{" "}
-                        {Math.round(currentEntry.totalSecondBreakTime * 60)} min.
+                        {Math.round(currentEntry.totalSecondBreakTime * 60)}{" "}
+                        min.
                       </p>
                     )}
 
@@ -1109,7 +1115,9 @@ export const AttendanceTracker: React.FC = () => {
                           <PaginationContent>
                             <PaginationItem>
                               <PaginationPrevious
-                                onClick={() => handlePageChange(currentPage - 1)}
+                                onClick={() =>
+                                  handlePageChange(currentPage - 1)
+                                }
                                 className={
                                   currentPage === 1
                                     ? "pointer-events-none opacity-50"
@@ -1132,7 +1140,9 @@ export const AttendanceTracker: React.FC = () => {
 
                             <PaginationItem>
                               <PaginationNext
-                                onClick={() => handlePageChange(currentPage + 1)}
+                                onClick={() =>
+                                  handlePageChange(currentPage + 1)
+                                }
                                 className={
                                   currentPage === totalPages
                                     ? "pointer-events-none opacity-50"
@@ -1151,12 +1161,6 @@ export const AttendanceTracker: React.FC = () => {
           </div>
         </CardContent>
       </Card>
-
-      {/* Payroll Integration Component */}
-      <TimeTrackerPayrollIntegration
-        userId={JSON.parse(localStorage.getItem("user")!)._id}
-        currentEntry={currentEntry}
-      />
     </div>
   );
 };
