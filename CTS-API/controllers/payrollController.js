@@ -1,4 +1,129 @@
 const Payroll = require("../models/payroll");
+const EmployeeTime = require("../models/employeeTimeModel");
+const { ScheduleEntry } = require("../models/ScheduleAndAttendanceModel");
+const UserProfile = require("../models/userProfileModel");
+
+// Helper function to convert time string to minutes since midnight
+function timeToMinutes(timeString) {
+    if (!timeString) return 0;
+    const [hours, minutes] = timeString.split(':').map(Number);
+    return hours * 60 + minutes;
+}
+
+// Helper function to convert minutes to hours
+function minutesToHours(minutes) {
+    return minutes / 60;
+}
+
+// Helper function to get work days in a month
+function getWorkDaysInMonth(year, month) {
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    let workDays = 0;
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month, day);
+        const dayOfWeek = date.getDay();
+        // Count weekdays (Monday = 1 to Friday = 5)
+        if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+            workDays++;
+        }
+    }
+    
+    return workDays;
+}
+
+// Auto-calculation function for payroll data
+async function calculatePayrollData(userId, startDate, endDate) {
+    try {
+        // Parse dates
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const year = start.getFullYear();
+        const month = start.getMonth();
+        
+        // Get employee profile for monthly salary
+        const userProfile = await UserProfile.findOne({ userId });
+        const monthlySalary = userProfile?.monthlySalary || 0;
+        
+        // Get time tracker data for the period
+        const timeRecords = await EmployeeTime.find({
+            employeeId: userId,
+            date: {
+                $gte: startDate,
+                $lte: endDate
+            }
+        });
+        
+        // Get schedule data
+        const scheduleEntry = await ScheduleEntry.findOne({ employeeId: userId.toString() });
+        
+        let totalHoursWorked = 0;
+        let totalLateMinutes = 0;
+        let totalUndertimeMinutes = 0;
+        let regularDays = 0;
+        let absentDays = 0;
+        
+        // Process each time record
+        for (const record of timeRecords) {
+            if (!record.timeIn || !record.timeOut) continue;
+            
+            // Find schedule for this date
+            const schedule = scheduleEntry?.schedule?.find(s => s.date === record.date);
+            if (!schedule || !schedule.startTime || !schedule.endTime) continue;
+            
+            // Convert times to minutes
+            const timeInMinutes = timeToMinutes(record.timeIn);
+            const timeOutMinutes = timeToMinutes(record.timeOut);
+            const scheduledStartMinutes = timeToMinutes(schedule.startTime);
+            const scheduledEndMinutes = timeToMinutes(schedule.endTime);
+            
+            // Adjust time in: if earlier than scheduled start, use scheduled start
+            const adjustedTimeIn = Math.max(timeInMinutes, scheduledStartMinutes);
+            
+            // Calculate late minutes
+            if (timeInMinutes > scheduledStartMinutes) {
+                totalLateMinutes += (timeInMinutes - scheduledStartMinutes);
+            }
+            
+            // Adjust time out: if earlier than scheduled end, count as undertime
+            const adjustedTimeOut = Math.min(timeOutMinutes, scheduledEndMinutes);
+            
+            // Calculate undertime minutes
+            if (timeOutMinutes < scheduledEndMinutes) {
+                totalUndertimeMinutes += (scheduledEndMinutes - timeOutMinutes);
+            }
+            
+            // Calculate hours worked (excluding lunch break)
+            const hoursWorked = (adjustedTimeOut - adjustedTimeIn) / 60;
+            totalHoursWorked += Math.max(0, hoursWorked);
+            
+            regularDays++;
+        }
+        
+        // Calculate absent days
+        const totalWorkDays = getWorkDaysInMonth(year, month);
+        absentDays = Math.max(0, totalWorkDays - regularDays);
+        
+        // Calculate rates
+        const dailyRate = monthlySalary / totalWorkDays;
+        const hourlyRate = dailyRate / 8; // Assuming 8 hours per day
+        
+        return {
+            monthlySalary,
+            dailyRate,
+            hourlyRate,
+            totalHoursWorked,
+            totalLateMinutes,
+            totalUndertimeMinutes,
+            regularDays,
+            absentDays
+        };
+        
+    } catch (error) {
+        console.error('Error calculating payroll data:', error);
+        throw error;
+    }
+}
 
 function deepUpdate(doc, updates) {
     for (const key in updates) {
@@ -17,12 +142,14 @@ function deepUpdate(doc, updates) {
 
 function computePayroll(payroll) {
     const monthlyRate = payroll.payrollRate?.monthlyRate || 0;
-    const dailyRate = monthlyRate / 26;
-    const hourlyRate = dailyRate / 8;
+    const dailyRate = payroll.payrollRate?.dailyRate || monthlyRate / 26;
+    const hourlyRate = payroll.payrollRate?.hourlyRate || dailyRate / 8;
 
     const regularDays = payroll.workDays?.regularDays || 0;
     const absentDays = payroll.workDays?.absentDays || 0;
     const minsLate = payroll.workDays?.minsLate || 0;
+    const totalHoursWorked = payroll.workDays?.totalHoursWorked || 0;
+    const undertimeMinutes = payroll.workDays?.undertimeMinutes || 0;
     const regHoliday = payroll.holidays?.regHoliday || 0;
     const speHoliday = payroll.holidays?.speHoliday || 0;
     const regularOT = payroll.totalOvertime?.regularOT || 0;
@@ -40,8 +167,8 @@ function computePayroll(payroll) {
     const sssSalaryLoan = payroll.totalDeductions?.sssSalaryLoan || 0;
     const hdmfLoan = payroll.totalDeductions?.hdmfLoan || 0;
 
-    // Basic Pay
-    const basicPay = regularDays * dailyRate;
+    // Basic Pay - use auto-calculated hours worked
+    const basicPay = totalHoursWorked * hourlyRate;
 
     // Late & Absences
     const amountAbsent = absentDays * dailyRate;
@@ -85,6 +212,94 @@ function computePayroll(payroll) {
     return payroll;
 }
 
+// Auto-update payroll from time tracker data
+exports.autoUpdatePayrollFromTimeTracker = async (userId, startDate, endDate) => {
+    try {
+        // Calculate payroll data from time tracker
+        const calculatedData = await calculatePayrollData(userId, startDate, endDate);
+        
+        // Find existing payroll or create new one
+        let payroll = await Payroll.findOne({ "payrollRate.userId": userId });
+        
+        if (!payroll) {
+            // Create new payroll with auto-calculated data
+            payroll = new Payroll({
+                employee: {
+                    userId: userId,
+                    email: "",
+                    fullName: "",
+                    position: ""
+                },
+                payrollRate: {
+                    userId: userId,
+                    monthlyRate: calculatedData.monthlySalary,
+                    dailyRate: calculatedData.dailyRate,
+                    hourlyRate: calculatedData.hourlyRate
+                },
+                workDays: {
+                    regularDays: calculatedData.regularDays,
+                    absentDays: calculatedData.absentDays,
+                    minsLate: calculatedData.totalLateMinutes,
+                    totalHoursWorked: calculatedData.totalHoursWorked,
+                    undertimeMinutes: calculatedData.totalUndertimeMinutes
+                },
+                holidays: {
+                    regHoliday: 0,
+                    regHolidayPay: 0,
+                    speHoliday: 0,
+                    speHolidayPay: 0
+                },
+                latesAndAbsent: {
+                    absentDays: calculatedData.absentDays,
+                    minLateUT: calculatedData.totalLateMinutes,
+                    amountAbsent: 0,
+                    amountMinLateUT: 0
+                },
+                salaryAdjustments: {
+                    unpaid: 0,
+                    unpaidAmount: 0,
+                    increase: 0
+                },
+                totalOvertime: {},
+                totalSupplementary: {},
+                grossSalary: {
+                    nonTaxableAllowance: 0,
+                    performanceBonus: 0,
+                    grossSalary: 0
+                },
+                totalDeductions: {},
+                grandtotal: { grandtotal: 0 }
+            });
+        } else {
+            // Update existing payroll with auto-calculated data
+            payroll.payrollRate.monthlyRate = calculatedData.monthlySalary;
+            payroll.payrollRate.dailyRate = calculatedData.dailyRate;
+            payroll.payrollRate.hourlyRate = calculatedData.hourlyRate;
+            
+            payroll.workDays.regularDays = calculatedData.regularDays;
+            payroll.workDays.absentDays = calculatedData.absentDays;
+            payroll.workDays.minsLate = calculatedData.totalLateMinutes;
+            payroll.workDays.totalHoursWorked = calculatedData.totalHoursWorked;
+            payroll.workDays.undertimeMinutes = calculatedData.totalUndertimeMinutes;
+            
+            payroll.latesAndAbsent.absentDays = calculatedData.absentDays;
+            payroll.latesAndAbsent.minLateUT = calculatedData.totalLateMinutes;
+        }
+        
+        // Recompute all payroll calculations
+        computePayroll(payroll);
+        
+        // Save the payroll
+        await payroll.save();
+        
+        return payroll;
+        
+    } catch (error) {
+        console.error('Error auto-updating payroll:', error);
+        throw error;
+    }
+};
+
 // CREATE or UPDATE Payroll
 exports.processPayroll = async (req, res) => {
     try {
@@ -97,7 +312,52 @@ exports.processPayroll = async (req, res) => {
         let payroll = await Payroll.findOne({ "payrollRate.userId": payrollRate.userId });
 
         if (!payroll) {
-            payroll = new Payroll(req.body);
+            // For new payrolls, try to auto-calculate from time tracker data
+            try {
+                // Get current month date range
+                const now = new Date();
+                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                
+                // Format dates as strings (MM/DD/YYYY)
+                const formatDate = (date) => {
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const year = date.getFullYear();
+                    return `${month}/${day}/${year}`;
+                };
+                
+                const startDate = formatDate(startOfMonth);
+                const endDate = formatDate(endOfMonth);
+                
+                // Auto-calculate payroll data
+                const calculatedData = await calculatePayrollData(payrollRate.userId, startDate, endDate);
+                
+                // Merge request body with calculated data
+                const payrollData = {
+                    ...req.body,
+                    payrollRate: {
+                        ...req.body.payrollRate,
+                        monthlyRate: calculatedData.monthlySalary,
+                        dailyRate: calculatedData.dailyRate,
+                        hourlyRate: calculatedData.hourlyRate
+                    },
+                    workDays: {
+                        ...req.body.workDays,
+                        regularDays: calculatedData.regularDays,
+                        absentDays: calculatedData.absentDays,
+                        minsLate: calculatedData.totalLateMinutes,
+                        totalHoursWorked: calculatedData.totalHoursWorked,
+                        undertimeMinutes: calculatedData.totalUndertimeMinutes
+                    }
+                };
+                
+                payroll = new Payroll(payrollData);
+            } catch (error) {
+                console.error('Error auto-calculating payroll data:', error);
+                // Fallback to manual data if auto-calculation fails
+                payroll = new Payroll(req.body);
+            }
         } else {
             deepUpdate(payroll, req.body);
         }
@@ -195,11 +455,33 @@ exports.getAllPayrolls = async (req, res) => {
 exports.updatePayroll = async (req, res) => {
     try {
         const { id } = req.params;   // ✅ get payrollId from URL
-        const updatedPayroll = await Payroll.findByIdAndUpdate(id, req.body, { new: true });
+        const payroll = await Payroll.findById(id);
 
-        if (!updatedPayroll) {
+        if (!payroll) {
             return res.status(404).json({ status: "Error", message: `No payroll record found for ID ${id}` });
         }
+
+        // Check if monthly salary is being updated
+        if (req.body.payrollRate?.monthlyRate) {
+            // Recalculate daily and hourly rates
+            const monthlyRate = req.body.payrollRate.monthlyRate;
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const totalWorkDays = getWorkDaysInMonth(year, month);
+            
+            req.body.payrollRate.dailyRate = monthlyRate / totalWorkDays;
+            req.body.payrollRate.hourlyRate = req.body.payrollRate.dailyRate / 8;
+        }
+
+        // Update the payroll
+        deepUpdate(payroll, req.body);
+        
+        // Recompute all calculations
+        computePayroll(payroll);
+        
+        // Save the updated payroll
+        const updatedPayroll = await payroll.save();
 
         res.json(updatedPayroll);
     } catch (error) {

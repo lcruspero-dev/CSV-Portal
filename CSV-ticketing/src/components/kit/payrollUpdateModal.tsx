@@ -27,17 +27,19 @@ const formSections = [
   {
     title: "Payroll Rates",
     fields: [
-      { path: "payrollRate.monthlyRate", label: "Monthly Rate" },
-      { path: "payrollRate.dailyRate", label: "Daily Rate" },
-      { path: "payrollRate.hourlyRate", label: "Hourly Rate" },
+      { path: "payrollRate.monthlyRate", label: "Monthly Rate", editable: true },
+      { path: "payrollRate.dailyRate", label: "Daily Rate (Auto)", editable: false },
+      { path: "payrollRate.hourlyRate", label: "Hourly Rate (Auto)", editable: false },
     ],
   },
   {
     title: "Work Days",
     fields: [
-      { path: "workDays.regularDays", label: "Regular Days" },
-      { path: "workDays.absentDays", label: "Absent Days" },
-      { path: "workDays.minsLate", label: "Minutes Late" },
+      { path: "workDays.regularDays", label: "Regular Days (Auto)", editable: false },
+      { path: "workDays.absentDays", label: "Absent Days (Auto)", editable: false },
+      { path: "workDays.minsLate", label: "Minutes Late (Auto)", editable: false },
+      { path: "workDays.totalHoursWorked", label: "Hours Worked (Auto)", editable: false },
+      { path: "workDays.undertimeMinutes", label: "Undertime Minutes (Auto)", editable: false },
     ],
   },
   {
@@ -280,7 +282,8 @@ const UpdatePayrollModal = ({
     const gross = formData.grossSalary ?? ({} as any);
     const ded = formData.totalDeductions ?? ({} as any);
 
-    const basicPay = round2(regularDays * dailyRate);
+    const totalHoursWorked = formData.workDays?.totalHoursWorked || 0;
+    const basicPay = round2(totalHoursWorked * hourlyRate);
     const absentDeduction = round2(absentDays * dailyRate);
     const lateDeduction = round2((minsLate / 60) * hourlyRate);
 
@@ -427,17 +430,19 @@ const UpdatePayrollModal = ({
                     {section.title}
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {section.fields.map(({ path, label }) => (
+                    {section.fields.map(({ path, label, editable = true }) => (
                       <div key={path} className="flex flex-col">
-                        <label className="text-sm font-medium mb-1">
+                        <label className={`text-sm font-medium mb-1 ${!editable ? 'text-gray-600' : ''}`}>
                           {label}
                         </label>
                         <Input
                           type="number"
                           value={getValue(formData, path)}
                           onChange={(e) =>
-                            handleChange(path, parseFloat(e.target.value) || 0)
+                            editable ? handleChange(path, parseFloat(e.target.value) || 0) : undefined
                           }
+                          disabled={!editable}
+                          className={!editable ? 'bg-gray-100 text-gray-600' : ''}
                         />
                       </div>
                     ))}
@@ -491,6 +496,12 @@ const UpdatePayrollModal = ({
                       </li>
                       <li>
                         <b>Minutes Late:</b> {formData.workDays?.minsLate ?? 0}
+                      </li>
+                      <li>
+                        <b>Hours Worked:</b> {formData.workDays?.totalHoursWorked?.toFixed(2) ?? 0}
+                      </li>
+                      <li>
+                        <b>Undertime Minutes:</b> {formData.workDays?.undertimeMinutes ?? 0}
                       </li>
                     </ul>
                   </div>

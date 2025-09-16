@@ -65,6 +65,8 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
     regularDays: 0,
     absentDays: 0,
     minsLate: 0,
+    totalHoursWorked: 0,
+    undertimeMinutes: 0,
     regHoliday: 0,
     speHoliday: 0,
     regularOT: 0,
@@ -232,6 +234,8 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
         regularDays: form.regularDays,
         absentDays: form.absentDays,
         minsLate: form.minsLate,
+        totalHoursWorked: form.totalHoursWorked,
+        undertimeMinutes: form.undertimeMinutes,
       },
       holidays: {
         regHoliday: form.regHoliday,
@@ -313,6 +317,52 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
     });
   }, [form, selectedUser]);
 
+  const handleAutoCalculate = async () => {
+    if (!selectedUser) return alert("Please select an employee first.");
+    
+    try {
+      // Get current month date range
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      
+      // Format dates as strings (MM/DD/YYYY)
+      const formatDate = (date: Date) => {
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${month}/${day}/${year}`;
+      };
+      
+      const startDate = formatDate(startOfMonth);
+      const endDate = formatDate(endOfMonth);
+      
+      const res = await payrollAPI.autoCalculatePayroll(selectedUser.userId || selectedUser._id, {
+        startDate,
+        endDate
+      });
+      
+      // Update form with auto-calculated data
+      if (res.data.payroll) {
+        const payroll = res.data.payroll;
+        setForm(prev => ({
+          ...prev,
+          monthlyRate: payroll.payrollRate?.monthlyRate || 0,
+          regularDays: payroll.workDays?.regularDays || 0,
+          absentDays: payroll.workDays?.absentDays || 0,
+          minsLate: payroll.workDays?.minsLate || 0,
+          totalHoursWorked: payroll.workDays?.totalHoursWorked || 0,
+          undertimeMinutes: payroll.workDays?.undertimeMinutes || 0,
+        }));
+      }
+      
+      alert("Payroll data auto-calculated successfully!");
+    } catch (err) {
+      console.error("Error auto-calculating payroll:", err);
+      alert("Failed to auto-calculate payroll data. Please check if the employee has time tracker and schedule data.");
+    }
+  };
+
   const handleCreate = async () => {
     if (!selectedUser || !payrollPreview)
       return alert("Select an employee and fill the form.");
@@ -343,26 +393,84 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
               {/* Employee Select */}
               <div className="mb-6">
                 <label className="text-sm font-medium">Select Employee</label>
-                <select
-                  value={selectedUser?._id || ""}
-                  onChange={(e) =>
-                    setSelectedUser(
-                      employees.find((emp) => emp._id === e.target.value)
-                    )
-                  }
-                  className="border rounded px-2 py-1 w-full"
-                >
-                  <option value="">-- Choose Employee --</option>
-                  {employees.map((emp) => (
-                    <option key={emp._id} value={emp._id}>
-                      {emp.firstName} {emp.lastName} ({emp.jobPosition})
-                    </option>
-                  ))}
-                </select>
+                <div className="flex gap-2">
+                  <select
+                    value={selectedUser?._id || ""}
+                    onChange={(e) =>
+                      setSelectedUser(
+                        employees.find((emp) => emp._id === e.target.value)
+                      )
+                    }
+                    className="border rounded px-2 py-1 flex-1"
+                  >
+                    <option value="">-- Choose Employee --</option>
+                    {employees.map((emp) => (
+                      <option key={emp._id} value={emp._id}>
+                        {emp.firstName} {emp.lastName} ({emp.jobPosition})
+                      </option>
+                    ))}
+                  </select>
+                  <Button 
+                    type="button" 
+                    onClick={handleAutoCalculate}
+                    variant="outline"
+                    disabled={!selectedUser}
+                  >
+                    Auto-Calculate
+                  </Button>
+                </div>
               </div>
               {/* Form Fields Grouped */}
               <div className="grid grid-cols-3 md:grid-cols-4 gap-4 py-4">
-                {formFields.map((key) => (
+                {/* Auto-calculated fields (disabled) */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-semibold text-gray-600">Daily Rate (Auto)</label>
+                  <input
+                    type="number"
+                    value={round2(form.monthlyRate / 26)}
+                    disabled
+                    className="border rounded px-2 py-1 bg-gray-100 text-gray-600"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-sm font-semibold text-gray-600">Hourly Rate (Auto)</label>
+                  <input
+                    type="number"
+                    value={round2((form.monthlyRate / 26) / 8)}
+                    disabled
+                    className="border rounded px-2 py-1 bg-gray-100 text-gray-600"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-sm font-semibold text-gray-600">Hours Worked (Auto)</label>
+                  <input
+                    type="number"
+                    value={form.totalHoursWorked}
+                    disabled
+                    className="border rounded px-2 py-1 bg-gray-100 text-gray-600"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-sm font-semibold text-gray-600">Late Minutes (Auto)</label>
+                  <input
+                    type="number"
+                    value={form.minsLate}
+                    disabled
+                    className="border rounded px-2 py-1 bg-gray-100 text-gray-600"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-sm font-semibold text-gray-600">Undertime Minutes (Auto)</label>
+                  <input
+                    type="number"
+                    value={form.undertimeMinutes}
+                    disabled
+                    className="border rounded px-2 py-1 bg-gray-100 text-gray-600"
+                  />
+                </div>
+                
+                {/* Editable fields */}
+                {formFields.filter(key => !['totalHoursWorked', 'undertimeMinutes'].includes(key)).map((key) => (
                   <div key={key} className="flex flex-col">
                     <label className="text-sm capitalize">{key}</label>
                     <input
@@ -596,6 +704,14 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                         <li>
                           <b>Minutes Late:</b>{" "}
                           {payrollPreview.workDays?.minsLate ?? 0}
+                        </li>
+                        <li>
+                          <b>Hours Worked:</b>{" "}
+                          {payrollPreview.workDays?.totalHoursWorked?.toFixed(2) ?? 0}
+                        </li>
+                        <li>
+                          <b>Undertime Minutes:</b>{" "}
+                          {payrollPreview.workDays?.undertimeMinutes ?? 0}
                         </li>
                       </ul>
                     </div>

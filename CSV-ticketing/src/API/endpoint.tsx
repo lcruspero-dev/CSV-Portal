@@ -250,4 +250,8 @@ export const payrollAPI = {
     endDate: string;
     payrollRate?: any;
   }) => apiHelper("/api/payroll/calculate-from-time-tracker", "POST", body),
+  autoCalculatePayroll: (userId: string, body: {
+    startDate: string;
+    endDate: string;
+  }) => apiHelper(`/api/payroll/auto-calculate/${userId}`, "POST", body),
 };

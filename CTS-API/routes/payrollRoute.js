@@ -6,13 +6,33 @@ const {
   getPayrollByUser,
   deletePayroll,
   updatePayroll,
-  calculatePayrollFromTimeTracker,
+  autoUpdatePayrollFromTimeTracker,
 } = require("../controllers/payrollController");
 const { protect } = require("../middleware/authMiddleware");
 
 router.post("/process", protect, processPayroll);
 
-// router.post("/calculate-from-time-tracker", protect, calculatePayrollFromTimeTracker);
+router.post("/auto-calculate/:userId", protect, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { startDate, endDate } = req.body;
+    
+    const result = await autoUpdatePayrollFromTimeTracker(userId, startDate, endDate);
+    
+    res.status(200).json({
+      status: "Success",
+      message: "Payroll auto-calculated successfully",
+      payroll: result
+    });
+  } catch (error) {
+    console.error('Error auto-calculating payroll:', error);
+    res.status(500).json({
+      status: "Error",
+      message: "Failed to auto-calculate payroll",
+      error: error.message
+    });
+  }
+});
 
 router.put("/update/:id", protect, updatePayroll);
 

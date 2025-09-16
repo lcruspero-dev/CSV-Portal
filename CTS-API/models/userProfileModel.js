@@ -148,6 +148,10 @@ const userProfileSchema = mongoose.Schema(
     homeProvince: {
       type: String,
     },
+    monthlySalary: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,
