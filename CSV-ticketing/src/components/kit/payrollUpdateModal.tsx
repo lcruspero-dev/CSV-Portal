@@ -202,12 +202,33 @@ const UpdatePayrollModal = ({
   };
 
   const getValue = (obj: any, path: string) => {
+    // Auto-derive daily/hourly from monthly rate for display
+    if (path === "payrollRate.dailyRate") {
+      const monthly = Number(obj?.payrollRate?.monthlyRate ?? 0);
+      return Math.round(((monthly / 26) || 0) * 100) / 100;
+    }
+    if (path === "payrollRate.hourlyRate") {
+      const monthly = Number(obj?.payrollRate?.monthlyRate ?? 0);
+      const daily = monthly / 26;
+      return Math.round((((daily / 8) || 0) * 100)) / 100;
+    }
     return path.split(".").reduce((acc, key) => acc?.[key], obj) ?? 0;
   };
 
   const handleUpdate = async () => {
     try {
+      // Ensure payrollRate is included with auto-derived daily/hourly
+      const monthly = Number(formData.payrollRate?.monthlyRate ?? 0);
+      const daily = monthly / 26;
+      const hourly = daily / 8;
+
       const payload: Partial<PayrollPayload> = {
+        payrollRate: {
+          ...(formData.payrollRate as any),
+          monthlyRate: monthly,
+          dailyRate: Math.round((daily || 0) * 100) / 100,
+          hourlyRate: Math.round((hourly || 0) * 100) / 100,
+        } as any,
         pay: { basicPay: preview.basicPay },
         holidays: {
           ...(formData.holidays as any),
@@ -266,8 +287,8 @@ const UpdatePayrollModal = ({
 
   const preview = useMemo(() => {
     const monthlyRate = formData.payrollRate?.monthlyRate ?? 0;
-    const dailyRate = formData.payrollRate?.dailyRate ?? monthlyRate / 26;
-    const hourlyRate = formData.payrollRate?.hourlyRate ?? dailyRate / 8;
+    const dailyRate = monthlyRate / 26; // auto-derive from monthly
+    const hourlyRate = dailyRate / 8;
 
     const regularDays = formData.workDays?.regularDays ?? 0;
     const absentDays = formData.workDays?.absentDays ?? 0;
@@ -377,6 +398,7 @@ const UpdatePayrollModal = ({
       monthlyRate: round2(monthlyRate),
       dailyRate: round2(dailyRate),
       hourlyRate: round2(hourlyRate),
+      totalHoursWorked: round2(totalHoursWorked),
       basicPay,
       absentDeduction,
       lateDeduction,

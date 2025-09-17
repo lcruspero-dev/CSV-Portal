@@ -254,4 +254,9 @@ export const payrollAPI = {
     startDate: string;
     endDate: string;
   }) => apiHelper(`/api/payroll/auto-calculate/${userId}`, "POST", body),
+  sendPayroll: (userId: string, body: {
+    payrollId: string;
+  }) => apiHelper(`/api/payroll/send/${userId}`, "POST", body),
+  getEmployeePayslips: (userId: string) => 
+    apiHelper(`/api/payroll/payslips/${userId}`, "GET"),
 };

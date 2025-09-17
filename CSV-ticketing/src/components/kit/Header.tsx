@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/context/useAuth";
-import { Key, LogOut, NotebookPenIcon, User, UserCog } from "lucide-react";
+import { Key, LogOut, NotebookPenIcon, User, UserCog, Receipt } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
@@ -196,6 +196,13 @@ const Header: React.FC = () => {
                     >
                       <User className="mr-2 h-4 w-4" />
                       <span>Profile Settings</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => navigate("/payslip")}
+                      className="cursor-pointer"
+                    >
+                      <Receipt className="mr-2 h-4 w-4" />
+                      <span>My Payslips</span>
                     </DropdownMenuItem>
                     {(user.isAdmin ||
                       user.role === "TM" ||

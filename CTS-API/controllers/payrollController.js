@@ -490,3 +490,131 @@ exports.updatePayroll = async (req, res) => {
     }
 };
 
+// GET SENT PAYROLLS FOR EMPLOYEE (PAYSLIPS)
+exports.getEmployeePayslips = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        // Get all sent payrolls for this employee
+        const payslips = await Payroll.find({
+            "payrollRate.userId": userId,
+            status: 'sent'
+        }).sort({ sentAt: -1 }); // Most recent first
+
+        if (!payslips || payslips.length === 0) {
+            return res.status(404).json({
+                status: "Error",
+                message: "No payslips found for this employee"
+            });
+        }
+
+        return res.status(200).json({
+            status: "Success",
+            count: payslips.length,
+            payslips
+        });
+
+    } catch (error) {
+        console.error('Error fetching employee payslips:', error);
+        res.status(500).json({
+            status: "Error",
+            message: "Failed to fetch payslips",
+            error: error.message
+        });
+    }
+};
+
+// SEND PAYROLL TO EMPLOYEE
+exports.sendPayroll = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { payrollId } = req.body;
+
+        // Find the payroll
+        const payroll = await Payroll.findById(payrollId);
+        if (!payroll) {
+            return res.status(404).json({ 
+                status: "Error", 
+                message: "Payroll not found" 
+            });
+        }
+
+        // Mark payroll as sent
+        payroll.status = 'sent';
+        payroll.sentAt = new Date();
+        await payroll.save();
+
+        // Reset only the payroll calculation fields (NOT time tracker data)
+        // This allows time tracker to continue accumulating data
+        // but payroll calculations start fresh for next cycle
+        
+        // Reset work days and time-related calculations
+        payroll.workDays = {
+            regularDays: 0,
+            absentDays: 0,
+            minsLate: 0,
+            totalHoursWorked: 0,
+            undertimeMinutes: 0
+        };
+
+        // Reset lates and absent calculations
+        payroll.latesAndAbsent = {
+            absentDays: 0,
+            minLateUT: 0,
+            amountAbsent: 0,
+            amountMinLateUT: 0
+        };
+
+        // Reset pay calculations
+        payroll.pay = {
+            basicPay: 0
+        };
+
+        // Reset overtime and supplementary income
+        payroll.totalOvertime = {};
+        payroll.totalSupplementary = {};
+
+        // Reset gross salary
+        payroll.grossSalary = {
+            nonTaxableAllowance: 0,
+            performanceBonus: 0,
+            grossSalary: 0
+        };
+
+        // Reset grand total
+        payroll.grandtotal = {
+            grandtotal: 0
+        };
+
+        // Keep monthly rate and deductions - they don't reset
+        // payroll.payrollRate.monthlyRate stays the same
+        // payroll.totalDeductions stays the same
+
+        // Save the reset payroll
+        await payroll.save();
+
+        console.log(`Payroll calculations reset for user ${userId}. Time tracker data preserved.`);
+
+        // TODO: Here you can add email notification logic
+        // For example: send email to employee with payroll details
+
+        res.status(200).json({
+            status: "Success",
+            message: "Payroll sent successfully. Calculations reset for next cycle.",
+            payroll: {
+                _id: payroll._id,
+                status: payroll.status,
+                sentAt: payroll.sentAt
+            }
+        });
+
+    } catch (error) {
+        console.error('Error sending payroll:', error);
+        res.status(500).json({ 
+            status: "Error", 
+            message: "Failed to send payroll",
+            error: error.message 
+        });
+    }
+};
+

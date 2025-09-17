@@ -7,6 +7,8 @@ const {
   deletePayroll,
   updatePayroll,
   autoUpdatePayrollFromTimeTracker,
+  sendPayroll,
+  getEmployeePayslips,
 } = require("../controllers/payrollController");
 const { protect } = require("../middleware/authMiddleware");
 
@@ -35,6 +37,10 @@ router.post("/auto-calculate/:userId", protect, async (req, res) => {
 });
 
 router.put("/update/:id", protect, updatePayroll);
+
+router.post("/send/:userId", protect, sendPayroll);
+
+router.get("/payslips/:userId", protect, getEmployeePayslips);
 
 router.get("/", protect, getAllPayrolls);
 

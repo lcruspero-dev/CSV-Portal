@@ -330,6 +330,15 @@ const payrollSchema = new mongoose.Schema({
   grossSalary: grossSalarySchema,
   totalDeductions: totalDeductionsSchema,
   grandtotal: grandtotalSchema,
+  status: {
+    type: String,
+    enum: ['draft', 'sent'],
+    default: 'draft'
+  },
+  sentAt: {
+    type: Date,
+    default: null
+  }
 });
 
 // Ensure one payroll per user

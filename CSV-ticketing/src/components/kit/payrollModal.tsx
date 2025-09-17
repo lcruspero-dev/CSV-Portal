@@ -59,47 +59,25 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
   const [employees, setEmployees] = useState<any[]>([]);
   const [selectedUser, setSelectedUser] = useState<any>(null);
 
-  // Form with all fields
+  // Minimal form (only requested editable fields)
   const [form, setForm] = useState({
     monthlyRate: 0,
+    sssEmployeeShare: 0,
+    wisp: 0,
+    hdmfEmployeeShare: 0, // Pag-IBIG
+    taxableIncome: 0,
+    hdmfLoan: 0,
+  });
+
+  // Auto-computed fields fetched from backend (disabled in UI, not editable)
+  const [autoComputed, setAutoComputed] = useState({
+    dailyRate: 0,
+    hourlyRate: 0,
+    totalHoursWorked: 0,
+    minsLate: 0,
+    undertimeMinutes: 0,
     regularDays: 0,
     absentDays: 0,
-    minsLate: 0,
-    totalHoursWorked: 0,
-    undertimeMinutes: 0,
-    regHoliday: 0,
-    speHoliday: 0,
-    regularOT: 0,
-    restDayOT: 0,
-    restDayOTExcess: 0,
-    regularHolidayWorked: 0,
-    regularHolidayWorkedExcess: 0,
-    specialHolidayWorked: 0,
-    specialHolidayWorkedOT: 0,
-    specialHolidayRDworkedHours: 0,
-    specialHolidayRDworkedOT: 0,
-    ndHours: 0,
-    regOTnightDiffHours: 0,
-    restDayNDhours: 0,
-    regHolNDHours: 0,
-    specialHolidayNDhours: 0,
-    // Deductions
-    sssEmployeeShare: 0,
-    phicEmployeeShare: 0,
-    hdmfEmployeeShare: 0,
-    wisp: 0,
-    totalSSScontribution: 0,
-    nonTaxableIncome: 0,
-    taxableIncome: 0,
-    withHoldingTax: 0,
-    sssSalaryLoan: 0,
-    hdmfLoan: 0,
-    // Salary Adjustments
-    unpaid: 0,
-    increase: 0,
-    // Gross Salary
-    nonTaxableAllowance: 0,
-    performanceBonus: 0,
   });
 
   const [payrollPreview, setPayrollPreview] = useState<Payroll | null>(null);
@@ -126,7 +104,7 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
 
   const round2 = (n: number) => Math.round((n || 0) * 100) / 100;
 
-  // Payroll preview
+  // Payroll preview (uses auto-computed values and selected deductions only)
   useEffect(() => {
     if (!selectedUser) return;
 
@@ -134,80 +112,18 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
     const dailyRate = round2(monthlyRate / 26);
     const hourlyRate = round2(dailyRate / 8);
 
-    const basicPay = round2(form.regularDays * dailyRate);
-    const absentDeduction = round2(form.absentDays * dailyRate);
-    const lateDeduction = round2((form.minsLate / 60) * hourlyRate);
+    const basicPay = round2(autoComputed.totalHoursWorked * hourlyRate);
+    const lateDeduction = round2((autoComputed.minsLate / 60) * hourlyRate);
 
-    const regHolidayPay = round2(form.regHoliday * dailyRate);
-    const speHolidayPay = round2(form.speHoliday * dailyRate * 0.3);
-
-    const regularOTpay = round2(form.regularOT * hourlyRate * 1.25);
-    const restDayOtPay = round2(form.restDayOT * hourlyRate * 1.3);
-    const restDayOtExcessPay = round2(form.restDayOTExcess * hourlyRate * 1.5);
-    const regularHolidayWorkedPay = round2(
-      form.regularHolidayWorked * dailyRate * 2
-    );
-    const regularHolidayWorkedExcessPay = round2(
-      form.regularHolidayWorkedExcess * hourlyRate * 2.6
-    );
-    const specialHolidayWorkedPay = round2(
-      form.specialHolidayWorked * dailyRate * 1.3
-    );
-    const specialHolidayWorkedOTpay = round2(
-      form.specialHolidayWorkedOT * hourlyRate * 1.69
-    );
-    const specialHolidayRDworkedPay = round2(
-      form.specialHolidayRDworkedHours * hourlyRate * 1.69
-    );
-    const specialHolidayRDworkedOTpay = round2(
-      form.specialHolidayRDworkedOT * hourlyRate * 2
-    );
-
-    const nightDiffPay = round2(form.ndHours * hourlyRate * 0.1);
-    const regOTnightDiffPay = round2(
-      form.regOTnightDiffHours * hourlyRate * 0.1
-    );
-    const restDayNDPay = round2(form.restDayNDhours * hourlyRate * 0.1);
-    const regHolNDPay = round2(form.regHolNDHours * hourlyRate * 0.1);
-    const specialHolidayNDpay = round2(
-      form.specialHolidayNDhours * hourlyRate * 0.1
-    );
-
-    const grossSalary = round2(
-      basicPay +
-        regHolidayPay +
-        speHolidayPay +
-        regularOTpay +
-        restDayOtPay +
-        restDayOtExcessPay +
-        regularHolidayWorkedPay +
-        regularHolidayWorkedExcessPay +
-        specialHolidayWorkedPay +
-        specialHolidayWorkedOTpay +
-        specialHolidayRDworkedPay +
-        specialHolidayRDworkedOTpay +
-        nightDiffPay +
-        regOTnightDiffPay +
-        restDayNDPay +
-        regHolNDPay +
-        specialHolidayNDpay +
-        (form.increase || 0) +
-        (form.nonTaxableAllowance || 0) +
-        (form.performanceBonus || 0)
-    );
+    const grossSalary = round2(basicPay);
 
     const totalDeductions = round2(
-      absentDeduction +
-        lateDeduction +
-        (form.sssEmployeeShare || 0) +
-        (form.phicEmployeeShare || 0) +
-        (form.hdmfEmployeeShare || 0) +
+      (form.sssEmployeeShare || 0) +
         (form.wisp || 0) +
-        (form.totalSSScontribution || 0) +
-        (form.withHoldingTax || 0) +
-        (form.sssSalaryLoan || 0) +
+        (form.hdmfEmployeeShare || 0) +
+        (form.taxableIncome || 0) +
         (form.hdmfLoan || 0) +
-        form.unpaid * dailyRate
+        lateDeduction
     );
     const netPay = round2(grossSalary - totalDeductions);
 
@@ -231,137 +147,108 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
       },
       pay: { basicPay },
       workDays: {
-        regularDays: form.regularDays,
-        absentDays: form.absentDays,
-        minsLate: form.minsLate,
-        totalHoursWorked: form.totalHoursWorked,
-        undertimeMinutes: form.undertimeMinutes,
-      },
-      holidays: {
-        regHoliday: form.regHoliday,
-        regHolidayPay,
-        speHoliday: form.speHoliday,
-        speHolidayPay,
-      },
-      totalOvertime: {
-        regularOT: form.regularOT,
-        regularOTpay,
-        restDayOtHours: form.restDayOT,
-        restDayOtPay,
-        restDayOtHoursExcess: form.restDayOTExcess,
-        regularHolidayWorked: form.regularHolidayWorked,
-        regularHolidayWorkedPay,
-        regularHolidayWorkedExcess: form.regularHolidayWorkedExcess,
-        regularHolidayWorkedExcessPay,
-        specialHolidayWorked: form.specialHolidayWorked,
-        specialHolidayWorkedPay,
-        specialHolidayWorkedOT: form.specialHolidayWorkedOT,
-        specialHolidayWorkedOTpay,
-        specialHolidayRDworkedHours: form.specialHolidayRDworkedHours,
-        specialHolidayRDworkedPay,
-        specialHolidayRDworkedOT: form.specialHolidayRDworkedOT,
-        specialHolidayRDworkedOTpay,
-        totalOvertime:
-          regularOTpay +
-          restDayOtPay +
-          restDayOtExcessPay +
-          regularHolidayWorkedPay +
-          regularHolidayWorkedExcessPay +
-          specialHolidayWorkedPay +
-          specialHolidayWorkedOTpay +
-          specialHolidayRDworkedPay +
-          specialHolidayRDworkedOTpay,
-      },
-      salaryAdjustments: {
-        unpaid: form.unpaid,
-        unpaidAmount: form.unpaid * dailyRate,
-        increase: form.increase,
-      },
-      totalSupplementary: {
-        nightDiffHours: form.ndHours,
-        nightDiffPay,
-        regOTnightDiffHours: form.regOTnightDiffHours,
-        regOTnightDiffPay,
-        restDayNDhours: form.restDayNDhours,
-        restDayNDPay,
-        regHolNDHours: form.regHolNDHours,
-        regHolNDpay: regHolNDPay,
-        specialHolidayNDhours: form.specialHolidayNDhours,
-        specialHolidayNDpay,
-        totalSupplementaryIncome:
-          nightDiffPay +
-          regOTnightDiffPay +
-          restDayNDPay +
-          regHolNDPay +
-          specialHolidayNDpay,
+        regularDays: autoComputed.regularDays,
+        absentDays: autoComputed.absentDays,
+        minsLate: autoComputed.minsLate,
+        totalHoursWorked: autoComputed.totalHoursWorked,
+        undertimeMinutes: autoComputed.undertimeMinutes,
       },
       grossSalary: {
         grossSalary,
-        nonTaxableAllowance: form.nonTaxableAllowance,
-        performanceBonus: form.performanceBonus,
+        nonTaxableAllowance: 0,
+        performanceBonus: 0,
       },
       totalDeductions: {
         totalDeductions,
         sssEmployeeShare: form.sssEmployeeShare,
         wisp: form.wisp,
-        totalSSScontribution: form.totalSSScontribution,
-        phicEmployeeShare: form.phicEmployeeShare,
         hdmfEmployeeShare: form.hdmfEmployeeShare,
-        nonTaxableIncome: form.nonTaxableIncome,
         taxableIncome: form.taxableIncome,
-        withHoldingTax: form.withHoldingTax,
-        sssSalaryLoan: form.sssSalaryLoan,
         hdmfLoan: form.hdmfLoan,
       },
       grandtotal: { grandtotal: netPay },
     });
-  }, [form, selectedUser]);
+  }, [form, selectedUser, autoComputed]);
 
-  const handleAutoCalculate = async () => {
-    if (!selectedUser) return alert("Please select an employee first.");
-    
-    try {
-      // Get current month date range
-      const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-      
-      // Format dates as strings (MM/DD/YYYY)
-      const formatDate = (date: Date) => {
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const year = date.getFullYear();
-        return `${month}/${day}/${year}`;
-      };
-      
-      const startDate = formatDate(startOfMonth);
-      const endDate = formatDate(endOfMonth);
-      
-      const res = await payrollAPI.autoCalculatePayroll(selectedUser.userId || selectedUser._id, {
-        startDate,
-        endDate
-      });
-      
-      // Update form with auto-calculated data
-      if (res.data.payroll) {
-        const payroll = res.data.payroll;
-        setForm(prev => ({
-          ...prev,
-          monthlyRate: payroll.payrollRate?.monthlyRate || 0,
-          regularDays: payroll.workDays?.regularDays || 0,
-          absentDays: payroll.workDays?.absentDays || 0,
-          minsLate: payroll.workDays?.minsLate || 0,
-          totalHoursWorked: payroll.workDays?.totalHoursWorked || 0,
-          undertimeMinutes: payroll.workDays?.undertimeMinutes || 0,
-        }));
+  // Auto-fetch computed data when employee changes (no button)
+  useEffect(() => {
+    const run = async () => {
+      if (!selectedUser) return;
+      try {
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        const formatDate = (date: Date) => {
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          const year = date.getFullYear();
+          return `${month}/${day}/${year}`;
+        };
+        const startDate = formatDate(startOfMonth);
+        const endDate = formatDate(endOfMonth);
+
+        console.log('Auto-fetching payroll data for:', selectedUser.firstName, selectedUser.lastName);
+        console.log('Date range:', startDate, 'to', endDate);
+
+        const res = await payrollAPI.autoCalculatePayroll(
+          selectedUser.userId || selectedUser._id,
+          { startDate, endDate }
+        );
+
+        console.log('Auto-fetch response:', res.data);
+
+        if (res.data?.payroll) {
+          const p = res.data.payroll;
+          console.log('Setting auto-computed values:', {
+            totalHoursWorked: p.workDays?.totalHoursWorked,
+            minsLate: p.workDays?.minsLate,
+            undertimeMinutes: p.workDays?.undertimeMinutes,
+            regularDays: p.workDays?.regularDays,
+            absentDays: p.workDays?.absentDays,
+          });
+
+          setAutoComputed({
+            dailyRate: p.payrollRate?.dailyRate || 0,
+            hourlyRate: p.payrollRate?.hourlyRate || 0,
+            totalHoursWorked: p.workDays?.totalHoursWorked || 0,
+            minsLate: p.workDays?.minsLate || 0,
+            undertimeMinutes: p.workDays?.undertimeMinutes || 0,
+            regularDays: p.workDays?.regularDays || 0,
+            absentDays: p.workDays?.absentDays || 0,
+          });
+
+          setForm(prev => ({
+            ...prev,
+            monthlyRate: p.payrollRate?.monthlyRate ?? prev.monthlyRate,
+          }));
+        } else {
+          console.log('No payroll data found, setting defaults');
+          setAutoComputed({
+            dailyRate: 0,
+            hourlyRate: 0,
+            totalHoursWorked: 0,
+            minsLate: 0,
+            undertimeMinutes: 0,
+            regularDays: 0,
+            absentDays: 0,
+          });
+        }
+      } catch (err) {
+        console.error('Auto-fetch payroll data failed:', err);
+        // Set defaults on error
+        setAutoComputed({
+          dailyRate: 0,
+          hourlyRate: 0,
+          totalHoursWorked: 0,
+          minsLate: 0,
+          undertimeMinutes: 0,
+          regularDays: 0,
+          absentDays: 0,
+        });
       }
-      
-      alert("Payroll data auto-calculated successfully!");
-    } catch (err) {
-      console.error("Error auto-calculating payroll:", err);
-      alert("Failed to auto-calculate payroll data. Please check if the employee has time tracker and schedule data.");
-    }
-  };
+    };
+    run();
+  }, [selectedUser]);
 
   const handleCreate = async () => {
     if (!selectedUser || !payrollPreview)
@@ -374,6 +261,39 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
       setOpen(false);
     } catch (err) {
       console.error("Error creating payroll:", err);
+    }
+  };
+
+  const handleSendPayroll = async () => {
+    if (!selectedUser || !payrollPreview)
+      return alert("Select an employee and fill the form.");
+    
+    const confirmSend = window.confirm(
+      `Are you sure you want to send this payroll to ${selectedUser.firstName} ${selectedUser.lastName}?\n\nThis will:\n- Send the payroll to the employee\n- Reset payroll calculations for next cycle\n- Keep their monthly rate and deductions\n- Preserve time tracker data (continues accumulating)`
+    );
+    
+    if (!confirmSend) return;
+
+    try {
+      // First, create/update the payroll
+      const res = await payrollAPI.processPayroll(
+        payrollPreview as unknown as PayrollPayload
+      );
+      
+      // Then send the payroll (resets calculations only)
+      await payrollAPI.sendPayroll(
+        selectedUser.userId || selectedUser._id,
+        { 
+          payrollId: res.data.payroll?._id || res.data._id
+        }
+      );
+      
+      alert("Payroll sent successfully! Calculations reset for next cycle. Time tracker data preserved.");
+      onAdd(res.data.payroll || res.data);
+      setOpen(false);
+    } catch (err) {
+      console.error("Error sending payroll:", err);
+      alert("Error sending payroll. Please try again.");
     }
   };
 
@@ -410,24 +330,26 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                       </option>
                     ))}
                   </select>
-                  <Button 
-                    type="button" 
-                    onClick={handleAutoCalculate}
-                    variant="outline"
-                    disabled={!selectedUser}
-                  >
-                    Auto-Calculate
-                  </Button>
                 </div>
               </div>
-              {/* Form Fields Grouped */}
-              <div className="grid grid-cols-3 md:grid-cols-4 gap-4 py-4">
-                {/* Auto-calculated fields (disabled) */}
+              {/* Form Fields (only required ones) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+                <div className="flex flex-col">
+                  <label className="text-sm font-semibold">Monthly Rate</label>
+                  <input
+                    type="number"
+                    name="monthlyRate"
+                    value={form.monthlyRate}
+                    onChange={handleChange}
+                    className="border rounded px-2 py-1"
+                  />
+                </div>
+                {/* Auto (disabled) derived from monthly rate */}
                 <div className="flex flex-col">
                   <label className="text-sm font-semibold text-gray-600">Daily Rate (Auto)</label>
                   <input
                     type="number"
-                    value={round2(form.monthlyRate / 26)}
+                    value={round2((form.monthlyRate || 0) / 26)}
                     disabled
                     className="border rounded px-2 py-1 bg-gray-100 text-gray-600"
                   />
@@ -436,7 +358,7 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                   <label className="text-sm font-semibold text-gray-600">Hourly Rate (Auto)</label>
                   <input
                     type="number"
-                    value={round2((form.monthlyRate / 26) / 8)}
+                    value={round2(((form.monthlyRate || 0) / 26) / 8)}
                     disabled
                     className="border rounded px-2 py-1 bg-gray-100 text-gray-600"
                   />
@@ -445,77 +367,17 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                   <label className="text-sm font-semibold text-gray-600">Hours Worked (Auto)</label>
                   <input
                     type="number"
-                    value={form.totalHoursWorked}
+                    value={round2(autoComputed.totalHoursWorked || 0)}
                     disabled
                     className="border rounded px-2 py-1 bg-gray-100 text-gray-600"
                   />
                 </div>
                 <div className="flex flex-col">
-                  <label className="text-sm font-semibold text-gray-600">Late Minutes (Auto)</label>
-                  <input
-                    type="number"
-                    value={form.minsLate}
-                    disabled
-                    className="border rounded px-2 py-1 bg-gray-100 text-gray-600"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-sm font-semibold text-gray-600">Undertime Minutes (Auto)</label>
-                  <input
-                    type="number"
-                    value={form.undertimeMinutes}
-                    disabled
-                    className="border rounded px-2 py-1 bg-gray-100 text-gray-600"
-                  />
-                </div>
-                
-                {/* Editable fields */}
-                {formFields.filter(key => !['totalHoursWorked', 'undertimeMinutes'].includes(key)).map((key) => (
-                  <div key={key} className="flex flex-col">
-                    <label className="text-sm capitalize">{key}</label>
-                    <input
-                      type="number"
-                      name={key}
-                      value={form[key]}
-                      onChange={handleChange}
-                      className="border rounded px-2 py-1"
-                    />
-                  </div>
-                ))}
-
-                {/* Deductions - Editable */}
-                <div className="flex flex-col">
-                  <label className="text-sm font-semibold">
-                    SSS Employee Share
-                  </label>
+                  <label className="text-sm font-semibold">SSS</label>
                   <input
                     type="number"
                     name="sssEmployeeShare"
                     value={form.sssEmployeeShare}
-                    onChange={handleChange}
-                    className="border rounded px-2 py-1"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-sm font-semibold">
-                    PhilHealth Employee Share
-                  </label>
-                  <input
-                    type="number"
-                    name="phicEmployeeShare"
-                    value={form.phicEmployeeShare}
-                    onChange={handleChange}
-                    className="border rounded px-2 py-1"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-sm font-semibold">
-                    Pag-IBIG Employee Share
-                  </label>
-                  <input
-                    type="number"
-                    name="hdmfEmployeeShare"
-                    value={form.hdmfEmployeeShare}
                     onChange={handleChange}
                     className="border rounded px-2 py-1"
                   />
@@ -531,33 +393,17 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                   />
                 </div>
                 <div className="flex flex-col">
-                  <label className="text-sm font-semibold">
-                    Total SSS Contribution
-                  </label>
+                  <label className="text-sm font-semibold">PAG-IBIG</label>
                   <input
                     type="number"
-                    name="totalSSScontribution"
-                    value={form.totalSSScontribution}
+                    name="hdmfEmployeeShare"
+                    value={form.hdmfEmployeeShare}
                     onChange={handleChange}
                     className="border rounded px-2 py-1"
                   />
                 </div>
                 <div className="flex flex-col">
-                  <label className="text-sm font-semibold">
-                    Non-Taxable Income
-                  </label>
-                  <input
-                    type="number"
-                    name="nonTaxableIncome"
-                    value={form.nonTaxableIncome}
-                    onChange={handleChange}
-                    className="border rounded px-2 py-1"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-sm font-semibold">
-                    Taxable Income
-                  </label>
+                  <label className="text-sm font-semibold">TAXABLE INCOME</label>
                   <input
                     type="number"
                     name="taxableIncome"
@@ -567,81 +413,11 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                   />
                 </div>
                 <div className="flex flex-col">
-                  <label className="text-sm font-semibold">
-                    Withholding Tax
-                  </label>
-                  <input
-                    type="number"
-                    name="withHoldingTax"
-                    value={form.withHoldingTax}
-                    onChange={handleChange}
-                    className="border rounded px-2 py-1"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-sm font-semibold">
-                    SSS Salary Loan
-                  </label>
-                  <input
-                    type="number"
-                    name="sssSalaryLoan"
-                    value={form.sssSalaryLoan}
-                    onChange={handleChange}
-                    className="border rounded px-2 py-1"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-sm font-semibold">HDMF Loan</label>
+                  <label className="text-sm font-semibold">HDMF LOAN</label>
                   <input
                     type="number"
                     name="hdmfLoan"
                     value={form.hdmfLoan}
-                    onChange={handleChange}
-                    className="border rounded px-2 py-1"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-sm font-semibold">Unpaid Days</label>
-                  <input
-                    type="number"
-                    name="unpaid"
-                    value={form.unpaid}
-                    onChange={handleChange}
-                    className="border rounded px-2 py-1"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-sm font-semibold">
-                    Salary Increase
-                  </label>
-                  <input
-                    type="number"
-                    name="increase"
-                    value={form.increase}
-                    onChange={handleChange}
-                    className="border rounded px-2 py-1"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-sm font-semibold">
-                    Non-Taxable Allowance
-                  </label>
-                  <input
-                    type="number"
-                    name="nonTaxableAllowance"
-                    value={form.nonTaxableAllowance}
-                    onChange={handleChange}
-                    className="border rounded px-2 py-1"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-sm font-semibold">
-                    Performance Bonus
-                  </label>
-                  <input
-                    type="number"
-                    name="performanceBonus"
-                    value={form.performanceBonus}
                     onChange={handleChange}
                     className="border rounded px-2 py-1"
                   />
@@ -657,176 +433,33 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                   </h3>
                   <div className="grid grid-cols-1 gap-4 text-sm">
                     <div>
-                      <h4 className="font-semibold mb-2">Employee Info</h4>
-                      <ul>
+                      <ul className="space-y-1">
                         <li>
-                          <b>Full Name:</b> {payrollPreview.employee.fullName}
+                          <b>Monthly Rate:</b> {payrollPreview.payrollRate?.monthlyRate.toFixed(2) ?? 0}
                         </li>
                         <li>
-                          <b>Email:</b> {payrollPreview.employee.email}
+                          <b>Hours Worked:</b> {payrollPreview.workDays?.totalHoursWorked?.toFixed(2) ?? 0}
                         </li>
                         <li>
-                          <b>Position:</b> {payrollPreview.employee.position}
-                        </li>
-                      </ul>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold mb-2">Payroll Rate</h4>
-                      <ul>
-                        <li>
-                          <b>Monthly:</b>{" "}
-                          {payrollPreview.payrollRate?.monthlyRate.toFixed(2) ??
-                            0}
+                          <b>SSS:</b> {payrollPreview.totalDeductions?.sssEmployeeShare?.toFixed(2) ?? 0}
                         </li>
                         <li>
-                          <b>Daily:</b>{" "}
-                          {payrollPreview.payrollRate?.dailyRate.toFixed(2) ??
-                            0}
+                          <b>WISP:</b> {payrollPreview.totalDeductions?.wisp?.toFixed(2) ?? 0}
                         </li>
                         <li>
-                          <b>Hourly:</b>{" "}
-                          {payrollPreview.payrollRate?.hourlyRate.toFixed(2) ??
-                            0}
-                        </li>
-                      </ul>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold mb-2">Work Days</h4>
-                      <ul>
-                        <li>
-                          <b>Regular Days:</b>{" "}
-                          {payrollPreview.workDays?.regularDays ?? 0}
+                          <b>PAG-IBIG:</b> {payrollPreview.totalDeductions?.hdmfEmployeeShare?.toFixed(2) ?? 0}
                         </li>
                         <li>
-                          <b>Absent Days:</b>{" "}
-                          {payrollPreview.workDays?.absentDays ?? 0}
+                          <b>TAXABLE INCOME:</b> {payrollPreview.totalDeductions?.taxableIncome?.toFixed(2) ?? 0}
                         </li>
                         <li>
-                          <b>Minutes Late:</b>{" "}
-                          {payrollPreview.workDays?.minsLate ?? 0}
+                          <b>HDMF LOAN:</b> {payrollPreview.totalDeductions?.hdmfLoan?.toFixed(2) ?? 0}
+                        </li>
+                        <li className="pt-2">
+                          <b>Net Pay:</b> {payrollPreview.grandtotal?.grandtotal?.toFixed(2) ?? 0}
                         </li>
                         <li>
-                          <b>Hours Worked:</b>{" "}
-                          {payrollPreview.workDays?.totalHoursWorked?.toFixed(2) ?? 0}
-                        </li>
-                        <li>
-                          <b>Undertime Minutes:</b>{" "}
-                          {payrollPreview.workDays?.undertimeMinutes ?? 0}
-                        </li>
-                      </ul>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold mb-2">Holidays</h4>
-                      <ul>
-                        <li>
-                          <b>Reg Holiday Days:</b>{" "}
-                          {payrollPreview.holidays?.regHoliday ?? 0}
-                        </li>
-                        <li>
-                          <b>Reg Holiday Pay:</b>{" "}
-                          {payrollPreview.holidays?.regHolidayPay?.toFixed(2) ??
-                            0}
-                        </li>
-                        <li>
-                          <b>Spe Holiday Days:</b>{" "}
-                          {payrollPreview.holidays?.speHoliday ?? 0}
-                        </li>
-                        <li>
-                          <b>Spe Holiday Pay:</b>{" "}
-                          {payrollPreview.holidays?.speHolidayPay?.toFixed(2) ??
-                            0}
-                        </li>
-                      </ul>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold mb-2">Overtime</h4>
-                      <ul>
-                        <li>
-                          <b>Regular OT Hours:</b>{" "}
-                          {payrollPreview.totalOvertime?.regularOT ?? 0}
-                        </li>
-                        <li>
-                          <b>Regular OT Pay:</b>{" "}
-                          {payrollPreview.totalOvertime?.regularOTpay?.toFixed(
-                            2
-                          ) ?? 0}
-                        </li>
-                        <li>
-                          <b>Rest Day OT Hours:</b>{" "}
-                          {payrollPreview.totalOvertime?.restDayOtHours ?? 0}
-                        </li>
-                        <li>
-                          <b>Rest Day OT Pay:</b>{" "}
-                          {payrollPreview.totalOvertime?.restDayOtPay?.toFixed(
-                            2
-                          ) ?? 0}
-                        </li>
-                        <li>
-                          <b>Total OT Pay:</b>{" "}
-                          {payrollPreview.totalOvertime?.totalOvertime?.toFixed(
-                            2
-                          ) ?? 0}
-                        </li>
-                      </ul>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold mb-2">Supplementary</h4>
-                      <ul>
-                        <li>
-                          <b>Night Diff Hours:</b>{" "}
-                          {payrollPreview.totalSupplementary?.nightDiffHours ??
-                            0}
-                        </li>
-                        <li>
-                          <b>Night Diff Pay:</b>{" "}
-                          {payrollPreview.totalSupplementary?.nightDiffPay?.toFixed(
-                            2
-                          ) ?? 0}
-                        </li>
-                        <li>
-                          <b>Total Supplementary:</b>{" "}
-                          {payrollPreview.totalSupplementary?.totalSupplementaryIncome?.toFixed(
-                            2
-                          ) ?? 0}
-                        </li>
-                      </ul>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold mb-2">Deductions</h4>
-                      <ul>
-                        <li>
-                          <b>Total Deductions:</b>{" "}
-                          {payrollPreview.totalDeductions?.totalDeductions?.toFixed(
-                            2
-                          ) ?? 0}
-                        </li>
-                        <li>
-                          <b>SSS:</b>{" "}
-                          {payrollPreview.totalDeductions?.sssEmployeeShare?.toFixed(
-                            2
-                          ) ?? 0}
-                        </li>
-                        <li>
-                          <b>PhilHealth:</b>{" "}
-                          {payrollPreview.totalDeductions?.phicEmployeeShare?.toFixed(
-                            2
-                          ) ?? 0}
-                        </li>
-                        <li>
-                          <b>Pag-IBIG:</b>{" "}
-                          {payrollPreview.totalDeductions?.hdmfEmployeeShare?.toFixed(
-                            2
-                          ) ?? 0}
-                        </li>
-                      </ul>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold mb-2">Net Pay</h4>
-                      <ul>
-                        <li>
-                          <b>Grand Total:</b>{" "}
-                          {payrollPreview.grandtotal?.grandtotal?.toFixed(2) ??
-                            0}
+                          <b>Grand Total:</b> 0.00
                         </li>
                       </ul>
                     </div>
@@ -836,7 +469,14 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
             </aside>
           </div>
           <DialogFooter className="mt-6">
-            <Button onClick={handleCreate}>Save Payroll</Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleCreate}>
+                Save Payroll
+              </Button>
+              <Button onClick={handleSendPayroll} className="bg-green-600 hover:bg-green-700">
+                Send Payroll
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

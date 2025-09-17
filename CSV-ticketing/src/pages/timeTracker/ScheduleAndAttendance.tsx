@@ -735,9 +735,8 @@ const ScheduleAndAttendance: React.FC = () => {
     if (selectedEmployee && selectedDate) {
       try {
         // Format the date for the API
-        const formattedDate = `${
-          selectedDate.getMonth() + 1
-        }/${selectedDate.getDate()}/${selectedDate.getFullYear()}`;
+        const formattedDate = `${selectedDate.getMonth() + 1
+          }/${selectedDate.getDate()}/${selectedDate.getFullYear()}`;
 
         // Determine if the status requires time data
         const needsTimeData = [
@@ -1051,16 +1050,14 @@ const ScheduleAndAttendance: React.FC = () => {
                         className="p-2 border text-center min-w-32"
                       >
                         <div
-                          className={`font-medium ${
-                            isToday(day) ? "text-blue-600" : ""
-                          }`}
+                          className={`font-medium ${isToday(day) ? "text-blue-600" : ""
+                            }`}
                         >
                           {format(day, "EEE")}
                         </div>
                         <div
-                          className={`text-sm ${
-                            isToday(day) ? "text-blue-600 font-bold" : ""
-                          }`}
+                          className={`text-sm ${isToday(day) ? "text-blue-600 font-bold" : ""
+                            }`}
                         >
                           {format(day, "MMM d")}
                         </div>
@@ -1105,11 +1102,10 @@ const ScheduleAndAttendance: React.FC = () => {
                         return (
                           <td
                             key={day.toString()}
-                            className={`p-2 border text-center cursor-pointer ${
-                              isToday(day)
-                                ? "bg-blue-50 hover:!bg-blue-100"
-                                : ""
-                            } hover:bg-blue-100`}
+                            className={`p-2 border text-center cursor-pointer ${isToday(day)
+                              ? "bg-blue-50 hover:!bg-blue-100"
+                              : ""
+                              } hover:bg-blue-100`}
                             onClick={() =>
                               handleScheduleCellClick(employee, day)
                             }
@@ -1133,14 +1129,14 @@ const ScheduleAndAttendance: React.FC = () => {
                                       </Badge>
                                       {displayShiftInfo(scheduleEntry.shiftType)
                                         .time && (
-                                        <span className="text-xs text-gray-500 mt-1">
-                                          {
-                                            displayShiftInfo(
-                                              scheduleEntry.shiftType
-                                            ).time
-                                          }
-                                        </span>
-                                      )}
+                                          <span className="text-xs text-gray-500 mt-1">
+                                            {
+                                              displayShiftInfo(
+                                                scheduleEntry.shiftType
+                                              ).time
+                                            }
+                                          </span>
+                                        )}
                                     </div>
                                   </TooltipTrigger>
                                   <TooltipContent className="max-w-xs whitespace-pre-line text-sm">
@@ -1526,12 +1522,12 @@ const ScheduleAndAttendance: React.FC = () => {
                   selectedAttendanceStatus === "Present" ||
                   selectedAttendanceStatus === "RDOT" ||
                   selectedAttendanceStatus === "Early Log Out") && (
-                  <div className="text-sm text-gray-600">
-                    <p>
-                      Time data will be automatically filled from time records.
-                    </p>
-                  </div>
-                )}
+                    <div className="text-sm text-gray-600">
+                      <p>
+                        Time data will be automatically filled from time records.
+                      </p>
+                    </div>
+                  )}
               </div>
             </TabsContent>
           </Tabs>
