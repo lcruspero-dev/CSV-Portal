@@ -1,5 +1,6 @@
 const Payroll = require("../models/payroll");
 const EmployeeTime = require("../models/employeeTimeModel");
+const Payslip = require("../models/payslipModel");
 const { ScheduleEntry } = require("../models/ScheduleAndAttendanceModel");
 const UserProfile = require("../models/userProfileModel");
 
@@ -19,7 +20,7 @@ function minutesToHours(minutes) {
 function getWorkDaysInMonth(year, month) {
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     let workDays = 0;
-    
+
     for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(year, month, day);
         const dayOfWeek = date.getDay();
@@ -28,7 +29,7 @@ function getWorkDaysInMonth(year, month) {
             workDays++;
         }
     }
-    
+
     return workDays;
 }
 
@@ -40,11 +41,11 @@ async function calculatePayrollData(userId, startDate, endDate) {
         const end = new Date(endDate);
         const year = start.getFullYear();
         const month = start.getMonth();
-        
+
         // Get employee profile for monthly salary
         const userProfile = await UserProfile.findOne({ userId });
         const monthlySalary = userProfile?.monthlySalary || 0;
-        
+
         // Get time tracker data for the period
         const timeRecords = await EmployeeTime.find({
             employeeId: userId,
@@ -53,61 +54,61 @@ async function calculatePayrollData(userId, startDate, endDate) {
                 $lte: endDate
             }
         });
-        
+
         // Get schedule data
         const scheduleEntry = await ScheduleEntry.findOne({ employeeId: userId.toString() });
-        
+
         let totalHoursWorked = 0;
         let totalLateMinutes = 0;
         let totalUndertimeMinutes = 0;
         let regularDays = 0;
         let absentDays = 0;
-        
+
         // Process each time record
         for (const record of timeRecords) {
             if (!record.timeIn || !record.timeOut) continue;
-            
+
             // Find schedule for this date
             const schedule = scheduleEntry?.schedule?.find(s => s.date === record.date);
             if (!schedule || !schedule.startTime || !schedule.endTime) continue;
-            
+
             // Convert times to minutes
             const timeInMinutes = timeToMinutes(record.timeIn);
             const timeOutMinutes = timeToMinutes(record.timeOut);
             const scheduledStartMinutes = timeToMinutes(schedule.startTime);
             const scheduledEndMinutes = timeToMinutes(schedule.endTime);
-            
+
             // Adjust time in: if earlier than scheduled start, use scheduled start
             const adjustedTimeIn = Math.max(timeInMinutes, scheduledStartMinutes);
-            
+
             // Calculate late minutes
             if (timeInMinutes > scheduledStartMinutes) {
                 totalLateMinutes += (timeInMinutes - scheduledStartMinutes);
             }
-            
+
             // Adjust time out: if earlier than scheduled end, count as undertime
             const adjustedTimeOut = Math.min(timeOutMinutes, scheduledEndMinutes);
-            
+
             // Calculate undertime minutes
             if (timeOutMinutes < scheduledEndMinutes) {
                 totalUndertimeMinutes += (scheduledEndMinutes - timeOutMinutes);
             }
-            
+
             // Calculate hours worked (excluding lunch break)
             const hoursWorked = (adjustedTimeOut - adjustedTimeIn) / 60;
             totalHoursWorked += Math.max(0, hoursWorked);
-            
+
             regularDays++;
         }
-        
+
         // Calculate absent days
         const totalWorkDays = getWorkDaysInMonth(year, month);
         absentDays = Math.max(0, totalWorkDays - regularDays);
-        
+
         // Calculate rates
         const dailyRate = monthlySalary / totalWorkDays;
         const hourlyRate = dailyRate / 8; // Assuming 8 hours per day
-        
+
         return {
             monthlySalary,
             dailyRate,
@@ -118,7 +119,7 @@ async function calculatePayrollData(userId, startDate, endDate) {
             regularDays,
             absentDays
         };
-        
+
     } catch (error) {
         console.error('Error calculating payroll data:', error);
         throw error;
@@ -217,10 +218,10 @@ exports.autoUpdatePayrollFromTimeTracker = async (userId, startDate, endDate) =>
     try {
         // Calculate payroll data from time tracker
         const calculatedData = await calculatePayrollData(userId, startDate, endDate);
-        
+
         // Find existing payroll or create new one
         let payroll = await Payroll.findOne({ "payrollRate.userId": userId });
-        
+
         if (!payroll) {
             // Create new payroll with auto-calculated data
             payroll = new Payroll({
@@ -275,25 +276,25 @@ exports.autoUpdatePayrollFromTimeTracker = async (userId, startDate, endDate) =>
             payroll.payrollRate.monthlyRate = calculatedData.monthlySalary;
             payroll.payrollRate.dailyRate = calculatedData.dailyRate;
             payroll.payrollRate.hourlyRate = calculatedData.hourlyRate;
-            
+
             payroll.workDays.regularDays = calculatedData.regularDays;
             payroll.workDays.absentDays = calculatedData.absentDays;
             payroll.workDays.minsLate = calculatedData.totalLateMinutes;
             payroll.workDays.totalHoursWorked = calculatedData.totalHoursWorked;
             payroll.workDays.undertimeMinutes = calculatedData.totalUndertimeMinutes;
-            
+
             payroll.latesAndAbsent.absentDays = calculatedData.absentDays;
             payroll.latesAndAbsent.minLateUT = calculatedData.totalLateMinutes;
         }
-        
+
         // Recompute all payroll calculations
         computePayroll(payroll);
-        
+
         // Save the payroll
         await payroll.save();
-        
+
         return payroll;
-        
+
     } catch (error) {
         console.error('Error auto-updating payroll:', error);
         throw error;
@@ -318,7 +319,7 @@ exports.processPayroll = async (req, res) => {
                 const now = new Date();
                 const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
                 const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-                
+
                 // Format dates as strings (MM/DD/YYYY)
                 const formatDate = (date) => {
                     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -326,13 +327,13 @@ exports.processPayroll = async (req, res) => {
                     const year = date.getFullYear();
                     return `${month}/${day}/${year}`;
                 };
-                
+
                 const startDate = formatDate(startOfMonth);
                 const endDate = formatDate(endOfMonth);
-                
+
                 // Auto-calculate payroll data
                 const calculatedData = await calculatePayrollData(payrollRate.userId, startDate, endDate);
-                
+
                 // Merge request body with calculated data
                 const payrollData = {
                     ...req.body,
@@ -351,7 +352,7 @@ exports.processPayroll = async (req, res) => {
                         undertimeMinutes: calculatedData.totalUndertimeMinutes
                     }
                 };
-                
+
                 payroll = new Payroll(payrollData);
             } catch (error) {
                 console.error('Error auto-calculating payroll data:', error);
@@ -469,17 +470,17 @@ exports.updatePayroll = async (req, res) => {
             const year = now.getFullYear();
             const month = now.getMonth();
             const totalWorkDays = getWorkDaysInMonth(year, month);
-            
+
             req.body.payrollRate.dailyRate = monthlyRate / totalWorkDays;
             req.body.payrollRate.hourlyRate = req.body.payrollRate.dailyRate / 8;
         }
 
         // Update the payroll
         deepUpdate(payroll, req.body);
-        
+
         // Recompute all calculations
         computePayroll(payroll);
-        
+
         // Save the updated payroll
         const updatedPayroll = await payroll.save();
 
@@ -494,12 +495,17 @@ exports.updatePayroll = async (req, res) => {
 exports.getEmployeePayslips = async (req, res) => {
     try {
         const { userId } = req.params;
-        
-        // Get all sent payrolls for this employee
-        const payslips = await Payroll.find({
-            "payrollRate.userId": userId,
-            status: 'sent'
-        }).sort({ sentAt: -1 }); // Most recent first
+        // Prefer real payslip snapshots if available
+        let payslips = await Payslip.find({ userId }).sort({ sentAt: -1 }).lean();
+
+        // Backward compatibility: if no snapshots yet, fall back to current Payroll marked sent
+        if (!payslips || payslips.length === 0) {
+            const sentPayrolls = await Payroll.find({
+                "payrollRate.userId": userId,
+                status: 'sent'
+            }).sort({ sentAt: -1 }).lean();
+            payslips = sentPayrolls;
+        }
 
         if (!payslips || payslips.length === 0) {
             return res.status(404).json({
@@ -533,9 +539,9 @@ exports.sendPayroll = async (req, res) => {
         // Find the payroll
         const payroll = await Payroll.findById(payrollId);
         if (!payroll) {
-            return res.status(404).json({ 
-                status: "Error", 
-                message: "Payroll not found" 
+            return res.status(404).json({
+                status: "Error",
+                message: "Payroll not found"
             });
         }
 
@@ -544,10 +550,60 @@ exports.sendPayroll = async (req, res) => {
         payroll.sentAt = new Date();
         await payroll.save();
 
+        // Determine current period (month) and collect time tracker entries
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        const toStr = (d) => {
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            const yyyy = d.getFullYear();
+            return `${mm}/${dd}/${yyyy}`;
+        };
+        const periodStart = toStr(startOfMonth);
+        const periodEnd = toStr(endOfMonth);
+
+        const timeEntriesRaw = await EmployeeTime.find({
+            employeeId: userId,
+            date: { $gte: periodStart, $lte: periodEnd }
+        }).lean();
+
+        const timeEntries = (timeEntriesRaw || []).map((t) => ({
+            date: t.date,
+            hoursWorked: Number(t.totalHours || 0)
+        }));
+
+        // Snapshot a payslip document
+        try {
+            await Payslip.create({
+                userId,
+                sentAt: payroll.sentAt,
+                periodStart,
+                periodEnd,
+                employee: payroll.employee,
+                payrollRate: payroll.payrollRate,
+                workDays: payroll.workDays,
+                holidays: payroll.holidays,
+                latesAndAbsent: payroll.latesAndAbsent,
+                salaryAdjustments: payroll.salaryAdjustments,
+                totalOvertime: payroll.totalOvertime,
+                totalSupplementary: payroll.totalSupplementary,
+                grossSalary: payroll.grossSalary,
+                totalDeductions: payroll.totalDeductions,
+                pay: payroll.pay,
+                grandtotal: payroll.grandtotal,
+                timeEntries,
+                status: 'sent',
+            });
+        } catch (snapErr) {
+            console.error('Failed to snapshot payslip:', snapErr);
+            // proceed anyway
+        }
+
         // Reset only the payroll calculation fields (NOT time tracker data)
         // This allows time tracker to continue accumulating data
         // but payroll calculations start fresh for next cycle
-        
+
         // Reset work days and time-related calculations
         payroll.workDays = {
             regularDays: 0,
@@ -610,10 +666,10 @@ exports.sendPayroll = async (req, res) => {
 
     } catch (error) {
         console.error('Error sending payroll:', error);
-        res.status(500).json({ 
-            status: "Error", 
+        res.status(500).json({
+            status: "Error",
             message: "Failed to send payroll",
-            error: error.message 
+            error: error.message
         });
     }
 };

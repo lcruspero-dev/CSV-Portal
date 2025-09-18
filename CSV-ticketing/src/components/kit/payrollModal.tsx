@@ -35,7 +35,13 @@ export interface Payroll {
     hourlyRate: number;
   };
   pay?: { basicPay: number };
-  workDays?: { regularDays: number; absentDays: number; minsLate: number };
+  workDays?: {
+    regularDays: number;
+    absentDays: number;
+    minsLate: number;
+    totalHoursWorked: number;
+    undertimeMinutes: number
+  };
   holidays?: {
     regHoliday: number;
     regHolidayPay: number;
@@ -52,6 +58,7 @@ export interface Payroll {
 type PayrollModal = Payroll & {
   _id?: string;
   basicSalary: number;
+  totalHoursWorked: number;
 };
 
 const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
@@ -119,11 +126,11 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
 
     const totalDeductions = round2(
       (form.sssEmployeeShare || 0) +
-        (form.wisp || 0) +
-        (form.hdmfEmployeeShare || 0) +
-        (form.taxableIncome || 0) +
-        (form.hdmfLoan || 0) +
-        lateDeduction
+      (form.wisp || 0) +
+      (form.hdmfEmployeeShare || 0) +
+      (form.taxableIncome || 0) +
+      (form.hdmfLoan || 0) +
+      lateDeduction
     );
     const netPay = round2(grossSalary - totalDeductions);
 
@@ -267,11 +274,11 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
   const handleSendPayroll = async () => {
     if (!selectedUser || !payrollPreview)
       return alert("Select an employee and fill the form.");
-    
+
     const confirmSend = window.confirm(
       `Are you sure you want to send this payroll to ${selectedUser.firstName} ${selectedUser.lastName}?\n\nThis will:\n- Send the payroll to the employee\n- Reset payroll calculations for next cycle\n- Keep their monthly rate and deductions\n- Preserve time tracker data (continues accumulating)`
     );
-    
+
     if (!confirmSend) return;
 
     try {
@@ -279,15 +286,15 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
       const res = await payrollAPI.processPayroll(
         payrollPreview as unknown as PayrollPayload
       );
-      
+
       // Then send the payroll (resets calculations only)
       await payrollAPI.sendPayroll(
         selectedUser.userId || selectedUser._id,
-        { 
+        {
           payrollId: res.data.payroll?._id || res.data._id
         }
       );
-      
+
       alert("Payroll sent successfully! Calculations reset for next cycle. Time tracker data preserved.");
       onAdd(res.data.payroll || res.data);
       setOpen(false);
@@ -296,8 +303,6 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
       alert("Error sending payroll. Please try again.");
     }
   };
-
-  const formFields = Object.keys(form) as (keyof typeof form)[];
 
   return (
     <>

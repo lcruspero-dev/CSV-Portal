@@ -282,6 +282,87 @@ const UpdatePayrollModal = ({
     }
   };
 
+  const handleSendPayroll = async () => {
+    try {
+      // Prepare same payload as update to persist latest edits before sending
+      const monthly = Number(formData.payrollRate?.monthlyRate ?? 0);
+      const daily = monthly / 26;
+      const hourly = daily / 8;
+
+      const payload: Partial<PayrollPayload> = {
+        payrollRate: {
+          ...(formData.payrollRate as any),
+          monthlyRate: monthly,
+          dailyRate: Math.round((daily || 0) * 100) / 100,
+          hourlyRate: Math.round((hourly || 0) * 100) / 100,
+        } as any,
+        pay: { basicPay: preview.basicPay },
+        holidays: {
+          ...(formData.holidays as any),
+          regHoliday: formData.holidays?.regHoliday ?? 0,
+          speHoliday: formData.holidays?.speHoliday ?? 0,
+          regHolidayPay: preview.regHolidayPay,
+          speHolidayPay: preview.speHolidayPay,
+        } as any,
+        totalOvertime: {
+          ...(formData.totalOvertime as any),
+          regularOTpay: preview.regularOTpay,
+          restDayOtPay: preview.restDayOtPay,
+          restDayOtHoursExcessPay: preview.restDayOtExcessPay,
+          regularHolidayWorkedPay: preview.regularHolidayWorkedPay,
+          regularHolidayWorkedExcessPay: preview.regularHolidayWorkedExcessPay,
+          specialHolidayWorkedPay: preview.specialHolidayWorkedPay,
+          specialHolidayWorkedOTpay: preview.specialHolidayWorkedOTpay,
+          specialHolidayRDworkedPay: preview.specialHolidayRDworkedPay,
+          specialHolidayRDworkedOTpay: preview.specialHolidayRDworkedOTpay,
+          totalOvertime: preview.totalOvertime,
+        } as any,
+        totalSupplementary: {
+          ...(formData.totalSupplementary as any),
+          nightDiffPay: preview.nightDiffPay,
+          regOTnightDiffPay: preview.regOTnightDiffPay,
+          restDayNDPay: preview.restDayNDPay,
+          regHolNDpay: preview.regHolNDPay,
+          specialHolidayNDpay: preview.specialHolidayNDpay,
+          totalSupplementaryIncome: preview.totalSupplementaryIncome,
+        } as any,
+        salaryAdjustments: {
+          ...(formData.salaryAdjustments as any),
+          unpaidAmount: preview.unpaidAmount,
+        } as any,
+        grossSalary: {
+          ...(formData.grossSalary as any),
+          grossSalary: preview.grossSalary,
+        } as any,
+        totalDeductions: {
+          ...(formData.totalDeductions as any),
+          totalDeductions: preview.totalDeductions,
+        } as any,
+        grandtotal: { grandtotal: preview.netPay } as any,
+      };
+
+      const confirmSend = window.confirm(
+        `Send this payroll to ${formData.employee?.fullName}? This will mark it as sent, snapshot a payslip, and reset computed fields for the next cycle. Monthly rate and deductions are preserved.`
+      );
+      if (!confirmSend) return;
+
+      // 1) Save current edits
+      const updated = await payrollAPI.updatePayroll((payroll as any)._id, payload);
+
+      // 2) Send payroll (snapshot and reset on server)
+      const userId = (formData.payrollRate as any)?.userId || (payroll as any)?.payrollRate?.userId;
+      const payrollId = updated?.data?._id || (payroll as any)._id;
+      await payrollAPI.sendPayroll(userId as string, { payrollId });
+
+      if (onUpdated) onUpdated(updated.data);
+      alert("Payroll sent successfully.");
+      setOpen(false);
+    } catch (err) {
+      console.error("Send payroll failed:", err);
+      alert("Failed to send payroll. Please try again.");
+    }
+  };
+
   // ===== Preview Computations (mirrors create modal) =====
   const round2 = (n: number) => Math.round((n || 0) * 100) / 100;
 
@@ -290,7 +371,6 @@ const UpdatePayrollModal = ({
     const dailyRate = monthlyRate / 26; // auto-derive from monthly
     const hourlyRate = dailyRate / 8;
 
-    const regularDays = formData.workDays?.regularDays ?? 0;
     const absentDays = formData.workDays?.absentDays ?? 0;
     const minsLate = formData.workDays?.minsLate ?? 0;
 
@@ -347,49 +427,49 @@ const UpdatePayrollModal = ({
 
     const totalOvertime = round2(
       regularOTpay +
-        restDayOtPay +
-        restDayOtExcessPay +
-        regularHolidayWorkedPay +
-        regularHolidayWorkedExcessPay +
-        specialHolidayWorkedPay +
-        specialHolidayWorkedOTpay +
-        specialHolidayRDworkedPay +
-        specialHolidayRDworkedOTpay
+      restDayOtPay +
+      restDayOtExcessPay +
+      regularHolidayWorkedPay +
+      regularHolidayWorkedExcessPay +
+      specialHolidayWorkedPay +
+      specialHolidayWorkedOTpay +
+      specialHolidayRDworkedPay +
+      specialHolidayRDworkedOTpay
     );
 
     const totalSupplementaryIncome = round2(
       nightDiffPay +
-        regOTnightDiffPay +
-        restDayNDPay +
-        regHolNDPay +
-        specialHolidayNDpay
+      regOTnightDiffPay +
+      restDayNDPay +
+      regHolNDPay +
+      specialHolidayNDpay
     );
 
     const grossSalary = round2(
       basicPay +
-        regHolidayPay +
-        speHolidayPay +
-        totalOvertime +
-        totalSupplementaryIncome +
-        (adj.increase ?? 0) +
-        (gross.nonTaxableAllowance ?? 0) +
-        (gross.performanceBonus ?? 0)
+      regHolidayPay +
+      speHolidayPay +
+      totalOvertime +
+      totalSupplementaryIncome +
+      (adj.increase ?? 0) +
+      (gross.nonTaxableAllowance ?? 0) +
+      (gross.performanceBonus ?? 0)
     );
 
     const unpaidAmount = round2((adj.unpaid ?? 0) * dailyRate);
 
     const totalDeductions = round2(
       absentDeduction +
-        lateDeduction +
-        (ded.sssEmployeeShare ?? 0) +
-        (ded.phicEmployeeShare ?? 0) +
-        (ded.hdmfEmployeeShare ?? 0) +
-        (ded.wisp ?? 0) +
-        (ded.totalSSScontribution ?? 0) +
-        (ded.withHoldingTax ?? 0) +
-        (ded.sssSalaryLoan ?? 0) +
-        (ded.hdmfLoan ?? 0) +
-        unpaidAmount
+      lateDeduction +
+      (ded.sssEmployeeShare ?? 0) +
+      (ded.phicEmployeeShare ?? 0) +
+      (ded.hdmfEmployeeShare ?? 0) +
+      (ded.wisp ?? 0) +
+      (ded.totalSSScontribution ?? 0) +
+      (ded.withHoldingTax ?? 0) +
+      (ded.sssSalaryLoan ?? 0) +
+      (ded.hdmfLoan ?? 0) +
+      unpaidAmount
     );
 
     const netPay = round2(grossSalary - totalDeductions);
@@ -478,6 +558,12 @@ const UpdatePayrollModal = ({
               <div className="border rounded-lg p-4 bg-gray-50">
                 <h3 className="text-lg font-semibold mb-3">Payroll Preview</h3>
                 <div className="space-y-3 text-sm">
+                  <div>
+                    <h4 className="font-semibold mb-1">Pay Period</h4>
+                    <div className="text-gray-700">
+                      {new Date().toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
+                    </div>
+                  </div>
                   <div>
                     <h4 className="font-semibold mb-1">Employee Info</h4>
                     <ul>
@@ -593,6 +679,20 @@ const UpdatePayrollModal = ({
                       {preview.netPay.toFixed(2)}
                     </div>
                   </div>
+                  <div>
+                    <h4 className="font-semibold mb-1">Summary</h4>
+                    <ul>
+                      <li>
+                        <b>Basic Pay:</b> {preview.basicPay.toFixed(2)}
+                      </li>
+                      <li>
+                        <b>Total Deductions:</b> {preview.totalDeductions.toFixed(2)}
+                      </li>
+                      <li className="text-green-700 font-semibold">
+                        <b>Net Pay:</b> {preview.netPay.toFixed(2)}
+                      </li>
+                    </ul>
+                  </div>
                 </div>
               </div>
             </aside>
@@ -604,6 +704,9 @@ const UpdatePayrollModal = ({
               Cancel
             </Button>
             <Button onClick={handleUpdate}>Save Changes</Button>
+            <Button onClick={handleSendPayroll} className="bg-green-600 hover:bg-green-700">
+              Send Payroll
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

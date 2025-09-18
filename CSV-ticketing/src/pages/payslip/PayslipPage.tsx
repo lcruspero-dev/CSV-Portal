@@ -13,6 +13,8 @@ interface Payslip {
     position: string;
     email: string;
   };
+  periodStart?: string;
+  periodEnd?: string;
   payrollRate: {
     monthlyRate: number;
     dailyRate: number;
@@ -25,6 +27,7 @@ interface Payslip {
     totalHoursWorked: number;
     undertimeMinutes: number;
   };
+  timeEntries?: { date: string; hoursWorked: number }[];
   pay: {
     basicPay: number;
   };
@@ -58,11 +61,11 @@ const PayslipPage: React.FC = () => {
 
   useEffect(() => {
     const fetchPayslips = async () => {
-      if (!user?.userId) return;
-      
+      if (!user?._id) return;
+
       try {
         setLoading(true);
-        const response = await payrollAPI.getEmployeePayslips(user.userId);
+        const response = await payrollAPI.getEmployeePayslips(user._id);
         setPayslips(response.data.payslips || []);
       } catch (error) {
         console.error('Error fetching payslips:', error);
@@ -72,7 +75,7 @@ const PayslipPage: React.FC = () => {
     };
 
     fetchPayslips();
-  }, [user?.userId]);
+  }, [user?._id]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -167,7 +170,12 @@ const PayslipPage: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                
+                {payslip.periodStart && payslip.periodEnd && (
+                  <div className="text-sm text-gray-600 mb-2">
+                    Pay Period: {payslip.periodStart} - {payslip.periodEnd}
+                  </div>
+                )}
+
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
@@ -230,7 +238,11 @@ const PayslipPage: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-600">Pay Period</p>
-                      <p className="font-semibold">{formatDate(selectedPayslip.sentAt)}</p>
+                      <p className="font-semibold">
+                        {selectedPayslip.periodStart && selectedPayslip.periodEnd
+                          ? `${selectedPayslip.periodStart} - ${selectedPayslip.periodEnd}`
+                          : formatDate(selectedPayslip.sentAt)}
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
@@ -341,6 +353,25 @@ const PayslipPage: React.FC = () => {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Time Tracker Entries */}
+              {selectedPayslip.timeEntries && selectedPayslip.timeEntries.length > 0 && (
+                <Card className="mt-6">
+                  <CardHeader>
+                    <CardTitle>Time Tracker Details</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                      {selectedPayslip.timeEntries.map((te, idx) => (
+                        <div key={`${te.date}-${idx}`} className="flex justify-between border-b py-1">
+                          <span className="text-gray-700">{te.date}</span>
+                          <span className="font-medium">{te.hoursWorked?.toFixed(2)} hrs</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
         </div>
