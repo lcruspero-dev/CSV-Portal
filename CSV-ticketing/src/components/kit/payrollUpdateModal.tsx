@@ -81,9 +81,9 @@ const formSections = [
     title: "Holidays",
     fields: [
       { path: "holidays.regHoliday", label: "Regular Holidays (days)" },
-      { path: "holidays.regHolidayPay", label: "Regular Holiday Pay" },
+      { path: "holidays.regHolidayPay", label: "Regular Holiday Pay (Auto)", editable: false },
       { path: "holidays.speHoliday", label: "Special Holidays (days)" },
-      { path: "holidays.speHolidayPay", label: "Special Holiday Pay" },
+      { path: "holidays.speHolidayPay", label: "Special Holiday Pay (Auto)", editable: false },
     ],
   },
   {
@@ -148,12 +148,12 @@ const formSections = [
         label: "Non-Taxable Allowance",
       },
       { path: "grossSalary.performanceBonus", label: "Performance Bonus" },
-      { path: "grossSalary.grossSalary", label: "Gross Salary" },
+      { path: "grossSalary.grossSalary", label: "Gross Salary (Auto)", editable: false },
     ],
   },
   {
     title: "Totals (Computed)",
-    fields: [{ path: "grandtotal.grandtotal", label: "Net Pay" }],
+    fields: [{ path: "grandtotal.grandtotal", label: "Net Pay (Auto)", editable: false }],
   },
 ];
 
