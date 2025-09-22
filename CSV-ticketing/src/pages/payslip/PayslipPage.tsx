@@ -4,7 +4,7 @@ import { useAuth } from '@/context/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Download, Eye } from 'lucide-react';
+import { Calendar, Download, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import BackButton from '@/components/kit/BackButton';
 
 interface Payslip {
@@ -60,6 +60,10 @@ const PayslipPage: React.FC = () => {
   const [selectedPayslip, setSelectedPayslip] = useState<Payslip | null>(null);
   const [showModal, setShowModal] = useState(false);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+
   useEffect(() => {
     const fetchPayslips = async () => {
       if (!user?._id) return;
@@ -77,6 +81,25 @@ const PayslipPage: React.FC = () => {
 
     fetchPayslips();
   }, [user?._id]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(payslips.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentPayslips = payslips.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Pagination handlers
+  const goToNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
+
+  const goToPrevPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+
+  const goToPage = (pageNumber: number) => {
+    setCurrentPage(Math.max(1, Math.min(pageNumber, totalPages)));
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -126,82 +149,131 @@ const PayslipPage: React.FC = () => {
         <Card>
           <CardContent className="p-8 text-center">
             <Calendar className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Payslips Found</h3> 
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Payslips Found</h3>
             <p className="text-gray-600">
               You don't have any payslips yet. Payslips will appear here once they are sent by HR.
             </p>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4">
-          {payslips.map((payslip) => (
-            <Card key={payslip._id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-lg">
-                      Payslip - {formatDate(payslip.sentAt)}
-                    </CardTitle>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Sent on {formatDate(payslip.sentAt)}
-                    </p>
+        <>
+          <div className="grid gap-4 mb-6">
+            {currentPayslips.map((payslip) => (
+              <Card key={payslip._id} className="hover:shadow-md transition-shadow">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg">
+                        Payslip - {formatDate(payslip.sentAt)}
+                      </CardTitle>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Sent on {formatDate(payslip.sentAt)}
+                      </p>
+                    </div>
+                    <Badge variant="secondary" className="bg-green-100 text-green-800">
+                      {payslip.status.toUpperCase()}
+                    </Badge>
                   </div>
-                  <Badge variant="secondary" className="bg-green-100 text-green-800">
-                    {payslip.status.toUpperCase()}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Monthly Rate</p>
-                    <p className="text-lg font-semibold">
-                      {formatCurrency(payslip.payrollRate.monthlyRate)}
-                    </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Monthly Rate</p>
+                      <p className="text-lg font-semibold">
+                        {formatCurrency(payslip.payrollRate.monthlyRate)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Hours Worked</p>
+                      <p className="text-lg font-semibold">
+                        {payslip.workDays.totalHoursWorked.toFixed(2)} hrs
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Net Pay</p>
+                      <p className="text-lg font-semibold text-green-600">
+                        {formatCurrency(payslip.grandtotal.grandtotal)}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Hours Worked</p>
-                    <p className="text-lg font-semibold">
-                      {payslip.workDays.totalHoursWorked.toFixed(2)} hrs
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Net Pay</p>
-                    <p className="text-lg font-semibold text-green-600">
-                      {formatCurrency(payslip.grandtotal.grandtotal)}
-                    </p>
-                  </div>
-                </div>
-                {payslip.periodStart && payslip.periodEnd && (
-                  <div className="text-sm text-gray-600 mb-2">
-                    Pay Period: {payslip.periodStart} - {payslip.periodEnd}
-                  </div>
-                )}
+                  {payslip.periodStart && payslip.periodEnd && (
+                    <div className="text-sm text-gray-600 mb-2">
+                      Pay Period: {payslip.periodStart} - {payslip.periodEnd}
+                    </div>
+                  )}
 
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleViewPayslip(payslip)}
-                    className="flex items-center gap-2"
-                  >
-                    <Eye className="h-4 w-4" />
-                    View Details
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDownloadPayslip(payslip)}
-                    className="flex items-center gap-2"
-                  >
-                    <Download className="h-4 w-4" />
-                    Download PDF
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleViewPayslip(payslip)}
+                      className="flex items-center gap-2"
+                    >
+                      <Eye className="h-4 w-4" />
+                      View Details
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDownloadPayslip(payslip)}
+                      className="flex items-center gap-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      Download PDF
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between border-t pt-6">
+              <div className="text-sm text-gray-700">
+                Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, payslips.length)} of {payslips.length} payslips
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToPrevPage}
+                  disabled={currentPage === 1}
+                  className="flex items-center gap-1"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </Button>
+
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => goToPage(page)}
+                      className="w-8 h-8 p-0"
+                    >
+                      {page}
+                    </Button>
+                  ))}
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages}
+                  className="flex items-center gap-1"
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Payslip Detail Modal */}

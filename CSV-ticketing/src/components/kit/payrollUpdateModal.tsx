@@ -516,25 +516,25 @@ const UpdatePayrollModal = ({
       )}
 
       <Dialog open={isOpen} onOpenChange={setOpen}>
-        <DialogContent className="max-w-[90vw] w-full max-h-[85vh] overflow-y-auto rounded-xl">
-          <DialogHeader>
-            <DialogTitle>
-              Update Payroll for {payroll.employee.fullName}
+        <DialogContent className="max-w-[98vw] w-full max-h-[95vh] overflow-y-auto rounded-md p-4">
+          <DialogHeader className="pb-1">
+            <DialogTitle className="text-base">
+              Update Payroll: {payroll.employee.fullName}
             </DialogTitle>
           </DialogHeader>
 
-          <div className="mt-5 grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Editable fields */}
-            <div className="lg:col-span-2 space-y-5">
+          <div className="mt-2 grid grid-cols-1 lg:grid-cols-4 gap-3">
+            {/* Editable fields - takes 3/4 width */}
+            <div className="lg:col-span-3 space-y-2">
               {formSections.map((section) => (
-                <div key={section.title}>
-                  <h3 className="text-lg font-semibold mb-4">
+                <div key={section.title} className="border rounded-md p-2 bg-white">
+                  <h3 className="text-sm font-semibold mb-1">
                     {section.title}
                   </h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-1.5">
                     {section.fields.map(({ path, label, editable = true }) => (
-                      <div key={path} className="flex flex-col">
-                        <label className={`text-sm font-medium mb-1 ${!editable ? 'text-gray-600' : ''}`}>
+                      <div key={path} className="flex flex-col min-w-0">
+                        <label className={`text-xs font-medium mb-0.5 ${!editable ? 'text-gray-600' : ''}`}>
                           {label}
                         </label>
                         <Input
@@ -544,7 +544,7 @@ const UpdatePayrollModal = ({
                             editable ? handleChange(path, parseFloat(e.target.value) || 0) : undefined
                           }
                           disabled={!editable}
-                          className={!editable ? 'bg-gray-100 text-gray-600' : ''}
+                          className={`text-xs h-7 px-2 ${!editable ? 'bg-gray-100 text-gray-600' : ''}`}
                         />
                       </div>
                     ))}
@@ -553,145 +553,87 @@ const UpdatePayrollModal = ({
               ))}
             </div>
 
-            {/* Live Preview (matches create modal) */}
+            {/* Live Preview - takes 1/4 width */}
             <aside className="lg:col-span-1">
-              <div className="border rounded-lg p-4 bg-gray-50">
-                <h3 className="text-lg font-semibold mb-3">Payroll Preview</h3>
-                <div className="space-y-3 text-sm">
+              <div className="border rounded-md p-2 bg-gray-50 h-full">
+                <h3 className="text-sm font-semibold mb-1">Preview</h3>
+                <div className="space-y-1.5 text-xs max-h-[70vh] overflow-y-auto">
                   <div>
-                    <h4 className="font-semibold mb-1">Pay Period</h4>
-                    <div className="text-gray-700">
-                      {new Date().toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
+                    <h4 className="font-semibold text-xs mb-0.5">Pay Period</h4>
+                    <div className="text-gray-700 text-xs">
+                      {new Date().toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
                     </div>
                   </div>
+
                   <div>
-                    <h4 className="font-semibold mb-1">Employee Info</h4>
-                    <ul>
-                      <li>
-                        <b>Full Name:</b> {formData.employee?.fullName}
-                      </li>
-                      <li>
-                        <b>Email:</b> {formData.employee?.email}
-                      </li>
-                      <li>
-                        <b>Position:</b> {formData.employee?.position}
-                      </li>
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-1">Payroll Rate</h4>
-                    <ul>
-                      <li>
-                        <b>Monthly:</b> {preview.monthlyRate.toFixed(2)}
-                      </li>
-                      <li>
-                        <b>Daily:</b> {preview.dailyRate.toFixed(2)}
-                      </li>
-                      <li>
-                        <b>Hourly:</b> {preview.hourlyRate.toFixed(2)}
-                      </li>
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-1">Work Days</h4>
-                    <ul>
-                      <li>
-                        <b>Regular Days:</b>{" "}
-                        {formData.workDays?.regularDays ?? 0}
-                      </li>
-                      <li>
-                        <b>Absent Days:</b> {formData.workDays?.absentDays ?? 0}
-                      </li>
-                      <li>
-                        <b>Minutes Late:</b> {formData.workDays?.minsLate ?? 0}
-                      </li>
-                      <li>
-                        <b>Hours Worked:</b> {formData.workDays?.totalHoursWorked?.toFixed(2) ?? 0}
-                      </li>
-                      <li>
-                        <b>Undertime Minutes:</b> {formData.workDays?.undertimeMinutes ?? 0}
-                      </li>
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-1">Holidays</h4>
-                    <ul>
-                      <li>
-                        <b>Reg Holiday Pay:</b>{" "}
-                        {preview.regHolidayPay.toFixed(2)}
-                      </li>
-                      <li>
-                        <b>Spe Holiday Pay:</b>{" "}
-                        {preview.speHolidayPay.toFixed(2)}
-                      </li>
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-1">Overtime</h4>
-                    <ul>
-                      <li>
-                        <b>Regular OT Pay:</b> {preview.regularOTpay.toFixed(2)}
-                      </li>
-                      <li>
-                        <b>Rest Day OT Pay:</b>{" "}
-                        {preview.restDayOtPay.toFixed(2)}
-                      </li>
-                      <li>
-                        <b>Total OT Pay:</b> {preview.totalOvertime.toFixed(2)}
-                      </li>
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-1">Supplementary</h4>
-                    <ul>
-                      <li>
-                        <b>Night Diff Pay:</b> {preview.nightDiffPay.toFixed(2)}
-                      </li>
-                      <li>
-                        <b>Total Supplementary:</b>{" "}
-                        {preview.totalSupplementaryIncome.toFixed(2)}
-                      </li>
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-1">Deductions</h4>
-                    <ul>
-                      <li>
-                        <b>Absent Deduction:</b>{" "}
-                        {preview.absentDeduction.toFixed(2)}
-                      </li>
-                      <li>
-                        <b>Late Deduction:</b>{" "}
-                        {preview.lateDeduction.toFixed(2)}
-                      </li>
-                      <li>
-                        <b>Unpaid Amount:</b> {preview.unpaidAmount.toFixed(2)}
-                      </li>
-                      <li>
-                        <b>Total Deductions:</b>{" "}
-                        {preview.totalDeductions.toFixed(2)}
-                      </li>
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-1">Net Pay</h4>
-                    <div className="text-base font-semibold">
-                      {preview.netPay.toFixed(2)}
+                    <h4 className="font-semibold text-xs mb-0.5">Employee</h4>
+                    <div className="text-gray-700 text-xs truncate">
+                      {formData.employee?.fullName}
                     </div>
                   </div>
+
                   <div>
-                    <h4 className="font-semibold mb-1">Summary</h4>
-                    <ul>
-                      <li>
-                        <b>Basic Pay:</b> {preview.basicPay.toFixed(2)}
-                      </li>
-                      <li>
-                        <b>Total Deductions:</b> {preview.totalDeductions.toFixed(2)}
-                      </li>
-                      <li className="text-green-700 font-semibold">
-                        <b>Net Pay:</b> {preview.netPay.toFixed(2)}
-                      </li>
-                    </ul>
+                    <h4 className="font-semibold text-xs mb-0.5">Rates</h4>
+                    <div className="grid grid-cols-2 gap-0.5 text-xs">
+                      <span>Monthly:</span><span>{preview.monthlyRate.toFixed(0)}</span>
+                      <span>Daily:</span><span>{preview.dailyRate.toFixed(0)}</span>
+                      <span>Hourly:</span><span>{preview.hourlyRate.toFixed(0)}</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-xs mb-0.5">Work</h4>
+                    <div className="grid grid-cols-2 gap-0.5 text-xs">
+                      <span>Reg Days:</span><span>{formData.workDays?.regularDays ?? 0}</span>
+                      <span>Absent:</span><span>{formData.workDays?.absentDays ?? 0}</span>
+                      <span>Late(min):</span><span>{formData.workDays?.minsLate ?? 0}</span>
+                      <span>Hours:</span><span>{formData.workDays?.totalHoursWorked?.toFixed(1) ?? 0}</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-xs mb-0.5">Holidays</h4>
+                    <div className="grid grid-cols-2 gap-0.5 text-xs">
+                      <span>Regular:</span><span>{preview.regHolidayPay.toFixed(0)}</span>
+                      <span>Special:</span><span>{preview.speHolidayPay.toFixed(0)}</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-xs mb-0.5">Overtime</h4>
+                    <div className="grid grid-cols-2 gap-0.5 text-xs">
+                      <span>Reg OT:</span><span>{preview.regularOTpay.toFixed(0)}</span>
+                      <span>Rest OT:</span><span>{preview.restDayOtPay.toFixed(0)}</span>
+                      <span>Total OT:</span><span>{preview.totalOvertime.toFixed(0)}</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-xs mb-0.5">Supplementary</h4>
+                    <div className="grid grid-cols-2 gap-0.5 text-xs">
+                      <span>Night Diff:</span><span>{preview.nightDiffPay.toFixed(0)}</span>
+                      <span>Total Suppl:</span><span>{preview.totalSupplementaryIncome.toFixed(0)}</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-xs mb-0.5">Deductions</h4>
+                    <div className="grid grid-cols-2 gap-0.5 text-xs">
+                      <span>Absent:</span><span>{preview.absentDeduction.toFixed(0)}</span>
+                      <span>Late:</span><span>{preview.lateDeduction.toFixed(0)}</span>
+                      <span>Unpaid:</span><span>{preview.unpaidAmount.toFixed(0)}</span>
+                      <span>Total Deduct:</span><span className="text-red-600">{preview.totalDeductions.toFixed(0)}</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-1 border-t">
+                    <h4 className="font-semibold text-xs mb-0.5">Summary</h4>
+                    <div className="grid grid-cols-2 gap-0.5 text-xs">
+                      <span>Basic:</span><span>{preview.basicPay.toFixed(0)}</span>
+                      <span>Deductions:</span><span className="text-red-600">-{preview.totalDeductions.toFixed(0)}</span>
+                      <span className="font-semibold">Net:</span>
+                      <span className="font-semibold text-green-700">{preview.netPay.toFixed(0)}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -699,17 +641,17 @@ const UpdatePayrollModal = ({
           </div>
 
           {/* Footer buttons */}
-          <div className="flex justify-end gap-3 mt-10">
-            <Button variant="outline" onClick={() => setOpen(false)}>
+          <div className="flex justify-end gap-1.5 mt-3">
+            <Button variant="outline" size="sm" onClick={() => setOpen(false)} className="h-7 px-3 text-xs">
               Cancel
             </Button>
-            <Button onClick={handleUpdate}>Save Changes</Button>
-            <Button onClick={handleSendPayroll} className="bg-green-600 hover:bg-green-700">
-              Send Payroll
+            <Button size="sm" onClick={handleUpdate} className="h-7 px-3 text-xs">Save</Button>
+            <Button size="sm" onClick={handleSendPayroll} className="h-7 px-3 text-xs bg-green-600 hover:bg-green-700">
+              Send
             </Button>
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog> 
     </>
   );
 };
