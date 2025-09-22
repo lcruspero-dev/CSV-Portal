@@ -251,8 +251,8 @@ const PayrollTable = ({
                         {typeof value === "number"
                           ? value.toFixed(2)
                           : typeof value === "string"
-                          ? value
-                          : ""}
+                            ? value
+                            : ""}
                       </TableCell>
                     );
                   })}
@@ -274,8 +274,8 @@ const PayrollTable = ({
                       {i === 0
                         ? "Grand Total"
                         : isNum && typeof total === "number"
-                        ? total.toFixed(2)
-                        : ""}
+                          ? total.toFixed(2)
+                          : ""}
                     </TableCell>
                   );
                 })}
@@ -389,7 +389,7 @@ const PayrollPage = () => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 return exists
                   ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    prev.map((x) => ((x as any)._id === id ? p : x))
+                  prev.map((x) => ((x as any)._id === id ? p : x))
                   : [...prev, p];
               })
             }

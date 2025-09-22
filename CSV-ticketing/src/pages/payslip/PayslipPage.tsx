@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Download, Eye } from 'lucide-react';
+import BackButton from '@/components/kit/BackButton';
 
 interface Payslip {
   _id: string;
@@ -115,7 +116,8 @@ const PayslipPage: React.FC = () => {
 
   return (
     <div className="container mx-auto p-6">
-      <div className="mb-6">
+      <div className="mb-6 space-y-2">
+        <BackButton />
         <h1 className="text-3xl font-bold text-gray-900">My Payslips</h1>
         <p className="text-gray-600 mt-2">View your salary history and payslips</p>
       </div>
@@ -124,7 +126,7 @@ const PayslipPage: React.FC = () => {
         <Card>
           <CardContent className="p-8 text-center">
             <Calendar className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Payslips Found</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Payslips Found</h3> 
             <p className="text-gray-600">
               You don't have any payslips yet. Payslips will appear here once they are sent by HR.
             </p>

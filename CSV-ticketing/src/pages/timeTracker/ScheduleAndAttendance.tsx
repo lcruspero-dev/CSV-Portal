@@ -22,6 +22,7 @@ import { AbsenteeismAnalytics } from "@/components/kit/AbsenteeismAnalytics";
 import AddEmployee from "@/components/kit/AddEmployee";
 import { Attendance } from "@/components/kit/EmployeeAttendance";
 import { IncompleteBreaksDialog } from "@/components/kit/IncompleteBreaksDialog";
+import { EmployeesOnLunchDialog } from "@/components/kit/employeeLunchDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -59,6 +60,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import BackButton from "@/components/kit/BackButton";
 
 // Types
 export type Employee = {
@@ -146,8 +148,6 @@ const getShiftColor = (shiftType: ShiftType): string => {
       return "bg-yellow-100 text-yellow-800";
     case "Night":
       return "bg-purple-100 text-purple-800";
-    // case "staff":
-    //   return "bg-green-100 text-green-800";
     case "restday":
       return "bg-orange-100 text-orange-800";
     case "paidTimeOff":
@@ -202,9 +202,6 @@ const displayShiftInfo = (
     case "Night":
       displayName = "Night";
       break;
-    // case "staff":
-    //   displayName = "Staff";
-    //   break;
     case "restday":
       displayName = "Rest Day";
       break;
@@ -257,8 +254,6 @@ const displayShiftInfo = (
   };
 };
 
-// Helper function to convert 24-hour time to 12-hour AM/PM format
-
 const ScheduleAndAttendance: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>("weekly");
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
@@ -291,6 +286,31 @@ const ScheduleAndAttendance: React.FC = () => {
   const [otHours, setOtHours] = useState<string>("");
   const [otMinutes, setOtMinutes] = useState<string>("");
   const [showOtInput, setShowOtInput] = useState<boolean>(false);
+
+  // Department Filter Dropdown Component
+  const DepartmentFilterDropdown = () => {
+    return (
+      <Select
+        value={selectedDepartment}
+        onValueChange={setSelectedDepartment}
+      >
+        <SelectTrigger className="w-48">
+          <SelectValue placeholder="Select Team Leader" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Employees</SelectItem>
+          {Array.from(new Set(employees.map((emp) => emp.teamLeader)))
+            .filter((leader) => leader && leader.trim() !== "")
+            .sort() // Sort alphabetically
+            .map((leader) => (
+              <SelectItem key={leader} value={leader}>
+                {leader}
+              </SelectItem>
+            ))}
+        </SelectContent>
+      </Select>
+    );
+  };
 
   const resetDialogState = () => {
     setSelectedEmployee(null);
@@ -407,7 +427,6 @@ const ScheduleAndAttendance: React.FC = () => {
           },
           {}
         );
-        // setAvatars(avatarMap);
 
         // Then fetch employees with avatar data
         await fetchEmployees(avatarMap);
@@ -476,6 +495,7 @@ const ScheduleAndAttendance: React.FC = () => {
       setToDate(addDays(toDate, -dayCount));
     }
   };
+
   const goToNextPeriod = () => {
     if (viewMode === "weekly") {
       setCurrentDate((prevDate) => addDays(prevDate, 7));
@@ -848,712 +868,690 @@ const ScheduleAndAttendance: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto">
-      <Card className="w-full">
-        <CardHeader>
-          {/* <div className="flex items-center justify-between"> */}
-          <div className="mb-3">
-            <CardTitle>Employee Schedule & Attendance</CardTitle>
-            <CardDescription>
-              Manage employee shifts and track attendance
-            </CardDescription>
-            <AbsenteeismAnalytics
-              employees={employees}
-              attendance={attendance}
-              schedule={schedule}
-              viewMode={viewMode}
-              currentDate={currentDate}
-              filteredEmployees={filteredEmployees.map((emp) => emp.id)}
-              fromDate={fromDate} // Pass fromDate
-              toDate={toDate} // Pass toDate
-            />
-          </div>
-          {/* </div> */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Select
-                value={selectedDepartment}
-                onValueChange={setSelectedDepartment}
-              >
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Team Leader" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Employees</SelectItem>
-                  {Array.from(new Set(employees.map((emp) => emp.teamLeader)))
-                    .filter((leader) => leader)
-                    .map((leader) => (
-                      <SelectItem key={leader} value={leader}>
-                        {leader}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+    <section>
+      <BackButton />
 
-              <Tabs
-                value={viewMode}
-                onValueChange={(value) => {
-                  // Add type assertion to ensure value is ViewMode
-                  const mode = value as ViewMode;
-                  setViewMode(mode);
-                  if (mode === "weekly") {
-                    setFromDate(startOfWeek(currentDate));
-                    setToDate(endOfWeek(currentDate));
-                  } else if (mode === "monthly") {
-                    setFromDate(startOfMonth(currentDate));
-                    setToDate(endOfMonth(currentDate));
-                  }
-                  // For dateRange mode, keep the existing from/to dates
-                }}
-              >
-                <TabsList>
-                  <TabsTrigger value="weekly">Weekly</TabsTrigger>
-                  <TabsTrigger value="monthly">Monthly</TabsTrigger>
-                  <TabsTrigger value="dateRange">Date Range</TabsTrigger>
-                </TabsList>
-              </Tabs>
-
-              {viewMode === "dateRange" && (
-                <div className="flex items-center space-x-2 text-sm">
-                  {/* From Date Picker */}
-                  <div className="relative">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setShowToCalendar(false); // Close other calendar if open
-                        setShowFromCalendar(!showFromCalendar);
-                      }}
-                      className="w-[120px] justify-start text-left font-normal"
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {fromDate ? format(fromDate, "MMM d") : "From"}
-                    </Button>
-                    {showFromCalendar && (
-                      <div
-                        className="absolute z-10 mt-1 bg-white border rounded-md shadow-lg"
-                        ref={(node) => {
-                          // Close calendar when clicking outside
-                          if (node) {
-                            const handleClickOutside = (event: MouseEvent) => {
-                              if (!node.contains(event.target as Node)) {
-                                setShowFromCalendar(false);
-                                document.removeEventListener(
-                                  "mousedown",
-                                  handleClickOutside
-                                );
-                              }
-                            };
-                            document.addEventListener(
-                              "mousedown",
-                              handleClickOutside
-                            );
-                          }
-                        }}
-                      >
-                        <Calendar
-                          mode="single"
-                          selected={fromDate}
-                          onSelect={(date) => {
-                            handleFromDateSelect(date);
-                            setShowFromCalendar(false);
-                          }}
-                          initialFocus
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  <span>to</span>
-
-                  {/* To Date Picker */}
-                  <div className="relative">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setShowFromCalendar(false); // Close other calendar if open
-                        setShowToCalendar(!showToCalendar);
-                      }}
-                      className="w-[120px] justify-start text-left font-normal"
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {toDate ? format(toDate, "MMM d") : "To"}
-                    </Button>
-                    {showToCalendar && (
-                      <div
-                        className="absolute z-10 mt-1 bg-white border rounded-md shadow-lg"
-                        ref={(node) => {
-                          // Close calendar when clicking outside
-                          if (node) {
-                            const handleClickOutside = (event: MouseEvent) => {
-                              if (!node.contains(event.target as Node)) {
-                                setShowToCalendar(false);
-                                document.removeEventListener(
-                                  "mousedown",
-                                  handleClickOutside
-                                );
-                              }
-                            };
-                            document.addEventListener(
-                              "mousedown",
-                              handleClickOutside
-                            );
-                          }
-                        }}
-                      >
-                        <Calendar
-                          mode="single"
-                          selected={toDate}
-                          onSelect={(date) => {
-                            handleToDateSelect(date);
-                            setShowToCalendar(false);
-                          }}
-                          initialFocus
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-            <div>
-              <h2 className="text-xl font-bold">{getHeaderText()}</h2>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm" onClick={goToPreviousPeriod}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="sm" onClick={goToToday}>
-                Today
-              </Button>
-              <Button variant="outline" size="sm" onClick={goToNextPeriod}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="schedule" onValueChange={setActiveTab}>
-            <TabsList className="mb-0">
-              <TabsTrigger value="schedule">Schedule</TabsTrigger>
-              <TabsTrigger value="attendance">Attendance</TabsTrigger>
-            </TabsList>
-            <TabsContent value="schedule" className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead>
-                  <tr>
-                    <th className="p-2 border sticky left-0 bg-white z-10 min-w-40">
-                      Employee
-                    </th>
-                    {days.map((day) => (
-                      <th
-                        key={day.toString()}
-                        className="p-2 border text-center min-w-32"
-                      >
-                        <div
-                          className={`font-medium ${isToday(day) ? "text-blue-600" : ""
-                            }`}
-                        >
-                          {format(day, "EEE")}
-                        </div>
-                        <div
-                          className={`text-sm ${isToday(day) ? "text-blue-600 font-bold" : ""
-                            }`}
-                        >
-                          {format(day, "MMM d")}
-                        </div>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {filteredEmployees.map((employee) => (
-                    <tr key={employee.id} className="group hover:bg-blue-50">
-                      {" "}
-                      {/* Added group class */}
-                      <td className="p-2 border sticky left-0 z-10 group-hover:bg-blue-50 bg-white">
-                        {" "}
-                        {/* Added group-hover:bg-blue-50 */}
-                        <div className="flex items-center">
-                          <Avatar className="h-8 w-8 mr-2 rounded-full overflow-hidden border-2 border-blue-200">
-                            <AvatarImage
-                              src={employee.avatarUrl}
-                              alt={employee.name}
-                              className="object-cover"
-                            />
-                            <AvatarFallback>
-                              {employee.name.substring(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-bold text-sm">
-                              {employee.name}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {employee.department}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      {days.map((day) => {
-                        const scheduleEntry = findScheduleEntry(
-                          employee.id,
-                          day
-                        );
-                        return (
-                          <td
-                            key={day.toString()}
-                            className={`p-2 border text-center cursor-pointer ${isToday(day)
-                              ? "bg-blue-50 hover:!bg-blue-100"
-                              : ""
-                              } hover:bg-blue-100`}
-                            onClick={() =>
-                              handleScheduleCellClick(employee, day)
-                            }
-                          >
-                            {scheduleEntry && scheduleEntry.shiftType && (
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <div className="flex flex-col items-center">
-                                      <Badge
-                                        variant="outline"
-                                        className={`w-fit flex items-center justify-center px-3 py-1 min-w-24 ${getShiftColor(
-                                          scheduleEntry.shiftType
-                                        )}`}
-                                      >
-                                        {
-                                          displayShiftInfo(
-                                            scheduleEntry.shiftType
-                                          ).name
-                                        }
-                                      </Badge>
-                                      {displayShiftInfo(scheduleEntry.shiftType)
-                                        .time && (
-                                          <span className="text-xs text-gray-500 mt-1">
-                                            {
-                                              displayShiftInfo(
-                                                scheduleEntry.shiftType
-                                              ).time
-                                            }
-                                          </span>
-                                        )}
-                                    </div>
-                                  </TooltipTrigger>
-                                  <TooltipContent className="max-w-xs whitespace-pre-line text-sm">
-                                    <div className="space-y-1">
-                                      <p className="font-semibold">
-                                        {
-                                          displayShiftInfo(
-                                            scheduleEntry.shiftType
-                                          ).name
-                                        }
-                                      </p>
-                                      {displayShiftInfo(scheduleEntry.shiftType)
-                                        .details?.split("\n")
-                                        .map((line, i) => (
-                                          <p key={i}>{line}</p>
-                                        ))}
-                                    </div>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            )}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </TabsContent>
-            <TabsContent value="attendance">
-              <Attendance
+      <div className="container mx-auto">
+        <Card className="w-full">
+          <CardHeader>
+            <div className="mb-3">
+              <CardTitle>Employee Schedule & Attendance</CardTitle>
+              <CardDescription>
+                Manage employee shifts and track attendance
+              </CardDescription>
+              <AbsenteeismAnalytics
+                employees={employees}
+                attendance={attendance}
+                schedule={schedule}
                 viewMode={viewMode}
                 currentDate={currentDate}
-                filteredEmployees={filteredEmployees}
-                attendance={attendance}
-                handleAttendanceCellClick={handleAttendanceCellClick}
-                // refreshAttendance={fetchAttendance}
+                filteredEmployees={filteredEmployees.map((emp) => emp.id)}
                 fromDate={fromDate} // Pass fromDate
                 toDate={toDate} // Pass toDate
               />
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-        <CardFooter className="flex justify-between">
-          <div className="text-sm text-gray-500">
-            Showing {filteredEmployees.length} employees
-          </div>
-          <div className="flex gap-2 text-xs">
-            <IncompleteBreaksDialog />
-            <AddEmployee
-              onEmployeeAdded={async () => {
-                try {
-                  setLoading(true);
-                  const avatarResponse =
-                    await UserProfileAPI.getAllUserAvatar();
-                  const avatarMap = avatarResponse.data.reduce(
-                    (
-                      acc: Record<string, string>,
-                      curr: { userId: string; avatar: string }
-                    ) => {
-                      acc[curr.userId] = curr.avatar;
-                      return acc;
-                    },
-                    {}
-                  );
-                  await fetchEmployees(avatarMap);
-                  await fetchAttendance();
-                } catch (err) {
-                  console.error("Error refreshing after adding employee:", err);
-                  setError("Failed to refresh data after adding employee");
-                } finally {
-                  setLoading(false);
-                }
-              }}
-            />
-          </div>
-        </CardFooter>
-      </Card>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                {/* Updated Department Filter Dropdown */}
+                <DepartmentFilterDropdown />
 
-      {/* Dialog for adding/editing shifts and attendance */}
-      <Dialog
-        open={isAddShiftOpen}
-        onOpenChange={(open) => {
-          setIsAddShiftOpen(open);
-          if (!open) resetDialogState();
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {selectedEmployee && selectedDate ? (
-                <>
-                  Update {format(selectedDate, "MMM d, yyyy")} for{" "}
-                  {selectedEmployee.name}
-                </>
-              ) : (
-                "Update Schedule"
-              )}
-            </DialogTitle>
-            <DialogDescription>
-              Select shift type or attendance status to update
-            </DialogDescription>
-          </DialogHeader>
-          <Tabs
-            defaultValue={activeTab === "schedule" ? "shift" : "attendance"}
-          >
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="shift">Shift Schedule</TabsTrigger>
-              <TabsTrigger value="attendance">Attendance</TabsTrigger>
-            </TabsList>
-            <TabsContent value="shift">
-              <div className="space-y-4 mt-4">
-                <Label htmlFor="shift-type">Shift Type</Label>
-                <RadioGroup
-                  id="shift-type"
-                  value={selectedShiftType}
-                  onValueChange={(value: string) => {
-                    setSelectedShiftType(value as ShiftTypeValue);
-                    if (hasShiftTime(value as ShiftTypeValue)) {
-                      setSelectedStartTime("00:00");
-                      setSelectedEndTime("00:00");
-                    } else {
-                      setSelectedBreak1(undefined);
-                      setSelectedLunch(undefined);
-                      setSelectedBreak2(undefined);
+                <Tabs
+                  value={viewMode}
+                  onValueChange={(value) => {
+                    // Add type assertion to ensure value is ViewMode
+                    const mode = value as ViewMode;
+                    setViewMode(mode);
+                    if (mode === "weekly") {
+                      setFromDate(startOfWeek(currentDate));
+                      setToDate(endOfWeek(currentDate));
+                    } else if (mode === "monthly") {
+                      setFromDate(startOfMonth(currentDate));
+                      setToDate(endOfMonth(currentDate));
                     }
+                    // For dateRange mode, keep the existing from/to dates
                   }}
                 >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Morning" id="Morning" />
-                    <Label htmlFor="Morning">Morning</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Mid" id="Mid" />
-                    <Label htmlFor="Mid">Mid</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Night" id="Night" />
-                    <Label htmlFor="Night">Night</Label>
-                  </div>
-                  {/* <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="staff" id="staff" />
-                    <Label htmlFor="staff">Staff</Label>
-                  </div> */}
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="restday" id="restday" />
-                    <Label htmlFor="restday">Rest Day</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="paidTimeOff" id="paidTimeOff" />
-                    <Label htmlFor="paidTimeOff">Paid Time Off</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="plannedLeave" id="plannedLeave" />
-                    <Label htmlFor="plannedLeave">Planned Leave</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="holiday" id="holiday" />
-                    <Label htmlFor="holiday">Holiday</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="rdot" id="rdot" />
-                    <Label htmlFor="rdot">RDOT</Label>
-                  </div>
-                </RadioGroup>
+                  <TabsList>
+                    <TabsTrigger value="weekly">Weekly</TabsTrigger>
+                    <TabsTrigger value="monthly">Monthly</TabsTrigger>
+                    <TabsTrigger value="dateRange">Date Range</TabsTrigger>
+                  </TabsList>
+                </Tabs>
 
-                {hasShiftTime(selectedShiftType) && (
-                  <>
-                    <div className="flex space-x-4">
-                      <div>
-                        <Label htmlFor="start-time">Shift Start </Label>
-                        <input
-                          id="start-time"
-                          type="time"
-                          value={selectedStartTime}
-                          onChange={(e) => setSelectedStartTime(e.target.value)}
-                          className="border p-2 rounded text-sm"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="end-time">Shift End </Label>
-                        <input
-                          id="end-time"
-                          type="time"
-                          value={selectedEndTime}
-                          onChange={(e) => setSelectedEndTime(e.target.value)}
-                          className="border p-2 rounded text-sm"
-                        />
-                      </div>
+                {viewMode === "dateRange" && (
+                  <div className="flex items-center space-x-2 text-sm">
+                    {/* From Date Picker */}
+                    <div className="relative">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setShowToCalendar(false); // Close other calendar if open
+                          setShowFromCalendar(!showFromCalendar);
+                        }}
+                        className="w-[120px] justify-start text-left font-normal"
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {fromDate ? format(fromDate, "MMM d") : "From"}
+                      </Button>
+                      {showFromCalendar && (
+                        <div
+                          className="absolute z-10 mt-1 bg-white border rounded-md shadow-lg"
+                          ref={(node) => {
+                            // Close calendar when clicking outside
+                            if (node) {
+                              const handleClickOutside = (event: MouseEvent) => {
+                                if (!node.contains(event.target as Node)) {
+                                  setShowFromCalendar(false);
+                                  document.removeEventListener(
+                                    "mousedown",
+                                    handleClickOutside
+                                  );
+                                }
+                              };
+                              document.addEventListener(
+                                "mousedown",
+                                handleClickOutside
+                              );
+                            }
+                          }}
+                        >
+                          <Calendar
+                            mode="single"
+                            selected={fromDate}
+                            onSelect={(date) => {
+                              handleFromDateSelect(date);
+                              setShowFromCalendar(false);
+                            }}
+                            initialFocus
+                          />
+                        </div>
+                      )}
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
-                        <Label htmlFor="break1">1st Break</Label>
-                        <input
-                          id="break1"
-                          type="time"
-                          value={selectedBreak1 || ""}
-                          onChange={(e) =>
-                            setSelectedBreak1(e.target.value || undefined)
-                          }
-                          className="border p-2 rounded text-sm w-full"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="lunch">Lunch</Label>
-                        <input
-                          id="lunch"
-                          type="time"
-                          value={selectedLunch || ""}
-                          onChange={(e) =>
-                            setSelectedLunch(e.target.value || undefined)
-                          }
-                          className="border p-2 rounded text-sm w-full"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="break2">2nd Break</Label>
-                        <input
-                          id="break2"
-                          type="time"
-                          value={selectedBreak2 || ""}
-                          onChange={(e) =>
-                            setSelectedBreak2(e.target.value || undefined)
-                          }
-                          className="border p-2 rounded text-sm w-full"
-                        />
-                      </div>
+                    <span>to</span>
+
+                    {/* To Date Picker */}
+                    <div className="relative">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setShowFromCalendar(false); // Close other calendar if open
+                          setShowToCalendar(!showToCalendar);
+                        }}
+                        className="w-[120px] justify-start text-left font-normal"
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {toDate ? format(toDate, "MMM d") : "To"}
+                      </Button>
+                      {showToCalendar && (
+                        <div
+                          className="absolute z-10 mt-1 bg-white border rounded-md shadow-lg"
+                          ref={(node) => {
+                            // Close calendar when clicking outside
+                            if (node) {
+                              const handleClickOutside = (event: MouseEvent) => {
+                                if (!node.contains(event.target as Node)) {
+                                  setShowToCalendar(false);
+                                  document.removeEventListener(
+                                    "mousedown",
+                                    handleClickOutside
+                                  );
+                                }
+                              };
+                              document.addEventListener(
+                                "mousedown",
+                                handleClickOutside
+                              );
+                            }
+                          }}
+                        >
+                          <Calendar
+                            mode="single"
+                            selected={toDate}
+                            onSelect={(date) => {
+                              handleToDateSelect(date);
+                              setShowToCalendar(false);
+                            }}
+                            initialFocus
+                          />
+                        </div>
+                      )}
                     </div>
-                  </>
+                  </div>
                 )}
-
-                <div className="flex items-center space-x-2 text-sm">
-                  <span>Repeat for</span>
-                  <Select
-                    value={repeatDays.toString()}
-                    onValueChange={(value) => setRepeatDays(parseInt(value))}
-                  >
-                    <SelectTrigger className="w-40 text-sm">
-                      <SelectValue placeholder="Repeat days" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">1 day</SelectItem>
-                      <SelectItem value="2">2 days</SelectItem>
-                      <SelectItem value="3">3 days</SelectItem>
-                      <SelectItem value="4">4 days</SelectItem>
-                      <SelectItem value="5">5 days</SelectItem>
-                      <SelectItem value="6">6 days</SelectItem>
-                      <SelectItem value="7">7 days</SelectItem>
-                      <SelectItem value="15">15 days</SelectItem>
-                      <SelectItem value="30">30 days</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
-            </TabsContent>
-            <TabsContent value="attendance">
-              <div className="space-y-4 mt-4">
-                <Label htmlFor="attendance-status">Attendance Status</Label>
-                <RadioGroup
-                  id="attendance-status"
-                  value={selectedAttendanceStatus}
-                  onValueChange={(value: string) => {
-                    setSelectedAttendanceStatus(value as AttendanceStatus);
-                  }}
-                >
-                  <div className="grid grid-cols-2 gap-2">
+              <div>
+                <h2 className="text-xl font-bold">{getHeaderText()}</h2>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button variant="outline" size="sm" onClick={goToPreviousPeriod}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="sm" onClick={goToToday}>
+                  Today
+                </Button>
+                <Button variant="outline" size="sm" onClick={goToNextPeriod}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="schedule" onValueChange={setActiveTab}>
+              <TabsList className="mb-0">
+                <TabsTrigger value="schedule">Schedule</TabsTrigger>
+                <TabsTrigger value="attendance">Attendance</TabsTrigger>
+              </TabsList>
+              <TabsContent value="schedule" className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead>
+                    <tr>
+                      <th className="p-2 border sticky left-0 bg-white z-10 min-w-40">
+                        Employee
+                      </th>
+                      {days.map((day) => (
+                        <th
+                          key={day.toString()}
+                          className="p-2 border text-center min-w-32"
+                        >
+                          <div
+                            className={`font-medium ${isToday(day) ? "text-blue-600" : ""
+                              }`}
+                          >
+                            {format(day, "EEE")}
+                          </div>
+                          <div
+                            className={`text-sm ${isToday(day) ? "text-blue-600 font-bold" : ""
+                              }`}
+                          >
+                            {format(day, "MMM d")}
+                          </div>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {filteredEmployees.map((employee) => (
+                      <tr key={employee.id} className="group hover:bg-blue-50">
+                        <td className="p-2 border sticky left-0 z-10 group-hover:bg-blue-50 bg-white">
+                          <div className="flex items-center">
+                            <Avatar className="h-8 w-8 mr-2 rounded-full overflow-hidden border-2 border-blue-200">
+                              <AvatarImage
+                                src={employee.avatarUrl}
+                                alt={employee.name}
+                                className="object-cover"
+                              />
+                              <AvatarFallback>
+                                {employee.name.substring(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="font-bold text-sm">
+                                {employee.name}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {employee.department}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        {days.map((day) => {
+                          const scheduleEntry = findScheduleEntry(
+                            employee.id,
+                            day
+                          );
+                          return (
+                            <td
+                              key={day.toString()}
+                              className={`p-2 border text-center cursor-pointer ${isToday(day)
+                                ? "bg-blue-50 hover:!bg-blue-100"
+                                : ""
+                                } hover:bg-blue-100`}
+                              onClick={() =>
+                                handleScheduleCellClick(employee, day)
+                              }
+                            >
+                              {scheduleEntry && scheduleEntry.shiftType && (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div className="flex flex-col items-center">
+                                        <Badge
+                                          variant="outline"
+                                          className={`w-fit flex items-center justify-center px-3 py-1 min-w-24 ${getShiftColor(
+                                            scheduleEntry.shiftType
+                                          )}`}
+                                        >
+                                          {
+                                            displayShiftInfo(
+                                              scheduleEntry.shiftType
+                                            ).name
+                                          }
+                                        </Badge>
+                                        {displayShiftInfo(scheduleEntry.shiftType)
+                                          .time && (
+                                            <span className="text-xs text-gray-500 mt-1">
+                                              {
+                                                displayShiftInfo(
+                                                  scheduleEntry.shiftType
+                                                ).time
+                                              }
+                                            </span>
+                                          )}
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-xs whitespace-pre-line text-sm">
+                                      <div className="space-y-1">
+                                        <p className="font-semibold">
+                                          {
+                                            displayShiftInfo(
+                                              scheduleEntry.shiftType
+                                            ).name
+                                          }
+                                        </p>
+                                        {displayShiftInfo(scheduleEntry.shiftType)
+                                          .details?.split("\n")
+                                          .map((line, i) => (
+                                            <p key={i}>{line}</p>
+                                          ))}
+                                      </div>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </TabsContent>
+              <TabsContent value="attendance">
+                <Attendance
+                  viewMode={viewMode}
+                  currentDate={currentDate}
+                  filteredEmployees={filteredEmployees}
+                  attendance={attendance}
+                  handleAttendanceCellClick={handleAttendanceCellClick}
+                  fromDate={fromDate} // Pass fromDate
+                  toDate={toDate} // Pass toDate
+                />
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+          <CardFooter className="flex justify-between">
+            <div className="text-sm text-gray-500">
+              Showing {filteredEmployees.length} employees
+            </div>
+            <div className="flex gap-2 text-xs">
+              <IncompleteBreaksDialog />
+              <EmployeesOnLunchDialog />
+              <AddEmployee
+                onEmployeeAdded={async () => {
+                  try {
+                    setLoading(true);
+                    const avatarResponse =
+                      await UserProfileAPI.getAllUserAvatar();
+                    const avatarMap = avatarResponse.data.reduce(
+                      (
+                        acc: Record<string, string>,
+                        curr: { userId: string; avatar: string }
+                      ) => {
+                        acc[curr.userId] = curr.avatar;
+                        return acc;
+                      },
+                      {}
+                    );
+                    await fetchEmployees(avatarMap);
+                    await fetchAttendance();
+                  } catch (err) {
+                    console.error("Error refreshing after adding employee:", err);
+                    setError("Failed to refresh data after adding employee");
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+              />
+            </div>
+          </CardFooter>
+        </Card>
+
+        {/* Dialog for adding/editing shifts and attendance */}
+        <Dialog
+          open={isAddShiftOpen}
+          onOpenChange={(open) => {
+            setIsAddShiftOpen(open);
+            if (!open) resetDialogState();
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {selectedEmployee && selectedDate ? (
+                  <>
+                    Update {format(selectedDate, "MMM d, yyyy")} for{" "}
+                    {selectedEmployee.name}
+                  </>
+                ) : (
+                  "Update Schedule"
+                )}
+              </DialogTitle>
+              <DialogDescription>
+                Select shift type or attendance status to update
+              </DialogDescription>
+            </DialogHeader>
+            <Tabs
+              defaultValue={activeTab === "schedule" ? "shift" : "attendance"}
+            >
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="shift">Shift Schedule</TabsTrigger>
+                <TabsTrigger value="attendance">Attendance</TabsTrigger>
+              </TabsList>
+              <TabsContent value="shift">
+                <div className="space-y-4 mt-4">
+                  <Label htmlFor="shift-type">Shift Type</Label>
+                  <RadioGroup
+                    id="shift-type"
+                    value={selectedShiftType}
+                    onValueChange={(value: string) => {
+                      setSelectedShiftType(value as ShiftTypeValue);
+                      if (hasShiftTime(value as ShiftTypeValue)) {
+                        setSelectedStartTime("00:00");
+                        setSelectedEndTime("00:00");
+                      } else {
+                        setSelectedBreak1(undefined);
+                        setSelectedLunch(undefined);
+                        setSelectedBreak2(undefined);
+                      }
+                    }}
+                  >
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="Present" id="present" />
-                      <Label htmlFor="present">Present</Label>
+                      <RadioGroupItem value="Morning" id="Morning" />
+                      <Label htmlFor="Morning">Morning</Label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="NCNS" id="ncns" />
-                      <Label htmlFor="ncns">NCNS</Label>
+                      <RadioGroupItem value="Mid" id="Mid" />
+                      <Label htmlFor="Mid">Mid</Label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="Call In" id="call-in" />
-                      <Label htmlFor="call-in">Call In</Label>
+                      <RadioGroupItem value="Night" id="Night" />
+                      <Label htmlFor="Night">Night</Label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="Rest Day" id="rest-day" />
-                      <Label htmlFor="rest-day">Rest Day</Label>
+                      <RadioGroupItem value="restday" id="restday" />
+                      <Label htmlFor="restday">Rest Day</Label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="Tardy" id="tardy" />
-                      <Label htmlFor="tardy">Tardy</Label>
+                      <RadioGroupItem value="paidTimeOff" id="paidTimeOff" />
+                      <Label htmlFor="paidTimeOff">Paid Time Off</Label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="RDOT" id="rdot" />
+                      <RadioGroupItem value="plannedLeave" id="plannedLeave" />
+                      <Label htmlFor="plannedLeave">Planned Leave</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="holiday" id="holiday" />
+                      <Label htmlFor="holiday">Holiday</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="rdot" id="rdot" />
                       <Label htmlFor="rdot">RDOT</Label>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="Suspended" id="suspended" />
-                      <Label htmlFor="suspended">Suspended</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="Attrition" id="attrition" />
-                      <Label htmlFor="attrition">Attrition</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="LOA" id="loa" />
-                      <Label htmlFor="loa">LOA</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="PTO" id="pto" />
-                      <Label htmlFor="pto">PTO</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="Half Day" id="half-day" />
-                      <Label htmlFor="half-day">Half Day</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem
-                        value="Early Log Out"
-                        id="early-log-out"
-                      />
-                      <Label htmlFor="early-log-out">Early Log Out</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="VTO" id="vto" />
-                      <Label htmlFor="vto">VTO</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="TB" id="tb" />
-                      <Label htmlFor="tb">TB</Label>
-                    </div>
-                  </div>
-                </RadioGroup>
-                {selectedAttendanceStatus === "Present" && (
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center space-x-2 mt-6">
-                      <Checkbox
-                        id="has-ot"
-                        checked={showOtInput}
-                        onCheckedChange={(checked) => {
-                          setShowOtInput(!!checked);
-                          // Clear OT values when unchecking
-                          if (!checked) {
-                            setOtHours("");
-                            setOtMinutes("");
-                          }
-                        }}
-                      />
-                      <Label htmlFor="has-ot">With Overtime?</Label>
-                    </div>
+                  </RadioGroup>
 
-                    {showOtInput && (
-                      <div className="grid grid-cols-2 gap-4">
+                  {hasShiftTime(selectedShiftType) && (
+                    <>
+                      <div className="flex space-x-4">
                         <div>
-                          <Label htmlFor="ot-hours">OT Hours</Label>
+                          <Label htmlFor="start-time">Shift Start </Label>
                           <input
-                            id="ot-hours"
-                            type="number"
-                            min="0"
-                            max="24"
-                            value={otHours}
-                            onChange={(e) => setOtHours(e.target.value)}
-                            className="border p-2 rounded text-sm w-full"
-                            placeholder="Hours"
+                            id="start-time"
+                            type="time"
+                            value={selectedStartTime}
+                            onChange={(e) => setSelectedStartTime(e.target.value)}
+                            className="border p-2 rounded text-sm"
                           />
                         </div>
                         <div>
-                          <Label htmlFor="ot-minutes">OT Minutes</Label>
+                          <Label htmlFor="end-time">Shift End </Label>
                           <input
-                            id="ot-minutes"
-                            type="number"
-                            min="0"
-                            max="59"
-                            value={otMinutes}
-                            onChange={(e) => setOtMinutes(e.target.value)}
-                            className="border p-2 rounded text-sm w-full"
-                            placeholder="Minutes"
+                            id="end-time"
+                            type="time"
+                            value={selectedEndTime}
+                            onChange={(e) => setSelectedEndTime(e.target.value)}
+                            className="border p-2 rounded text-sm"
                           />
                         </div>
                       </div>
-                    )}
-                  </div>
-                )}
 
-                {/* Auto-fill time data for specific statuses */}
-                {(selectedAttendanceStatus === "Tardy" ||
-                  selectedAttendanceStatus === "Half Day" ||
-                  selectedAttendanceStatus === "Present" ||
-                  selectedAttendanceStatus === "RDOT" ||
-                  selectedAttendanceStatus === "Early Log Out") && (
-                    <div className="text-sm text-gray-600">
-                      <p>
-                        Time data will be automatically filled from time records.
-                      </p>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div>
+                          <Label htmlFor="break1">1st Break</Label>
+                          <input
+                            id="break1"
+                            type="time"
+                            value={selectedBreak1 || ""}
+                            onChange={(e) =>
+                              setSelectedBreak1(e.target.value || undefined)
+                            }
+                            className="border p-2 rounded text-sm w-full"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="lunch">Lunch</Label>
+                          <input
+                            id="lunch"
+                            type="time"
+                            value={selectedLunch || ""}
+                            onChange={(e) =>
+                              setSelectedLunch(e.target.value || undefined)
+                            }
+                            className="border p-2 rounded text-sm w-full"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="break2">2nd Break</Label>
+                          <input
+                            id="break2"
+                            type="time"
+                            value={selectedBreak2 || ""}
+                            onChange={(e) =>
+                              setSelectedBreak2(e.target.value || undefined)
+                            }
+                            className="border p-2 rounded text-sm w-full"
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  <div className="flex items-center space-x-2 text-sm">
+                    <span>Repeat for</span>
+                    <Select
+                      value={repeatDays.toString()}
+                      onValueChange={(value) => setRepeatDays(parseInt(value))}
+                    >
+                      <SelectTrigger className="w-40 text-sm">
+                        <SelectValue placeholder="Repeat days" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">1 day</SelectItem>
+                        <SelectItem value="2">2 days</SelectItem>
+                        <SelectItem value="3">3 days</SelectItem>
+                        <SelectItem value="4">4 days</SelectItem>
+                        <SelectItem value="5">5 days</SelectItem>
+                        <SelectItem value="6">6 days</SelectItem>
+                        <SelectItem value="7">7 days</SelectItem>
+                        <SelectItem value="15">15 days</SelectItem>
+                        <SelectItem value="30">30 days</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </TabsContent>
+              <TabsContent value="attendance">
+                <div className="space-y-4 mt-4">
+                  <Label htmlFor="attendance-status">Attendance Status</Label>
+                  <RadioGroup
+                    id="attendance-status"
+                    value={selectedAttendanceStatus}
+                    onValueChange={(value: string) => {
+                      setSelectedAttendanceStatus(value as AttendanceStatus);
+                    }}
+                  >
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="Present" id="present" />
+                        <Label htmlFor="present">Present</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="NCNS" id="ncns" />
+                        <Label htmlFor="ncns">NCNS</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="Call In" id="call-in" />
+                        <Label htmlFor="call-in">Call In</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="Rest Day" id="rest-day" />
+                        <Label htmlFor="rest-day">Rest Day</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="Tardy" id="tardy" />
+                        <Label htmlFor="tardy">Tardy</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="RDOT" id="rdot" />
+                        <Label htmlFor="rdot">RDOT</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="Suspended" id="suspended" />
+                        <Label htmlFor="suspended">Suspended</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="Attrition" id="attrition" />
+                        <Label htmlFor="attrition">Attrition</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="LOA" id="loa" />
+                        <Label htmlFor="loa">LOA</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="PTO" id="pto" />
+                        <Label htmlFor="pto">PTO</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="Half Day" id="half-day" />
+                        <Label htmlFor="half-day">Half Day</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem
+                          value="Early Log Out"
+                          id="early-log-out"
+                        />
+                        <Label htmlFor="early-log-out">Early Log Out</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="VTO" id="vto" />
+                        <Label htmlFor="vto">VTO</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="TB" id="tb" />
+                        <Label htmlFor="tb">TB</Label>
+                      </div>
+                    </div>
+                  </RadioGroup>
+                  {selectedAttendanceStatus === "Present" && (
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center space-x-2 mt-6">
+                        <Checkbox
+                          id="has-ot"
+                          checked={showOtInput}
+                          onCheckedChange={(checked) => {
+                            setShowOtInput(!!checked);
+                            // Clear OT values when unchecking
+                            if (!checked) {
+                              setOtHours("");
+                              setOtMinutes("");
+                            }
+                          }}
+                        />
+                        <Label htmlFor="has-ot">With Overtime?</Label>
+                      </div>
+
+                      {showOtInput && (
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="ot-hours">OT Hours</Label>
+                            <input
+                              id="ot-hours"
+                              type="number"
+                              min="0"
+                              max="24"
+                              value={otHours}
+                              onChange={(e) => setOtHours(e.target.value)}
+                              className="border p-2 rounded text-sm w-full"
+                              placeholder="Hours"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="ot-minutes">OT Minutes</Label>
+                            <input
+                              id="ot-minutes"
+                              type="number"
+                              min="0"
+                              max="59"
+                              value={otMinutes}
+                              onChange={(e) => setOtMinutes(e.target.value)}
+                              className="border p-2 rounded text-sm w-full"
+                              placeholder="Minutes"
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
-              </div>
-            </TabsContent>
-          </Tabs>
-          <DialogFooter className="text-xs">
-            <Button
-              variant="outline"
-              onClick={() => {
-                resetDialogState();
-                setIsAddShiftOpen(false);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={
-                activeTab === "schedule"
-                  ? handleAddShift
-                  : handleUpdateAttendance
-              }
-            >
-              Save Changes
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+
+                  {/* Auto-fill time data for specific statuses */}
+                  {(selectedAttendanceStatus === "Tardy" ||
+                    selectedAttendanceStatus === "Half Day" ||
+                    selectedAttendanceStatus === "Present" ||
+                    selectedAttendanceStatus === "RDOT" ||
+                    selectedAttendanceStatus === "Early Log Out") && (
+                      <div className="text-sm text-gray-600">
+                        <p>
+                          Time data will be automatically filled from time records.
+                        </p>
+                      </div>
+                    )}
+                </div>
+              </TabsContent>
+            </Tabs>
+            <DialogFooter className="text-xs">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  resetDialogState();
+                  setIsAddShiftOpen(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={
+                  activeTab === "schedule"
+                    ? handleAddShift
+                    : handleUpdateAttendance
+                }
+              >
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </section>
   );
 };
 
