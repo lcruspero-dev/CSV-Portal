@@ -117,6 +117,8 @@ const payrollColumns: ColumnDef<Payroll>[] = [
   { accessorKey: "totalDeductions.sssEmployeeShare", header: "SSS" },
   { accessorKey: "totalDeductions.phicEmployeeShare", header: "PhilHealth" },
   { accessorKey: "totalDeductions.hdmfEmployeeShare", header: "Pag-IBIG" },
+  { accessorKey: "totalDeductions.wisp", header: "WISP" },
+  { accessorKey: "totalDeductions.totalSSSContribution", header: "Total SSS Contribution" },
   {
     accessorKey: "totalDeductions.totalDeductions",
     header: "Total Deductions",
@@ -153,6 +155,101 @@ const getByPath = (obj: any, path: string): any => {
     .reduce((acc, key) => (acc ? acc[key] : undefined), obj);
 };
 
+// ================= Reset Payroll Data Function =================
+const resetPayrollData = (payroll: Payroll): Payroll => {
+  // Preserve only the specific fields mentioned
+  const preservedPayrollRate = {
+    userId: payroll.payrollRate?.userId || "",
+    monthlyRate: payroll.payrollRate?.monthlyRate || 0,
+    dailyRate: payroll.payrollRate?.dailyRate || 0,
+    hourlyRate: payroll.payrollRate?.hourlyRate || 0,
+  };
+
+  const preservedDeductions = {
+    sssEmployeeShare: payroll.totalDeductions?.sssEmployeeShare || 0,
+    phicEmployeeShare: payroll.totalDeductions?.phicEmployeeShare || 0,
+    hdmfEmployeeShare: payroll.totalDeductions?.hdmfEmployeeShare || 0,
+    wisp: payroll.totalDeductions?.wisp || 0,
+    totalSSSContribution: payroll.totalDeductions?.totalSSSContribution || 0,
+  };
+
+  return {
+    ...payroll,
+    // Keep preserved payroll rates
+    payrollRate: preservedPayrollRate,
+
+    // Reset work days and related fields
+    workDays: {
+      regularDays: 0,
+      absentDays: 0,
+      minsLate: 0,
+      totalHoursWorked: 0,
+      undertimeMinutes: 0
+    },
+
+    // Reset holidays
+    holidays: {
+      regHolidayPay: 0,
+      speHolidayPay: 0,
+      regHoliday: 0,
+      speHoliday: 0
+    },
+
+    // Reset overtime
+    totalOvertime: {
+      regularOTpay: 0,
+      restDayOtPay: 0,
+      restDayOtHoursExcessPay: 0,
+      regularHolidayWorkedPay: 0,
+      regularHolidayWorkedExcessPay: 0,
+      specialHolidayWorkedPay: 0,
+      specialHolidayWorkedOTpay: 0,
+      specialHolidayRDworkedPay: 0,
+      specialHolidayRDworkedOTpay: 0,
+      totalOvertime: 0,
+    },
+
+    // Reset salary adjustments
+    salaryAdjustments: {
+      unpaidAmount: 0,
+      increase: 0,
+    },
+
+    // Reset supplementary income
+    totalSupplementary: {
+      nightDiffPay: 0,
+      regOTnightDiffPay: 0,
+      restDayNDPay: 0,
+      regHolNDpay: 0,
+      specialHolidayNDpay: 0,
+      totalSupplementaryIncome: 0,
+    },
+
+    // Reset gross salary components
+    grossSalary: {
+      grossSalary: 0,
+      nonTaxableAllowance: 0,
+      performanceBonus: 0,
+    },
+
+    // Keep only the preserved deductions, reset totalDeductions to 0 (will be recalculated)
+    totalDeductions: {
+      ...preservedDeductions,
+      totalDeductions: 0,
+    },
+
+    // Reset grand total
+    grandtotal: {
+      grandtotal: 0,
+    },
+
+    // Reset basic pay
+    pay: {
+      basicPay: 0,
+    },
+  };
+};
+
 {
   /** Payroll Table */
 }
@@ -160,10 +257,12 @@ const PayrollTable = ({
   columns,
   data,
   onRowClick,
+  onSendPayroll,
 }: {
   columns: ColumnDef<Payroll>[];
   data: Payroll[];
   onRowClick: (payroll: Payroll) => void;
+  onSendPayroll: (payroll: Payroll) => void;
 }) => {
   const table = useReactTable({
     data,
@@ -203,6 +302,11 @@ const PayrollTable = ({
     return { columnTotals: totals, columnIsNumeric: isNumeric };
   }, [data, leafColumns]);
 
+  const handleSendPayroll = (payroll: Payroll, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent row click event
+    onSendPayroll(payroll);
+  };
+
   return (
     <section className="w-full overflow-x-auto">
       <Table>
@@ -224,6 +328,9 @@ const PayrollTable = ({
                   </TableHead>
                 );
               })}
+              <TableHead className="border sticky bg-white z-10 border-r">
+                Actions
+              </TableHead>
             </TableRow>
           ))}
         </TableHeader>
@@ -256,6 +363,16 @@ const PayrollTable = ({
                       </TableCell>
                     );
                   })}
+                  <TableCell className="border sticky bg-white z-10 border-r">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => handleSendPayroll(row.original, e)}
+                      className="bg-green-500 text-white hover:bg-green-600"
+                    >
+                      Send
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
               {/* Totals footer per column */}
@@ -279,11 +396,14 @@ const PayrollTable = ({
                     </TableCell>
                   );
                 })}
+                <TableCell className="border font-semibold">
+                  {/* Empty action cell for totals row */}
+                </TableCell>
               </TableRow>
             </>
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
+              <TableCell colSpan={columns.length + 1} className="h-24 text-center">
                 No payroll records found.
               </TableCell>
             </TableRow>
@@ -308,7 +428,9 @@ const computePayroll = (p: Payroll): Payroll => {
   const totalDeductions =
     (p.totalDeductions?.sssEmployeeShare ?? 0) +
     (p.totalDeductions?.phicEmployeeShare ?? 0) +
-    (p.totalDeductions?.hdmfEmployeeShare ?? 0);
+    (p.totalDeductions?.hdmfEmployeeShare ?? 0) +
+    (p.totalDeductions?.wisp ?? 0) +
+    (p.totalDeductions?.totalSSSContribution ?? 0);
 
   const netPay =
     grossSalary - totalDeductions - (p.salaryAdjustments?.unpaidAmount ?? 0);
@@ -330,7 +452,6 @@ const PayrollPage = () => {
   const [selectedPayroll, setSelectedPayroll] = useState<Payroll | null>(null);
   const [positionFilter, setPositionFilter] = useState<string>("All");
   const [filterOpen, setFilterOpen] = useState<boolean>(false);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 
   useEffect(() => {
     const fetchPayrolls = async () => {
@@ -357,7 +478,35 @@ const PayrollPage = () => {
     setSelectedPayroll(null);
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleSendPayroll = async (payroll: Payroll) => {
+    try {
+      // Here you would typically send the payroll data to the employee
+      // For now, we'll just simulate the API call and reset the data
+      console.log('Sending payroll to employee:', payroll);
+
+      // Simulate API call to send payroll
+      // await payrollAPI.sendPayrollToEmployee(payroll);
+
+      // Reset the payroll data for this employee (preserving specific fields)
+      const resetPayroll = resetPayrollData(payroll);
+      const recomputed = computePayroll(resetPayroll);
+
+      // Update the data with reset values
+      setData((prev) =>
+        prev.map((p) =>
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (p as any)._id === (recomputed as any)._id ? recomputed : p
+        )
+      );
+
+      // Show success message
+      alert('Payroll sent successfully and reset for next period!');
+
+    } catch (error) {
+      console.error('Error sending payroll:', error);
+      alert('Error sending payroll. Please try again.');
+    }
+  };
 
   const filteredData = useMemo(() => {
     if (positionFilter === "All") return data;
@@ -407,6 +556,7 @@ const PayrollPage = () => {
           columns={payrollColumns}
           data={filteredData}
           onRowClick={setSelectedPayroll}
+          onSendPayroll={handleSendPayroll}
         />
       </div>
 

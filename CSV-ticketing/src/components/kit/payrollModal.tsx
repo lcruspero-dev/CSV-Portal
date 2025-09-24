@@ -8,7 +8,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import React, { useEffect, useState } from "react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export interface UserProfile {
   _id: string;
@@ -40,7 +46,7 @@ export interface Payroll {
     absentDays: number;
     minsLate: number;
     totalHoursWorked: number;
-    undertimeMinutes: number
+    undertimeMinutes: number;
   };
   holidays?: {
     regHoliday: number;
@@ -55,28 +61,21 @@ export interface Payroll {
   totalDeductions?: any;
   grandtotal?: any;
 }
-type PayrollModal = Payroll & {
-  _id?: string;
-  basicSalary: number;
-  totalHoursWorked: number;
-};
 
 const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
   const [open, setOpen] = useState(false);
   const [employees, setEmployees] = useState<any[]>([]);
   const [selectedUser, setSelectedUser] = useState<any>(null);
 
-  // Minimal form (only requested editable fields)
   const [form, setForm] = useState({
     monthlyRate: 0,
     sssEmployeeShare: 0,
     wisp: 0,
-    hdmfEmployeeShare: 0, // Pag-IBIG
+    hdmfEmployeeShare: 0,
     taxableIncome: 0,
     hdmfLoan: 0,
   });
 
-  // Auto-computed fields fetched from backend (disabled in UI, not editable)
   const [autoComputed, setAutoComputed] = useState({
     dailyRate: 0,
     hourlyRate: 0,
@@ -101,9 +100,6 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
     fetchUsers();
   }, []);
 
-  console.log("Selected User:", selectedUser);
-
-  // Handle form input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: Number(value) }));
@@ -111,19 +107,16 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
 
   const round2 = (n: number) => Math.round((n || 0) * 100) / 100;
 
-  // Payroll preview (uses auto-computed values and selected deductions only)
   useEffect(() => {
     if (!selectedUser) return;
 
     const monthlyRate = round2(form.monthlyRate || 0);
     const dailyRate = round2(monthlyRate / 26);
     const hourlyRate = round2(dailyRate / 8);
-
     const basicPay = round2(autoComputed.totalHoursWorked * hourlyRate);
     const lateDeduction = round2((autoComputed.minsLate / 60) * hourlyRate);
 
     const grossSalary = round2(basicPay);
-
     const totalDeductions = round2(
       (form.sssEmployeeShare || 0) +
       (form.wisp || 0) +
@@ -137,21 +130,11 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
     setPayrollPreview({
       employee: {
         ...selectedUser,
-        email:
-          (selectedUser.email as string) ||
-          (selectedUser.emailAddress as string) ||
-          (selectedUser.personalEmail as string) ||
-          (selectedUser?.user?.email as string) ||
-          "",
+        email: selectedUser.email || selectedUser.emailAddress || selectedUser.personalEmail || selectedUser?.user?.email || "",
         fullName: `${selectedUser.firstName} ${selectedUser.lastName}`,
         position: selectedUser.jobPosition,
       },
-      payrollRate: {
-        userId: selectedUser.userId || selectedUser._id,
-        monthlyRate,
-        dailyRate,
-        hourlyRate,
-      },
+      payrollRate: { userId: selectedUser.userId || selectedUser._id, monthlyRate, dailyRate, hourlyRate },
       pay: { basicPay },
       workDays: {
         regularDays: autoComputed.regularDays,
@@ -160,11 +143,7 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
         totalHoursWorked: autoComputed.totalHoursWorked,
         undertimeMinutes: autoComputed.undertimeMinutes,
       },
-      grossSalary: {
-        grossSalary,
-        nonTaxableAllowance: 0,
-        performanceBonus: 0,
-      },
+      grossSalary: { grossSalary, nonTaxableAllowance: 0, performanceBonus: 0 },
       totalDeductions: {
         totalDeductions,
         sssEmployeeShare: form.sssEmployeeShare,
@@ -177,7 +156,6 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
     });
   }, [form, selectedUser, autoComputed]);
 
-  // Auto-fetch computed data when employee changes (no button)
   useEffect(() => {
     const run = async () => {
       if (!selectedUser) return;
@@ -194,26 +172,13 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
         const startDate = formatDate(startOfMonth);
         const endDate = formatDate(endOfMonth);
 
-        console.log('Auto-fetching payroll data for:', selectedUser.firstName, selectedUser.lastName);
-        console.log('Date range:', startDate, 'to', endDate);
-
         const res = await payrollAPI.autoCalculatePayroll(
           selectedUser.userId || selectedUser._id,
           { startDate, endDate }
         );
 
-        console.log('Auto-fetch response:', res.data);
-
         if (res.data?.payroll) {
           const p = res.data.payroll;
-          console.log('Setting auto-computed values:', {
-            totalHoursWorked: p.workDays?.totalHoursWorked,
-            minsLate: p.workDays?.minsLate,
-            undertimeMinutes: p.workDays?.undertimeMinutes,
-            regularDays: p.workDays?.regularDays,
-            absentDays: p.workDays?.absentDays,
-          });
-
           setAutoComputed({
             dailyRate: p.payrollRate?.dailyRate || 0,
             hourlyRate: p.payrollRate?.hourlyRate || 0,
@@ -229,7 +194,6 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
             monthlyRate: p.payrollRate?.monthlyRate ?? prev.monthlyRate,
           }));
         } else {
-          console.log('No payroll data found, setting defaults');
           setAutoComputed({
             dailyRate: 0,
             hourlyRate: 0,
@@ -242,7 +206,6 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
         }
       } catch (err) {
         console.error('Auto-fetch payroll data failed:', err);
-        // Set defaults on error
         setAutoComputed({
           dailyRate: 0,
           hourlyRate: 0,
@@ -258,12 +221,9 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
   }, [selectedUser]);
 
   const handleCreate = async () => {
-    if (!selectedUser || !payrollPreview)
-      return alert("Select an employee and fill the form.");
+    if (!selectedUser || !payrollPreview) return alert("Select an employee and fill the form.");
     try {
-      const res = await payrollAPI.processPayroll(
-        payrollPreview as unknown as PayrollPayload
-      );
+      const res = await payrollAPI.processPayroll(payrollPreview as unknown as PayrollPayload);
       onAdd(res.data.payroll || res.data);
       setOpen(false);
     } catch (err) {
@@ -272,8 +232,7 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
   };
 
   const handleSendPayroll = async () => {
-    if (!selectedUser || !payrollPreview)
-      return alert("Select an employee and fill the form.");
+    if (!selectedUser || !payrollPreview) return alert("Select an employee and fill the form.");
 
     const confirmSend = window.confirm(
       `Are you sure you want to send this payroll to ${selectedUser.firstName} ${selectedUser.lastName}?\n\nThis will:\n- Send the payroll to the employee\n- Reset payroll calculations for next cycle\n- Keep their monthly rate and deductions\n- Preserve time tracker data (continues accumulating)`
@@ -282,20 +241,18 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
     if (!confirmSend) return;
 
     try {
-      // First, create/update the payroll
-      const res = await payrollAPI.processPayroll(
-        payrollPreview as unknown as PayrollPayload
-      );
+      const res = await payrollAPI.processPayroll(payrollPreview as unknown as PayrollPayload);
+      await payrollAPI.sendPayroll(selectedUser.userId || selectedUser._id, {
+        payrollId: res.data.payroll?._id || res.data._id
+      });
 
-      // Then send the payroll (resets calculations only)
-      await payrollAPI.sendPayroll(
-        selectedUser.userId || selectedUser._id,
-        {
-          payrollId: res.data.payroll?._id || res.data._id
-        }
-      );
+      <Alert variant="default">
+        <AlertTitle>Heads up!</AlertTitle>
+        <AlertDescription>
+          Payroll sent successfully! Calculations reset for next cycle. Time tracker data preserved.
+        </AlertDescription>
+      </Alert>
 
-      alert("Payroll sent successfully! Calculations reset for next cycle. Time tracker data preserved.");
       onAdd(res.data.payroll || res.data);
       setOpen(false);
     } catch (err) {
@@ -304,184 +261,242 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
     }
   };
 
+  // Calculate values for the math breakdown
+  const hourlyRate = round2(((form.monthlyRate || 0) / 26) / 8);
+  const basicPay = round2(autoComputed.totalHoursWorked * hourlyRate);
+  const lateDeduction = round2((autoComputed.minsLate / 60) * hourlyRate);
+  const totalDeductions = round2(
+    form.sssEmployeeShare + form.wisp + form.hdmfEmployeeShare +
+    form.taxableIncome + form.hdmfLoan + lateDeduction
+  );
+  const netPay = round2(basicPay - totalDeductions);
+
   return (
     <>
       <Button onClick={() => setOpen(true)}>Create Payroll</Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-[90vw] w-full max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Create Payroll</DialogTitle>
-          </DialogHeader>
-          <div className="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left: Form */}
-            <div className="lg:col-span-2">
-              {/* Employee Select */}
-              <div className="mb-6">
-                <label className="text-sm font-medium">Select Employee</label>
-                <div className="flex gap-2">
-                  <select
-                    value={selectedUser?._id || ""}
-                    onChange={(e) =>
-                      setSelectedUser(
-                        employees.find((emp) => emp._id === e.target.value)
-                      )
-                    }
-                    className="border rounded px-2 py-1 flex-1"
-                  >
-                    <option value="">-- Choose Employee --</option>
-                    {employees.map((emp) => (
-                      <option key={emp._id} value={emp._id}>
-                        {emp.firstName} {emp.lastName} ({emp.jobPosition})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              {/* Form Fields (only required ones) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-                <div className="flex flex-col">
-                  <label className="text-sm font-semibold">Monthly Rate</label>
-                  <input
-                    type="number"
-                    name="monthlyRate"
-                    value={form.monthlyRate}
-                    onChange={handleChange}
-                    className="border rounded px-2 py-1"
-                  />
-                </div>
-                {/* Auto (disabled) derived from monthly rate */}
-                <div className="flex flex-col">
-                  <label className="text-sm font-semibold text-gray-600">Daily Rate (Auto)</label>
-                  <input
-                    type="number"
-                    value={round2((form.monthlyRate || 0) / 26)}
-                    disabled
-                    className="border rounded px-2 py-1 bg-gray-100 text-gray-600"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-sm font-semibold text-gray-600">Hourly Rate (Auto)</label>
-                  <input
-                    type="number"
-                    value={round2(((form.monthlyRate || 0) / 26) / 8)}
-                    disabled
-                    className="border rounded px-2 py-1 bg-gray-100 text-gray-600"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-sm font-semibold text-gray-600">Hours Worked (Auto)</label>
-                  <input
-                    type="number"
-                    value={round2(autoComputed.totalHoursWorked || 0)}
-                    disabled
-                    className="border rounded px-2 py-1 bg-gray-100 text-gray-600"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-sm font-semibold">SSS</label>
-                  <input
-                    type="number"
-                    name="sssEmployeeShare"
-                    value={form.sssEmployeeShare}
-                    onChange={handleChange}
-                    className="border rounded px-2 py-1"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-sm font-semibold">WISP</label>
-                  <input
-                    type="number"
-                    name="wisp"
-                    value={form.wisp}
-                    onChange={handleChange}
-                    className="border rounded px-2 py-1"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-sm font-semibold">PAG-IBIG</label>
-                  <input
-                    type="number"
-                    name="hdmfEmployeeShare"
-                    value={form.hdmfEmployeeShare}
-                    onChange={handleChange}
-                    className="border rounded px-2 py-1"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-sm font-semibold">TAXABLE INCOME</label>
-                  <input
-                    type="number"
-                    name="taxableIncome"
-                    value={form.taxableIncome}
-                    onChange={handleChange}
-                    className="border rounded px-2 py-1"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-sm font-semibold">HDMF LOAN</label>
-                  <input
-                    type="number"
-                    name="hdmfLoan"
-                    value={form.hdmfLoan}
-                    onChange={handleChange}
-                    className="border rounded px-2 py-1"
-                  />
-                </div>
-              </div>
-            </div>
-            {/* Right: Preview */}
-            <aside className="lg:col-span-1">
-              {payrollPreview && (
-                <div className="bg-gray-50 border rounded-lg p-4">
-                  <h3 className="font-semibold mb-4 text-lg">
-                    Payroll Preview
-                  </h3>
-                  <div className="grid grid-cols-1 gap-4 text-sm">
-                    <div>
-                      <ul className="space-y-1">
-                        <li>
-                          <b>Monthly Rate:</b> {payrollPreview.payrollRate?.monthlyRate.toFixed(2) ?? 0}
-                        </li>
-                        <li>
-                          <b>Hours Worked:</b> {payrollPreview.workDays?.totalHoursWorked?.toFixed(2) ?? 0}
-                        </li>
-                        <li>
-                          <b>SSS:</b> {payrollPreview.totalDeductions?.sssEmployeeShare?.toFixed(2) ?? 0}
-                        </li>
-                        <li>
-                          <b>WISP:</b> {payrollPreview.totalDeductions?.wisp?.toFixed(2) ?? 0}
-                        </li>
-                        <li>
-                          <b>PAG-IBIG:</b> {payrollPreview.totalDeductions?.hdmfEmployeeShare?.toFixed(2) ?? 0}
-                        </li>
-                        <li>
-                          <b>TAXABLE INCOME:</b> {payrollPreview.totalDeductions?.taxableIncome?.toFixed(2) ?? 0}
-                        </li>
-                        <li>
-                          <b>HDMF LOAN:</b> {payrollPreview.totalDeductions?.hdmfLoan?.toFixed(2) ?? 0}
-                        </li>
-                        <li className="pt-2">
-                          <b>Net Pay:</b> {payrollPreview.grandtotal?.grandtotal?.toFixed(2) ?? 0}
-                        </li>
-                        <li>
-                          <b>Grand Total:</b> 0.00
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
+            <DialogTitle className="flex items-center gap-2">
+              Create Payroll
+              {selectedUser && (
+                <Badge variant="secondary">
+                  {selectedUser.firstName} {selectedUser.lastName}
+                </Badge>
               )}
-            </aside>
-          </div>
-          <DialogFooter className="mt-6">
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handleCreate}>
-                Save Payroll
-              </Button>
-              <Button onClick={handleSendPayroll} className="bg-green-600 hover:bg-green-700">
-                Send Payroll
-              </Button>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left: Employee Selection and Form */}
+            <div className="lg:col-span-2 space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Employee Information</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="employee">Select Employee</Label>
+                      <Select
+                        value={selectedUser?._id || ""}
+                        onValueChange={(value) => setSelectedUser(employees.find((emp) => emp._id === value))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Choose employee..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {employees.map((emp) => (
+                            <SelectItem key={emp._id} value={emp._id}>
+                              {emp.firstName} {emp.lastName} • {emp.jobPosition}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {selectedUser && (
+                      <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
+                        <div>Position: <span className="font-normal">{selectedUser.jobPosition}</span></div>
+                        <div>Email: <span className="font-normal">{selectedUser.email}</span></div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {selectedUser && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Payroll Details</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Rates Section */}
+                      <div className="space-y-3">
+                        <h4 className="font-semibold text-sm border-b pb-1">Rates & Hours</h4>
+                        <div>
+                          <Label htmlFor="monthlyRate">Monthly Rate</Label>
+                          <Input
+                            id="monthlyRate"
+                            type="number"
+                            name="monthlyRate"
+                            value={form.monthlyRate}
+                            onChange={handleChange}
+                          />
+                        </div>  
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <Label className="text-xs">Daily Rate (Auto)</Label>
+                            <Input value={round2((form.monthlyRate || 0) / 26)} disabled className="bg-muted" />
+                          </div>
+                          <div>
+                            <Label className="text-xs">Hourly Rate (Auto)</Label>
+                            <Input value={round2(((form.monthlyRate || 0) / 26) / 8)} disabled className="bg-muted" />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <Label className="text-xs">Hours Worked (Auto)</Label>
+                            <Input value={round2(autoComputed.totalHoursWorked || 0)} disabled className="bg-muted" />
+                          </div>
+                          <div>
+                            <Label className="text-xs">Late Minutes (Auto)</Label>
+                            <Input value={autoComputed.minsLate || 0} disabled className="bg-muted" />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Deductions Section */}
+                      <div className="space-y-3">
+                        <h4 className="font-semibold text-sm border-b pb-1">Deductions</h4>
+                        {[
+                          {
+                            id: "sssEmployeeShare",
+                            label: "SSS"
+                          },
+                          {
+                            id: "wisp",
+                            label: "WISP"
+                          },
+                          { id: "hdmfEmployeeShare", label: "PAG-IBIG" },
+                          { id: "taxableIncome", label: "TAXABLE INCOME" },
+                          { id: "hdmfLoan", label: "HDMF LOAN" },
+                        ].map((field) => (
+                          <div key={field.id}>
+                            <Label htmlFor={field.id}>{field.label}</Label>
+                            <Input
+                              id={field.id}
+                              type="number"
+                              name={field.id}
+                              value={form[field.id as keyof typeof form]}
+                              onChange={handleChange}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
+
+            {/* Right: Preview */}
+            <div className="lg:col-span-1">
+              {payrollPreview && (
+                <Card className="sticky top-4">
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center justify-between">
+                      Payroll Breakdown
+                      <Badge variant="outline" className="text-green-600 border-green-600">
+                        PHP {netPay.toFixed(2)}
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3 text-sm">
+                      {/* Earnings */}
+                      <div className="space-y-2">
+                        <div className="font-medium text-green-600">EARNINGS</div>
+                        <div className="flex justify-between">
+                          <span>Basic Pay ({autoComputed.totalHoursWorked.toFixed(1)}h × {hourlyRate.toFixed(2)})</span>
+                          <span>+ {basicPay.toFixed(2)}</span>
+                        </div>
+                      </div>
+
+                      {/* Deductions */}
+                      <div className="space-y-2 border-t pt-2">
+                        <div className="font-medium text-red-600">DEDUCTIONS</div>
+                        {form.sssEmployeeShare > 0 && (
+                          <div className="flex justify-between">
+                            <span>SSS</span>
+                            <span>- {form.sssEmployeeShare.toFixed(2)}</span>
+                          </div>
+                        )}
+                        {form.wisp > 0 && (
+                          <div className="flex justify-between">
+                            <span>WISP</span>
+                            <span>- {form.wisp.toFixed(2)}</span>
+                          </div>
+                        )}
+                        {form.hdmfEmployeeShare > 0 && (
+                          <div className="flex justify-between">
+                            <span>PAG-IBIG</span>
+                            <span>- {form.hdmfEmployeeShare.toFixed(2)}</span>
+                          </div>
+                        )}
+                        {form.taxableIncome > 0 && (
+                          <div className="flex justify-between">
+                            <span>Taxable Income</span>
+                            <span>- {form.taxableIncome.toFixed(2)}</span>
+                          </div>
+                        )}
+                        {form.hdmfLoan > 0 && (
+                          <div className="flex justify-between">
+                            <span>HDMF Loan</span>
+                            <span>- {form.hdmfLoan.toFixed(2)}</span>
+                          </div>
+                        )}
+                        {lateDeduction > 0 && (
+                          <div className="flex justify-between">
+                            <span>Late Deduction ({autoComputed.minsLate}m)</span>
+                            <span>- {lateDeduction.toFixed(2)}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Total Calculation */}
+                      <div className="border-t pt-2 space-y-1">
+                        <div className="flex justify-between font-medium">
+                          <span>Gross Salary</span>
+                          <span>{basicPay.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between font-medium">
+                          <span>Total Deductions</span>
+                          <span className="text-red-600">- {totalDeductions.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between font-bold border-t pt-1 text-base">
+                          <span>NET PAY</span>
+                          <span className="text-green-600">PHP {netPay.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter className="flex gap-2 pt-4 border-t">
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="outline" onClick={handleCreate} disabled={!selectedUser}>
+              Save Draft
+            </Button>
+            <Button onClick={handleSendPayroll} disabled={!selectedUser} className="bg-green-600 hover:bg-green-700">
+              Send Payroll
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
