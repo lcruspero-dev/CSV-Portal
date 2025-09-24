@@ -674,3 +674,130 @@ exports.sendPayroll = async (req, res) => {
     }
 };
 
+// GENERATE PAYSLIP FOR CUSTOM DATE RANGE (without mutating payroll)
+exports.generatePayslipForRange = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        let { startDate, endDate } = req.body || {};
+
+        if (!startDate || !endDate) {
+            return res.status(400).json({ status: "Error", message: "startDate and endDate are required (MM/DD/YYYY)" });
+        }
+
+        // Normalize and enforce date boundaries
+        const parseMdY = (s) => {
+            const [mm, dd, yyyy] = s.split('/').map((v) => Number(v));
+            return new Date(yyyy, mm - 1, dd);
+        };
+        const fmtMdY = (d) => {
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            const yyyy = d.getFullYear();
+            return `${mm}/${dd}/${yyyy}`;
+        };
+
+        const start = parseMdY(startDate);
+        const end = parseMdY(endDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+            return res.status(400).json({ status: "Error", message: "Invalid date format. Use MM/DD/YYYY" });
+        }
+        if (end < start) {
+            return res.status(400).json({ status: "Error", message: "endDate cannot be earlier than startDate" });
+        }
+
+        // Do not include future dates beyond today
+        const effectiveEnd = end > today ? today : end;
+        startDate = fmtMdY(start);
+        endDate = fmtMdY(effectiveEnd);
+
+        // Calculate payroll-like data from time tracker for range
+        const calculatedData = await calculatePayrollData(userId, startDate, endDate);
+
+        // Build a transient payroll-like object for computation
+        const transientPayroll = {
+            employee: { userId, email: "", fullName: "", position: "" },
+            payrollRate: {
+                userId,
+                monthlyRate: calculatedData.monthlySalary,
+                dailyRate: calculatedData.dailyRate,
+                hourlyRate: calculatedData.hourlyRate,
+            },
+            workDays: {
+                regularDays: calculatedData.regularDays,
+                // For custom range, avoid month-wide absence penalty. Recompute within range below.
+                absentDays: 0,
+                minsLate: calculatedData.totalLateMinutes,
+                totalHoursWorked: calculatedData.totalHoursWorked,
+                undertimeMinutes: calculatedData.totalUndertimeMinutes,
+            },
+            holidays: {},
+            latesAndAbsent: {},
+            salaryAdjustments: {},
+            totalOvertime: {},
+            totalSupplementary: {},
+            grossSalary: {},
+            totalDeductions: {},
+            pay: {},
+            grandtotal: {},
+        };
+
+        computePayroll(transientPayroll);
+
+        // Fetch time entries strictly within [startDate, endDate]
+        const timeEntriesRaw = await EmployeeTime.find({
+            employeeId: userId,
+            date: { $gte: startDate, $lte: endDate }
+        }).lean();
+
+        const timeEntries = (timeEntriesRaw || []).map((t) => ({
+            date: t.date,
+            hoursWorked: Number(t.totalHours || 0),
+        }));
+
+        // Compute workdays and absences strictly within range (Mon-Fri only)
+        const countWeekdaysInclusive = (a, b) => {
+            const startD = parseMdY(a);
+            const endD = parseMdY(b);
+            let count = 0;
+            for (let d = new Date(startD); d <= endD; d.setDate(d.getDate() + 1)) {
+                const wd = d.getDay();
+                if (wd >= 1 && wd <= 5) count++;
+            }
+            return count;
+        };
+        const uniqueWorkedDays = new Set((timeEntries || []).filter(te => te.hoursWorked > 0).map(te => te.date));
+        const workdaysInRange = countWeekdaysInclusive(startDate, endDate);
+        const absentInRange = Math.max(0, workdaysInRange - uniqueWorkedDays.size);
+        transientPayroll.workDays.absentDays = absentInRange;
+
+        const payload = {
+            userId,
+            sentAt: new Date(),
+            periodStart: startDate,
+            periodEnd: endDate,
+            employee: transientPayroll.employee,
+            payrollRate: transientPayroll.payrollRate,
+            workDays: transientPayroll.workDays,
+            holidays: transientPayroll.holidays,
+            latesAndAbsent: transientPayroll.latesAndAbsent,
+            salaryAdjustments: transientPayroll.salaryAdjustments,
+            totalOvertime: transientPayroll.totalOvertime,
+            totalSupplementary: transientPayroll.totalSupplementary,
+            grossSalary: transientPayroll.grossSalary,
+            totalDeductions: transientPayroll.totalDeductions,
+            pay: transientPayroll.pay,
+            grandtotal: transientPayroll.grandtotal,
+            timeEntries,
+            status: 'generated',
+        };
+
+        return res.status(200).json({ status: "Success", payslip: payload });
+    } catch (error) {
+        console.error('Error generating payslip for range:', error);
+        return res.status(500).json({ status: "Error", message: "Failed to generate payslip", error: error.message });
+    }
+};
+

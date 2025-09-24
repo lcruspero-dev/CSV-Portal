@@ -9,6 +9,7 @@ const {
   autoUpdatePayrollFromTimeTracker,
   sendPayroll,
   getEmployeePayslips,
+  generatePayslipForRange,
 } = require("../controllers/payrollController");
 const { protect } = require("../middleware/authMiddleware");
 
@@ -41,6 +42,9 @@ router.put("/update/:id", protect, updatePayroll);
 router.post("/send/:userId", protect, sendPayroll);
 
 router.get("/payslips/:userId", protect, getEmployeePayslips);
+
+// Generate a payslip for a custom date range without persisting it
+router.post("/payslips/generate/:userId", protect, generatePayslipForRange);
 
 router.get("/", protect, getAllPayrolls);
 

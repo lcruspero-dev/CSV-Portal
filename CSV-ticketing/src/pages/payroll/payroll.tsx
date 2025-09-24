@@ -27,7 +27,7 @@ import BackButton from "@/components/kit/BackButton";
 import PayrollModal, { Payroll } from "@/components/kit/payrollModal";
 import UpdatePayrollModal from "@/components/kit/payrollUpdateModal";
 
-// ================= Payroll Columns =================
+{/** Payroll Inputs */ }
 const payrollColumns: ColumnDef<Payroll>[] = [
   {
     accessorKey: "employee.email",
@@ -452,6 +452,12 @@ const PayrollPage = () => {
   const [selectedPayroll, setSelectedPayroll] = useState<Payroll | null>(null);
   const [positionFilter, setPositionFilter] = useState<string>("All");
   const [filterOpen, setFilterOpen] = useState<boolean>(false);
+  const [csrTypes, setCsrTypes] = useState({
+    US: false,
+    CANADA: false,
+    GENERAL: false,
+    VIP: false
+  });
 
   useEffect(() => {
     const fetchPayrolls = async () => {
@@ -583,20 +589,71 @@ const PayrollPage = () => {
                 <option value="CSR">CSR</option>
               </select>
             </div>
+
+            {/* CSR Sub-filter with Checkboxes */}
+            {positionFilter === "CSR" && (
+              <div className="flex flex-col gap-3">
+                <label className="text-sm font-medium text-gray-700">
+                  CSR Type
+                </label>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={csrTypes.US}
+                      onChange={(e) => setCsrTypes(prev => ({ ...prev, US: e.target.checked }))}
+                      className="rounded border-gray-300"
+                    />
+                    <span className="text-sm">US</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={csrTypes.CANADA}
+                      onChange={(e) => setCsrTypes(prev => ({ ...prev, CANADA: e.target.checked }))}
+                      className="rounded border-gray-300"
+                    />
+                    <span className="text-sm">CANADA</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={csrTypes.GENERAL}
+                      onChange={(e) => setCsrTypes(prev => ({ ...prev, GENERAL: e.target.checked }))}
+                      className="rounded border-gray-300"
+                    />
+                    <span className="text-sm">GENERAL</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={csrTypes.VIP}
+                      onChange={(e) => setCsrTypes(prev => ({ ...prev, VIP: e.target.checked }))}
+                      className="rounded border-gray-300"
+                    />
+                    <span className="text-sm">VIP</span>
+                  </label>
+                </div>
+              </div>
+            )}
             <div className="flex gap-3">
               <Button
                 variant="outline"
                 onClick={() => {
                   setPositionFilter("All");
+                  setCsrTypes({
+                    US: false,
+                    CANADA: false,
+                    GENERAL: false,
+                    VIP: false
+                  });
                 }}
               >
                 Reset
               </Button>
               <Button onClick={() => setFilterOpen(false)}>Apply</Button>
             </div>
-            <h4 className="text-xs text-gray-500 italic">
-              Filter by accounts In Progress
-            </h4>
+
           </div>
         </SheetContent>
       </Sheet>

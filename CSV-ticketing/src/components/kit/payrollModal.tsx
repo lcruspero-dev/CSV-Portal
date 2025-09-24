@@ -87,6 +87,7 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
   });
 
   const [payrollPreview, setPayrollPreview] = useState<Payroll | null>(null);
+  const [loadingAuto, setLoadingAuto] = useState(false);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -160,17 +161,19 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
     const run = async () => {
       if (!selectedUser) return;
       try {
+        setLoadingAuto(true);
+        // Auto-calc for current month-to-date
         const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        const formatDate = (date: Date) => {
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const day = String(date.getDate()).padStart(2, '0');
-          const year = date.getFullYear();
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        const end = now;
+        const toMdY = (d: Date) => {
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          const year = d.getFullYear();
           return `${month}/${day}/${year}`;
         };
-        const startDate = formatDate(startOfMonth);
-        const endDate = formatDate(endOfMonth);
+        const startDate = toMdY(start);
+        const endDate = toMdY(end);
 
         const res = await payrollAPI.autoCalculatePayroll(
           selectedUser.userId || selectedUser._id,
@@ -215,6 +218,8 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
           regularDays: 0,
           absentDays: 0,
         });
+      } finally {
+        setLoadingAuto(false);
       }
     };
     run();
@@ -335,6 +340,9 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                       {/* Rates Section */}
                       <div className="space-y-3">
                         <h4 className="font-semibold text-sm border-b pb-1">Rates & Hours</h4>
+                        {loadingAuto && (
+                          <div className="text-xs text-gray-500">Auto-calculating from time tracker…</div>
+                        )}
                         <div>
                           <Label htmlFor="monthlyRate">Monthly Rate</Label>
                           <Input

@@ -259,4 +259,6 @@ export const payrollAPI = {
   }) => apiHelper(`/api/payroll/send/${userId}`, "POST", body),
   getEmployeePayslips: (userId: string) => 
     apiHelper(`/api/payroll/payslips/${userId}`, "GET"),
+  generatePayslipForRange: (userId: string, body: { startDate: string; endDate: string; }) =>
+    apiHelper(`/api/payroll/payslips/generate/${userId}`, "POST", body),
 };

@@ -169,6 +169,7 @@ const UpdatePayrollModal = ({
 }: Props) => {
   const [internalOpen, setInternalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("basic");
+  const [loadingAuto, setLoadingAuto] = useState(false);
   const isControlled = typeof open === "boolean";
   const isOpen = isControlled ? (open as boolean) : internalOpen;
   const setOpen = (next: boolean) => {
@@ -219,6 +220,55 @@ const UpdatePayrollModal = ({
     }
     return path.split(".").reduce((acc, key) => acc?.[key], obj) ?? 0;
   };
+
+  // Auto-calc hours from time tracker for current month-to-date on open and employee change
+  useEffect(() => {
+    const run = async () => {
+      try {
+        setLoadingAuto(true);
+        const now = new Date();
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        const end = now;
+        const toMdY = (d: Date) => {
+          const mm = String(d.getMonth() + 1).padStart(2, '0');
+          const dd = String(d.getDate()).padStart(2, '0');
+          const yyyy = d.getFullYear();
+          return `${mm}/${dd}/${yyyy}`;
+        };
+        const startDate = toMdY(start);
+        const endDate = toMdY(end);
+
+        const userId = (formData.payrollRate as any)?.userId || (payroll as any)?.payrollRate?.userId;
+        if (!userId) return;
+        const res = await payrollAPI.autoCalculatePayroll(userId, { startDate, endDate });
+        const p = res.data?.payroll;
+        if (p) {
+          setFormData((prev) => ({
+            ...prev,
+            payrollRate: {
+              ...(prev.payrollRate as any),
+              monthlyRate: p.payrollRate?.monthlyRate ?? (prev.payrollRate?.monthlyRate || 0),
+              dailyRate: p.payrollRate?.dailyRate ?? (prev.payrollRate?.dailyRate || 0),
+              hourlyRate: p.payrollRate?.hourlyRate ?? (prev.payrollRate?.hourlyRate || 0),
+            } as any,
+            workDays: {
+              ...(prev.workDays as any),
+              totalHoursWorked: p.workDays?.totalHoursWorked || 0,
+              minsLate: p.workDays?.minsLate || 0,
+              undertimeMinutes: p.workDays?.undertimeMinutes || 0,
+              regularDays: p.workDays?.regularDays || 0,
+              absentDays: p.workDays?.absentDays || 0,
+            } as any,
+          }));
+        }
+      } catch (e) {
+        console.error('Auto-calc from time tracker failed:', e);
+      } finally {
+        setLoadingAuto(false);
+      }
+    };
+    run();
+  }, [isOpen, payroll]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-PH', {
@@ -534,6 +584,9 @@ const UpdatePayrollModal = ({
 
                 <ScrollArea className="flex-1">
                   <div className="p-6">
+                    {loadingAuto && (
+                      <div className="text-xs text-gray-500 mb-2">Auto-calculating hours from time tracker…</div>
+                    )}
                     {tabSections.map((tab) => (
                       <TabsContent key={tab.id} value={tab.id} className="space-y-6 m-0">
                         {tab.fields.map((section) => (
