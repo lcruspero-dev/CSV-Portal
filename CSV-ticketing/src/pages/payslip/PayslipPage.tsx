@@ -66,7 +66,7 @@ const PayslipPage: React.FC = () => {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
+  const [itemsPerPage] = useState(2);
 
   useEffect(() => {
     const fetchPayslips = async () => {
@@ -230,8 +230,10 @@ const PayslipPage: React.FC = () => {
 
   return (
     <div className="container mx-auto p-6">
+
+      <BackButton />
+
       <div className="mb-6 space-y-2">
-        <BackButton />
         <h1 className="text-3xl font-bold text-gray-900">My Payslips</h1>
         <p className="text-gray-600 mt-2">View your salary history and payslips</p>
       </div>
@@ -563,6 +565,7 @@ const PayslipPage: React.FC = () => {
                     </div>
                   </CardContent>
                 </Card>
+
               </div>
 
               {/* Summary */}
