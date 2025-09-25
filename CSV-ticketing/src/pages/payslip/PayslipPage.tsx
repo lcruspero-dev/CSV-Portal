@@ -278,7 +278,7 @@ const PayslipPage: React.FC = () => {
                   Generated for {generated.periodStart} - {generated.periodEnd}
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setSelectedPayslip(generated) || setShowModal(true)} className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => { setSelectedPayslip(generated); setShowModal(true); }} className="flex items-center gap-2">
                     <Eye className="h-4 w-4" /> View
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => handleDownloadPayslip(generated)} className="flex items-center gap-2">

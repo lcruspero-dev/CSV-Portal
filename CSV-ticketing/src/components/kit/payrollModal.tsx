@@ -14,7 +14,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import React, { useEffect, useState } from "react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export interface UserProfile {
   _id: string;
@@ -233,36 +232,6 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
       setOpen(false);
     } catch (err) {
       console.error("Error creating payroll:", err);
-    }
-  };
-
-  const handleSendPayroll = async () => {
-    if (!selectedUser || !payrollPreview) return alert("Select an employee and fill the form.");
-
-    const confirmSend = window.confirm(
-      `Are you sure you want to send this payroll to ${selectedUser.firstName} ${selectedUser.lastName}?\n\nThis will:\n- Send the payroll to the employee\n- Reset payroll calculations for next cycle\n- Keep their monthly rate and deductions\n- Preserve time tracker data (continues accumulating)`
-    );
-
-    if (!confirmSend) return;
-
-    try {
-      const res = await payrollAPI.processPayroll(payrollPreview as unknown as PayrollPayload);
-      await payrollAPI.sendPayroll(selectedUser.userId || selectedUser._id, {
-        payrollId: res.data.payroll?._id || res.data._id
-      });
-
-      <Alert variant="default">
-        <AlertTitle>Heads up!</AlertTitle>
-        <AlertDescription>
-          Payroll sent successfully! Calculations reset for next cycle. Time tracker data preserved.
-        </AlertDescription>
-      </Alert>
-
-      onAdd(res.data.payroll || res.data);
-      setOpen(false);
-    } catch (err) {
-      console.error("Error sending payroll:", err);
-      alert("Error sending payroll. Please try again.");
     }
   };
 
@@ -499,11 +468,8 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button variant="outline" onClick={handleCreate} disabled={!selectedUser}>
-              Save Draft
-            </Button>
-            <Button onClick={handleSendPayroll} disabled={!selectedUser} className="bg-green-600 hover:bg-green-700">
-              Send Payroll
+            <Button onClick={handleCreate} disabled={!selectedUser}>
+              Create Payroll
             </Button>
           </DialogFooter>
         </DialogContent>
