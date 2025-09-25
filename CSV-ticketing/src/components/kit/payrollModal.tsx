@@ -352,7 +352,7 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                             value={form.monthlyRate}
                             onChange={handleChange}
                           />
-                        </div>  
+                        </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div>
                             <Label className="text-xs">Daily Rate (Auto)</Label>

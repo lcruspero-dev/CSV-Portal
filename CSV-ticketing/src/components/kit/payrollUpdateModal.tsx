@@ -12,7 +12,6 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
   Calculator,
@@ -76,22 +75,22 @@ const tabSections = [
       {
         title: "Overtime Hours",
         fields: [
-          { path: "totalOvertime.regularOT", label: "Regular OT Hours" },
-          { path: "totalOvertime.restDayOtHours", label: "Rest Day OT Hours" },
-          { path: "totalOvertime.restDayOtHoursExcess", label: "Rest Day OT Excess Hours" },
-          { path: "totalOvertime.regularHolidayWorked", label: "Regular Holiday Worked" },
-          { path: "totalOvertime.regularHolidayWorkedExcess", label: "Regular Holiday Worked Excess" },
-          { path: "totalOvertime.specialHolidayWorked", label: "Special Holiday Worked" },
-          { path: "totalOvertime.specialHolidayWorkedOT", label: "Special Holiday Worked OT" },
-          { path: "totalOvertime.specialHolidayRDworkedHours", label: "Special Holiday RD Worked Hours" },
-          { path: "totalOvertime.specialHolidayRDworkedOT", label: "Special Holiday RD Worked OT" },
+          { path: "totalOvertime.regularOT", label: "Regular OT Hours", editable: true },
+          { path: "totalOvertime.restDayOtHours", label: "Rest Day OT Hours", editable: true },
+          { path: "totalOvertime.restDayOtHoursExcess", label: "Rest Day OT Excess Hours", editable: true },
+          { path: "totalOvertime.regularHolidayWorked", label: "Regular Holiday Worked", editable: true },
+          { path: "totalOvertime.regularHolidayWorkedExcess", label: "Regular Holiday Worked Excess", editable: true },
+          { path: "totalOvertime.specialHolidayWorked", label: "Special Holiday Worked", editable: true },
+          { path: "totalOvertime.specialHolidayWorkedOT", label: "Special Holiday Worked OT", editable: true },
+          { path: "totalOvertime.specialHolidayRDworkedHours", label: "Special Holiday RD Worked Hours", editable: true },
+          { path: "totalOvertime.specialHolidayRDworkedOT", label: "Special Holiday RD Worked OT", editable: true },
         ],
       },
       {
         title: "Holidays",
         fields: [
-          { path: "holidays.regHoliday", label: "Regular Holidays (days)" },
-          { path: "holidays.speHoliday", label: "Special Holidays (days)" },
+          { path: "holidays.regHoliday", label: "Regular Holidays (days)", editable: true },
+          { path: "holidays.speHoliday", label: "Special Holidays (days)", editable: true },
         ],
       },
     ],
@@ -104,11 +103,11 @@ const tabSections = [
       {
         title: "Night Differential Hours",
         fields: [
-          { path: "totalSupplementary.nightDiffHours", label: "Night Diff Hours" },
-          { path: "totalSupplementary.regOTnightDiffHours", label: "Reg OT Night Diff Hours" },
-          { path: "totalSupplementary.restDayNDhours", label: "Rest Day Night Diff Hours" },
-          { path: "totalSupplementary.regHolNDHours", label: "Reg Holiday Night Diff Hours" },
-          { path: "totalSupplementary.specialHolidayNDhours", label: "Special Holiday Night Diff Hours" },
+          { path: "totalSupplementary.nightDiffHours", label: "Night Diff Hours", editable: true },
+          { path: "totalSupplementary.regOTnightDiffHours", label: "Reg OT Night Diff Hours", editable: true },
+          { path: "totalSupplementary.restDayNDhours", label: "Rest Day Night Diff Hours", editable: true },
+          { path: "totalSupplementary.regHolNDHours", label: "Reg Holiday Night Diff Hours", editable: true },
+          { path: "totalSupplementary.specialHolidayNDhours", label: "Special Holiday Night Diff Hours", editable: true },
         ],
       },
     ],
@@ -121,15 +120,15 @@ const tabSections = [
       {
         title: "Salary Adjustments",
         fields: [
-          { path: "salaryAdjustments.unpaid", label: "Unpaid Days" },
-          { path: "salaryAdjustments.increase", label: "Salary Increase", type: "currency" },
+          { path: "salaryAdjustments.unpaid", label: "Unpaid Days", editable: true },
+          { path: "salaryAdjustments.increase", label: "Salary Increase", editable: true, type: "currency" },
         ],
       },
       {
         title: "Allowances & Bonuses",
         fields: [
-          { path: "grossSalary.nonTaxableAllowance", label: "Non-Taxable Allowance", type: "currency" },
-          { path: "grossSalary.performanceBonus", label: "Performance Bonus", type: "currency" },
+          { path: "grossSalary.nonTaxableAllowance", label: "Non-Taxable Allowance", editable: true, type: "currency" },
+          { path: "grossSalary.performanceBonus", label: "Performance Bonus", editable: true, type: "currency" },
         ],
       },
     ],
@@ -142,19 +141,19 @@ const tabSections = [
       {
         title: "Government Deductions",
         fields: [
-          { path: "totalDeductions.sssEmployeeShare", label: "SSS Employee Share", type: "currency" },
-          { path: "totalDeductions.phicEmployeeShare", label: "PhilHealth Employee Share", type: "currency" },
-          { path: "totalDeductions.hdmfEmployeeShare", label: "Pag-IBIG Employee Share", type: "currency" },
-          { path: "totalDeductions.wisp", label: "WISP", type: "currency" },
-          { path: "totalDeductions.totalSSScontribution", label: "Total SSS Contribution", type: "currency" },
+          { path: "totalDeductions.sssEmployeeShare", label: "SSS Employee Share", editable: true, type: "currency" },
+          { path: "totalDeductions.phicEmployeeShare", label: "PhilHealth Employee Share", editable: true, type: "currency" },
+          { path: "totalDeductions.hdmfEmployeeShare", label: "Pag-IBIG Employee Share", editable: true, type: "currency" },
+          { path: "totalDeductions.wisp", label: "WISP", editable: true, type: "currency" },
+          { path: "totalDeductions.totalSSScontribution", label: "Total SSS Contribution", editable: true, type: "currency" },
         ],
       },
       {
         title: "Tax & Loans",
         fields: [
-          { path: "totalDeductions.withHoldingTax", label: "Withholding Tax", type: "currency" },
-          { path: "totalDeductions.sssSalaryLoan", label: "SSS Salary Loan", type: "currency" },
-          { path: "totalDeductions.hdmfLoan", label: "HDMF Loan", type: "currency" },
+          { path: "totalDeductions.withHoldingTax", label: "Withholding Tax", editable: true, type: "currency" },
+          { path: "totalDeductions.sssSalaryLoan", label: "SSS Salary Loan", editable: true, type: "currency" },
+          { path: "totalDeductions.hdmfLoan", label: "HDMF Loan", editable: true, type: "currency" },
         ],
       },
     ],
@@ -538,7 +537,6 @@ const UpdatePayrollModal = ({
 
       <Dialog open={isOpen} onOpenChange={setOpen}>
         <DialogContent className="max-w-[95vw] w-full h-[70vh] rounded-lg p-0 overflow-hidden">
-
           <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -564,7 +562,7 @@ const UpdatePayrollModal = ({
 
           <div className="flex h-full">
             {/* Left Panel - Form Fields */}
-            <div className="flex-1 flex flex-col min-w-0">
+            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
                 <TabsList className="grid grid-cols-5 rounded-none border-b px-6 py-0 h-12">
                   {tabSections.map((tab) => {
@@ -582,7 +580,7 @@ const UpdatePayrollModal = ({
                   })}
                 </TabsList>
 
-                <ScrollArea className="flex-1">
+                <div className="flex-1 overflow-y-auto">
                   <div className="p-6">
                     {loadingAuto && (
                       <div className="text-xs text-gray-500 mb-2">Auto-calculating hours from time tracker…</div>
@@ -614,9 +612,9 @@ const UpdatePayrollModal = ({
                                       }
                                       disabled={!editable}
                                       className={`
-                                        ${!editable ? 'bg-gray-50 text-gray-600' : ''}
-                                        ${type === 'currency' ? 'font-mono' : ''}
-                                      `}
+                                    ${!editable ? 'bg-gray-50 text-gray-600' : ''}
+                                    ${type === 'currency' ? 'font-mono' : ''}
+                                  `}
                                       step={type === 'currency' ? '0.01' : '1'}
                                     />
                                     {type === 'currency' && (
@@ -633,138 +631,143 @@ const UpdatePayrollModal = ({
                       </TabsContent>
                     ))}
                   </div>
-                </ScrollArea>
+                </div>
               </Tabs>
             </div>
 
-            {/* Right Panel - Preview */}
-            <div className="w-100 border-l bg-gradient-to-b from-gray-50 to-white flex flex-col">
-              <div className="p-5 space-y-2">
-                {/* Summary Card */}
-                <Card className="bg-gradient-to-br from-blue-50 to-indigo-100 border-blue-200">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-bold flex items-center gap-2">
-                      <Calculator className="h-4 w-4" />
-                      Payroll Summary
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="grid grid-cols-2 gap-2 text-base  ">
-                      <div className="text-gray-600">Basic Pay:</div>
-                      <div className="font-semibold text-right font-mono">
-                        {formatCurrency(preview.basicPay)}
+            {/* Right Panel - Preview with guaranteed scroll */}
+            <div className="w-[400px] border-l bg-gradient-to-b from-gray-50 to-white flex flex-col overflow-hidden">
+              {/* Scrollable container with fixed height */}
+              <div className="h-full overflow-y-auto" style={{ maxHeight: 'calc(70vh - 80px)' }}>
+                <div className="p-5 space-y-4"> {/* Increased space-y for better spacing */}
+                  {/* Summary Card */}
+                  <Card className="bg-gradient-to-br from-blue-50 to-indigo-100 border-blue-200">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-bold flex items-center gap-2">
+                        <Calculator className="h-4 w-4" />
+                        Payroll Summary
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="grid grid-cols-2 gap-2 text-base">
+                        <div className="text-gray-600">Basic Pay:</div>
+                        <div className="font-semibold text-right font-mono">
+                          {formatCurrency(preview.basicPay)}
+                        </div>
+
+                        <div className="text-gray-600">Overtime:</div>
+                        <div className="text-right font-mono text-blue-600">
+                          +{formatCurrency(preview.totalOvertime)}
+                        </div>
+
+                        <div className="text-gray-600">Supplementary:</div>
+                        <div className="text-right font-mono text-green-600">
+                          +{formatCurrency(preview.totalSupplementaryIncome)}
+                        </div>
+
+                        <div className="text-gray-600">Allowances:</div>
+                        <div className="text-right font-mono text-green-600">
+                          +{formatCurrency((formData.grossSalary?.nonTaxableAllowance || 0) + (formData.grossSalary?.performanceBonus || 0))}
+                        </div>
+
+                        <Separator className="col-span-2 my-1" />
+
+                        <div className="text-gray-600 font-semibold">Gross Salary:</div>
+                        <div className="font-bold text-right font-mono text-green-700">
+                          {formatCurrency(preview.grossSalary)}
+                        </div>
+
+                        <div className="text-gray-600">Deductions:</div>
+                        <div className="text-right font-mono text-red-600">
+                          -{formatCurrency(preview.totalDeductions)}
+                        </div>
+
+                        <Separator className="col-span-2 my-1" />
+
+                        <div className="font-bold text-gray-900">Net Pay:</div>
+                        <div className="font-bold text-right font-mono text-lg text-green-700">
+                          {formatCurrency(preview.netPay)}
+                        </div>
                       </div>
+                    </CardContent>
+                  </Card>
 
-                      <div className="text-gray-600">Overtime:</div>
-                      <div className="text-right font-mono text-blue-600">
-                        +{formatCurrency(preview.totalOvertime)}
+                  {/* Rates Card */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-semibold">Rates</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>Monthly:</span>
+                        <span className="font-mono">{formatCurrency(preview.monthlyRate)}</span>
                       </div>
-
-                      <div className="text-gray-600">Supplementary:</div>
-                      <div className="text-right font-mono text-green-600">
-                        +{formatCurrency(preview.totalSupplementaryIncome)}
+                      <div className="flex justify-between">
+                        <span>Daily:</span>
+                        <span className="font-mono">{formatCurrency(preview.dailyRate)}</span>
                       </div>
-
-                      <div className="text-gray-600">Allowances:</div>
-                      <div className="text-right font-mono text-green-600">
-                        +{formatCurrency((formData.grossSalary?.nonTaxableAllowance || 0) + (formData.grossSalary?.performanceBonus || 0))}
+                      <div className="flex justify-between">
+                        <span>Hourly:</span>
+                        <span className="font-mono">{formatCurrency(preview.hourlyRate)}</span>
                       </div>
+                    </CardContent>
+                  </Card>
 
-                      <Separator className="col-span-2 my-1" />
-
-                      <div className="text-gray-600 font-semibold">Gross Salary:</div>
-                      <div className="font-bold text-right font-mono text-green-700">
-                        {formatCurrency(preview.grossSalary)}
+                  {/* Work Details Card */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-semibold">Work Details</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>Hours Worked:</span>
+                        <span>{formData.workDays?.totalHoursWorked?.toFixed(1) || 0}h</span>
                       </div>
-
-                      <div className="text-gray-600">Deductions:</div>
-                      <div className="text-right font-mono text-red-600">
-                        -{formatCurrency(preview.totalDeductions)}
+                      <div className="flex justify-between">
+                        <span>Absent Days:</span>
+                        <span className="text-red-600">{formData.workDays?.absentDays || 0}</span>
                       </div>
-
-                      <Separator className="col-span-2 my-1" />
-
-                      <div className="font-bold text-gray-900">Net Pay:</div>
-                      <div className="font-bold text-right font-mono text-lg text-green-700">
-                        {formatCurrency(preview.netPay)}
+                      <div className="flex justify-between">
+                        <span>Late Minutes:</span>
+                        <span className="text-orange-600">{formData.workDays?.minsLate || 0}m</span>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
 
-                {/* Rates Card */}
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-semibold">Rates</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>Monthly:</span>
-                      <span className="font-mono">{formatCurrency(preview.monthlyRate)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Daily:</span>
-                      <span className="font-mono">{formatCurrency(preview.dailyRate)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Hourly:</span>
-                      <span className="font-mono">{formatCurrency(preview.hourlyRate)}</span>
-                    </div>
-                  </CardContent>
-                </Card>
+                  {/* Quick Actions */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-semibold">Actions</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3"> {/* Increased spacing */}
+                      <Button
+                        onClick={handleUpdate}
+                        className="w-full gap-2"
+                        variant="outline"
+                      >
+                        <Eye className="h-4 w-4" />
+                        Save Changes
+                      </Button>
+                      <Button
+                        onClick={handleSendPayroll}
+                        className="w-full gap-2 bg-green-600 hover:bg-green-700"
+                      >
+                        <Send className="h-4 w-4" />
+                        Send Payroll
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="w-full gap-2"
+                        onClick={() => setOpen(false)}
+                      >
+                        <Download className="h-4 w-4" />
+                        Export PDF
+                      </Button>
+                    </CardContent>
+                  </Card>
 
-                {/* Work Details Card */}
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-semibold">Work Details</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>Hours Worked:</span>
-                      <span>{formData.workDays?.totalHoursWorked?.toFixed(1) || 0}h</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Absent Days:</span>
-                      <span className="text-red-600">{formData.workDays?.absentDays || 0}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Late Minutes:</span>
-                      <span className="text-orange-600">{formData.workDays?.minsLate || 0}m</span>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Quick Actions */}
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-semibold">Actions</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <Button
-                      onClick={handleUpdate}
-                      className="w-full gap-2"
-                      variant="outline"
-                    >
-                      <Eye className="h-4 w-4" />
-                      Save Changes
-                    </Button>
-                    <Button
-                      onClick={handleSendPayroll}
-                      className="w-full gap-2 bg-green-600 hover:bg-green-700"
-                    >
-                      <Send className="h-4 w-4" />
-                      Send Payroll
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full gap-2"
-                      onClick={() => setOpen(false)}
-                    >
-                      <Download className="h-4 w-4" />
-                      Export PDF
-                    </Button>
-                  </CardContent>
-                </Card>
+                  <div className="h-4"></div>
+                </div>
               </div>
             </div>
           </div>
