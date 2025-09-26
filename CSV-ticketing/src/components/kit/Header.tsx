@@ -13,8 +13,7 @@ import {
 import { useAuth } from "@/context/useAuth";
 import { Key, LogOut, NotebookPenIcon, User, UserCog, Receipt } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Button } from "../ui/button";
+import { useNavigate } from "react-router-dom";
 
 const Snowflakes = () => {
   return (
@@ -25,7 +24,7 @@ const Snowflakes = () => {
         const delay = Math.random() * 5;
         const left = Math.random() * 100;
         const opacity = Math.random() * 0.8 + 0.5;
-        const topOffset = Math.random() * 100 - 100; // from -100vh to 0vh
+        const topOffset = Math.random() * 100 - 100;
 
         return (
           <div
@@ -85,8 +84,7 @@ const Header: React.FC = () => {
         const response = await UserProfileAPI.getProfile();
         if (response.data?.avatar) {
           setAvatarUrl(
-            `${import.meta.env.VITE_UPLOADFILES_URL}/avatars/${
-              response.data.avatar
+            `${import.meta.env.VITE_UPLOADFILES_URL}/avatars/${response.data.avatar
             }`
           );
         }
@@ -207,14 +205,14 @@ const Header: React.FC = () => {
                     {(user.isAdmin ||
                       user.role === "TM" ||
                       user.role === "TL") && (
-                      <DropdownMenuItem
-                        onClick={() => navigate("/schedule-and-attendance")}
-                        className="cursor-pointer"
-                      >
-                        <NotebookPenIcon className="mr-2 h-4 w-4" />
-                        <span>Shift & Attendance</span>
-                      </DropdownMenuItem>
-                    )}
+                        <DropdownMenuItem
+                          onClick={() => navigate("/schedule-and-attendance")}
+                          className="cursor-pointer"
+                        >
+                          <NotebookPenIcon className="mr-2 h-4 w-4" />
+                          <span>Shift & Attendance</span>
+                        </DropdownMenuItem>
+                      )}
                     <DropdownMenuItem
                       onClick={handleChangePassword}
                       className="cursor-pointer"
@@ -245,20 +243,7 @@ const Header: React.FC = () => {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-            ) : (
-              <>
-                <div>
-                  <Link to="/sign-in">
-                    <Button className="text-sm">Login</Button>
-                  </Link>
-                </div>
-                <div>
-                  <Link to="/sign-up">
-                    <Button className="text-sm">Register</Button>
-                  </Link>
-                </div>
-              </>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
