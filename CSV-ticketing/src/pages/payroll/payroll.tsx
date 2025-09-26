@@ -32,10 +32,82 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Edit, Trash2 } from "lucide-react";
+import { MoreHorizontal, Eye, Edit, Trash2, Check, Square } from "lucide-react";
+
+// Improved Checkbox component with better accessibility and styling
+const Checkbox = ({
+  checked,
+  indeterminate,
+  onCheckedChange,
+  disabled,
+  "aria-label": ariaLabel,
+}: {
+  checked: boolean;
+  indeterminate?: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  disabled?: boolean;
+  "aria-label": string;
+}) => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent row click when clicking checkbox
+    if (!disabled) {
+      onCheckedChange(!checked);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={checked}
+      aria-label={ariaLabel}
+      disabled={disabled}
+      onClick={handleClick}
+      className={`
+        flex h-4 w-4 items-center justify-center rounded border 
+        transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+        ${disabled
+          ? 'bg-gray-100 border-gray-300 cursor-not-allowed'
+          : checked || indeterminate
+            ? 'bg-blue-600 border-blue-600 hover:bg-blue-700 hover:border-blue-700'
+            : 'bg-white border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+        }
+      `}
+    >
+      {indeterminate ? (
+        <Square className="h-2 w-2 text-white fill-current" />
+      ) : checked ? (
+        <Check className="h-3 w-3 text-white" />
+      ) : null}
+    </button>
+  );
+};
 
 {/** Payroll Inputs */ }
 const payrollColumns: ColumnDef<Payroll>[] = [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <div className="flex items-center justify-center">
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected()}
+          indeterminate={table.getIsSomePageRowsSelected()}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      </div>
+    ),
+    cell: ({ row }) => (
+      <div className="flex items-center justify-center">
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      </div>
+    ),
+    meta: { sticky: true, width: 60 },
+  },
   {
     accessorKey: "employee.email",
     header: "Email",
@@ -162,101 +234,6 @@ const getByPath = (obj: any, path: string): any => {
     .reduce((acc, key) => (acc ? acc[key] : undefined), obj);
 };
 
-// ================= Reset Payroll Data Function =================
-// const resetPayrollData = (payroll: Payroll): Payroll => {
-//   // Preserve only the specific fields mentioned
-//   const preservedPayrollRate = {
-//     userId: payroll.payrollRate?.userId || "",
-//     monthlyRate: payroll.payrollRate?.monthlyRate || 0,
-//     dailyRate: payroll.payrollRate?.dailyRate || 0,
-//     hourlyRate: payroll.payrollRate?.hourlyRate || 0,
-//   };
-
-//   const preservedDeductions = {
-//     sssEmployeeShare: payroll.totalDeductions?.sssEmployeeShare || 0,
-//     phicEmployeeShare: payroll.totalDeductions?.phicEmployeeShare || 0,
-//     hdmfEmployeeShare: payroll.totalDeductions?.hdmfEmployeeShare || 0,
-//     wisp: payroll.totalDeductions?.wisp || 0,
-//     totalSSSContribution: payroll.totalDeductions?.totalSSSContribution || 0,
-//   };
-
-//   return {
-//     ...payroll,
-//     // Keep preserved payroll rates
-//     payrollRate: preservedPayrollRate,
-
-//     // Reset work days and related fields
-//     workDays: {
-//       regularDays: 0,
-//       absentDays: 0,
-//       minsLate: 0,
-//       totalHoursWorked: 0,
-//       undertimeMinutes: 0
-//     },
-
-//     // Reset holidays
-//     holidays: {
-//       regHolidayPay: 0,
-//       speHolidayPay: 0,
-//       regHoliday: 0,
-//       speHoliday: 0
-//     },
-
-//     // Reset overtime
-//     totalOvertime: {
-//       regularOTpay: 0,
-//       restDayOtPay: 0,
-//       restDayOtHoursExcessPay: 0,
-//       regularHolidayWorkedPay: 0,
-//       regularHolidayWorkedExcessPay: 0,
-//       specialHolidayWorkedPay: 0,
-//       specialHolidayWorkedOTpay: 0,
-//       specialHolidayRDworkedPay: 0,
-//       specialHolidayRDworkedOTpay: 0,
-//       totalOvertime: 0,
-//     },
-
-//     // Reset salary adjustments
-//     salaryAdjustments: {
-//       unpaidAmount: 0,
-//       increase: 0,
-//     },
-
-//     // Reset supplementary income
-//     totalSupplementary: {
-//       nightDiffPay: 0,
-//       regOTnightDiffPay: 0,
-//       restDayNDPay: 0,
-//       regHolNDpay: 0,
-//       specialHolidayNDpay: 0,
-//       totalSupplementaryIncome: 0,
-//     },
-
-//     // Reset gross salary components
-//     grossSalary: {
-//       grossSalary: 0,
-//       nonTaxableAllowance: 0,
-//       performanceBonus: 0,
-//     },
-
-//     // Keep only the preserved deductions, reset totalDeductions to 0 (will be recalculated)
-//     totalDeductions: {
-//       ...preservedDeductions,
-//       totalDeductions: 0,
-//     },
-
-//     // Reset grand total
-//     grandtotal: {
-//       grandtotal: 0,
-//     },
-
-//     // Reset basic pay
-//     pay: {
-//       basicPay: 0,
-//     },
-//   };
-// };
-
 {
   /** Payroll Table */
 }
@@ -266,18 +243,28 @@ const PayrollTable = ({
   onRowClick,
   onDeletePayroll,
   onViewPayroll,
+  onBulkDelete,
 }: {
   columns: ColumnDef<Payroll>[];
   data: Payroll[];
   onRowClick: (payroll: Payroll) => void;
   onDeletePayroll: (payroll: Payroll) => void;
   onViewPayroll: (payroll: Payroll) => void;
+  onBulkDelete: (payrolls: Payroll[]) => void;
 }) => {
+  const [rowSelection, setRowSelection] = useState({});
+
   const table = useReactTable({
     data,
     columns,
+    state: {
+      rowSelection,
+    },
+    enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
   });
+
   const leafColumns = table.getAllLeafColumns();
   const { columnTotals, columnIsNumeric } = useMemo(() => {
     const totals: Array<number | null> = [];
@@ -311,6 +298,9 @@ const PayrollTable = ({
     return { columnTotals: totals, columnIsNumeric: isNumeric };
   }, [data, leafColumns]);
 
+  const selectedRows = table.getSelectedRowModel().rows.map(row => row.original);
+  const hasSelectedRows = selectedRows.length > 0;
+
   const handleAction = (payroll: Payroll, action: 'view' | 'update' | 'delete', e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent row click event
 
@@ -327,8 +317,52 @@ const PayrollTable = ({
     }
   };
 
+  const handleBulkDelete = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent any parent event propagation
+    if (hasSelectedRows) {
+      onBulkDelete(selectedRows);
+      // Don't clear selection here - let the parent component handle state updates
+    }
+  };
+
+  const handleRowClick = (payroll: Payroll, e: React.MouseEvent) => {
+    // Only trigger row click if the click wasn't on a checkbox or action button
+    const target = e.target as HTMLElement;
+    if (!target.closest('button') && !target.closest('[role="checkbox"]')) {
+      onRowClick(payroll);
+    }
+  };
+
   return (
     <section className="w-full overflow-x-auto">
+      {/* Bulk Actions Bar */}
+      {hasSelectedRows && (
+        <div className="bg-blue-50 border border-blue-200 rounded-t-lg p-3 flex items-center justify-between mb-0">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-blue-800">
+              {selectedRows.length} payroll record(s) selected
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setRowSelection({})}
+              className="text-blue-700 border-blue-300 hover:bg-blue-100"
+            >
+              Clear Selection
+            </Button>
+          </div>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleBulkDelete}
+            className="flex items-center gap-2"
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete Selected ({selectedRows.length})
+          </Button>
+        </div>
+      )}
+
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
@@ -348,7 +382,7 @@ const PayrollTable = ({
                   </TableHead>
                 );
               })}
-              <TableHead className="border sticky bg-white z-10 border-r">
+              <TableHead className="border sticky right-0 bg-white z-10">
                 Actions
               </TableHead>
             </TableRow>
@@ -360,30 +394,29 @@ const PayrollTable = ({
               {table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  className="cursor-pointer hover:bg-gray-50"
-                  onClick={() => onRowClick(row.original)}
+                  className={`cursor-pointer hover:bg-gray-50 transition-colors ${row.getIsSelected() ? 'bg-blue-50 border-blue-200' : ''
+                    }`}
+                  onClick={(e) => handleRowClick(row.original, e)}
                 >
                   {row.getVisibleCells().map((cell, i) => {
                     const stickyProps = getStickyStyle(
                       i,
                       row.getVisibleCells()
                     );
-                    const value = cell.getValue() ?? 0;
                     return (
                       <TableCell
                         key={cell.id}
                         className="border"
                         {...stickyProps}
                       >
-                        {typeof value === "number"
-                          ? value.toFixed(2)
-                          : typeof value === "string"
-                            ? value
-                            : ""}
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
                       </TableCell>
                     );
                   })}
-                  <TableCell className="border sticky bg-white z-10 border-r">
+                  <TableCell className="border sticky right-0 bg-white z-10">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
@@ -424,7 +457,7 @@ const PayrollTable = ({
                 </TableRow>
               ))}
               {/* Totals footer per column */}
-              <TableRow className="bg-gray-50">
+              <TableRow className="bg-gray-50 font-semibold">
                 {leafColumns.map((col, i) => {
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   const stickyProps = getStickyStyle(i, leafColumns as any);
@@ -433,7 +466,7 @@ const PayrollTable = ({
                   return (
                     <TableCell
                       key={col.id}
-                      className="border font-semibold"
+                      className="border"
                       {...stickyProps}
                     >
                       {i === 0
@@ -444,7 +477,7 @@ const PayrollTable = ({
                     </TableCell>
                   );
                 })}
-                <TableCell className="border font-semibold">
+                <TableCell className="border">
                   {/* Empty action cell for totals row */}
                 </TableCell>
               </TableRow>
@@ -561,6 +594,35 @@ const PayrollPage = () => {
     }
   };
 
+  const handleBulkDelete = async (payrolls: Payroll[]) => {
+    if (!payrolls.length) return;
+
+    const userIds = payrolls.map(p => p.payrollRate?.userId).filter(Boolean);
+
+    if (userIds.length !== payrolls.length) {
+      alert('Error: Some payroll records are missing user IDs and cannot be deleted');
+      return;
+    }
+
+    if (confirm(`Are you sure you want to delete ${payrolls.length} payroll record(s)? This action cannot be undone.`)) {
+      try {
+        // Delete each payroll record
+        const deletePromises = userIds.map(userId => payrollAPI.deletePayroll(userId!));
+        await Promise.all(deletePromises);
+
+        // Remove from local state
+        setData((prev) =>
+          prev.filter((p) => !userIds.includes(p.payrollRate?.userId))
+        );
+
+        alert(`${payrolls.length} payroll record(s) deleted successfully!`);
+      } catch (error) {
+        console.error('Error deleting payrolls:', error);
+        alert('Error deleting payroll records. Please try again.');
+      }
+    }
+  };
+
   const handleViewPayroll = (payroll: Payroll) => {
     // For now, we'll just show an alert with basic info
     // You can replace this with a modal or detailed view
@@ -608,8 +670,6 @@ const PayrollPage = () => {
         </div>
       </div>
 
-      {/* Dynamic Calculation Results */}
-
       <div className="bg-white rounded-sm border border-gray-200 p-4">
         <PayrollTable
           columns={payrollColumns}
@@ -617,6 +677,7 @@ const PayrollPage = () => {
           onRowClick={setSelectedPayroll}
           onDeletePayroll={handleDeletePayroll}
           onViewPayroll={handleViewPayroll}
+          onBulkDelete={handleBulkDelete}
         />
       </div>
 
