@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Button } from "../ui/button";
 import { useAuth } from "@/context/useAuth";
 import { Key, LogOut, NotebookPenIcon, User, UserCog, Receipt } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -243,11 +244,19 @@ const Header: React.FC = () => {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-            ) : null}
+            ) : (
+              <Button
+                className="mt-2"
+              >
+                <a
+                  href="https://www.csvnow.com/"
+                > Visit Landing </a>
+              </Button>
+            )}
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 

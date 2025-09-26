@@ -37,7 +37,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
-import { Clock, Loader2, LogIn } from "lucide-react";
+import {
+  Clock,
+  Loader2,
+  LogIn,
+  Coffee,
+  Utensils,
+  Calendar
+} from "lucide-react";
 import React, { useEffect, useState } from "react";
 
 interface AttendanceEntry {
@@ -219,22 +226,19 @@ export const AttendanceTracker: React.FC = () => {
 
       if (isOnBreak) {
         const breakStartTime = new Date(
-          `${currentEntry.dateBreakStart || currentEntry.date} ${
-            currentEntry.breakStart
+          `${currentEntry.dateBreakStart || currentEntry.date} ${currentEntry.breakStart
           }`
         ).getTime();
         diffMs = currentTime - breakStartTime;
       } else if (isOnSecondBreak) {
         const secondBreakStartTime = new Date(
-          `${currentEntry.dateSecondBreakStart || currentEntry.date} ${
-            currentEntry.secondBreakStart
+          `${currentEntry.dateSecondBreakStart || currentEntry.date} ${currentEntry.secondBreakStart
           }`
         ).getTime();
         diffMs = currentTime - secondBreakStartTime;
       } else if (isOnLunch) {
         const lunchStartTime = new Date(
-          `${currentEntry.dateLunchStart || currentEntry.date} ${
-            currentEntry.lunchStart
+          `${currentEntry.dateLunchStart || currentEntry.date} ${currentEntry.lunchStart
           }`
         ).getTime();
         diffMs = currentTime - lunchStartTime;
@@ -247,13 +251,11 @@ export const AttendanceTracker: React.FC = () => {
         let totalLunchMs = 0;
         if (currentEntry.lunchStart && currentEntry.lunchEnd) {
           const lunchStart = new Date(
-            `${currentEntry.dateLunchStart || currentEntry.date} ${
-              currentEntry.lunchStart
+            `${currentEntry.dateLunchStart || currentEntry.date} ${currentEntry.lunchStart
             }`
           );
           const lunchEnd = new Date(
-            `${currentEntry.dateLunchEnd || currentEntry.date} ${
-              currentEntry.lunchEnd
+            `${currentEntry.dateLunchEnd || currentEntry.date} ${currentEntry.lunchEnd
             }`
           );
 
@@ -838,65 +840,70 @@ export const AttendanceTracker: React.FC = () => {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-6">
-      <Card>
-        <CardHeader className="relative">
-          <div className="absolute right-6 top-6">
-            {" "}
-            {/* Position the button in top right */}
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 py-4">
+      <Card className="w-full">
+
+        <CardHeader className="relative pb-4 sm:pb-6">
+          {/* Mobile: Button below title, Desktop: Button top right */}
+          <div className="block sm:absolute sm:right-6 sm:top-6 mt-4 sm:mt-0">
             <ViewScheduleButton />
           </div>
-          <CardTitle className="flex items-center justify-center">
-            <Clock className="mr-2" /> Time Tracker
+          <CardTitle className="flex items-center justify-center text-lg sm:text-xl lg:text-2xl flex-col sm:flex-row gap-2">
+            <Clock className="h-5 w-5 sm:h-6 sm:w-6" />
+            Time Tracker
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="absolute left-40 top-24 text-xs">
+
+        <CardContent className="p-4 sm:p-6">
+          {/* Back Button - Responsive positioning */}
+          <div className="absolute left-2 sm:left-4 top-24 sm:top-28 text-xs">
             <BackButton />
           </div>
-          <div className="flex flex-col space-y-4">
-            <div className="flex flex-col items-center space-y-4">
+
+          <div className="flex flex-col space-y-4 sm:space-y-6">
+            {/* Timer Display Section */}
+            <div className="flex flex-col items-center space-y-4 sm:space-y-6">
               {currentEntry.breakStart && !currentEntry.breakEnd ? (
-                <div className="text-4xl font-bold tracking-tighter text-red-600 text-center">
-                  <p className="text-base text-black tracking-wide">
-                    BREAK TIME{" "}
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-red-600 text-center">
+                  <p className="text-sm sm:text-base text-black tracking-wide mb-2">
+                    BREAK TIME
                   </p>
                   {formatElapsedTime(elapsedTime)}
                 </div>
-              ) : currentEntry.secondBreakStart &&
-                !currentEntry.secondBreakEnd ? (
-                <div className="text-4xl font-bold tracking-tighter text-red-600 text-center">
-                  <p className="text-base text-black tracking-wide">
-                    SECOND BREAK TIME{" "}
+              ) : currentEntry.secondBreakStart && !currentEntry.secondBreakEnd ? (
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-red-600 text-center">
+                  <p className="text-sm sm:text-base text-black tracking-wide mb-2">
+                    SECOND BREAK TIME
                   </p>
                   {formatElapsedTime(elapsedTime)}
                 </div>
               ) : currentEntry.lunchStart && !currentEntry.lunchEnd ? (
-                <div className="text-4xl font-bold tracking-tighter text-red-600 text-center">
-                  <p className="text-base text-black tracking-wide">
-                    LUNCH TIME{" "}
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-red-600 text-center">
+                  <p className="text-sm sm:text-base text-black tracking-wide mb-2">
+                    LUNCH TIME
                   </p>
                   {formatElapsedTime(elapsedTime)}
                 </div>
               ) : (
                 <div
-                  className={`mb-2 text-4xl font-bold tracking-tighter text-center text-green-700 ${
-                    isTimeIn ? "" : "hidden"
-                  }`}
+                  className={`mb-2 text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-center text-green-700 ${isTimeIn ? "" : "hidden"
+                    }`}
                 >
-                  <p className="text-base text-black tracking-wide">
-                    RUNNING TIME{" "}
+                  <p className="text-sm sm:text-base text-black tracking-wide mb-2">
+                    RUNNING TIME
                   </p>
                   {formatElapsedTime(elapsedTime)}
                 </div>
               )}
 
-              <div className="flex justify-center space-x-4">
+              {/* Action Buttons Section */}
+              <div className="flex flex-col sm:flex-row justify-center items-center gap-3 w-full max-w-md mx-auto">
                 {!isTimeIn ? (
                   <Button
                     onClick={handleTimeIn}
-                    className="flex items-center"
+                    className="flex items-center w-full sm:w-auto min-w-[120px]"
                     disabled={isLoadingTimeIn}
+                    size="sm"
                   >
                     {isLoadingTimeIn ? (
                       <LoadingSpinner />
@@ -911,9 +918,8 @@ export const AttendanceTracker: React.FC = () => {
                       value={selectedAction || undefined}
                       onValueChange={handleActionChange}
                     >
-                      <SelectTrigger className="w-40">
-                        <SelectValue />
-                        {selectedAction ? null : "Select Action"}
+                      <SelectTrigger className="w-full sm:w-40 text-sm">
+                        <SelectValue placeholder="Select Action" />
                       </SelectTrigger>
                       <SelectContent>
                         {getAvailableActions().map((action) => (
@@ -923,10 +929,11 @@ export const AttendanceTracker: React.FC = () => {
                         ))}
                       </SelectContent>
                     </Select>
+
                     {selectedAction && (
                       <Button
                         onClick={handleConfirmAction}
-                        className="flex items-center text-sm"
+                        className="flex items-center text-sm w-full sm:w-auto min-w-[100px]"
                         disabled={
                           isLoadingBreakStart ||
                           isLoadingBreakEnd ||
@@ -936,23 +943,25 @@ export const AttendanceTracker: React.FC = () => {
                           isLoadingLunchEnd ||
                           isLoadingTimeOut
                         }
+                        size="sm"
                       >
                         Confirm
                       </Button>
                     )}
+
                     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                      <DialogContent>
+                      <DialogContent className="sm:max-w-md">
                         <DialogHeader>
-                          <DialogTitle>Log Out</DialogTitle>
+                          <DialogTitle className="text-lg">Log Out</DialogTitle>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="notes" className="text-right">
+                          <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                            <Label htmlFor="notes" className="sm:text-right">
                               Notes (Optional)
                             </Label>
                             <Input
                               id="notes"
-                              className="col-span-3"
+                              className="col-span-1 sm:col-span-3"
                               placeholder="Add any notes about your work day"
                             />
                           </div>
@@ -967,6 +976,7 @@ export const AttendanceTracker: React.FC = () => {
                                 });
                               }}
                               disabled={isLoadingTimeOut}
+                              size="sm"
                             >
                               {isLoadingTimeOut ? <LoadingSpinner /> : null}
                               Confirm Log Out
@@ -979,150 +989,195 @@ export const AttendanceTracker: React.FC = () => {
                 )}
               </div>
 
+              {/* Current Session Info */}
               {isTimeIn && (
-                <div className="text-center p-4 bg-muted rounded-lg text-sm">
-                  <p className="font-semibold">Current Session</p>
-
-                  {currentEntry.date && <p>Date: {currentEntry.date}</p>}
-                  {currentEntry.timeIn && <p>Time In: {currentEntry.timeIn}</p>}
-                  {currentEntry.shift && <p>Shift: {currentEntry.shift}</p>}
-                  {currentEntry.breakStart && (
-                    <p>Break Started: {currentEntry.breakStart}</p>
-                  )}
-                  {currentEntry.breakEnd && (
-                    <p>Break Ended: {currentEntry.breakEnd}</p>
-                  )}
-
-                  {currentEntry.totalBreakTime !== undefined &&
-                    currentEntry.totalBreakTime !== null && (
-                      <p>
-                        Total Break Time:{" "}
-                        {Math.round(currentEntry.totalBreakTime * 60)} min.
-                      </p>
-                    )}
-                  {currentEntry.secondBreakStart && (
-                    <p>Second Break Started: {currentEntry.secondBreakStart}</p>
-                  )}
-                  {currentEntry.secondBreakEnd && (
-                    <p>Second Break Ended: {currentEntry.secondBreakEnd}</p>
-                  )}
-                  {currentEntry.totalSecondBreakTime !== undefined &&
-                    currentEntry.totalSecondBreakTime !== null && (
-                      <p>
-                        Total Second Break Time:{" "}
-                        {Math.round(currentEntry.totalSecondBreakTime * 60)}{" "}
-                        min.
-                      </p>
+                <div className="w-full max-w-2xl mx-auto">
+                  <p className="font-semibold text-sm sm:text-base mb-3 text-center">Current Session</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {/* Date Card */}
+                    {currentEntry.date && (
+                      <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-3 border border-blue-200">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-blue-600" />
+                          <span className="text-xs font-medium text-blue-800">Date</span>
+                        </div>
+                        <p className="text-sm font-semibold mt-1">{currentEntry.date}</p>
+                      </div>
                     )}
 
-                  {currentEntry.lunchStart && (
-                    <p>Lunch Started: {currentEntry.lunchStart}</p>
-                  )}
-                  {currentEntry.lunchEnd && (
-                    <p>Lunch Ended: {currentEntry.lunchEnd}</p>
-                  )}
-
-                  {currentEntry.totalLunchTime !== undefined &&
-                    currentEntry.totalLunchTime !== null && (
-                      <p>
-                        Total Lunch Time:{" "}
-                        {Math.round(currentEntry.totalLunchTime * 60)} min.
-                      </p>
+                    {/* Time In Card */}
+                    {currentEntry.timeIn && (
+                      <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-3 border border-green-200">
+                        <div className="flex items-center gap-2">
+                          <LogIn className="h-4 w-4 text-green-600" />
+                          <span className="text-xs font-medium text-green-800">Time In</span>
+                        </div>
+                        <p className="text-sm font-semibold mt-1">{currentEntry.timeIn}</p>
+                      </div>
                     )}
+
+                    {/* Shift Card */}
+                    {currentEntry.shift && (
+                      <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-3 border border-purple-200">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-purple-600" />
+                          <span className="text-xs font-medium text-purple-800">Shift</span>
+                        </div>
+                        <p className="text-sm font-semibold mt-1">{currentEntry.shift}</p>
+                      </div>
+                    )}
+
+                    {/* Break Times */}
+                    {currentEntry.breakStart && (
+                      <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-3 border border-orange-200">
+                        <div className="flex items-center gap-2">
+                          <Coffee className="h-4 w-4 text-orange-600" />
+                          <span className="text-xs font-medium text-orange-800">Break</span>
+                        </div>
+                        <div className="space-y-1 mt-1">
+                          <p className="text-xs"><span className="font-medium">Start:</span> {currentEntry.breakStart}</p>
+                          {currentEntry.breakEnd && (
+                            <p className="text-xs"><span className="font-medium">End:</span> {currentEntry.breakEnd}</p>
+                          )}
+                          {currentEntry.totalBreakTime !== undefined && currentEntry.totalBreakTime !== null && (
+                            <p className="text-xs font-semibold">
+                              Total: {Math.round(currentEntry.totalBreakTime * 60)} min
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Second Break Times */}
+                    {currentEntry.secondBreakStart && (
+                      <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg p-3 border border-amber-200">
+                        <div className="flex items-center gap-2">
+                          <Coffee className="h-4 w-4 text-amber-600" />
+                          <span className="text-xs font-medium text-amber-800">Second Break</span>
+                        </div>
+                        <div className="space-y-1 mt-1">
+                          <p className="text-xs"><span className="font-medium">Start:</span> {currentEntry.secondBreakStart}</p>
+                          {currentEntry.secondBreakEnd && (
+                            <p className="text-xs"><span className="font-medium">End:</span> {currentEntry.secondBreakEnd}</p>
+                          )}
+                          {currentEntry.totalSecondBreakTime !== undefined && currentEntry.totalSecondBreakTime !== null && (
+                            <p className="text-xs font-semibold">
+                              Total: {Math.round(currentEntry.totalSecondBreakTime * 60)} min
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Lunch Times */}
+                    {currentEntry.lunchStart && (
+                      <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-3 border border-red-200">
+                        <div className="flex items-center gap-2">
+                          <Utensils className="h-4 w-4 text-red-600" />
+                          <span className="text-xs font-medium text-red-800">Lunch</span>
+                        </div>
+                        <div className="space-y-1 mt-1">
+                          <p className="text-xs"><span className="font-medium">Start:</span> {currentEntry.lunchStart}</p>
+                          {currentEntry.lunchEnd && (
+                            <p className="text-xs"><span className="font-medium">End:</span> {currentEntry.lunchEnd}</p>
+                          )}
+                          {currentEntry.totalLunchTime !== undefined && currentEntry.totalLunchTime !== null && (
+                            <p className="text-xs font-semibold">
+                              Total: {Math.round(currentEntry.totalLunchTime * 60)} min
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
 
+            {/* History Table Section */}
             <Card className="w-full">
-              <CardHeader>
-                <CardTitle>Time Tracker History</CardTitle>
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="text-lg sm:text-xl">Time Tracker History</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-0 sm:p-6">
                 {isLoadingHistory ? (
                   <div className="flex justify-center py-8">
                     <LoadingSpinner />
                   </div>
                 ) : (
                   <>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Log In</TableHead>
-                          <TableHead>Log Out</TableHead>
-                          <TableHead>Total Hours</TableHead>
-                          <TableHead>Break Time</TableHead>
-                          <TableHead>Second Break Time</TableHead>
-                          <TableHead>Lunch Time</TableHead>
-                          <TableHead>Shift</TableHead>
-                          <TableHead>Notes</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {currentEntries.length > 0 ? (
-                          currentEntries.map((entry, index) => (
-                            <TableRow key={entry.id || `entry-${index}`}>
-                              <TableCell>{entry.date}</TableCell>
-                              <TableCell>{entry.timeIn}</TableCell>
-                              <TableCell>
-                                {entry.timeOut || "In Progress"}
-                              </TableCell>
-                              <TableCell>
-                                {formatHoursToMinutes(
-                                  String(entry.totalHours || "")
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                {formatHoursToMinutes(
-                                  String(entry.totalBreakTime || "")
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                {formatHoursToMinutes(
-                                  String(entry.totalSecondBreakTime || "")
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                {formatHoursToMinutes(
-                                  String(entry.totalLunchTime || "")
-                                )}
-                              </TableCell>
-                              <TableCell>{entry.shift}</TableCell>
-                              <TableCell>
-                                <div
-                                  className="truncate max-w-[100px] 2xl:max-w-[150px] text-ellipsis overflow-hidden"
-                                  title={entry.notes || ""}
-                                >
-                                  {entry.notes || "-"}
-                                </div>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="min-w-[80px]">Date</TableHead>
+                            <TableHead className="min-w-[70px]">Log In</TableHead>
+                            <TableHead className="min-w-[70px]">Log Out</TableHead>
+                            <TableHead className="min-w-[90px]">Total Hours</TableHead>
+                            <TableHead className="min-w-[90px]">Break Time</TableHead>
+                            <TableHead className="min-w-[120px]">Second Break</TableHead>
+                            <TableHead className="min-w-[90px]">Lunch Time</TableHead>
+                            <TableHead className="min-w-[70px]">Shift</TableHead>
+                            <TableHead className="min-w-[100px]">Notes</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {currentEntries.length > 0 ? (
+                            currentEntries.map((entry, index) => (
+                              <TableRow key={entry.id || `entry-${index}`}>
+                                <TableCell className="py-2">{entry.date}</TableCell>
+                                <TableCell className="py-2">{entry.timeIn}</TableCell>
+                                <TableCell className="py-2">
+                                  {entry.timeOut || "In Progress"}
+                                </TableCell>
+                                <TableCell className="py-2">
+                                  {formatHoursToMinutes(String(entry.totalHours || ""))}
+                                </TableCell>
+                                <TableCell className="py-2">
+                                  {formatHoursToMinutes(String(entry.totalBreakTime || ""))}
+                                </TableCell>
+                                <TableCell className="py-2">
+                                  {formatHoursToMinutes(String(entry.totalSecondBreakTime || ""))}
+                                </TableCell>
+                                <TableCell className="py-2">
+                                  {formatHoursToMinutes(String(entry.totalLunchTime || ""))}
+                                </TableCell>
+                                <TableCell className="py-2">{entry.shift}</TableCell>
+                                <TableCell className="py-2">
+                                  <div
+                                    className="truncate max-w-[80px] sm:max-w-[100px] lg:max-w-[150px] text-ellipsis overflow-hidden"
+                                    title={entry.notes || ""}
+                                  >
+                                    {entry.notes || "-"}
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell colSpan={9} className="text-center py-4">
+                                No attendance records found
                               </TableCell>
                             </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={9} className="text-center py-4">
-                              No attendance records found
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
 
                     {/* Pagination */}
                     {totalPages > 0 && (
-                      <div className="mt-4 flex justify-end items-end text-xs">
+                      <div className="mt-4 flex justify-end items-center">
                         <Pagination>
-                          <PaginationContent>
+                          <PaginationContent className="flex-wrap">
                             <PaginationItem>
                               <PaginationPrevious
-                                onClick={() =>
-                                  handlePageChange(currentPage - 1)
-                                }
+                                onClick={() => handlePageChange(currentPage - 1)}
                                 className={
                                   currentPage === 1
                                     ? "pointer-events-none opacity-50"
                                     : "cursor-pointer"
                                 }
+                                size="sm"
                               />
                             </PaginationItem>
 
@@ -1131,7 +1186,8 @@ export const AttendanceTracker: React.FC = () => {
                                 <PaginationLink
                                   onClick={() => handlePageChange(pageNumber)}
                                   isActive={currentPage === pageNumber}
-                                  className="cursor-pointer text-xs"
+                                  className="cursor-pointer text-xs h-8 w-8"
+                                  size="sm"
                                 >
                                   {pageNumber}
                                 </PaginationLink>
@@ -1140,14 +1196,13 @@ export const AttendanceTracker: React.FC = () => {
 
                             <PaginationItem>
                               <PaginationNext
-                                onClick={() =>
-                                  handlePageChange(currentPage + 1)
-                                }
+                                onClick={() => handlePageChange(currentPage + 1)}
                                 className={
                                   currentPage === totalPages
                                     ? "pointer-events-none opacity-50"
                                     : "cursor-pointer"
                                 }
+                                size="sm"
                               />
                             </PaginationItem>
                           </PaginationContent>

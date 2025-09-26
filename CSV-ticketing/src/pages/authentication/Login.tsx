@@ -162,7 +162,6 @@ const Login = () => {
               onClick={togglePasswordVisibility}
               className="text-sm text-blue-600 hover:text-blue-500 transition-colors duration-200"
             >
-              {showPassword ? "Hide" : "Show"}
             </button>
           </div>
           <div className="relative">
