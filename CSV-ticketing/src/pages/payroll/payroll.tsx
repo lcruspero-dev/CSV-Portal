@@ -26,6 +26,13 @@ import { payrollAPI } from "@/API/endpoint";
 import BackButton from "@/components/kit/BackButton";
 import PayrollModal, { Payroll } from "@/components/kit/payrollModal";
 import UpdatePayrollModal from "@/components/kit/payrollUpdateModal";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal, Eye, Edit, Trash2 } from "lucide-react";
 
 {/** Payroll Inputs */ }
 const payrollColumns: ColumnDef<Payroll>[] = [
@@ -156,99 +163,99 @@ const getByPath = (obj: any, path: string): any => {
 };
 
 // ================= Reset Payroll Data Function =================
-const resetPayrollData = (payroll: Payroll): Payroll => {
-  // Preserve only the specific fields mentioned
-  const preservedPayrollRate = {
-    userId: payroll.payrollRate?.userId || "",
-    monthlyRate: payroll.payrollRate?.monthlyRate || 0,
-    dailyRate: payroll.payrollRate?.dailyRate || 0,
-    hourlyRate: payroll.payrollRate?.hourlyRate || 0,
-  };
+// const resetPayrollData = (payroll: Payroll): Payroll => {
+//   // Preserve only the specific fields mentioned
+//   const preservedPayrollRate = {
+//     userId: payroll.payrollRate?.userId || "",
+//     monthlyRate: payroll.payrollRate?.monthlyRate || 0,
+//     dailyRate: payroll.payrollRate?.dailyRate || 0,
+//     hourlyRate: payroll.payrollRate?.hourlyRate || 0,
+//   };
 
-  const preservedDeductions = {
-    sssEmployeeShare: payroll.totalDeductions?.sssEmployeeShare || 0,
-    phicEmployeeShare: payroll.totalDeductions?.phicEmployeeShare || 0,
-    hdmfEmployeeShare: payroll.totalDeductions?.hdmfEmployeeShare || 0,
-    wisp: payroll.totalDeductions?.wisp || 0,
-    totalSSSContribution: payroll.totalDeductions?.totalSSSContribution || 0,
-  };
+//   const preservedDeductions = {
+//     sssEmployeeShare: payroll.totalDeductions?.sssEmployeeShare || 0,
+//     phicEmployeeShare: payroll.totalDeductions?.phicEmployeeShare || 0,
+//     hdmfEmployeeShare: payroll.totalDeductions?.hdmfEmployeeShare || 0,
+//     wisp: payroll.totalDeductions?.wisp || 0,
+//     totalSSSContribution: payroll.totalDeductions?.totalSSSContribution || 0,
+//   };
 
-  return {
-    ...payroll,
-    // Keep preserved payroll rates
-    payrollRate: preservedPayrollRate,
+//   return {
+//     ...payroll,
+//     // Keep preserved payroll rates
+//     payrollRate: preservedPayrollRate,
 
-    // Reset work days and related fields
-    workDays: {
-      regularDays: 0,
-      absentDays: 0,
-      minsLate: 0,
-      totalHoursWorked: 0,
-      undertimeMinutes: 0
-    },
+//     // Reset work days and related fields
+//     workDays: {
+//       regularDays: 0,
+//       absentDays: 0,
+//       minsLate: 0,
+//       totalHoursWorked: 0,
+//       undertimeMinutes: 0
+//     },
 
-    // Reset holidays
-    holidays: {
-      regHolidayPay: 0,
-      speHolidayPay: 0,
-      regHoliday: 0,
-      speHoliday: 0
-    },
+//     // Reset holidays
+//     holidays: {
+//       regHolidayPay: 0,
+//       speHolidayPay: 0,
+//       regHoliday: 0,
+//       speHoliday: 0
+//     },
 
-    // Reset overtime
-    totalOvertime: {
-      regularOTpay: 0,
-      restDayOtPay: 0,
-      restDayOtHoursExcessPay: 0,
-      regularHolidayWorkedPay: 0,
-      regularHolidayWorkedExcessPay: 0,
-      specialHolidayWorkedPay: 0,
-      specialHolidayWorkedOTpay: 0,
-      specialHolidayRDworkedPay: 0,
-      specialHolidayRDworkedOTpay: 0,
-      totalOvertime: 0,
-    },
+//     // Reset overtime
+//     totalOvertime: {
+//       regularOTpay: 0,
+//       restDayOtPay: 0,
+//       restDayOtHoursExcessPay: 0,
+//       regularHolidayWorkedPay: 0,
+//       regularHolidayWorkedExcessPay: 0,
+//       specialHolidayWorkedPay: 0,
+//       specialHolidayWorkedOTpay: 0,
+//       specialHolidayRDworkedPay: 0,
+//       specialHolidayRDworkedOTpay: 0,
+//       totalOvertime: 0,
+//     },
 
-    // Reset salary adjustments
-    salaryAdjustments: {
-      unpaidAmount: 0,
-      increase: 0,
-    },
+//     // Reset salary adjustments
+//     salaryAdjustments: {
+//       unpaidAmount: 0,
+//       increase: 0,
+//     },
 
-    // Reset supplementary income
-    totalSupplementary: {
-      nightDiffPay: 0,
-      regOTnightDiffPay: 0,
-      restDayNDPay: 0,
-      regHolNDpay: 0,
-      specialHolidayNDpay: 0,
-      totalSupplementaryIncome: 0,
-    },
+//     // Reset supplementary income
+//     totalSupplementary: {
+//       nightDiffPay: 0,
+//       regOTnightDiffPay: 0,
+//       restDayNDPay: 0,
+//       regHolNDpay: 0,
+//       specialHolidayNDpay: 0,
+//       totalSupplementaryIncome: 0,
+//     },
 
-    // Reset gross salary components
-    grossSalary: {
-      grossSalary: 0,
-      nonTaxableAllowance: 0,
-      performanceBonus: 0,
-    },
+//     // Reset gross salary components
+//     grossSalary: {
+//       grossSalary: 0,
+//       nonTaxableAllowance: 0,
+//       performanceBonus: 0,
+//     },
 
-    // Keep only the preserved deductions, reset totalDeductions to 0 (will be recalculated)
-    totalDeductions: {
-      ...preservedDeductions,
-      totalDeductions: 0,
-    },
+//     // Keep only the preserved deductions, reset totalDeductions to 0 (will be recalculated)
+//     totalDeductions: {
+//       ...preservedDeductions,
+//       totalDeductions: 0,
+//     },
 
-    // Reset grand total
-    grandtotal: {
-      grandtotal: 0,
-    },
+//     // Reset grand total
+//     grandtotal: {
+//       grandtotal: 0,
+//     },
 
-    // Reset basic pay
-    pay: {
-      basicPay: 0,
-    },
-  };
-};
+//     // Reset basic pay
+//     pay: {
+//       basicPay: 0,
+//     },
+//   };
+// };
 
 {
   /** Payroll Table */
@@ -257,12 +264,14 @@ const PayrollTable = ({
   columns,
   data,
   onRowClick,
-  onSendPayroll,
+  onDeletePayroll,
+  onViewPayroll,
 }: {
   columns: ColumnDef<Payroll>[];
   data: Payroll[];
   onRowClick: (payroll: Payroll) => void;
-  onSendPayroll: (payroll: Payroll) => void;
+  onDeletePayroll: (payroll: Payroll) => void;
+  onViewPayroll: (payroll: Payroll) => void;
 }) => {
   const table = useReactTable({
     data,
@@ -302,9 +311,20 @@ const PayrollTable = ({
     return { columnTotals: totals, columnIsNumeric: isNumeric };
   }, [data, leafColumns]);
 
-  const handleSendPayroll = (payroll: Payroll, e: React.MouseEvent) => {
+  const handleAction = (payroll: Payroll, action: 'view' | 'update' | 'delete', e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent row click event
-    onSendPayroll(payroll);
+
+    switch (action) {
+      case 'view':
+        onViewPayroll(payroll);
+        break;
+      case 'update':
+        onRowClick(payroll);
+        break;
+      case 'delete':
+        onDeletePayroll(payroll);
+        break;
+    }
   };
 
   return (
@@ -364,14 +384,42 @@ const PayrollTable = ({
                     );
                   })}
                   <TableCell className="border sticky bg-white z-10 border-r">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={(e) => handleSendPayroll(row.original, e)}
-                      className="bg-green-500 text-white hover:bg-green-600"
-                    >
-                      Send
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => e.stopPropagation()}
+                          className="h-8 w-8 p-0"
+                        >
+                          <span className="sr-only">Open menu</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={(e) => handleAction(row.original, 'view', e)}
+                          className="flex items-center gap-2"
+                        >
+                          <Eye className="h-4 w-4" />
+                          View
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={(e) => handleAction(row.original, 'update', e)}
+                          className="flex items-center gap-2"
+                        >
+                          <Edit className="h-4 w-4" />
+                          Update
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={(e) => handleAction(row.original, 'delete', e)}
+                          className="flex items-center gap-2 text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
@@ -484,34 +532,39 @@ const PayrollPage = () => {
     setSelectedPayroll(null);
   };
 
-  const handleSendPayroll = async (payroll: Payroll) => {
-    try {
-      // Here you would typically send the payroll data to the employee
-      // For now, we'll just simulate the API call and reset the data
-      console.log('Sending payroll to employee:', payroll);
+  const handleDeletePayroll = async (payroll: Payroll) => {
+    // Get the userId from the payroll record
+    const userId = payroll.payrollRate?.userId;
 
-      // Simulate API call to send payroll
-      // await payrollAPI.sendPayrollToEmployee(payroll);
-
-      // Reset the payroll data for this employee (preserving specific fields)
-      const resetPayroll = resetPayrollData(payroll);
-      const recomputed = computePayroll(resetPayroll);
-
-      // Update the data with reset values
-      setData((prev) =>
-        prev.map((p) =>
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (p as any)._id === (recomputed as any)._id ? recomputed : p
-        )
-      );
-
-      // Show success message
-      alert('Payroll sent successfully and reset for next period!');
-
-    } catch (error) {
-      console.error('Error sending payroll:', error);
-      alert('Error sending payroll. Please try again.');
+    if (!userId) {
+      alert('Error: Cannot delete payroll record - missing user ID');
+      return;
     }
+
+    if (confirm('Are you sure you want to delete this payroll record?')) {
+      try {
+        // Use the payrollAPI.deletePayroll function with the userId
+        await payrollAPI.deletePayroll(userId);
+
+        // Remove from local state
+        setData((prev) =>
+          prev.filter((p) =>
+            p.payrollRate?.userId !== userId
+          )
+        );
+
+        alert('Payroll record deleted successfully!');
+      } catch (error) {
+        console.error('Error deleting payroll:', error);
+        alert('Error deleting payroll record. Please try again.');
+      }
+    }
+  };
+
+  const handleViewPayroll = (payroll: Payroll) => {
+    // For now, we'll just show an alert with basic info
+    // You can replace this with a modal or detailed view
+    alert(`Viewing payroll for: ${payroll.employee?.fullName}\nNet Pay: ₱${payroll.grandtotal?.grandtotal?.toFixed(2)}`);
   };
 
   const filteredData = useMemo(() => {
@@ -562,7 +615,8 @@ const PayrollPage = () => {
           columns={payrollColumns}
           data={filteredData}
           onRowClick={setSelectedPayroll}
-          onSendPayroll={handleSendPayroll}
+          onDeletePayroll={handleDeletePayroll}
+          onViewPayroll={handleViewPayroll}
         />
       </div>
 
