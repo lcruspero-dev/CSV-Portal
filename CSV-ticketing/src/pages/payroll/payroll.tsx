@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Sheet,
   SheetContent,
@@ -32,7 +33,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Edit, Trash2, Check, Square } from "lucide-react";
+import { MoreHorizontal, Eye, Edit, Trash2, Check, Square, History } from "lucide-react";
 
 // Improved Checkbox component with better accessibility and styling
 const Checkbox = ({
@@ -244,6 +245,7 @@ const PayrollTable = ({
   onDeletePayroll,
   onViewPayroll,
   onBulkDelete,
+  hideActions,
 }: {
   columns: ColumnDef<Payroll>[];
   data: Payroll[];
@@ -251,6 +253,7 @@ const PayrollTable = ({
   onDeletePayroll: (payroll: Payroll) => void;
   onViewPayroll: (payroll: Payroll) => void;
   onBulkDelete: (payrolls: Payroll[]) => void;
+  hideActions?: boolean;
 }) => {
   const [rowSelection, setRowSelection] = useState({});
 
@@ -301,7 +304,7 @@ const PayrollTable = ({
   const selectedRows = table.getSelectedRowModel().rows.map(row => row.original);
   const hasSelectedRows = selectedRows.length > 0;
 
-  const handleAction = (payroll: Payroll, action: 'view' | 'update' | 'delete', e: React.MouseEvent) => {
+  const handleAction = (payroll: Payroll, action: 'view' | 'update' | 'delete' | 'send' | 'history', e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent row click event
 
     switch (action) {
@@ -313,6 +316,16 @@ const PayrollTable = ({
         break;
       case 'delete':
         onDeletePayroll(payroll);
+        break;
+      case 'send':
+        // Bubble up a custom event through row click handler to keep props surface small
+        // We'll rely on an attached dataset attribute to find it, parent will intercept
+        const customEvent = new CustomEvent('send-payroll', { detail: payroll, bubbles: true });
+        (e.target as HTMLElement).dispatchEvent(customEvent);
+        break;
+      case 'history':
+        const historyEvent = new CustomEvent('view-payslip-history', { detail: payroll, bubbles: true });
+        (e.target as HTMLElement).dispatchEvent(historyEvent);
         break;
     }
   };
@@ -382,9 +395,11 @@ const PayrollTable = ({
                   </TableHead>
                 );
               })}
-              <TableHead className="border sticky right-0 bg-white z-10">
-                Actions
-              </TableHead>
+              {!hideActions && (
+                <TableHead className="border sticky right-0 bg-white z-10">
+                  Actions
+                </TableHead>
+              )}
             </TableRow>
           ))}
         </TableHeader>
@@ -416,44 +431,60 @@ const PayrollTable = ({
                       </TableCell>
                     );
                   })}
-                  <TableCell className="border sticky right-0 bg-white z-10">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => e.stopPropagation()}
-                          className="h-8 w-8 p-0"
-                        >
-                          <span className="sr-only">Open menu</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={(e) => handleAction(row.original, 'view', e)}
-                          className="flex items-center gap-2"
-                        >
-                          <Eye className="h-4 w-4" />
-                          View
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={(e) => handleAction(row.original, 'update', e)}
-                          className="flex items-center gap-2"
-                        >
-                          <Edit className="h-4 w-4" />
-                          Update
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={(e) => handleAction(row.original, 'delete', e)}
-                          className="flex items-center gap-2 text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+                  {!hideActions && (
+                    <TableCell className="border sticky right-0 bg-white z-10">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => e.stopPropagation()}
+                            className="h-8 w-8 p-0"
+                          >
+                            <span className="sr-only">Open menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={(e) => handleAction(row.original, 'view', e)}
+                            className="flex items-center gap-2"
+                          >
+                            <Eye className="h-4 w-4" />
+                            View
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => handleAction(row.original, 'update', e)}
+                            className="flex items-center gap-2"
+                          >
+                            <Edit className="h-4 w-4" />
+                            Update
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => handleAction(row.original, 'history', e)}
+                            className="flex items-center gap-2"
+                          >
+                            <History className="h-4 w-4" />
+                            View History
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => handleAction(row.original, 'send', e)}
+                            className="flex items-center gap-2"
+                          >
+                            <Check className="h-4 w-4" />
+                            Send Payroll
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => handleAction(row.original, 'delete', e)}
+                            className="flex items-center gap-2 text-red-600"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
               {/* Totals footer per column */}
@@ -477,14 +508,16 @@ const PayrollTable = ({
                     </TableCell>
                   );
                 })}
-                <TableCell className="border">
-                  {/* Empty action cell for totals row */}
-                </TableCell>
+                {!hideActions && (
+                  <TableCell className="border">
+                    {/* Empty action cell for totals row */}
+                  </TableCell>
+                )}
               </TableRow>
             </>
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length + 1} className="h-24 text-center">
+              <TableCell colSpan={columns.length + (hideActions ? 0 : 1)} className="h-24 text-center">
                 No payroll records found.
               </TableCell>
             </TableRow>
@@ -539,6 +572,17 @@ const PayrollPage = () => {
     GENERAL: false,
     VIP: false
   });
+  const [historyOpen, setHistoryOpen] = useState<boolean>(false);
+  const [historyEmployee, setHistoryEmployee] = useState<Payroll | null>(null);
+  const [historyLoading, setHistoryLoading] = useState<boolean>(false);
+  const [payslips, setPayslips] = useState<any[]>([]);
+  const historyNetSum = useMemo(() => {
+    try {
+      return (payslips || []).reduce((acc: number, ps: any) => acc + Number(ps?.grandtotal?.grandtotal || 0), 0);
+    } catch {
+      return 0;
+    }
+  }, [payslips]);
 
   useEffect(() => {
     const fetchPayrolls = async () => {
@@ -551,6 +595,73 @@ const PayrollPage = () => {
       }
     };
     fetchPayrolls();
+  }, []);
+
+  // Handle custom dispatched send-payroll events from table items
+  useEffect(() => {
+    const handler = async (evt: Event) => {
+      const custom = evt as CustomEvent<Payroll>;
+      const payroll = custom.detail;
+      const userId = payroll?.payrollRate?.userId as unknown as string;
+      const payrollId = (payroll as any)?._id as string;
+      if (!userId || !payrollId) return;
+      try {
+        if (!confirm('Send this payroll and reset calculations for the next cycle?')) return;
+        await payrollAPI.sendPayroll(userId, { payrollId });
+        // Refresh the record in local state by refetching or clearing computed fields
+        // We'll optimistically mark status to sent and clear computed fields to mirror backend
+        setData(prev => prev.map(p => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const same = ((p as any)._id === payrollId);
+          if (!same) return p;
+          const updated: Payroll = {
+            ...p,
+            status: 'sent',
+            // reset calculation fields as backend does
+            workDays: { regularDays: 0, absentDays: 0, minsLate: 0, totalHoursWorked: 0, undertimeMinutes: 0 },
+            latesAndAbsent: { absentDays: 0, minLateUT: 0, amountAbsent: 0, amountMinLateUT: 0 } as any,
+            pay: { basicPay: 0 },
+            totalOvertime: {},
+            totalSupplementary: {},
+            grossSalary: { ...(p.grossSalary || {}), nonTaxableAllowance: 0, performanceBonus: 0, grossSalary: 0 },
+            grandtotal: { grandtotal: 0 },
+          } as unknown as Payroll;
+          return computePayroll(updated);
+        }));
+        alert('Payroll sent and snapshot stored successfully.');
+      } catch (error) {
+        console.error('Failed to send payroll:', error);
+        alert('Failed to send payroll. Please try again.');
+      }
+    };
+    // Listen on the document to capture bubbled events
+    document.addEventListener('send-payroll', handler as EventListener);
+    return () => document.removeEventListener('send-payroll', handler as EventListener);
+  }, []);
+
+  // Listen for view history events and fetch payslips
+  useEffect(() => {
+    const handler = async (evt: Event) => {
+      const custom = evt as CustomEvent<Payroll>;
+      const payroll = custom.detail;
+      const userId = payroll?.payrollRate?.userId as unknown as string;
+      if (!userId) return;
+      try {
+        setHistoryLoading(true);
+        setHistoryEmployee(payroll);
+        setHistoryOpen(true);
+        const res = await payrollAPI.getEmployeePayslips(userId);
+        const list = Array.isArray(res.data?.payslips) ? res.data.payslips : [];
+        setPayslips(list);
+      } catch (error) {
+        console.error('Failed to load payslip history:', error);
+        setPayslips([]);
+      } finally {
+        setHistoryLoading(false);
+      }
+    };
+    document.addEventListener('view-payslip-history', handler as EventListener);
+    return () => document.removeEventListener('view-payslip-history', handler as EventListener);
   }, []);
 
   const handleUpdate = (updated: Payroll) => {
@@ -769,6 +880,43 @@ const PayrollPage = () => {
               <Button onClick={() => setFilterOpen(false)}>Apply</Button>
             </div>
 
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Payslip History Sheet */}
+      <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>
+        <SheetContent side="right" className="w-[100vw] sm:max-w-[100vw]">
+          <SheetHeader>
+            <div className="flex items-center justify-between gap-3">
+              <SheetTitle>
+                Payslip History {historyEmployee?.employee?.fullName ? `— ${historyEmployee.employee.fullName}` : ''}
+              </SheetTitle>
+              {payslips.length > 0 && (
+                <Badge variant="outline" className="text-green-700 border-green-700">
+                  Total Net: PHP {historyNetSum.toFixed(2)}
+                </Badge>
+              )}
+            </div>
+          </SheetHeader>
+          <div className="mt-4 w-full overflow-x-auto">
+            {historyLoading ? (
+              <div className="text-sm text-gray-600">Loading history…</div>
+            ) : payslips.length === 0 ? (
+              <div className="text-sm text-gray-600">No payslips found for this employee.</div>
+            ) : (
+              <div className="bg-white rounded-sm border border-gray-200 p-4 min-w-[1200px]">
+                <PayrollTable
+                  columns={payrollColumns}
+                  data={payslips as unknown as Payroll[]}
+                  onRowClick={() => {}}
+                  onDeletePayroll={() => {}}
+                  onViewPayroll={() => {}}
+                  onBulkDelete={() => {}}
+                  hideActions
+                />
+              </div>
+            )}
           </div>
         </SheetContent>
       </Sheet>
