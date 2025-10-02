@@ -6,6 +6,7 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetDescription,
 } from "@/components/ui/sheet";
 import {
   Table,
@@ -21,7 +22,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 
 import { payrollAPI } from "@/API/endpoint";
 import BackButton from "@/components/kit/BackButton";
@@ -84,6 +85,24 @@ const Checkbox = ({
   );
 };
 
+// Enhanced helper for nested paths with better error handling
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getByPath = (obj: any, path: string): any => {
+  if (!obj || typeof obj !== 'object') return undefined;
+  
+  try {
+    return path
+      .split(".")
+      .reduce((acc, key) => {
+        if (acc === null || acc === undefined) return undefined;
+        return acc[key];
+      }, obj);
+  } catch (error) {
+    console.warn(`Error accessing path "${path}":`, error);
+    return undefined;
+  }
+};
+
 {/** Payroll Inputs */ }
 const payrollColumns: ColumnDef<Payroll>[] = [
   {
@@ -112,98 +131,325 @@ const payrollColumns: ColumnDef<Payroll>[] = [
   {
     accessorKey: "employee.email",
     header: "Email",
+    cell: ({ row }) => getByPath(row.original, "employee.email") || "-",
     meta: { sticky: true, width: 200 },
   },
   {
     accessorKey: "employee.fullName",
     header: "Full Name",
+    cell: ({ row }) => getByPath(row.original, "employee.fullName") || "-",
     meta: { sticky: true, width: 200 },
   },
   {
     accessorKey: "employee.position",
     header: "Position",
+    cell: ({ row }) => getByPath(row.original, "employee.position") || "-",
     meta: { sticky: true, width: 150 },
   },
-  { accessorKey: "payrollRate.monthlyRate", header: "Monthly Rate" },
-  { accessorKey: "payrollRate.dailyRate", header: "Daily Rate" },
-  { accessorKey: "payrollRate.hourlyRate", header: "Hourly Rate" },
-  { accessorKey: "pay.basicPay", header: "Basic Pay" },
-  { accessorKey: "workDays.regularDays", header: "Regular Days" },
-  { accessorKey: "workDays.absentDays", header: "Absent Days" },
-  { accessorKey: "workDays.minsLate", header: "Minutes Late" },
-  { accessorKey: "workDays.totalHoursWorked", header: "Hours Worked" },
-  { accessorKey: "holidays.regHolidayPay", header: "Reg Holiday Pay" },
-  { accessorKey: "holidays.speHolidayPay", header: "Special Holiday Pay" },
-  { accessorKey: "totalOvertime.regularOTpay", header: "Regular OT Pay" },
-  { accessorKey: "totalOvertime.restDayOtPay", header: "Rest Day OT Pay" },
+  { 
+    accessorKey: "payrollRate.monthlyRate", 
+    header: "Monthly Rate",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "payrollRate.monthlyRate");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
+  },
+  { 
+    accessorKey: "payrollRate.dailyRate", 
+    header: "Daily Rate",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "payrollRate.dailyRate");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
+  },
+  { 
+    accessorKey: "payrollRate.hourlyRate", 
+    header: "Hourly Rate",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "payrollRate.hourlyRate");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
+  },
+  { 
+    accessorKey: "pay.basicPay", 
+    header: "Basic Pay",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "pay.basicPay");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
+  },
+  { 
+    accessorKey: "workDays.regularDays", 
+    header: "Regular Days",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "workDays.regularDays");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
+  },
+  { 
+    accessorKey: "workDays.absentDays", 
+    header: "Absent Days",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "workDays.absentDays");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
+  },
+  { 
+    accessorKey: "workDays.minsLate", 
+    header: "Minutes Late",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "workDays.minsLate");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
+  },
+  { 
+    accessorKey: "workDays.totalHoursWorked", 
+    header: "Hours Worked",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "workDays.totalHoursWorked");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
+  },
+  { 
+    accessorKey: "holidays.regHolidayPay", 
+    header: "Reg Holiday Pay",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "holidays.regHolidayPay");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
+  },
+  { 
+    accessorKey: "holidays.speHolidayPay", 
+    header: "Special Holiday Pay",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "holidays.speHolidayPay");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
+  },
+  { 
+    accessorKey: "totalOvertime.regularOTpay", 
+    header: "Regular OT Pay",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "totalOvertime.regularOTpay");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
+  },
+  { 
+    accessorKey: "totalOvertime.restDayOtPay", 
+    header: "Rest Day OT Pay",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "totalOvertime.restDayOtPay");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
+  },
   {
     accessorKey: "totalOvertime.restDayOtHoursExcessPay",
     header: "Rest Day OT Excess Pay",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "totalOvertime.restDayOtHoursExcessPay");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
   },
   {
     accessorKey: "totalOvertime.regularHolidayWorkedPay",
     header: "Regular Holiday Worked Pay",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "totalOvertime.regularHolidayWorkedPay");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
   },
   {
     accessorKey: "totalOvertime.regularHolidayWorkedExcessPay",
     header: "Regular Holiday Worked Excess Pay",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "totalOvertime.regularHolidayWorkedExcessPay");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
   },
   {
     accessorKey: "totalOvertime.specialHolidayWorkedPay",
     header: "Special Holiday Worked Pay",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "totalOvertime.specialHolidayWorkedPay");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
   },
   {
     accessorKey: "totalOvertime.specialHolidayWorkedOTpay",
     header: "Special Holiday Worked OT Pay",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "totalOvertime.specialHolidayWorkedOTpay");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
   },
   {
     accessorKey: "totalOvertime.specialHolidayRDworkedPay",
     header: "Special Holiday RD Worked Pay",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "totalOvertime.specialHolidayRDworkedPay");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
   },
   {
     accessorKey: "totalOvertime.specialHolidayRDworkedOTpay",
     header: "Special Holiday RD Worked OT Pay",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "totalOvertime.specialHolidayRDworkedOTpay");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
   },
-  { accessorKey: "totalOvertime.totalOvertime", header: "Total Overtime" },
-  { accessorKey: "salaryAdjustments.unpaidAmount", header: "Unpaid Amount" },
-  { accessorKey: "salaryAdjustments.increase", header: "Salary Increase" },
-  { accessorKey: "totalSupplementary.nightDiffPay", header: "Night Diff Pay" },
+  { 
+    accessorKey: "totalOvertime.totalOvertime", 
+    header: "Total Overtime",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "totalOvertime.totalOvertime");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
+  },
+  { 
+    accessorKey: "salaryAdjustments.unpaidAmount", 
+    header: "Unpaid Amount",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "salaryAdjustments.unpaidAmount");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
+  },
+  { 
+    accessorKey: "salaryAdjustments.increase", 
+    header: "Salary Increase",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "salaryAdjustments.increase");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
+  },
+  { 
+    accessorKey: "totalSupplementary.nightDiffPay", 
+    header: "Night Diff Pay",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "totalSupplementary.nightDiffPay");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
+  },
   {
     accessorKey: "totalSupplementary.regOTnightDiffPay",
     header: "Reg OT Night Diff Pay",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "totalSupplementary.regOTnightDiffPay");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
   },
   {
     accessorKey: "totalSupplementary.restDayNDPay",
     header: "Rest Day Night Diff Pay",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "totalSupplementary.restDayNDPay");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
   },
   {
     accessorKey: "totalSupplementary.regHolNDpay",
     header: "Reg Holiday Night Diff Pay",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "totalSupplementary.regHolNDpay");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
   },
   {
     accessorKey: "totalSupplementary.specialHolidayNDpay",
     header: "Special Holiday Night Diff Pay",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "totalSupplementary.specialHolidayNDpay");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
   },
   {
     accessorKey: "totalSupplementary.totalSupplementaryIncome",
     header: "Total Supplementary",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "totalSupplementary.totalSupplementaryIncome");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
   },
-  { accessorKey: "grossSalary.grossSalary", header: "Gross Salary" },
+  { 
+    accessorKey: "grossSalary.grossSalary", 
+    header: "Gross Salary",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "grossSalary.grossSalary");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
+  },
   {
     accessorKey: "grossSalary.nonTaxableAllowance",
     header: "Non-Taxable Allowance",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "grossSalary.nonTaxableAllowance");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
   },
-  { accessorKey: "grossSalary.performanceBonus", header: "Performance Bonus" },
-  { accessorKey: "totalDeductions.sssEmployeeShare", header: "SSS" },
-  { accessorKey: "totalDeductions.phicEmployeeShare", header: "PhilHealth" },
-  { accessorKey: "totalDeductions.hdmfEmployeeShare", header: "Pag-IBIG" },
-  { accessorKey: "totalDeductions.wisp", header: "WISP" },
-  { accessorKey: "totalDeductions.totalSSSContribution", header: "Total SSS Contribution" },
+  { 
+    accessorKey: "grossSalary.performanceBonus", 
+    header: "Performance Bonus",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "grossSalary.performanceBonus");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
+  },
+  { 
+    accessorKey: "totalDeductions.sssEmployeeShare", 
+    header: "SSS",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "totalDeductions.sssEmployeeShare");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
+  },
+  { 
+    accessorKey: "totalDeductions.phicEmployeeShare", 
+    header: "PhilHealth",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "totalDeductions.phicEmployeeShare");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
+  },
+  { 
+    accessorKey: "totalDeductions.hdmfEmployeeShare", 
+    header: "Pag-IBIG",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "totalDeductions.hdmfEmployeeShare");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
+  },
+  { 
+    accessorKey: "totalDeductions.wisp", 
+    header: "WISP",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "totalDeductions.wisp");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
+  },
+  {
+    accessorKey: "totalDeductions.totalSSSContribution",
+    header: "Total SSS Contribution",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "totalDeductions.totalSSSContribution");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
+  },
   {
     accessorKey: "totalDeductions.totalDeductions",
     header: "Total Deductions",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "totalDeductions.totalDeductions");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
   },
-  { accessorKey: "grandtotal.grandtotal", header: "Net Pay" },
+  { 
+    accessorKey: "grandtotal.grandtotal", 
+    header: "Net Pay",
+    cell: ({ row }) => {
+      const value = getByPath(row.original, "grandtotal.grandtotal");
+      return value !== undefined && value !== null ? value : "0.00";
+    }
+  },
 ];
 
 // ================= Sticky Column Helper =================
@@ -225,14 +471,6 @@ const getStickyStyle = (index: number, items: any[]) => {
     };
   }
   return {};
-};
-
-// helper for nested paths (e.g., "a.b.c")
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const getByPath = (obj: any, path: string): any => {
-  return path
-    .split(".")
-    .reduce((acc, key) => (acc ? acc[key] : undefined), obj);
 };
 
 {
@@ -318,8 +556,6 @@ const PayrollTable = ({
         onDeletePayroll(payroll);
         break;
       case 'send':
-        // Bubble up a custom event through row click handler to keep props surface small
-        // We'll rely on an attached dataset attribute to find it, parent will intercept
         const customEvent = new CustomEvent('send-payroll', { detail: payroll, bubbles: true });
         (e.target as HTMLElement).dispatchEvent(customEvent);
         break;
@@ -334,7 +570,6 @@ const PayrollTable = ({
     e.stopPropagation(); // Prevent any parent event propagation
     if (hasSelectedRows) {
       onBulkDelete(selectedRows);
-      // Don't clear selection here - let the parent component handle state updates
     }
   };
 
@@ -438,14 +673,21 @@ const PayrollTable = ({
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={(e) => e.stopPropagation()}
-                            className="h-8 w-8 p-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                            }}
+                            className="h-8 w-8 p-0 focus:z-50 focus:relative"
                           >
                             <span className="sr-only">Open menu</span>
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
+                        <DropdownMenuContent 
+                          align="end" 
+                          onCloseAutoFocus={(e) => e.preventDefault()}
+                          className="z-[100]"
+                        >
                           <DropdownMenuItem
                             onClick={(e) => handleAction(row.original, 'view', e)}
                             className="flex items-center gap-2"
@@ -584,6 +826,17 @@ const PayrollPage = () => {
     }
   }, [payslips]);
 
+  // Use refs to track if we're in the middle of operations
+  const isMounted = useRef(true);
+  const isProcessingHistory = useRef(false);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
   useEffect(() => {
     const fetchPayrolls = async () => {
       try {
@@ -608,8 +861,8 @@ const PayrollPage = () => {
       try {
         if (!confirm('Send this payroll and reset calculations for the next cycle?')) return;
         await payrollAPI.sendPayroll(userId, { payrollId });
-        // Refresh the record in local state by refetching or clearing computed fields
-        // We'll optimistically mark status to sent and clear computed fields to mirror backend
+        if (!isMounted.current) return;
+        
         setData(prev => prev.map(p => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const same = ((p as any)._id === payrollId);
@@ -617,7 +870,6 @@ const PayrollPage = () => {
           const updated: Payroll = {
             ...p,
             status: 'sent',
-            // reset calculation fields as backend does
             workDays: { regularDays: 0, absentDays: 0, minsLate: 0, totalHoursWorked: 0, undertimeMinutes: 0 },
             latesAndAbsent: { absentDays: 0, minLateUT: 0, amountAbsent: 0, amountMinLateUT: 0 } as any,
             pay: { basicPay: 0 },
@@ -634,39 +886,87 @@ const PayrollPage = () => {
         alert('Failed to send payroll. Please try again.');
       }
     };
-    // Listen on the document to capture bubbled events
+
     document.addEventListener('send-payroll', handler as EventListener);
-    return () => document.removeEventListener('send-payroll', handler as EventListener);
+    return () => {
+      document.removeEventListener('send-payroll', handler as EventListener);
+    };
   }, []);
 
   // Listen for view history events and fetch payslips
   useEffect(() => {
     const handler = async (evt: Event) => {
+      // Prevent multiple simultaneous history operations
+      if (isProcessingHistory.current) return;
+      
+      isProcessingHistory.current = true;
       const custom = evt as CustomEvent<Payroll>;
       const payroll = custom.detail;
       const userId = payroll?.payrollRate?.userId as unknown as string;
-      if (!userId) return;
+      
+      if (!userId) {
+        isProcessingHistory.current = false;
+        return;
+      }
+      
       try {
         setHistoryLoading(true);
         setHistoryEmployee(payroll);
         setHistoryOpen(true);
         const res = await payrollAPI.getEmployeePayslips(userId);
+        if (!isMounted.current) return;
+        
         const list = Array.isArray(res.data?.payslips) ? res.data.payslips : [];
         setPayslips(list);
       } catch (error) {
         console.error('Failed to load payslip history:', error);
-        setPayslips([]);
+        if (isMounted.current) {
+          setPayslips([]);
+        }
       } finally {
+        if (isMounted.current) {
+          setHistoryLoading(false);
+        }
+        isProcessingHistory.current = false;
+      }
+    };
+
+    document.addEventListener('view-payslip-history', handler as EventListener);
+    return () => {
+      document.removeEventListener('view-payslip-history', handler as EventListener);
+    };
+  }, []);
+
+  // Improved handler for closing history
+  const handleHistoryOpenChange = (open: boolean) => {
+    setHistoryOpen(open);
+    
+    if (!open) {
+      // Use setTimeout to ensure the close animation completes before resetting state
+      setTimeout(() => {
+        if (isMounted.current) {
+          setHistoryEmployee(null);
+          setPayslips([]);
+          setHistoryLoading(false);
+        }
+      }, 150); // Reduced delay for better responsiveness
+    }
+  };
+
+  // Force close history if component unmounts
+  useEffect(() => {
+    return () => {
+      if (isMounted.current) {
+        setHistoryOpen(false);
+        setHistoryEmployee(null);
+        setPayslips([]);
         setHistoryLoading(false);
       }
     };
-    document.addEventListener('view-payslip-history', handler as EventListener);
-    return () => document.removeEventListener('view-payslip-history', handler as EventListener);
   }, []);
 
   const handleUpdate = (updated: Payroll) => {
     const recomputed = computePayroll(updated);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setData((prev) =>
       prev.map((p) =>
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -677,7 +977,6 @@ const PayrollPage = () => {
   };
 
   const handleDeletePayroll = async (payroll: Payroll) => {
-    // Get the userId from the payroll record
     const userId = payroll.payrollRate?.userId;
 
     if (!userId) {
@@ -687,16 +986,12 @@ const PayrollPage = () => {
 
     if (confirm('Are you sure you want to delete this payroll record?')) {
       try {
-        // Use the payrollAPI.deletePayroll function with the userId
         await payrollAPI.deletePayroll(userId);
-
-        // Remove from local state
         setData((prev) =>
           prev.filter((p) =>
             p.payrollRate?.userId !== userId
           )
         );
-
         alert('Payroll record deleted successfully!');
       } catch (error) {
         console.error('Error deleting payroll:', error);
@@ -717,15 +1012,11 @@ const PayrollPage = () => {
 
     if (confirm(`Are you sure you want to delete ${payrolls.length} payroll record(s)? This action cannot be undone.`)) {
       try {
-        // Delete each payroll record
         const deletePromises = userIds.map(userId => payrollAPI.deletePayroll(userId!));
         await Promise.all(deletePromises);
-
-        // Remove from local state
         setData((prev) =>
           prev.filter((p) => !userIds.includes(p.payrollRate?.userId))
         );
-
         alert(`${payrolls.length} payroll record(s) deleted successfully!`);
       } catch (error) {
         console.error('Error deleting payrolls:', error);
@@ -735,8 +1026,6 @@ const PayrollPage = () => {
   };
 
   const handleViewPayroll = (payroll: Payroll) => {
-    // For now, we'll just show an alert with basic info
-    // You can replace this with a modal or detailed view
     alert(`Viewing payroll for: ${payroll.employee?.fullName}\nNet Pay: ₱${payroll.grandtotal?.grandtotal?.toFixed(2)}`);
   };
 
@@ -797,6 +1086,9 @@ const PayrollPage = () => {
         <SheetContent side="right" className="sm:max-w-md">
           <SheetHeader>
             <SheetTitle>Filter Payroll</SheetTitle>
+            <SheetDescription>
+              Filter payroll records by position and other criteria
+            </SheetDescription>
           </SheetHeader>
           <div className="mt-4 space-y-6">
             <div className="flex flex-col gap-2">
@@ -879,14 +1171,24 @@ const PayrollPage = () => {
               </Button>
               <Button onClick={() => setFilterOpen(false)}>Apply</Button>
             </div>
-
           </div>
         </SheetContent>
       </Sheet>
 
       {/* Payslip History Sheet */}
-      <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>
-        <SheetContent side="right" className="w-[100vw] sm:max-w-[100vw]">
+      <Sheet open={historyOpen} onOpenChange={handleHistoryOpenChange}>
+        <SheetContent 
+          side="right" 
+          className="w-[100vw] sm:max-w-[100vw]"
+          onInteractOutside={(e) => {
+            // Allow outside clicks to close the sheet
+            e.preventDefault();
+          }}
+          onEscapeKeyDown={(e) => {
+            // Allow escape key to close the sheet
+            e.preventDefault();
+          }}
+        >
           <SheetHeader>
             <div className="flex items-center justify-between gap-3">
               <SheetTitle>
@@ -898,6 +1200,9 @@ const PayrollPage = () => {
                 </Badge>
               )}
             </div>
+            <SheetDescription>
+              View historical payslip data for this employee
+            </SheetDescription>
           </SheetHeader>
           <div className="mt-4 w-full overflow-x-auto">
             {historyLoading ? (
