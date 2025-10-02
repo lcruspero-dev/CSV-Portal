@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Sheet,
   SheetContent,
@@ -34,7 +36,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Edit, Trash2, Check, Square, History } from "lucide-react";
+import { MoreHorizontal, Eye, Edit, Trash2, Check, Square, History, Archive } from "lucide-react";
 
 // Improved Checkbox component with better accessibility and styling
 const Checkbox = ({
@@ -771,31 +773,102 @@ const PayrollTable = ({
 };
 
 const computePayroll = (p: Payroll): Payroll => {
-  const basicPay =
-    (p.workDays?.regularDays ?? 0) * (p.payrollRate?.dailyRate ?? 0);
-  const grossSalary =
-    basicPay +
-    (p.holidays?.regHolidayPay ?? 0) +
-    (p.holidays?.speHolidayPay ?? 0) +
-    (p.totalOvertime?.totalOvertime ?? 0) +
-    (p.totalSupplementary?.totalSupplementaryIncome ?? 0) +
-    (p.salaryAdjustments?.increase ?? 0);
+  const monthlyRate = p.payrollRate?.monthlyRate ?? 0;
+  const dailyRate = p.payrollRate?.dailyRate ?? (monthlyRate / 26);
+  const hourlyRate = p.payrollRate?.hourlyRate ?? (dailyRate / 8);
+  
+  const totalHoursWorked = p.workDays?.totalHoursWorked ?? 0;
+  const basicPay = totalHoursWorked * hourlyRate;
+  
+  const absentDays = p.workDays?.absentDays ?? 0;
+  const minsLate = p.workDays?.minsLate ?? 0;
+  const undertimeMinutes = p.workDays?.undertimeMinutes ?? 0;
+  
+  // Calculate deductions from time
+  const amountAbsent = absentDays * dailyRate;
+  const amountMinLateUT = (minsLate / 60) * hourlyRate;
+  const undertimeAmount = (undertimeMinutes / 60) * hourlyRate;
+  
+  // Holiday pay
+  const regHolidayPay = (p.holidays?.regHoliday ?? 0) * dailyRate;
+  const speHolidayPay = (p.holidays?.speHoliday ?? 0) * dailyRate * 0.3;
+  
+  // Overtime pay
+  const regularOTpay = (p.totalOvertime?.regularOT ?? 0) * hourlyRate * 1.25;
+  const restDayOtPay = (p.totalOvertime?.restDayOtHours ?? 0) * hourlyRate * 1.3;
+  const totalOvertimePay = regularOTpay + restDayOtPay;
+  
+  // Night differential
+  const nightDiffPay = (p.totalSupplementary?.nightDiffHours ?? 0) * hourlyRate * 0.1;
+  
+  // Salary adjustments
+  const salaryIncrease = p.salaryAdjustments?.increase ?? 0;
+  const unpaidAmount = (p.salaryAdjustments?.unpaid ?? 0) * dailyRate;
+  
+  // Allowances
+  const nonTaxableAllowance = p.grossSalary?.nonTaxableAllowance ?? 0;
+  const performanceBonus = p.grossSalary?.performanceBonus ?? 0;
+  
+  // Gross salary calculation
+  const grossSalary = basicPay + regHolidayPay + speHolidayPay + totalOvertimePay + 
+                     nightDiffPay + salaryIncrease + nonTaxableAllowance + performanceBonus;
 
-  const totalDeductions =
-    (p.totalDeductions?.sssEmployeeShare ?? 0) +
-    (p.totalDeductions?.phicEmployeeShare ?? 0) +
-    (p.totalDeductions?.hdmfEmployeeShare ?? 0) +
-    (p.totalDeductions?.wisp ?? 0) +
-    (p.totalDeductions?.totalSSSContribution ?? 0);
+  // Government deductions
+  const sss = p.totalDeductions?.sssEmployeeShare ?? 0;
+  const phic = p.totalDeductions?.phicEmployeeShare ?? 0;
+  const hdmf = p.totalDeductions?.hdmfEmployeeShare ?? 0;
+  const wisp = p.totalDeductions?.wisp ?? 0;
+  const totalSSSContribution = p.totalDeductions?.totalSSScontribution ?? 0;
+  const withHoldingTax = p.totalDeductions?.withHoldingTax ?? 0;
+  const sssSalaryLoan = p.totalDeductions?.sssSalaryLoan ?? 0;
+  const hdmfLoan = p.totalDeductions?.hdmfLoan ?? 0;
 
-  const netPay =
-    grossSalary - totalDeductions - (p.salaryAdjustments?.unpaidAmount ?? 0);
+  const totalDeductions = amountAbsent + amountMinLateUT + undertimeAmount + unpaidAmount +
+                         sss + phic + hdmf + wisp + totalSSSContribution + withHoldingTax + 
+                         sssSalaryLoan + hdmfLoan;
+
+  const netPay = grossSalary - totalDeductions;
 
   return {
     ...p,
     pay: { basicPay },
-    grossSalary: { ...p.grossSalary, grossSalary },
-    totalDeductions: { ...p.totalDeductions, totalDeductions },
+    holidays: { 
+      regHoliday: p.holidays?.regHoliday ?? 0,
+      regHolidayPay, 
+      speHoliday: p.holidays?.speHoliday ?? 0,
+      speHolidayPay 
+    },
+    latesAndAbsent: {
+      ...p.latesAndAbsent,
+      amountAbsent,
+      amountMinLateUT,
+      undertimeAmount
+    },
+    salaryAdjustments: {
+      ...p.salaryAdjustments,
+      unpaidAmount
+    },
+    totalOvertime: { 
+      ...p.totalOvertime,
+      regularOTpay,
+      restDayOtPay,
+      totalOvertime: totalOvertimePay
+    },
+    totalSupplementary: {
+      ...p.totalSupplementary,
+      nightDiffPay,
+      totalSupplementaryIncome: nightDiffPay
+    },
+    grossSalary: { 
+      ...p.grossSalary, 
+      grossSalary,
+      nonTaxableAllowance,
+      performanceBonus
+    },
+    totalDeductions: { 
+      ...p.totalDeductions, 
+      totalDeductions 
+    },
     grandtotal: { grandtotal: netPay },
   };
 };
@@ -818,6 +891,12 @@ const PayrollPage = () => {
   const [historyEmployee, setHistoryEmployee] = useState<Payroll | null>(null);
   const [historyLoading, setHistoryLoading] = useState<boolean>(false);
   const [payslips, setPayslips] = useState<any[]>([]);
+  const [archiveOpen, setArchiveOpen] = useState<boolean>(false);
+  const [archivePayslips, setArchivePayslips] = useState<any[]>([]);
+  const [archiveLoading, setArchiveLoading] = useState<boolean>(false);
+  const [archiveStartDate, setArchiveStartDate] = useState<string>('');
+  const [archiveEndDate, setArchiveEndDate] = useState<string>('');
+  
   const historyNetSum = useMemo(() => {
     try {
       return (payslips || []).reduce((acc: number, ps: any) => acc + Number(ps?.grandtotal?.grandtotal || 0), 0);
@@ -825,6 +904,14 @@ const PayrollPage = () => {
       return 0;
     }
   }, [payslips]);
+
+  const archiveNetSum = useMemo(() => {
+    try {
+      return (archivePayslips || []).reduce((acc: number, ps: any) => acc + Number(ps?.grandtotal?.grandtotal || 0), 0);
+    } catch {
+      return 0;
+    }
+  }, [archivePayslips]);
 
   // Use refs to track if we're in the middle of operations
   const isMounted = useRef(true);
@@ -867,9 +954,22 @@ const PayrollPage = () => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const same = ((p as any)._id === payrollId);
           if (!same) return p;
+          
+          // Preserve the original rates - they should NEVER change after send
+          const preservedRates = {
+            monthlyRate: p.payrollRate?.monthlyRate || 0,
+            dailyRate: p.payrollRate?.dailyRate || 0,
+            hourlyRate: p.payrollRate?.hourlyRate || 0,
+            userId: p.payrollRate?.userId
+          };
+          
+          const preservedDeductions = { ...p.totalDeductions };
+          
           const updated: Payroll = {
             ...p,
             status: 'sent',
+            // PRESERVE payroll rates - they should NEVER change
+            payrollRate: preservedRates,
             workDays: { regularDays: 0, absentDays: 0, minsLate: 0, totalHoursWorked: 0, undertimeMinutes: 0 },
             latesAndAbsent: { absentDays: 0, minLateUT: 0, amountAbsent: 0, amountMinLateUT: 0 } as any,
             pay: { basicPay: 0 },
@@ -877,6 +977,8 @@ const PayrollPage = () => {
             totalSupplementary: {},
             grossSalary: { ...(p.grossSalary || {}), nonTaxableAllowance: 0, performanceBonus: 0, grossSalary: 0 },
             grandtotal: { grandtotal: 0 },
+            // PRESERVE deductions but reset calculated total
+            totalDeductions: { ...preservedDeductions, totalDeductions: 0 }
           } as unknown as Payroll;
           return computePayroll(updated);
         }));
@@ -964,6 +1066,57 @@ const PayrollPage = () => {
       }
     };
   }, []);
+
+  // Handle archive view - fetch all archived payslips
+  const handleViewArchive = async () => {
+    try {
+      setArchiveLoading(true);
+      setArchiveOpen(true);
+      
+      // Set default date range to current month if not set
+      if (!archiveStartDate || !archiveEndDate) {
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        
+        const formatDate = (date: Date) => {
+          return date.toISOString().split('T')[0]; // YYYY-MM-DD format
+        };
+        
+        setArchiveStartDate(formatDate(startOfMonth));
+        setArchiveEndDate(formatDate(endOfMonth));
+      }
+      
+      const res = await payrollAPI.getAllArchivedPayslips(archiveStartDate, archiveEndDate);
+      const list = Array.isArray(res.data?.payslips) ? res.data.payslips : [];
+      setArchivePayslips(list);
+    } catch (error) {
+      console.error('Failed to load archived payslips:', error);
+      setArchivePayslips([]);
+    } finally {
+      setArchiveLoading(false);
+    }
+  };
+
+  // Handle archive date filter
+  const handleArchiveDateFilter = async () => {
+    if (!archiveStartDate || !archiveEndDate) {
+      alert('Please select both start and end dates');
+      return;
+    }
+    
+    try {
+      setArchiveLoading(true);
+      const res = await payrollAPI.getAllArchivedPayslips(archiveStartDate, archiveEndDate);
+      const list = Array.isArray(res.data?.payslips) ? res.data.payslips : [];
+      setArchivePayslips(list);
+    } catch (error) {
+      console.error('Failed to filter archived payslips:', error);
+      setArchivePayslips([]);
+    } finally {
+      setArchiveLoading(false);
+    }
+  };
 
   const handleUpdate = (updated: Payroll) => {
     const recomputed = computePayroll(updated);
@@ -1064,6 +1217,10 @@ const PayrollPage = () => {
               })
             }
           />
+          <Button variant="outline" onClick={handleViewArchive} className="flex items-center gap-2">
+            <Archive className="h-4 w-4" />
+            Archive
+          </Button>
           <Button variant="outline" onClick={() => setFilterOpen(true)}>
             Filter
           </Button>
@@ -1214,6 +1371,84 @@ const PayrollPage = () => {
                 <PayrollTable
                   columns={payrollColumns}
                   data={payslips as unknown as Payroll[]}
+                  onRowClick={() => {}}
+                  onDeletePayroll={() => {}}
+                  onViewPayroll={() => {}}
+                  onBulkDelete={() => {}}
+                  hideActions
+                />
+              </div>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Archive View Sheet - All archived payslips */}
+      <Sheet open={archiveOpen} onOpenChange={setArchiveOpen}>
+        <SheetContent side="right" className="w-[100vw] sm:max-w-[100vw]">
+          <SheetHeader>
+            <div className="flex items-center justify-between gap-3">
+              <SheetTitle>
+                Payroll Archive — All Sent Payslips
+              </SheetTitle>
+              {archivePayslips.length > 0 && (
+                <Badge variant="outline" className="text-green-700 border-green-700">
+                  Total Net: PHP {archiveNetSum.toFixed(2)} ({archivePayslips.length} payslips)
+                </Badge>
+              )}
+            </div>
+          </SheetHeader>
+          
+          {/* Date Range Filter */}
+          <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
+            <div className="flex items-end gap-4">
+              <div className="flex-1">
+                <Label htmlFor="archive-start-date">Start Date</Label>
+                <Input
+                  id="archive-start-date"
+                  type="date"
+                  value={archiveStartDate}
+                  onChange={(e) => setArchiveStartDate(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+              <div className="flex-1">
+                <Label htmlFor="archive-end-date">End Date</Label>
+                <Input
+                  id="archive-end-date"
+                  type="date"
+                  value={archiveEndDate}
+                  onChange={(e) => setArchiveEndDate(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+              <Button onClick={handleArchiveDateFilter} disabled={archiveLoading}>
+                {archiveLoading ? 'Loading...' : 'Filter'}
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setArchiveStartDate('');
+                  setArchiveEndDate('');
+                  handleViewArchive();
+                }}
+                disabled={archiveLoading}
+              >
+                Clear
+              </Button>
+            </div>
+          </div>
+
+          <div className="mt-4 w-full overflow-x-auto">
+            {archiveLoading ? (
+              <div className="text-sm text-gray-600">Loading archive data…</div>
+            ) : archivePayslips.length === 0 ? (
+              <div className="text-sm text-gray-600">No archived payslips found.</div>
+            ) : (
+              <div className="bg-white rounded-sm border border-gray-200 p-4 min-w-[1200px]">
+                <PayrollTable
+                  columns={payrollColumns}
+                  data={archivePayslips as unknown as Payroll[]}
                   onRowClick={() => {}}
                   onDeletePayroll={() => {}}
                   onViewPayroll={() => {}}

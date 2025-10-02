@@ -220,22 +220,21 @@ const UpdatePayrollModal = ({
     return path.split(".").reduce((acc, key) => acc?.[key], obj) ?? 0;
   };
 
-  // Auto-calc hours from time tracker for current month-to-date on open and employee change
+  // Auto-calc hours from time tracker for dynamic period on open and employee change
   useEffect(() => {
     const run = async () => {
       try {
         setLoadingAuto(true);
+        // Use a wide date range to capture all unsent work days
         const now = new Date();
-        const start = new Date(now.getFullYear(), now.getMonth(), 1);
-        const end = now;
         const toMdY = (d: Date) => {
           const mm = String(d.getMonth() + 1).padStart(2, '0');
           const dd = String(d.getDate()).padStart(2, '0');
           const yyyy = d.getFullYear();
           return `${mm}/${dd}/${yyyy}`;
         };
-        const startDate = toMdY(start);
-        const endDate = toMdY(end);
+        const startDate = toMdY(new Date(now.getFullYear(), 0, 1)); // Start of year
+        const endDate = toMdY(now); // Today
 
         const userId = (formData.payrollRate as any)?.userId || (payroll as any)?.payrollRate?.userId;
         if (!userId) return;
@@ -266,7 +265,11 @@ const UpdatePayrollModal = ({
         setLoadingAuto(false);
       }
     };
-    run();
+    
+    // Only run auto-calculation when modal opens or payroll changes
+    if (isOpen) {
+      run();
+    }
   }, [isOpen, payroll]);
 
   const formatCurrency = (value: number) => {

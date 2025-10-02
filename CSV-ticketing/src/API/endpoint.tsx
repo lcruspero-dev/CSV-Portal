@@ -261,4 +261,11 @@ export const payrollAPI = {
     apiHelper(`/api/payroll/payslips/${userId}`, "GET"),
   generatePayslipForRange: (userId: string, body: { startDate: string; endDate: string; }) =>
     apiHelper(`/api/payroll/payslips/generate/${userId}`, "POST", body),
+  getAllArchivedPayslips: (startDate?: string, endDate?: string) => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    const queryString = params.toString();
+    return apiHelper(`/api/payroll/payslips/archive${queryString ? `?${queryString}` : ''}`, "GET");
+  },
 };

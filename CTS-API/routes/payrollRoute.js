@@ -10,6 +10,7 @@ const {
   sendPayroll,
   getEmployeePayslips,
   generatePayslipForRange,
+  getAllArchivedPayslips,
 } = require("../controllers/payrollController");
 const { protect } = require("../middleware/authMiddleware");
 
@@ -40,6 +41,9 @@ router.post("/auto-calculate/:userId", protect, async (req, res) => {
 router.put("/update/:id", protect, updatePayroll);
 
 router.post("/send/:userId", protect, sendPayroll);
+
+// Get all archived payslips - MUST come before /payslips/:userId to avoid route conflict
+router.get("/payslips/archive", protect, getAllArchivedPayslips);
 
 router.get("/payslips/:userId", protect, getEmployeePayslips);
 

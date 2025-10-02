@@ -27,6 +27,7 @@ export interface UserProfile {
 }
 
 export interface Payroll {
+  latesAndAbsent: any;
   _id?: string;
   employee: UserProfile & {
     email?: string;
@@ -128,6 +129,7 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
     const netPay = round2(grossSalary - totalDeductions);
 
     setPayrollPreview({
+      latesAndAbsent: {}, // Add a default or computed value here as needed
       employee: {
         ...selectedUser,
         email: selectedUser.email || selectedUser.emailAddress || selectedUser.personalEmail || selectedUser?.user?.email || "",
@@ -161,18 +163,17 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
       if (!selectedUser) return;
       try {
         setLoadingAuto(true);
-        // Auto-calc for current month-to-date
+        // Auto-calc for dynamic period based on actual work days
         const now = new Date();
-        const start = new Date(now.getFullYear(), now.getMonth(), 1);
-        const end = now;
         const toMdY = (d: Date) => {
           const month = String(d.getMonth() + 1).padStart(2, '0');
           const day = String(d.getDate()).padStart(2, '0');
           const year = d.getFullYear();
           return `${month}/${day}/${year}`;
         };
-        const startDate = toMdY(start);
-        const endDate = toMdY(end);
+        // Use a wide date range to capture all unsent work days
+        const startDate = toMdY(new Date(now.getFullYear(), 0, 1)); // Start of year
+        const endDate = toMdY(now); // Today
 
         const res = await payrollAPI.autoCalculatePayroll(
           selectedUser.userId || selectedUser._id,
