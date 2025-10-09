@@ -1,4 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { 
+  useEffect, 
+  useState } from 'react';
 import { payrollAPI } from '@/API/endpoint';
 import { useAuth } from '@/context/useAuth';
 import { Button } from '@/components/ui/button';
@@ -59,10 +61,6 @@ const PayslipPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedPayslip, setSelectedPayslip] = useState<Payslip | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [genStart, setGenStart] = useState<string>("");
-  const [genEnd, setGenEnd] = useState<string>("");
-  const [generated, setGenerated] = useState<Payslip | null>(null);
-  const [generating, setGenerating] = useState(false);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -111,15 +109,6 @@ const PayslipPage: React.FC = () => {
       month: 'long',
       day: 'numeric'
     });
-  };
-
-  const toMdY = (iso: string) => {
-    if (!iso) return "";
-    const d = new Date(iso);
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    const yyyy = d.getFullYear();
-    return `${mm}/${dd}/${yyyy}`;
   };
 
   const formatCurrency = (amount: number) => {
@@ -193,31 +182,6 @@ const PayslipPage: React.FC = () => {
     w.document.close();
   };
 
-  const canGenerate = useMemo(() => {
-    if (!genStart || !genEnd) return false;
-    const s = new Date(genStart);
-    const e = new Date(genEnd);
-    if (isNaN(s.getTime()) || isNaN(e.getTime())) return false;
-    return e >= s;
-  }, [genStart, genEnd]);
-
-  const handleGenerateRange = async () => {
-    if (!user?._id || !canGenerate) return;
-    try {
-      setGenerating(true);
-      // Convert inputs (YYYY-MM-DD from date input) to MM/DD/YYYY for backend
-      const s = toMdY(genStart);
-      const e = toMdY(genEnd);
-      const resp = await payrollAPI.generatePayslipForRange(user._id, { startDate: s, endDate: e });
-      setGenerated(resp.data.payslip);
-    } catch (err) {
-      console.error('Failed to generate payslip:', err);
-      alert('Failed to generate payslip for the given range.');
-    } finally {
-      setGenerating(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="container mx-auto p-6">
@@ -237,75 +201,6 @@ const PayslipPage: React.FC = () => {
         <h1 className="text-3xl font-bold text-gray-900">My Payslips</h1>
         <p className="text-gray-600 mt-2">View your salary history and payslips</p>
       </div>
-
-      {/* Range-based generator */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Generate Payslip by Date Range</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
-            <div className="md:col-span-2">
-              <p className="text-sm font-medium text-gray-600">Start date</p>
-              <input
-                type="date"
-                className="border rounded px-3 py-2 w-full"
-                value={genStart}
-                onChange={(e) => setGenStart(e.target.value)}
-                max={new Date().toISOString().split('T')[0]}
-              />
-            </div>
-            <div className="md:col-span-2">
-              <p className="text-sm font-medium text-gray-600">End date</p>
-              <input
-                type="date"
-                className="border rounded px-3 py-2 w-full"
-                value={genEnd}
-                onChange={(e) => setGenEnd(e.target.value)}
-                max={new Date().toISOString().split('T')[0]}
-              />
-            </div>
-            <div className="md:col-span-1 flex gap-2">
-              <Button disabled={!canGenerate || generating} onClick={handleGenerateRange} className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                {generating ? 'Generating...' : 'Generate'}
-              </Button>
-            </div>
-          </div>
-
-          {generated && (
-            <div className="mt-4 p-4 border rounded">
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-sm text-gray-700">
-                  Generated for {generated.periodStart} - {generated.periodEnd}
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => { setSelectedPayslip(generated); setShowModal(true); }} className="flex items-center gap-2">
-                    <Eye className="h-4 w-4" /> View
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleDownloadPayslip(generated)} className="flex items-center gap-2">
-                    <Download className="h-4 w-4" /> Download PDF
-                  </Button>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                <div>
-                  <p className="text-gray-600">Hours Worked</p>
-                  <p className="font-semibold">{generated.workDays.totalHoursWorked.toFixed(2)} hrs</p>
-                </div>
-                <div>
-                  <p className="text-gray-600">Absent Days</p>
-                  <p className="font-semibold">{generated.workDays.absentDays}</p>
-                </div>
-                <div>
-                  <p className="text-gray-600">Net Pay</p>
-                  <p className="font-semibold text-green-600">{formatCurrency(generated.grandtotal.grandtotal)}</p>
-                </div>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       {payslips.length === 0 ? (
         <Card>

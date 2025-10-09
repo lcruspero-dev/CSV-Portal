@@ -15,6 +15,16 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { motion } from "framer-motion";
+import { 
+  Clock, 
+  FileText, 
+  Users, 
+  HeadphonesIcon, 
+  Ticket, 
+  AlertTriangle,
+  Bell,
+  ArrowRight
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -24,23 +34,53 @@ const container = {
   show: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1,
+      staggerChildren: 0.15,
     },
   },
 };
 
 const item = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0 },
+  hidden: { opacity: 0, y: 30, scale: 0.9 },
+  show: { 
+    opacity: 1, 
+    y: 0, 
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 100,
+      damping: 15
+    }
+  },
 };
 
 const notificationBadge = {
-  initial: { scale: 0 },
-  animate: { scale: 1, transition: { type: "spring", stiffness: 500 } },
-  pulse: {
-    scale: [1, 1.1, 1],
-    transition: { repeat: Infinity, duration: 1.5 },
+  initial: { scale: 0, rotate: -180 },
+  animate: { 
+    scale: 1, 
+    rotate: 0, 
+    transition: { 
+      type: "spring", 
+      stiffness: 500,
+      damping: 15
+    } 
   },
+  pulse: {
+    scale: [1, 1.2, 1],
+    transition: { repeat: Infinity, duration: 2, ease: "easeInOut" },
+  },
+};
+
+const hoverEffect = {
+  hover: { 
+    scale: 1.05, 
+    y: -8,
+    transition: {
+      type: "spring",
+      stiffness: 400,
+      damping: 25
+    }
+  },
+  tap: { scale: 0.95 }
 };
 
 const UserHome = () => {
@@ -113,181 +153,285 @@ const UserHome = () => {
     }
   }, [user]);
 
+  const features = [
+    {
+      id: 1,
+      title: "Time Tracker",
+      description: "Track your work hours and attendance",
+      icon: Clock,
+      image: timetracker,
+      path: "/timetracker",
+      color: "from-blue-500 to-cyan-500",
+      bgColor: "bg-gradient-to-br from-blue-50 to-cyan-50",
+      notification: 0
+    },
+    {
+      id: 2,
+      title: "Memo",
+      description: "View company announcements and updates",
+      icon: FileText,
+      image: memo,
+      path: "/all-memo",
+      color: "from-emerald-500 to-green-500",
+      bgColor: "bg-gradient-to-br from-emerald-50 to-green-50",
+      notification: unacknowledgedCount
+    },
+    {
+      id: 3,
+      title: "HR Support",
+      description: "Request HR assistance and services",
+      icon: Users,
+      image: request,
+      path: "/request-something",
+      color: "from-purple-500 to-pink-500",
+      bgColor: "bg-gradient-to-br from-purple-50 to-pink-50",
+      notification: 0
+    },
+    {
+      id: 4,
+      title: "IT Support",
+      description: "Get technical help and assistance",
+      icon: HeadphonesIcon,
+      image: gethelp,
+      path: "/create-ticket",
+      color: "from-orange-500 to-red-500",
+      bgColor: "bg-gradient-to-br from-orange-50 to-red-50",
+      notification: 0
+    },
+    {
+      id: 5,
+      title: "My Tickets",
+      description: "View your support tickets and status",
+      icon: Ticket,
+      image: ticket,
+      path: "/view-ticket",
+      color: "from-indigo-500 to-blue-500",
+      bgColor: "bg-gradient-to-br from-indigo-50 to-blue-50",
+      notification: 0
+    },
+    {
+      id: 6,
+      title: "Employee Notice",
+      description: "View disciplinary notices and updates",
+      icon: AlertTriangle,
+      image: test,
+      path: "/nte",
+      color: "from-amber-500 to-orange-500",
+      bgColor: "bg-gradient-to-br from-amber-50 to-orange-50",
+      notification: nteNotificationCount,
+      exclamation: showExclamation,
+      tooltip: nteTooltip
+    }
+  ];
+
   return (
     <>
       <SurveyModal />
-      <motion.section
-        className="heading container text-center pt-3"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <h1 className="italic text-3xl p-1 drop-shadow-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#1638df] to-[#192fb4]">
-          Everything you need is just a click away!
-        </h1>
-        <p className="text-2xl font-bold italic">Select an option to proceed</p>
-      </motion.section>
-
-      <motion.div
-        className="container grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 mt-3 text-center p-3 drop-shadow-lg w-full md:w-10/12 lg:w-8/12 xl:w-6/12 mx-auto"
-        variants={container}
-        initial="hidden"
-        animate="show"
-      >
-        <motion.div
-          variants={item}
-          whileHover={{ scale: 1.0 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <Card
-            className="hover:scale-105 ease-in-out duration-200 cursor-pointer hover:border-1 hover:border-[#5a95ff] h-full"
-            onClick={() => navigate("/timetracker")}
+      
+      {/* Main Container */}
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Header Section */}
+          <motion.section
+            className="text-center mb-12"
+            initial={{ opacity: 0, y: -30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            <img src={timetracker} alt="Time tracker" className="mx-auto" />
-            <h3 className="text-base font-semibold text-gray-800 ">
-              Time Tracker
-            </h3>
-            <p className="text-sm text-gray-500 mb-3">Track your work hours</p>
-          </Card>
-        </motion.div>
+            <motion.div
+              className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl shadow-lg mb-6"
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
+            >
+              <Bell className="h-10 w-10 text-white" />
+            </motion.div>
+            
+            <motion.h1
+              className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.6 }}
+            >
+              Welcome Back!
+            </motion.h1>
+            
+            <motion.p
+              className="text-xl sm:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5, duration: 0.6 }}
+            >
+              Everything you need is just a click away! Select an option to proceed
+            </motion.p>
+          </motion.section>
 
-        <motion.div
-          variants={item}
-          whileHover={{ scale: 1.0 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <Card
-            className="relative hover:scale-105 ease-in-out duration-200 cursor-pointer hover:border-1 hover:border-[#5a95ff] h-full"
-            onClick={() => navigate("/all-memo")}
+          {/* Features Grid */}
+          <motion.div
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"
+            variants={container}
+            initial="hidden"
+            animate="show"
           >
-            {unacknowledgedCount > 0 && (
+            {features.map((feature) => (
               <motion.div
-                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold"
-                variants={notificationBadge}
-                initial="initial"
-                animate={["animate", "pulse"]}
+                key={feature.id}
+                variants={item}
+                whileHover="hover"
+                whileTap="tap"
               >
-                {unacknowledgedCount}
-              </motion.div>
-            )}
-            <img src={memo} alt="memo" className="mx-auto" />
-            <h3 className="text-base font-semibold text-gray-800">Memo</h3>
-            <p className="text-sm text-gray-500 mb-3">
-              View company announcements
-            </p>
-          </Card>
-        </motion.div>
-
-        <motion.div
-          variants={item}
-          whileHover={{ scale: 1.0 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <Card
-            className="hover:scale-105 ease-in-out duration-200 cursor-pointer hover:border-1 hover:border-[#5a95ff] h-full"
-            onClick={() => navigate("/request-something")}
-          >
-            <img src={request} alt="test" className="mx-auto" />
-            <h3 className="text-base font-semibold text-gray-800">
-              HR Support
-            </h3>
-            <p className="text-sm text-gray-500 mb-3">Request HR assistance</p>
-          </Card>
-        </motion.div>
-
-        <motion.div
-          variants={item}
-          whileHover={{ scale: 1.0 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <Card
-            className="hover:scale-105 ease-in-out duration-200 cursor-pointer hover:border-1 hover:border-[#5a95ff] h-full"
-            onClick={() => navigate("/create-ticket")}
-          >
-            <img src={gethelp} alt="test" className="mx-auto" />
-            <h3 className="text-base font-semibold text-gray-800">
-              IT Support
-            </h3>
-            <p className="text-sm text-gray-500 mb-3">Get technical help</p>
-          </Card>
-        </motion.div>
-
-        <motion.div
-          variants={item}
-          whileHover={{ scale: 1.0 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <Card
-            className="hover:scale-105 ease-in-out duration-200 cursor-pointer hover:border-1 hover:border-[#5a95ff] h-full"
-            onClick={() => navigate("/view-ticket")}
-          >
-            <img src={ticket} alt="tickets" className="mx-auto" />
-            <h3 className="text-base font-semibold text-gray-800">
-              My Tickets
-            </h3>
-            <p className="text-sm text-gray-500 mb-2">
-              View your support tickets
-            </p>
-          </Card>
-        </motion.div>
-
-        <motion.div
-          variants={item}
-          whileHover={{ scale: 1.0 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <TooltipProvider>
-            {nteTooltip ? (
-              <Tooltip delayDuration={200}>
-                <TooltipTrigger asChild>
-                  <Card
-                    className="relative hover:scale-105 ease-in-out duration-200 cursor-pointer hover:border-1 hover:border-[#5a95ff] p-1 h-full"
-                    onClick={() => navigate("/nte")}
-                  >
-                    <div className="relative">
-                      {(nteNotificationCount > 0 || showExclamation) && (
+                <TooltipProvider>
+                  {feature.tooltip ? (
+                    <Tooltip delayDuration={300}>
+                      <TooltipTrigger asChild>
                         <motion.div
-                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold"
-                          variants={notificationBadge}
-                          initial="initial"
-                          animate={["animate", "pulse"]}
+                          variants={hoverEffect}
+                          className="relative group cursor-pointer h-full"
+                          onClick={() => navigate(feature.path)}
                         >
-                          {showExclamation ? "!" : nteNotificationCount}
+                          <Card className={`relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 h-full ${feature.bgColor} group-hover:shadow-xl`}>
+                            {/* Background Gradient */}
+                            <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
+                            
+                            {/* Notification Badge */}
+                            {(feature.notification > 0 || feature.exclamation) && (
+                              <motion.div
+                                className="absolute top-4 right-4 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg z-10"
+                                variants={notificationBadge}
+                                initial="initial"
+                                animate={["animate", "pulse"]}
+                              >
+                                {feature.exclamation ? "!" : feature.notification}
+                              </motion.div>
+                            )}
+
+                            {/* Content */}
+                            <div className="relative p-6 flex flex-col items-center text-center h-full">
+                              {/* Icon Container */}
+                              <div className={`mb-4 p-4 rounded-2xl bg-gradient-to-br ${feature.color} shadow-lg transform group-hover:scale-110 transition-transform duration-300`}>
+                                <feature.icon className="h-8 w-8 text-white" />
+                              </div>
+
+                              {/* Image */}
+                              <div className="mb-4 transform group-hover:scale-105 transition-transform duration-300">
+                                <img 
+                                  src={feature.image} 
+                                  alt={feature.title} 
+                                  className="w-20 h-20 object-contain filter drop-shadow-lg"
+                                />
+                              </div>
+
+                              {/* Text Content */}
+                              <div className="flex-1 flex flex-col justify-center">
+                                <h3 className="text-xl font-bold text-gray-800 mb-2 group-hover:text-gray-900 transition-colors">
+                                  {feature.title}
+                                </h3>
+                                <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                                  {feature.description}
+                                </p>
+                              </div>
+
+                              {/* Action Indicator */}
+                              <div className="flex items-center justify-center text-gray-400 group-hover:text-gray-600 transition-colors mt-2">
+                                <span className="text-sm font-medium mr-2">Open</span>
+                                <ArrowRight className="h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
+                              </div>
+                            </div>
+
+                            {/* Hover Border Effect */}
+                            <div className={`absolute inset-0 rounded-lg bg-gradient-to-r ${feature.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10`}>
+                              <div className="absolute inset-[2px] rounded-lg bg-white" />
+                            </div>
+                          </Card>
                         </motion.div>
-                      )}
-                      <img src={test} alt="NTE" className="w-full" />
-                    </div>
-                    <h3 className="text-base font-semibold text-gray-800 mt-3">
-                      Employee Notice
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      View disciplinary notice
-                    </p>
-                  </Card>
-                </TooltipTrigger>
-                <TooltipContent className="p-2 max-w-xs text-gray-600">
-                  <p className="text-xs">{nteTooltip}</p>
-                </TooltipContent>
-              </Tooltip>
-            ) : (
-              <Card
-                className="relative hover:scale-105 ease-in-out duration-200 cursor-pointer hover:border-1 hover:border-[#5a95ff] p-1 h-full"
-                onClick={() => navigate("/nte")}
-              >
-                <div className="relative">
-                  <img src={test} alt="NTE" className="w-full" />
-                </div>
-                <h3 className="text-base font-semibold text-gray-800 mt-3">
-                  Employee Notice
-                </h3>
-                <p className="text-sm text-gray-500">
-                  View disciplinary notice
-                </p>
-              </Card>
-            )}
-          </TooltipProvider>
-        </motion.div>
-      </motion.div>
+                      </TooltipTrigger>
+                      <TooltipContent className="p-4 max-w-xs bg-gray-900 text-white border-0 shadow-xl">
+                        <p className="text-sm leading-relaxed">{feature.tooltip}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    <motion.div
+                      variants={hoverEffect}
+                      className="relative group cursor-pointer h-full"
+                      onClick={() => navigate(feature.path)}
+                    >
+                      <Card className={`relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 h-full ${feature.bgColor} group-hover:shadow-xl`}>
+                        {/* Background Gradient */}
+                        <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
+                        
+                        {/* Notification Badge */}
+                        {feature.notification > 0 && (
+                          <motion.div
+                            className="absolute top-4 right-4 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg z-10"
+                            variants={notificationBadge}
+                            initial="initial"
+                            animate={["animate", "pulse"]}
+                          >
+                            {feature.notification}
+                          </motion.div>
+                        )}
+
+                        {/* Content */}
+                        <div className="relative p-6 flex flex-col items-center text-center h-full">
+                          {/* Icon Container */}
+                          <div className={`mb-4 p-4 rounded-2xl bg-gradient-to-br ${feature.color} shadow-lg transform group-hover:scale-110 transition-transform duration-300`}>
+                            <feature.icon className="h-8 w-8 text-white" />
+                          </div>
+
+                          {/* Image */}
+                          <div className="mb-4 transform group-hover:scale-105 transition-transform duration-300">
+                            <img 
+                              src={feature.image} 
+                              alt={feature.title} 
+                              className="w-20 h-20 object-contain filter drop-shadow-lg"
+                            />
+                          </div>
+
+                          {/* Text Content */}
+                          <div className="flex-1 flex flex-col justify-center">
+                            <h3 className="text-xl font-bold text-gray-800 mb-2 group-hover:text-gray-900 transition-colors">
+                              {feature.title}
+                            </h3>
+                            <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                              {feature.description}
+                            </p>
+                          </div>
+
+                          {/* Action Indicator */}
+                          <div className="flex items-center justify-center text-gray-400 group-hover:text-gray-600 transition-colors mt-2">
+                            <span className="text-sm font-medium mr-2">Open</span>
+                            <ArrowRight className="h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
+                          </div>
+                        </div>
+
+                        {/* Hover Border Effect */}
+                        <div className={`absolute inset-0 rounded-lg bg-gradient-to-r ${feature.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10`}>
+                          <div className="absolute inset-[2px] rounded-lg bg-white" />
+                        </div>
+                      </Card>
+                    </motion.div>
+                  )}
+                </TooltipProvider>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          {/* Footer */}
+          <motion.div
+            className="text-center mt-12 pt-8 border-t border-gray-200"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1, duration: 0.6 }}
+          >
+            <p className="text-gray-500 text-sm">
+              Need help? Contact support at{" "}
+              <a href="mailto:support@company.com" className="text-blue-600 hover:text-blue-700 font-medium">
+                support@company.com
+              </a>
+            </p>
+          </motion.div>
+        </div>
+      </div>
     </>
   );
 };
