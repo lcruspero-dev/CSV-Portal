@@ -22,16 +22,20 @@ import {
   ChevronRight,
   Clock,
   Edit,
-  FileOutput,
   FileSpreadsheet,
   FileText,
-  Home,
   Menu,
   Tag,
   Ticket,
   UserPlus,
   Users,
-  BadgeDollarSign
+  BadgeDollarSign,
+  LayoutDashboard,
+  Settings,
+  BarChart3,
+  Shield,
+  Key,
+  LogOut
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -51,6 +55,7 @@ interface NavItem {
   path: string;
   icon: React.ReactNode;
   protected?: boolean;
+  badge?: string;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
@@ -69,7 +74,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         {
           title: "Dashboard",
           path: "/",
-          icon: <Home className="h-5 w-5" />,
+          icon: <LayoutDashboard className="h-5 w-5" />,
         },
         {
           title: "Time Tracker",
@@ -80,6 +85,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
           title: "Payroll",
           path: "/payroll",
           icon: <BadgeDollarSign className="h-5 w-5" />,
+          badge: "New",
         },
       ],
     },
@@ -92,12 +98,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
           icon: <Ticket className="h-5 w-5" />,
         },
         {
-          title: "Add Ticket Assignee",
+          title: "Add Assignee",
           path: "/addassign",
           icon: <UserPlus className="h-5 w-5" />,
         },
         {
-          title: "Add Ticket Category",
+          title: "Add Category",
           path: "/addcategory",
           icon: <Tag className="h-5 w-5" />,
         },
@@ -107,12 +113,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       name: "Time Management",
       items: [
         {
-          title: "Manage Time Record",
+          title: "Time Records",
           path: "/timerecord",
           icon: <Edit className="h-5 w-5" />,
         },
         {
-          title: "Export Time Tracker",
+          title: "Export Tracker",
           path: "/exporttimetracker",
           icon: <CalendarCheck className="h-5 w-5" />,
         },
@@ -122,17 +128,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       name: "Data & Reports",
       items: [
         {
-          title: "Export Memo Data",
+          title: "Export Memo",
           path: "/exportmemo",
           icon: <FileText className="h-5 w-5" />,
         },
         {
-          title: "Export Survey Data",
+          title: "Export Survey",
           path: "/exportsurveydata",
-          icon: <FileOutput className="h-5 w-5" />,
+          icon: <BarChart3 className="h-5 w-5" />,
         },
         {
-          title: "Export Tickets Data",
+          title: "Export Tickets",
           path: "/exportdata",
           icon: <FileSpreadsheet className="h-5 w-5" />,
         },
@@ -142,25 +148,25 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       name: "Administration",
       items: [
         {
-          title: "Manage Leave Credits",
+          title: "Leave Credits",
           path: "/leavecredits",
           icon: <FileText className="h-5 w-5" />,
           protected: true,
         },
         {
-          title: "Manage Employees",
+          title: "Employees",
           path: "/manageemployees",
           icon: <Users className="h-5 w-5" />,
         },
         {
           title: "Reset Password",
           path: "/resetuserpassword",
-          icon: <Users className="h-5 w-5" />,
+          icon: <Key className="h-5 w-5" />,
         },
         {
           title: "Manage Survey",
           path: "/createsurvey",
-          icon: <FileText className="h-5 w-5" />,
+          icon: <Settings className="h-5 w-5" />,
         },
       ],
     },
@@ -181,6 +187,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       navigate(protectedPath);
       setIsPasswordDialogOpen(false);
       setPassword("");
+      toast({
+        title: "Access Granted",
+        description: "You now have access to the protected section.",
+        variant: "default",
+      });
     } else {
       toast({
         title: "Incorrect Password",
@@ -210,27 +221,45 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         open={isPasswordDialogOpen}
         onOpenChange={setIsPasswordDialogOpen}
       >
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Enter Password</DialogTitle>
-            <DialogDescription>
-              Please enter the password to access this section.
-            </DialogDescription>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Shield className="h-6 w-6 text-blue-600" />
+              </div>
+              <div>
+                <DialogTitle>Protected Section</DialogTitle>
+                <DialogDescription>
+                  This section requires additional authentication.
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
-          <Input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Enter password"
-            className="mt-4"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                verifyPassword();
-              }
-            }}
-          />
-          <div className="flex justify-end mt-4">
-            <Button onClick={verifyPassword}>Submit</Button>
+          <div className="space-y-4">
+            <Input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              className="w-full"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  verifyPassword();
+                }
+              }}
+            />
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setIsPasswordDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button onClick={verifyPassword} className="gap-2">
+                <Key className="h-4 w-4" />
+                Verify & Continue
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -241,27 +270,38 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden fixed top-4 left-4 z-10 bg-white/80 backdrop-blur-sm shadow-sm rounded-full"
+            className="md:hidden fixed top-4 left-4 z-50 bg-white/90 backdrop-blur-sm shadow-lg rounded-full border border-gray-200 hover:bg-white"
           >
             <Menu className="h-5 w-5" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-80 p-0">
-          <div className="flex flex-col h-full bg-gradient-to-b from-slate-50 to-white">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h2 className="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-500">
-                Dashboard
-              </h2>
+        <SheetContent side="left" className="w-80 p-0 border-r-0">
+          <div className="flex flex-col h-full bg-gradient-to-b from-white to-gray-50/50">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-white">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl">
+                  <LayoutDashboard className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                    Admin Portal
+                  </h2>
+                  <p className="text-sm text-gray-500">Management System</p>
+                </div>
+              </div>
             </div>
-            <nav className="flex-1 overflow-y-auto py-1">
+
+            {/* Navigation */}
+            <nav className="flex-1 overflow-y-auto py-4 px-3">
               {navGroups.map((group, groupIndex) => (
-                <div key={groupIndex} className="mb-2">
-                  <div className="px-4 py-1">
-                    <p className="text-sm font-medium text-slate-500">
+                <div key={groupIndex} className="mb-6">
+                  <div className="px-3 mb-3">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                       {group.name}
                     </p>
                   </div>
-                  <div className="space-y-0.5">
+                  <div className="space-y-1">
                     {group.items.map((item, index) => {
                       const isActive = location.pathname === item.path;
                       return (
@@ -270,21 +310,31 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                           variant="ghost"
                           onClick={() => handleNavigation(item)}
                           className={cn(
-                            "w-full justify-start gap-3 px-4 py-1.5 rounded-lg mx-2",
+                            "w-full justify-start gap-3 px-3 py-3 rounded-xl transition-all duration-200 group",
                             isActive
-                              ? "bg-slate-100 text-blue-600 font-medium"
-                              : "hover:bg-slate-50 text-slate-700"
+                              ? "bg-gradient-to-r from-blue-50 to-blue-100/50 border border-blue-200 text-blue-700 font-semibold shadow-sm"
+                              : "hover:bg-gray-100/80 text-gray-700 hover:text-gray-900 border border-transparent"
                           )}
                         >
                           <div
                             className={cn(
-                              "p-1 rounded-md",
-                              isActive ? "text-blue-600" : "text-slate-500"
+                              "p-2 rounded-lg transition-colors",
+                              isActive
+                                ? "bg-blue-500 text-white shadow-sm"
+                                : "bg-gray-100 text-gray-600 group-hover:bg-gray-200"
                             )}
                           >
                             {item.icon}
                           </div>
-                          <span>{item.title}</span>
+                          <span className="flex-1 text-left">{item.title}</span>
+                          {item.badge && (
+                            <span className="px-2 py-1 text-xs bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full font-medium">
+                              {item.badge}
+                            </span>
+                          )}
+                          {item.protected && (
+                            <Shield className="h-3 w-3 text-blue-500 flex-shrink-0" />
+                          )}
                         </Button>
                       );
                     })}
@@ -292,6 +342,22 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                 </div>
               ))}
             </nav>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-gray-100 bg-white">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50/80">
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                  <span className="text-white text-sm font-semibold">A</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">Admin User</p>
+                  <p className="text-xs text-gray-500 truncate">Administrator</p>
+                </div>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <LogOut className="h-4 w-4 text-gray-500" />
+                </Button>
+              </div>
+            </div>
           </div>
         </SheetContent>
       </Sheet>
@@ -299,16 +365,35 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       {/* Desktop Sidebar */}
       <div
         className={cn(
-          "hidden md:flex flex-col transition-all duration-300 ease-in-out h-[89vh] sticky top-0 bg-white border-r shadow-sm",
+          "hidden md:flex flex-col transition-all duration-300 ease-in-out h-screen sticky top-0 bg-white border-r border-gray-200/60 shadow-sm",
           isOpen ? "w-64" : "w-20",
           isMounted ? "opacity-100" : "opacity-0"
         )}
       >
-        <div className="flex justify-end">
+        {/* Header */}
+        <div className={cn(
+          "flex items-center border-b border-gray-200/60 transition-all duration-300",
+          isOpen ? "justify-between p-4" : "justify-center p-3"
+        )}>
+          {isOpen && (
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl">
+                <LayoutDashboard className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  Admin Portal
+                </h2>
+              </div>
+            </div>
+          )}
           <Button
             variant="ghost"
             size="icon"
-            className="rounded-full hover:bg-slate-100"
+            className={cn(
+              "rounded-xl transition-all duration-200 hover:bg-gray-100",
+              isOpen ? "h-8 w-8" : "h-9 w-9"
+            )}
             onClick={handleToggle}
           >
             {isOpen ? (
@@ -319,18 +404,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
           </Button>
         </div>
 
-        <TooltipProvider>
-          <nav className="flex flex-col px-2 flex-1 overflow-y-auto">
+        <TooltipProvider delayDuration={300}>
+          <nav className="flex flex-col px-3 py-4 flex-1 overflow-y-auto">
             {navGroups.map((group, groupIndex) => (
-              <div key={groupIndex} className="mb-2">
+              <div key={groupIndex} className="mb-6">
                 {isOpen && (
-                  <div className="px-3 mb-1">
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  <div className="px-3 mb-3">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                       {group.name}
                     </p>
                   </div>
                 )}
-                <div className="space-y-0.5">
+                <div className="space-y-1">
                   {group.items.map((item, index) => {
                     const isActive = location.pathname === item.path;
                     return isOpen ? (
@@ -339,43 +424,73 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                         variant="ghost"
                         onClick={() => handleNavigation(item)}
                         className={cn(
-                          "w-full justify-start gap-3 px-3 py-1.5 rounded-lg",
+                          "w-full justify-start gap-3 px-3 py-3 rounded-xl transition-all duration-200 group relative",
                           isActive
-                            ? "bg-blue-50 text-blue-600 font-medium"
-                            : "hover:bg-slate-50 text-slate-700"
+                            ? "bg-gradient-to-r from-blue-50 to-blue-100/50 border border-blue-200 text-blue-700 font-semibold shadow-sm"
+                            : "hover:bg-gray-100/80 text-gray-700 hover:text-gray-900 border border-transparent"
                         )}
                       >
                         <div
                           className={cn(
-                            "p-1 rounded-md",
-                            isActive ? "text-blue-600" : "text-slate-500"
+                            "p-2 rounded-lg transition-colors flex-shrink-0",
+                            isActive
+                              ? "bg-blue-500 text-white shadow-sm"
+                              : "bg-gray-100 text-gray-600 group-hover:bg-gray-200"
                           )}
                         >
                           {item.icon}
                         </div>
-                        <span className="text-sm">{item.title}</span>
+                        <span className="flex-1 text-left text-sm">{item.title}</span>
+                        {item.badge && (
+                          <span className="px-1.5 py-0.5 text-xs bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full font-medium">
+                            {item.badge}
+                          </span>
+                        )}
+                        {item.protected && (
+                          <Shield className="h-3 w-3 text-blue-500 flex-shrink-0" />
+                        )}
                       </Button>
                     ) : (
-                      <Tooltip key={index} delayDuration={300}>
+                      <Tooltip key={index}>
                         <TooltipTrigger asChild>
                           <Button
                             variant="ghost"
                             onClick={() => handleNavigation(item)}
                             className={cn(
-                              "w-full p-2 justify-center rounded-lg",
+                              "w-full p-3 justify-center rounded-xl transition-all duration-200 group relative",
                               isActive
-                                ? "bg-blue-50 text-blue-600"
-                                : "hover:bg-slate-50 text-slate-600"
+                                ? "bg-gradient-to-r from-blue-50 to-blue-100/50 border border-blue-200 text-blue-700"
+                                : "hover:bg-gray-100 text-gray-600 hover:text-gray-900"
                             )}
                           >
-                            {item.icon}
+                            <div
+                              className={cn(
+                                "transition-colors",
+                                isActive
+                                  ? "text-blue-600"
+                                  : "text-gray-500 group-hover:text-gray-700"
+                              )}
+                            >
+                              {item.icon}
+                            </div>
+                            {item.badge && (
+                              <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full border-2 border-white"></span>
+                            )}
+                            {item.protected && (
+                              <span className="absolute -bottom-1 -right-1 w-2 h-2 bg-blue-500 rounded-full border-2 border-white"></span>
+                            )}
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent
                           side="right"
-                          className="bg-slate-800 text-white"
+                          className="bg-gray-900 text-white px-3 py-2 rounded-lg border border-gray-700"
+                          sideOffset={5}
                         >
-                          {item.title}
+                          <div className="flex items-center gap-2">
+                            {item.icon}
+                            <span>{item.title}</span>
+                            {item.protected && <Shield className="h-3 w-3 text-blue-400" />}
+                          </div>
                         </TooltipContent>
                       </Tooltip>
                     );
@@ -385,6 +500,32 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
             ))}
           </nav>
         </TooltipProvider>
+
+        {/* User Profile - Desktop */}
+        <div className={cn(
+          "border-t border-gray-200/60 transition-all duration-300",
+          isOpen ? "p-4" : "p-3"
+        )}>
+          <div className={cn(
+            "flex items-center gap-3 transition-all duration-300",
+            isOpen ? "justify-start" : "justify-center"
+          )}>
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-white text-sm font-semibold">A</span>
+            </div>
+            {isOpen && (
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">Admin User</p>
+                <p className="text-xs text-gray-500 truncate">Administrator</p>
+              </div>
+            )}
+            {isOpen && (
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <LogOut className="h-4 w-4 text-gray-500" />
+              </Button>
+            )}
+          </div>
+        </div>
       </div>
     </>
   );

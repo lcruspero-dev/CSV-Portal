@@ -2,7 +2,7 @@
 import { TimeRecordAPI } from "@/API/endpoint";
 import BackButton from "@/components/kit/BackButton";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Dialog,
   DialogClose,
@@ -29,8 +29,24 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
-import { EyeIcon, EyeOffIcon, Pencil, Search, Trash2 } from "lucide-react";
+import { 
+  EyeIcon, 
+  EyeOffIcon, 
+  Pencil, 
+  Search, 
+  Trash2, 
+  Clock,
+  Calendar,
+  User,
+  Filter,
+  Download,
+  RefreshCw,
+  AlertTriangle,
+  CheckCircle,
+  Building
+} from "lucide-react";
 import React, { useState } from "react";
+import { Badge } from "@/components/ui/badge";
 
 interface TimeRecord {
   _id: string;
@@ -62,7 +78,6 @@ const calculateTotalHours = (
   totalLunchTime: string;
   totalSecondBreakTime: string;
 } => {
-  // Guard clause for invalid or incomplete data
   if (!record.timeIn || !record.timeOut) {
     return {
       totalHours: "0.00",
@@ -88,11 +103,9 @@ const calculateTotalHours = (
     return hours * 3600 + minutes * 60 + seconds;
   };
 
-  // Calculate main work duration
   let inTotalSeconds = convertToSeconds(record.timeIn);
   let outTotalSeconds = convertToSeconds(record.timeOut);
 
-  // Guard against invalid time values
   if (inTotalSeconds === 0 || outTotalSeconds === 0) {
     return {
       totalHours: "0.00",
@@ -102,22 +115,17 @@ const calculateTotalHours = (
     };
   }
 
-  // Adjust for crossing midnight
   if (outTotalSeconds < inTotalSeconds) {
     outTotalSeconds += 24 * 3600;
   }
 
-  // Calculate break durations if break times exist and are valid
   let breakTimeSeconds = 0;
   let lunchTimeSeconds = 0;
   let secondBreakTimeSeconds = 0;
-
-  // Calculate time to deduct from total hours
   let breakDeductionSeconds = 0;
   let lunchDeductionSeconds = 0;
   let secondBreakDeductionSeconds = 0;
 
-  // First break calculation
   if (record.breakStart && record.breakEnd) {
     let breakStartSeconds = convertToSeconds(record.breakStart);
     let breakEndSeconds = convertToSeconds(record.breakEnd);
@@ -127,15 +135,11 @@ const calculateTotalHours = (
         breakEndSeconds += 24 * 3600;
       }
       const totalBreakSeconds = breakEndSeconds - breakStartSeconds;
-      // Calculate actual break time for display
       breakTimeSeconds = totalBreakSeconds;
-      // Only deduct if break is more than 15 minutes (900 seconds)
-      breakDeductionSeconds =
-        totalBreakSeconds > 900 ? totalBreakSeconds - 900 : 0;
+      breakDeductionSeconds = totalBreakSeconds > 900 ? totalBreakSeconds - 900 : 0;
     }
   }
 
-  // Lunch break calculation
   if (record.lunchStart && record.lunchEnd) {
     let lunchStartSeconds = convertToSeconds(record.lunchStart);
     let lunchEndSeconds = convertToSeconds(record.lunchEnd);
@@ -144,14 +148,11 @@ const calculateTotalHours = (
       if (lunchEndSeconds < lunchStartSeconds) {
         lunchEndSeconds += 24 * 3600;
       }
-      // Calculate actual lunch time for display
       lunchTimeSeconds = lunchEndSeconds - lunchStartSeconds;
-      // Always deduct full lunch time
       lunchDeductionSeconds = lunchTimeSeconds;
     }
   }
 
-  // Second break calculation
   if (record.secondBreakStart && record.secondBreakEnd) {
     let secondBreakStartSeconds = convertToSeconds(record.secondBreakStart);
     let secondBreakEndSeconds = convertToSeconds(record.secondBreakEnd);
@@ -160,22 +161,16 @@ const calculateTotalHours = (
       if (secondBreakEndSeconds < secondBreakStartSeconds) {
         secondBreakEndSeconds += 24 * 3600;
       }
-      const totalSecondBreakSeconds =
-        secondBreakEndSeconds - secondBreakStartSeconds;
-      // Calculate actual second break time for display
+      const totalSecondBreakSeconds = secondBreakEndSeconds - secondBreakStartSeconds;
       secondBreakTimeSeconds = totalSecondBreakSeconds;
-      // Only deduct if second break is more than 15 minutes (900 seconds)
-      secondBreakDeductionSeconds =
-        totalSecondBreakSeconds > 900 ? totalSecondBreakSeconds - 900 : 0;
+      secondBreakDeductionSeconds = totalSecondBreakSeconds > 900 ? totalSecondBreakSeconds - 900 : 0;
     }
   }
 
   const totalWorkSeconds = outTotalSeconds - inTotalSeconds;
-  const totalDeductionSeconds =
-    breakDeductionSeconds + lunchDeductionSeconds + secondBreakDeductionSeconds;
+  const totalDeductionSeconds = breakDeductionSeconds + lunchDeductionSeconds + secondBreakDeductionSeconds;
   const netWorkSeconds = Math.max(0, totalWorkSeconds - totalDeductionSeconds);
 
-  // Convert to hours with 2 decimal places, ensuring non-negative values
   const totalHours = (netWorkSeconds / 3600).toFixed(2);
   const totalBreakTime = (breakTimeSeconds / 3600).toFixed(2);
   const totalLunchTime = (lunchTimeSeconds / 3600).toFixed(2);
@@ -189,7 +184,6 @@ const calculateTotalHours = (
   };
 };
 
-// Helper function to convert hours to minutes format
 const formatHoursToMinutes = (hoursString: string): string => {
   const hours = parseFloat(hoursString);
   if (isNaN(hours)) return "0 minutes";
@@ -208,7 +202,7 @@ const formatHoursToMinutes = (hoursString: string): string => {
 };
 
 const employeeGroupOptions = [
-  { label: "All", value: "csv-all" },
+  { label: "All Employees", value: "csv-all" },
   { label: "Shift 1", value: "csv-shift1" },
   { label: "Shift 2", value: "csv-shift2" },
   { label: "Shift 3", value: "csv-shift3" },
@@ -225,6 +219,7 @@ const AdminTimeRecordEdit: React.FC = () => {
   const [secretKey, setSecretKey] = useState("");
   const [secretKeyError, setSecretKeyError] = useState("");
   const [showSecretKey, setShowSecretKey] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const formatDate = (dateString: string): string => {
@@ -234,7 +229,7 @@ const AdminTimeRecordEdit: React.FC = () => {
 
   const validateSecretKey = () => {
     if (!secretKey) {
-      setSecretKeyError("Key is required");
+      setSecretKeyError("Secret key is required");
       return false;
     }
     setSecretKeyError("");
@@ -245,7 +240,7 @@ const AdminTimeRecordEdit: React.FC = () => {
     if (!searchDate) {
       toast({
         title: "Validation Error",
-        description: "Please enter a date",
+        description: "Please select a date",
         variant: "destructive",
       });
       return;
@@ -260,6 +255,7 @@ const AdminTimeRecordEdit: React.FC = () => {
       return;
     }
 
+    setIsLoading(true);
     try {
       let response;
       if (searchType === "search-by-name") {
@@ -268,7 +264,6 @@ const AdminTimeRecordEdit: React.FC = () => {
           formatDate(searchDate)
         );
       } else {
-        // Search by group
         response = await TimeRecordAPI.getTimeRecordsByNameAndDate(
           searchType,
           formatDate(searchDate)
@@ -279,8 +274,14 @@ const AdminTimeRecordEdit: React.FC = () => {
 
       if (response.data.length === 0) {
         toast({
-          title: "No Records",
+          title: "No Records Found",
           description: "No time records found for the given criteria",
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "Search Complete",
+          description: `Found ${response.data.length} record(s)`,
           variant: "default",
         });
       }
@@ -288,9 +289,11 @@ const AdminTimeRecordEdit: React.FC = () => {
       console.error("Search failed", error);
       toast({
         title: "Search Error",
-        description: "No time records found",
+        description: "Failed to fetch time records",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -304,16 +307,11 @@ const AdminTimeRecordEdit: React.FC = () => {
     if (!editingRecord) return;
 
     if (!validateSecretKey()) {
-      toast({
-        title: "Validation Error",
-        description: "Please enter the secret key",
-        variant: "destructive",
-      });
       return;
     }
 
+    setIsLoading(true);
     try {
-      // Calculate updated total hours and break times before saving
       const {
         totalHours,
         totalBreakTime,
@@ -321,7 +319,6 @@ const AdminTimeRecordEdit: React.FC = () => {
         totalSecondBreakTime,
       } = calculateTotalHours(editingRecord);
 
-      // Create the complete updated record with all fields
       const updatedRecord = {
         ...editingRecord,
         breakStart: editingRecord.breakStart || null,
@@ -336,13 +333,11 @@ const AdminTimeRecordEdit: React.FC = () => {
         totalSecondBreakTime,
       };
 
-      // Make the API call with the complete record and secret key
       await TimeRecordAPI.updateTimeRecord(updatedRecord._id, {
         ...updatedRecord,
         secretKey,
       });
 
-      // Update the local state with the new record
       setTimeRecords((prev) =>
         prev.map((record) =>
           record._id === updatedRecord._id ? updatedRecord : record
@@ -357,7 +352,6 @@ const AdminTimeRecordEdit: React.FC = () => {
 
       setEditingRecord(null);
       setSecretKey("");
-      setSecretKeyError("");
     } catch (error) {
       console.error("Update failed", error);
       toast({
@@ -365,6 +359,8 @@ const AdminTimeRecordEdit: React.FC = () => {
         description: "Failed to update time record",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -413,291 +409,332 @@ const AdminTimeRecordEdit: React.FC = () => {
     setShowSecretKey(!showSecretKey);
   };
 
+  const getHoursColor = (hours: string) => {
+    const numHours = parseFloat(hours);
+    if (numHours >= 8) return "text-green-600 bg-green-50";
+    if (numHours >= 6) return "text-yellow-600 bg-yellow-50";
+    return "text-red-600 bg-red-50";
+  };
+
+  const clearSearch = () => {
+    setSearchName("");
+    setSearchDate("");
+    setTimeRecords([]);
+  };
+
   return (
-    <div className="min-h-screen flex items-start justify-center bg-gray-100 p-4">
-      <Card className="w-full max-w-5xl">
-        <CardHeader>
-          <div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 py-6">
+      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
+          <div className="flex items-center gap-4">
             <BackButton />
-          </div>
-          <CardTitle className="text-center">Time Record Management</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div
-            className={`flex space-x-4 mb-6 ${
-              searchType === "search-by-name" ? "w-3/4" : "w-1/2"
-            }`}
-          >
-            <div className="flex-grow">
-              <Label>Search Type</Label>
-              <Select onValueChange={setSearchType} value={searchType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select search type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {employeeGroupOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+                Time Record Management
+              </h1>
+              <p className="text-gray-600 mt-2">
+                Manage and edit employee time records
+              </p>
             </div>
-            {searchType === "search-by-name" && (
-              <div className="flex-grow">
-                <Label>Employee Name</Label>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <Button variant="outline" className="flex items-center gap-2">
+              <Download className="h-4 w-4" />
+              Export
+            </Button>
+          </div>
+        </div>
+
+        {/* Search Section */}
+        <Card className="mb-6 shadow-sm border-0">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <Filter className="h-5 w-5 text-blue-600" />
+              Search Records
+            </CardTitle>
+            <CardDescription>
+              Find time records by employee or group
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+              <div className="lg:col-span-3">
+                <Label className="flex items-center gap-2 mb-2">
+                  <Building className="h-4 w-4 text-blue-600" />
+                  Search Type
+                </Label>
+                <Select onValueChange={setSearchType} value={searchType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select search type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {employeeGroupOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {searchType === "search-by-name" && (
+                <div className="lg:col-span-3">
+                  <Label className="flex items-center gap-2 mb-2">
+                    <User className="h-4 w-4 text-blue-600" />
+                    Employee Name
+                  </Label>
+                  <Input
+                    placeholder="Enter employee name"
+                    value={searchName}
+                    onChange={(e) => setSearchName(e.target.value)}
+                  />
+                </div>
+              )}
+
+              <div className="lg:col-span-3">
+                <Label className="flex items-center gap-2 mb-2">
+                  <Calendar className="h-4 w-4 text-blue-600" />
+                  Date
+                </Label>
                 <Input
-                  placeholder="Enter employee name"
-                  value={searchName}
-                  onChange={(e) => setSearchName(e.target.value)}
+                  type="date"
+                  value={searchDate}
+                  onChange={(e) => setSearchDate(e.target.value)}
                 />
               </div>
-            )}
-            <div className="flex-grow">
-              <Label>Date</Label>
-              <Input
-                type="date"
-                value={searchDate}
-                onChange={(e) => setSearchDate(e.target.value)}
-              />
-            </div>
-            <div className="flex items-end">
-              <Button onClick={handleSearch}>
-                <Search className="mr-2" size={16} /> Search
-              </Button>
-            </div>
-          </div>
 
-          {editingRecord && (
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle>Edit Time Record</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Date</Label>
+              <div className="lg:col-span-3 flex items-end gap-2">
+                <Button 
+                  onClick={handleSearch} 
+                  disabled={isLoading}
+                  className="flex items-center gap-2 flex-1"
+                >
+                  {isLoading ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Search className="h-4 w-4" />
+                  )}
+                  {isLoading ? "Searching..." : "Search"}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={clearSearch}
+                  className="flex-1"
+                >
+                  Clear
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Edit Form */}
+        {editingRecord && (
+          <Card className="mb-6 shadow-sm border-0 border-l-4 border-l-blue-500">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <Pencil className="h-5 w-5 text-blue-600" />
+                Edit Time Record
+                <Badge variant="secondary" className="ml-2">
+                  {editingRecord.employeeName}
+                </Badge>
+              </CardTitle>
+              <CardDescription>
+                Update the time record details below
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                {/* Basic Information */}
+                <div className="space-y-3">
+                  <Label>Date</Label>
+                  <Input
+                    value={editingRecord.date}
+                    onChange={(e) =>
+                      handleTimeInputChange("date", e.target.value, editingRecord)
+                    }
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Label>Shift</Label>
+                  <Input
+                    value={editingRecord.shift || ""}
+                    onChange={(e) =>
+                      handleTimeInputChange("shift", e.target.value, editingRecord)
+                    }
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Label>Time In</Label>
+                  <Input
+                    value={editingRecord.timeIn || ""}
+                    onChange={(e) =>
+                      handleTimeInputChange("timeIn", e.target.value, editingRecord)
+                    }
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Label>Time Out</Label>
+                  <Input
+                    value={editingRecord.timeOut || ""}
+                    onChange={(e) =>
+                      handleTimeInputChange("timeOut", e.target.value, editingRecord)
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* Break Times */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div className="space-y-3">
+                  <Label>Break Start</Label>
+                  <Input
+                    value={editingRecord.breakStart || ""}
+                    onChange={(e) =>
+                      handleTimeInputChange("breakStart", e.target.value, editingRecord)
+                    }
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Label>Break End</Label>
+                  <Input
+                    value={editingRecord.breakEnd || ""}
+                    onChange={(e) =>
+                      handleTimeInputChange("breakEnd", e.target.value, editingRecord)
+                    }
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Label>Lunch Start</Label>
+                  <Input
+                    value={editingRecord.lunchStart || ""}
+                    onChange={(e) =>
+                      handleTimeInputChange("lunchStart", e.target.value, editingRecord)
+                    }
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Label>Lunch End</Label>
+                  <Input
+                    value={editingRecord.lunchEnd || ""}
+                    onChange={(e) =>
+                      handleTimeInputChange("lunchEnd", e.target.value, editingRecord)
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* Second Break Times */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div className="space-y-3">
+                  <Label>2nd Break Start</Label>
+                  <Input
+                    value={editingRecord.secondBreakStart || ""}
+                    onChange={(e) =>
+                      handleTimeInputChange("secondBreakStart", e.target.value, editingRecord)
+                    }
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Label>2nd Break End</Label>
+                  <Input
+                    value={editingRecord.secondBreakEnd || ""}
+                    onChange={(e) =>
+                      handleTimeInputChange("secondBreakEnd", e.target.value, editingRecord)
+                    }
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Label>Notes</Label>
+                  <Input
+                    value={editingRecord.notes || ""}
+                    onChange={(e) =>
+                      handleTimeInputChange("notes", e.target.value, editingRecord)
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* Calculated Totals */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 bg-blue-50 rounded-lg">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Total Hours</Label>
+                  <div className="flex items-center gap-2">
                     <Input
-                      type="text"
-                      value={editingRecord.date}
-                      onChange={(e) =>
-                        handleTimeInputChange(
-                          "date",
-                          e.target.value,
-                          editingRecord
-                        )
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Shift</Label>
-                    <Input
-                      value={editingRecord.shift || ""}
-                      onChange={(e) =>
-                        handleTimeInputChange(
-                          "shift",
-                          e.target.value,
-                          editingRecord
-                        )
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Time In</Label>
-                    <Input
-                      type="text"
-                      value={editingRecord.timeIn || ""}
-                      onChange={(e) =>
-                        handleTimeInputChange(
-                          "timeIn",
-                          e.target.value,
-                          editingRecord
-                        )
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Time Out</Label>
-                    <Input
-                      type="text"
-                      value={editingRecord.timeOut || ""}
-                      onChange={(e) =>
-                        handleTimeInputChange(
-                          "timeOut",
-                          e.target.value,
-                          editingRecord
-                        )
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Break Start</Label>
-                    <Input
-                      type="text"
-                      value={editingRecord.breakStart || ""}
-                      onChange={(e) =>
-                        handleTimeInputChange(
-                          "breakStart",
-                          e.target.value,
-                          editingRecord
-                        )
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Break End</Label>
-                    <Input
-                      type="text"
-                      value={editingRecord.breakEnd || ""}
-                      onChange={(e) =>
-                        handleTimeInputChange(
-                          "breakEnd",
-                          e.target.value,
-                          editingRecord
-                        )
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Lunch Start</Label>
-                    <Input
-                      type="text"
-                      value={editingRecord.lunchStart || ""}
-                      onChange={(e) =>
-                        handleTimeInputChange(
-                          "lunchStart",
-                          e.target.value,
-                          editingRecord
-                        )
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Lunch End</Label>
-                    <Input
-                      type="text"
-                      value={editingRecord.lunchEnd || ""}
-                      onChange={(e) =>
-                        handleTimeInputChange(
-                          "lunchEnd",
-                          e.target.value,
-                          editingRecord
-                        )
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Second Break Start</Label>
-                    <Input
-                      type="text"
-                      value={editingRecord.secondBreakStart || ""}
-                      onChange={(e) =>
-                        handleTimeInputChange(
-                          "secondBreakStart",
-                          e.target.value,
-                          editingRecord
-                        )
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Second Break End</Label>
-                    <Input
-                      type="text"
-                      value={editingRecord.secondBreakEnd || ""}
-                      onChange={(e) =>
-                        handleTimeInputChange(
-                          "secondBreakEnd",
-                          e.target.value,
-                          editingRecord
-                        )
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Total Hours</Label>
-                    <span className="text-red-300 text-xs ml-2">
-                      * {formatHoursToMinutes(editingRecord.totalHours)}
-                    </span>
-                    <Input
-                      type="text"
                       value={editingRecord.totalHours}
                       readOnly
+                      className={`font-semibold ${getHoursColor(editingRecord.totalHours)}`}
                     />
-                  </div>
-                  <div>
-                    <Label>Total Break Time</Label>
-                    <span className="text-red-300 text-xs ml-2">
-                      *{" "}
-                      {formatHoursToMinutes(
-                        editingRecord.totalBreakTime || "0.00"
-                      )}
+                    <span className="text-xs text-gray-500">
+                      {formatHoursToMinutes(editingRecord.totalHours)}
                     </span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Break Time</Label>
+                  <div className="flex items-center gap-2">
                     <Input
-                      type="text"
                       value={editingRecord.totalBreakTime || "0.00"}
                       readOnly
                     />
-                  </div>
-                  <div>
-                    <Label>Total Lunch Time</Label>
-                    <span className="text-red-300 text-xs ml-2">
-                      *{" "}
-                      {formatHoursToMinutes(
-                        editingRecord.totalLunchTime || "0.00"
-                      )}
+                    <span className="text-xs text-gray-500">
+                      {formatHoursToMinutes(editingRecord.totalBreakTime || "0.00")}
                     </span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Lunch Time</Label>
+                  <div className="flex items-center gap-2">
                     <Input
-                      type="text"
                       value={editingRecord.totalLunchTime || "0.00"}
                       readOnly
                     />
-                  </div>
-                  <div>
-                    <Label>Total Second Break Time</Label>
-                    <span className="text-red-300 text-xs ml-2">
-                      *{" "}
-                      {formatHoursToMinutes(
-                        editingRecord.totalSecondBreakTime || "0.00"
-                      )}
+                    <span className="text-xs text-gray-500">
+                      {formatHoursToMinutes(editingRecord.totalLunchTime || "0.00")}
                     </span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">2nd Break</Label>
+                  <div className="flex items-center gap-2">
                     <Input
-                      type="text"
                       value={editingRecord.totalSecondBreakTime || "0.00"}
                       readOnly
                     />
+                    <span className="text-xs text-gray-500">
+                      {formatHoursToMinutes(editingRecord.totalSecondBreakTime || "0.00")}
+                    </span>
                   </div>
-                  <div>
-                    <Label>Notes</Label>
-                    <Input
-                      type="text"
-                      value={editingRecord.notes || ""}
-                      onChange={(e) =>
-                        handleTimeInputChange(
-                          "notes",
-                          e.target.value,
-                          editingRecord
-                        )
-                      }
-                    />
-                  </div>
+                </div>
+              </div>
+
+              {/* Security Section */}
+              <div className="border-t pt-4">
+                <Label className="flex items-center gap-2 mb-3 text-sm font-medium">
+                  <AlertTriangle className="h-4 w-4 text-orange-600" />
+                  Security Verification
+                </Label>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <div className="relative">
-                    <Label>Key</Label>
+                    <Label>Secret Key</Label>
                     <Input
                       type={showSecretKey ? "text" : "password"}
                       value={secretKey}
                       onChange={(e) => setSecretKey(e.target.value)}
                       className={secretKeyError ? "border-red-500" : ""}
+                      placeholder="Enter secret key"
                     />
                     <button
                       type="button"
                       onClick={toggleSecretKeyVisibility}
-                      className="absolute right-3 top-8 text-gray-500"
+                      className="absolute right-3 top-8 text-gray-500 hover:text-gray-700"
                     >
                       {showSecretKey ? (
-                        <EyeOffIcon size={20} />
+                        <EyeOffIcon size={18} />
                       ) : (
-                        <EyeIcon size={20} />
+                        <EyeIcon size={18} />
                       )}
                     </button>
                     {secretKeyError && (
@@ -706,100 +743,161 @@ const AdminTimeRecordEdit: React.FC = () => {
                       </p>
                     )}
                   </div>
+                  <div className="flex items-end gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setEditingRecord(null);
+                        setSecretKey("");
+                        setSecretKeyError("");
+                      }}
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleUpdate} 
+                      disabled={isLoading}
+                      className="flex-1 flex items-center gap-2"
+                    >
+                      {isLoading ? (
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <CheckCircle className="h-4 w-4" />
+                      )}
+                      {isLoading ? "Updating..." : "Update Record"}
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex justify-end space-x-2 mt-4">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setEditingRecord(null);
-                      setSecretKey("");
-                      setSecretKeyError("");
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button onClick={handleUpdate}>Save Changes</Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-          {timeRecords.length > 0 && (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Employee Name</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Time In</TableHead>
-                  <TableHead>Time Out</TableHead>
-                  <TableHead>Total Hours</TableHead>
-                  <TableHead>Total Break</TableHead>
-                  <TableHead>Total Lunch</TableHead>
-                  <TableHead>Total 2nd Break</TableHead>
-                  <TableHead>Shift</TableHead>
-                  <TableHead>Notes</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {timeRecords.map((record) => (
-                  <TableRow key={record._id}>
-                    <TableCell>{record.employeeName}</TableCell>
-                    <TableCell>{record.date}</TableCell>
-                    <TableCell>{record.timeIn || "-"}</TableCell>
-                    <TableCell>{record.timeOut || "-"}</TableCell>
-                    <TableCell>{record.totalHours}</TableCell>
-                    <TableCell>{record.totalBreakTime || "0.00"}</TableCell>
-                    <TableCell>{record.totalLunchTime || "0.00"}</TableCell>
-                    <TableCell>
-                      {record.totalSecondBreakTime || "0.00"}
-                    </TableCell>
-                    <TableCell>{record.shift || "-"}</TableCell>
-                    <TableCell>{record.notes || "-"}</TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handleEdit(record)}
-                        >
-                          <Pencil size={16} />
-                        </Button>
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="destructive" size="icon">
-                              <Trash2 size={16} />
+        {/* Results Table */}
+        {timeRecords.length > 0 && (
+          <Card className="shadow-sm border-0">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <Clock className="h-5 w-5 text-blue-600" />
+                Time Records
+                <Badge variant="secondary" className="ml-2">
+                  {timeRecords.length} records
+                </Badge>
+              </CardTitle>
+              <CardDescription>
+                Found {timeRecords.length} time record(s) for the selected criteria
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-gray-50">
+                    <TableRow>
+                      <TableHead className="font-semibold">Employee</TableHead>
+                      <TableHead className="font-semibold">Date</TableHead>
+                      <TableHead className="font-semibold">Time In</TableHead>
+                      <TableHead className="font-semibold">Time Out</TableHead>
+                      <TableHead className="font-semibold">Total Hours</TableHead>
+                      <TableHead className="font-semibold">Break</TableHead>
+                      <TableHead className="font-semibold">Lunch</TableHead>
+                      <TableHead className="font-semibold">2nd Break</TableHead>
+                      <TableHead className="font-semibold">Shift</TableHead>
+                      <TableHead className="font-semibold">Notes</TableHead>
+                      <TableHead className="font-semibold text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {timeRecords.map((record) => (
+                      <TableRow key={record._id} className="hover:bg-gray-50/50">
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4 text-gray-500" />
+                            {record.employeeName}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-gray-500" />
+                            {record.date}
+                          </div>
+                        </TableCell>
+                        <TableCell>{record.timeIn || "-"}</TableCell>
+                        <TableCell>{record.timeOut || "-"}</TableCell>
+                        <TableCell>
+                          <Badge className={getHoursColor(record.totalHours)}>
+                            {record.totalHours}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{record.totalBreakTime || "0.00"}</TableCell>
+                        <TableCell>{record.totalLunchTime || "0.00"}</TableCell>
+                        <TableCell>{record.totalSecondBreakTime || "0.00"}</TableCell>
+                        <TableCell>
+                          {record.shift ? (
+                            <Badge variant="outline">{record.shift}</Badge>
+                          ) : (
+                            "-"
+                          )}
+                        </TableCell>
+                        <TableCell className="max-w-xs truncate">
+                          {record.notes || "-"}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEdit(record)}
+                              className="flex items-center gap-1"
+                            >
+                              <Pencil size={14} />
+                              Edit
                             </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Confirm Deletion</DialogTitle>
-                            </DialogHeader>
-                            <p>
-                              Are you sure you want to delete this time record?
-                            </p>
-                            <div className="flex justify-end space-x-2">
-                              <DialogClose asChild>
-                                <Button variant="outline">Cancel</Button>
-                              </DialogClose>
-                              <Button
-                                variant="destructive"
-                                onClick={() => handleDelete(record._id)}
-                              >
-                                Delete
-                              </Button>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="destructive" size="sm" className="flex items-center gap-1">
+                                  <Trash2 size={14} />
+                                  Delete
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle className="flex items-center gap-2">
+                                    <AlertTriangle className="h-5 w-5 text-red-600" />
+                                    Confirm Deletion
+                                  </DialogTitle>
+                                </DialogHeader>
+                                <p className="text-gray-600">
+                                  Are you sure you want to delete the time record for{" "}
+                                  <strong>{record.employeeName}</strong> on {record.date}?
+                                  This action cannot be undone.
+                                </p>
+                                <div className="flex justify-end gap-3">
+                                  <DialogClose asChild>
+                                    <Button variant="outline">Cancel</Button>
+                                  </DialogClose>
+                                  <Button
+                                    variant="destructive"
+                                    onClick={() => handleDelete(record._id)}
+                                    className="flex items-center gap-2"
+                                  >
+                                    <Trash2 size={14} />
+                                    Delete Record
+                                  </Button>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 };

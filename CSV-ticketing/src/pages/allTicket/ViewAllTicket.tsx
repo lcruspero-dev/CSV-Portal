@@ -25,7 +25,7 @@ import {
   Ticket as TicketIcon
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom"; 
 
 export interface Ticket {
   _id: string;

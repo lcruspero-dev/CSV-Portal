@@ -1,11 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NteAPI, TicketAPi } from "@/API/endpoint";
-import memo from "@/assets/AllTickets.webp";
-import request from "@/assets/Checklist.webp";
-import gethelp from "@/assets/g10.webp";
-import ticket from "@/assets/Group.webp";
-import test from "@/assets/login.webp";
-import timetracker from "@/assets/timetracker.webp";
 import SurveyModal from "@/components/kit/Survey";
 import { Card } from "@/components/ui/card";
 import {
@@ -159,7 +153,6 @@ const UserHome = () => {
       title: "Time Tracker",
       description: "Track your work hours and attendance",
       icon: Clock,
-      image: timetracker,
       path: "/timetracker",
       color: "from-blue-500 to-cyan-500",
       bgColor: "bg-gradient-to-br from-blue-50 to-cyan-50",
@@ -170,7 +163,6 @@ const UserHome = () => {
       title: "Memo",
       description: "View company announcements and updates",
       icon: FileText,
-      image: memo,
       path: "/all-memo",
       color: "from-emerald-500 to-green-500",
       bgColor: "bg-gradient-to-br from-emerald-50 to-green-50",
@@ -181,7 +173,6 @@ const UserHome = () => {
       title: "HR Support",
       description: "Request HR assistance and services",
       icon: Users,
-      image: request,
       path: "/request-something",
       color: "from-purple-500 to-pink-500",
       bgColor: "bg-gradient-to-br from-purple-50 to-pink-50",
@@ -192,7 +183,6 @@ const UserHome = () => {
       title: "IT Support",
       description: "Get technical help and assistance",
       icon: HeadphonesIcon,
-      image: gethelp,
       path: "/create-ticket",
       color: "from-orange-500 to-red-500",
       bgColor: "bg-gradient-to-br from-orange-50 to-red-50",
@@ -203,7 +193,6 @@ const UserHome = () => {
       title: "My Tickets",
       description: "View your support tickets and status",
       icon: Ticket,
-      image: ticket,
       path: "/view-ticket",
       color: "from-indigo-500 to-blue-500",
       bgColor: "bg-gradient-to-br from-indigo-50 to-blue-50",
@@ -214,7 +203,6 @@ const UserHome = () => {
       title: "Employee Notice",
       description: "View disciplinary notices and updates",
       icon: AlertTriangle,
-      image: test,
       path: "/nte",
       color: "from-amber-500 to-orange-500",
       bgColor: "bg-gradient-to-br from-amber-50 to-orange-50",
@@ -315,7 +303,6 @@ const UserHome = () => {
                               {/* Image */}
                               <div className="mb-4 transform group-hover:scale-105 transition-transform duration-300">
                                 <img 
-                                  src={feature.image} 
                                   alt={feature.title} 
                                   className="w-20 h-20 object-contain filter drop-shadow-lg"
                                 />
@@ -376,15 +363,6 @@ const UserHome = () => {
                           {/* Icon Container */}
                           <div className={`mb-4 p-4 rounded-2xl bg-gradient-to-br ${feature.color} shadow-lg transform group-hover:scale-110 transition-transform duration-300`}>
                             <feature.icon className="h-8 w-8 text-white" />
-                          </div>
-
-                          {/* Image */}
-                          <div className="mb-4 transform group-hover:scale-105 transition-transform duration-300">
-                            <img 
-                              src={feature.image} 
-                              alt={feature.title} 
-                              className="w-20 h-20 object-contain filter drop-shadow-lg"
-                            />
                           </div>
 
                           {/* Text Content */}
