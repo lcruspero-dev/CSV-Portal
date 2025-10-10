@@ -1,12 +1,5 @@
-
-
-
 const ArchivePayroll = () => {
-    return (
-        <section>
+  return <section></section>;
+};
 
-        </section>
-    )
-}
-
-export default ArchivePayroll
+export default ArchivePayroll;
