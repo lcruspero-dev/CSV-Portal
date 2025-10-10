@@ -13,7 +13,20 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "@/components/ui/use-toast";
-import { ChevronsLeftIcon, ChevronsRightIcon, SearchIcon } from "lucide-react";
+import { 
+  ChevronsLeftIcon, 
+  ChevronsRightIcon, 
+  SearchIcon,
+  FilterIcon,
+  TicketIcon,
+  CalendarIcon,
+  UserIcon,
+  FileTextIcon,
+  AlertCircleIcon,
+  ClockIcon,
+  CheckCircleIcon,
+  XCircleIcon
+} from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Assigned } from "../assigns/CreateAssigns";
@@ -50,6 +63,7 @@ const ViewAllRaisedTickets: React.FC = () => {
   const [hrCategories, setHrCatergories] = useState<string[]>([]);
   const [assign, setAssign] = useState<Assigned[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [showFilters, setShowFilters] = useState(false);
 
   const logInUser = JSON.parse(localStorage.getItem("user")!);
   const loginUserRole = logInUser.role;
@@ -218,17 +232,14 @@ const ViewAllRaisedTickets: React.FC = () => {
 
   const handleSearchSubmit = () => {
     if (searchTicketNumber.trim()) {
-      // Find the ticket with the matching ticket number (case insensitive)
       const foundTicket = allRaisedTickets.find(
         (ticket) =>
           ticket.ticketNumber.toLowerCase() === searchTicketNumber.toLowerCase()
       );
 
       if (foundTicket) {
-        // Navigate to the ticket details page
         navigate(`/ticket/${foundTicket._id}`);
       } else {
-        // Show an error message
         toast({
           title: "Error",
           description:
@@ -242,6 +253,53 @@ const ViewAllRaisedTickets: React.FC = () => {
   const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       handleSearchSubmit();
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "open":
+      case "new":
+        return <ClockIcon className="h-4 w-4" />;
+      case "in progress":
+        return <AlertCircleIcon className="h-4 w-4" />;
+      case "closed":
+      case "approved":
+        return <CheckCircleIcon className="h-4 w-4" />;
+      case "rejected":
+        return <XCircleIcon className="h-4 w-4" />;
+      default:
+        return <ClockIcon className="h-4 w-4" />;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "open":
+      case "new":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "in progress":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "closed":
+      case "approved":
+        return "bg-gray-100 text-gray-800 border-gray-200";
+      case "rejected":
+        return "bg-red-100 text-red-800 border-red-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority?.toLowerCase()) {
+      case "high":
+        return "text-red-600 font-semibold";
+      case "medium":
+        return "text-orange-600 font-semibold";
+      case "low":
+        return "text-green-600 font-semibold";
+      default:
+        return "text-gray-600";
     }
   };
 
@@ -266,177 +324,320 @@ const ViewAllRaisedTickets: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto text-sm">
-      <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="absolute left-0 top-3 text-xs">
-          <BackButton />
-        </div>
-        <h1 className="text-4xl font-bold text-center pt-7 pb-4">
-          All Tickets
-        </h1>
-      </div>
-      <div className="mb-4 flex justify-between items-center">
-        <div className="flex space-x-4">
-          <div>
-            <label htmlFor="statusFilter" className="mr-2">
-              Filter by status:
-            </label>
-            <select
-              id="statusFilter"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="border p-2 rounded"
-            >
-              <option value="open">Open</option>
-              <option value="In Progress">In Progress</option>
-              <option value="closed">Closed</option>
-              <option value="all">All</option>
-            </select>
+    <div className="min-h-screen bg-gray-50 py-6">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div className="flex items-center gap-4">
+            <BackButton />
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2">
+                <TicketIcon className="h-7 w-7 text-blue-600" />
+                All Tickets
+              </h1>
+              <p className="text-gray-600 text-sm mt-1">
+                Manage and track all support tickets in one place
+              </p>
+            </div>
           </div>
-          <div>
-            <label htmlFor="assignedToFilter" className="mr-2">
-              Filter by assigned to:
-            </label>
-            <select
-              id="assignedToFilter"
-              value={assignedToFilter}
-              onChange={(e) => setAssignedToFilter(e.target.value)}
-              className="border p-2 rounded"
-            >
-              <option value="all">All Tickets</option>
-              {userRole === "SUPERADMIN" && (
-                <>
-                  <option value="ALL IT">All IT Tickets</option>
-                  <option value="ALL HR">All HR Tickets</option>
-                </>
-              )}
-              {filteredAssign.map((assign) => (
-                <option key={assign._id} value={assign.name}>
-                  {assign.name}
-                </option>
-              ))}
-              <option value="Not Assigned">Not Assigned</option>
-            </select>
-          </div>
-          <div className="flex items-center">
-            <label htmlFor="searchTicket" className="mr-2">
-              Search by Ticket #:
-            </label>
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Input
-                  id="searchTicket"
-                  type="text"
-                  value={searchTicketNumber}
-                  onChange={(e) => setSearchTicketNumber(e.target.value)}
-                  onKeyPress={handleSearchKeyPress}
-                  placeholder="Enter ticket number (e.g. INC-0001)..."
-                  className="pl-8 w-64"
-                />
-                <SearchIcon className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              </div>
-              <Button
-                onClick={handleSearchSubmit}
-                className="bg-blue-600 hover:bg-blue-700 text-xs"
-              >
-                Search
-              </Button>
+          <div className="bg-white px-4 py-3 rounded-lg border shadow-sm">
+            <div className="text-sm text-gray-600">Total Tickets</div>
+            <div className="text-2xl font-bold text-gray-900">
+              {filteredTickets.length}
             </div>
           </div>
         </div>
-        <div className="text-lg font-semibold">
-          Total Tickets: {filteredTickets.length}
-        </div>
-      </div>
-      <Table>
-        <TableHeader className="bg-slate-200">
-          <TableRow>
-            <TableHead className="text-center font-bold text-black w-24">
-              Ticket #
-            </TableHead>
-            <TableHead className="text-center font-bold text-black w-48">
-              Date
-            </TableHead>
-            <TableHead className="text-center font-bold text-black w-40">
-              Category
-            </TableHead>
-            <TableHead className="font-bold text-black text-center w-40">
-              Name
-            </TableHead>
-            <TableHead className="font-bold text-black text-center w-80">
-              Description
-            </TableHead>
-            <TableHead className="font-bold text-black text-center w-26">
-              Priority
-            </TableHead>
-            <TableHead className="text-center font-bold text-black w-26">
-              Status
-            </TableHead>
-            <TableHead className="text-center font-bold text-black w-36">
-              Assigned to
-            </TableHead>
-            <TableHead className="font-bold text-black text-center w-24">
-              Action
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {currentTickets.map((ticket, index) => (
-            <TableRow
-              key={ticket._id}
-              className={`${
-                index % 2 === 0 ? "bg-gray-100" : "bg-white"
-              } text-sm`}
+
+        {/* Search and Filters */}
+        <div className="bg-white rounded-xl border shadow-sm p-6 mb-6">
+          {/* Search Bar */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-4">
+            <div className="flex-1 relative">
+              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                type="text"
+                value={searchTicketNumber}
+                onChange={(e) => setSearchTicketNumber(e.target.value)}
+                onKeyPress={handleSearchKeyPress}
+                placeholder="Search by ticket number (e.g., INC-0001)..."
+                className="pl-10 w-full"
+              />
+            </div>
+            <Button 
+              onClick={handleSearchSubmit}
+              className="bg-blue-600 hover:bg-blue-700 px-6"
             >
-              <TableCell className="font-medium text-center font-mono">
-                {ticket.ticketNumber}
-              </TableCell>
-              <TableCell className="font-medium text-center">
-                {formattedDate(ticket.createdAt)}
-              </TableCell>
-              <TableCell className="text-center">{ticket.category}</TableCell>
-              <TableCell className="text-center">{ticket.name}</TableCell>
-              <TableCell className="text-center max-w-xs truncate">
-                {ticket.description.length > 45
-                  ? `${ticket.description.substring(0, 45)}...`
-                  : ticket.description}
-              </TableCell>
-              <TableCell className="text-center">{ticket.priority}</TableCell>
-              <TableCell>
-                <p
-                  className={`p-1 mx-4 rounded-sm text-center text-primary-foreground font-semibold text-xs ${
-                    ticket.status === "new" || ticket.status === "open"
-                      ? "bg-green-600"
-                      : ticket.status === "closed" ||
-                        ticket.status === "Rejected"
-                      ? "bg-red-600"
-                      : "bg-[#FF8C00]"
-                  }`}
+              Search
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2"
+            >
+              <FilterIcon className="h-4 w-4" />
+              Filters
+            </Button>
+          </div>
+
+          {/* Expandable Filters */}
+          {showFilters && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t">
+              <div>
+                <label htmlFor="statusFilter" className="block text-sm font-medium text-gray-700 mb-2">
+                  Status
+                </label>
+                <select
+                  id="statusFilter"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  {ticket.status}
-                </p>
-              </TableCell>
-              <TableCell className="text-center">{ticket.assignedTo}</TableCell>
-              <TableCell className="text-center">
-                <Button onClick={() => navigate(`/ticket/${ticket._id}`)}>
-                  View
+                  <option value="open">Open Tickets</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="closed">Closed Tickets</option>
+                  <option value="all">All Statuses</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="assignedToFilter" className="block text-sm font-medium text-gray-700 mb-2">
+                  Assigned To
+                </label>
+                <select
+                  id="assignedToFilter"
+                  value={assignedToFilter}
+                  onChange={(e) => setAssignedToFilter(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="all">All Tickets</option>
+                  {userRole === "SUPERADMIN" && (
+                    <>
+                      <option value="ALL IT">All IT Tickets</option>
+                      <option value="ALL HR">All HR Tickets</option>
+                    </>
+                  )}
+                  {filteredAssign.map((assign) => (
+                    <option key={assign._id} value={assign.name}>
+                      {assign.name}
+                    </option>
+                  ))}
+                  <option value="Not Assigned">Not Assigned</option>
+                </select>
+              </div>
+
+              <div className="flex items-end">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setStatusFilter("open");
+                    setAssignedToFilter("all");
+                    setSearchTicketNumber("");
+                  }}
+                  className="w-full"
+                >
+                  Clear Filters
                 </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      <div className="flex items-center justify-end gap-4 border-t-2 mb-16">
-        <div className="mt-4 flex items-center gap-4">
-          <button onClick={goToPreviousPage} disabled={currentPage === 1}>
-            <ChevronsLeftIcon className="text-blue-950 hover:scale-150 hover:text-green-600" />
-          </button>
-          <span>
-            Page {currentPage} of {totalPages}
-          </span>
-          <button onClick={goToNextPage} disabled={currentPage === totalPages}>
-            <ChevronsRightIcon className="text-blue-950 hover:scale-150 hover:text-green-600" />
-          </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Tickets Table */}
+        <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+          {/* Mobile Cards */}
+          <div className="block lg:hidden">
+            {currentTickets.length === 0 ? (
+              <div className="text-center py-12">
+                <TicketIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900">No tickets found</h3>
+                <p className="text-gray-600 mt-2">Try adjusting your filters or search terms.</p>
+              </div>
+            ) : (
+              <div className="divide-y">
+                {currentTickets.map((ticket) => (
+                  <div key={ticket._id} className="p-4 hover:bg-gray-50">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-center gap-2">
+                        <TicketIcon className="h-4 w-4 text-blue-600" />
+                        <span className="font-mono font-semibold text-gray-900">
+                          {ticket.ticketNumber}
+                        </span>
+                      </div>
+                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs border ${getStatusColor(ticket.status)}`}>
+                        {getStatusIcon(ticket.status)}
+                        {ticket.status}
+                      </span>
+                    </div>
+
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <UserIcon className="h-4 w-4 text-gray-400" />
+                        <span className="font-medium">{ticket.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <FileTextIcon className="h-4 w-4 text-gray-400" />
+                        <span className="text-gray-600">{ticket.category}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CalendarIcon className="h-4 w-4 text-gray-400" />
+                        <span className="text-gray-600">{formattedDate(ticket.createdAt)}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className={`text-sm ${getPriorityColor(ticket.priority)}`}>
+                          {ticket.priority} Priority
+                        </span>
+                        <span className="text-sm text-gray-600">
+                          {ticket.assignedTo || "Unassigned"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 pt-3 border-t">
+                      <p className="text-gray-700 text-sm line-clamp-2">
+                        {ticket.description}
+                      </p>
+                    </div>
+
+                    <div className="mt-4">
+                      <Button 
+                        onClick={() => navigate(`/ticket/${ticket._id}`)}
+                        className="w-full"
+                        size="sm"
+                      >
+                        View Details
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Desktop Table */}
+          <div className="hidden lg:block overflow-x-auto">
+            <Table>
+              <TableHeader className="bg-gray-50">
+                <TableRow>
+                  <TableHead className="font-semibold text-gray-700">Ticket #</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Date</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Category</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Requester</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Description</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Priority</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Status</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Assigned To</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {currentTickets.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center py-12">
+                      <TicketIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900">No tickets found</h3>
+                      <p className="text-gray-600 mt-2">Try adjusting your filters or search terms.</p>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  currentTickets.map((ticket, index) => (
+                    <TableRow 
+                      key={ticket._id} 
+                      className={`hover:bg-gray-50 transition-colors ${
+                        index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                      }`}
+                    >
+                      <TableCell className="font-mono font-semibold text-blue-600">
+                        {ticket.ticketNumber}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <CalendarIcon className="h-4 w-4 text-gray-400" />
+                          {formattedDate(ticket.createdAt)}
+                        </div>
+                      </TableCell>
+                      <TableCell>{ticket.category}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <UserIcon className="h-4 w-4 text-gray-400" />
+                          {ticket.name}
+                        </div>
+                      </TableCell>
+                      <TableCell className="max-w-xs">
+                        <div className="flex items-center gap-2">
+                          <FileTextIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                          <span className="truncate">
+                            {ticket.description.length > 60
+                              ? `${ticket.description.substring(0, 60)}...`
+                              : ticket.description}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`${getPriorityColor(ticket.priority)}`}>
+                          {ticket.priority}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs border ${getStatusColor(ticket.status)}`}>
+                          {getStatusIcon(ticket.status)}
+                          {ticket.status}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        {ticket.assignedTo || (
+                          <span className="text-gray-400 italic">Unassigned</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Button 
+                          onClick={() => navigate(`/ticket/${ticket._id}`)}
+                          variant="outline"
+                          size="sm"
+                        >
+                          View
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Pagination */}
+          {currentTickets.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 border-t bg-gray-50">
+              <div className="text-sm text-gray-600">
+                Showing {startIndex + 1} to {Math.min(endIndex, filteredTickets.length)} of{" "}
+                {filteredTickets.length} tickets
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={goToPreviousPage}
+                  disabled={currentPage === 1}
+                  className="flex items-center gap-2"
+                >
+                  <ChevronsLeftIcon className="h-4 w-4" />
+                  Previous
+                </Button>
+                <div className="flex items-center gap-1 mx-4">
+                  <span className="text-sm font-medium">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages}
+                  className="flex items-center gap-2"
+                >
+                  Next
+                  <ChevronsRightIcon className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
