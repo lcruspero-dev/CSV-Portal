@@ -1,21 +1,5 @@
-import { Button } from "@/components/ui/button"
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow
-} from "@/components/ui/table";
-
-
-
 const ArchivePayroll = () => {
-    return (
-        <section>
+  return <section></section>;
+};
 
-        </section>
-    )
-}
-
-export default ArchivePayroll
+export default ArchivePayroll;
