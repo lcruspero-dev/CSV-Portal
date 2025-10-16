@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-
 import { Assigns } from "@/API/endpoint";
 import {
   Dialog,
@@ -15,9 +14,20 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import "quill/dist/quill.core.css";
 import { useState } from "react";
-
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { 
+  Select, 
+  SelectContent, 
+  SelectGroup, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { Assigned } from "./CreateAssigns";
+import { 
+  UserPlus, 
+  Save, 
+  Loader2 
+} from "lucide-react";
 
 interface CreateMemoProps {
   setAssign: React.Dispatch<React.SetStateAction<Assigned[]>>;
@@ -30,6 +40,7 @@ const AddAssign: React.FC<CreateMemoProps> = ({ setAssign, setLoading }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+
   const getAssigns = async () => {
     try {
       const response = await Assigns.getAssign();
@@ -38,29 +49,30 @@ const AddAssign: React.FC<CreateMemoProps> = ({ setAssign, setLoading }) => {
     } catch (error) {
       console.error(error);
     } finally {
-      setLoading(false); // Stop loading after the request is done
+      setLoading(false);
     }
   };
 
   const handleCategoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAssignName(e.target.value);
   };
+
   const handleSave = async () => {
-    if (isSaving) return; // Prevent multiple submissions
+    if (isSaving || !assignName.trim() || !role.trim()) return;
 
     setIsSaving(true);
     try {
       const body = {
-        name: assignName,
+        name: assignName.trim(),
         role: role,
       };
       console.log(body);
       const response = await Assigns.CreateAssign(body);
       console.log(response.data);
-      getAssigns();
+      await getAssigns();
       toast({
         title: "Success",
-        description: "Category Added",
+        description: "Assignee added successfully",
         variant: "default",
       });
       setAssignName("");
@@ -68,62 +80,130 @@ const AddAssign: React.FC<CreateMemoProps> = ({ setAssign, setLoading }) => {
       setIsDialogOpen(false);
     } catch (error) {
       toast({
-        title: "Error creating category",
-        description: "Please add all required fields",
+        title: "Error creating assignee",
+        description: "Please check all required fields",
         variant: "destructive",
       });
       console.error(error);
     } finally {
-      setIsSaving(false); // Set loading to false regardless of success or failure
+      setIsSaving(false);
     }
   };
 
   const handleRoleChange = (value: string) => {
     setRole(value);
   };
+
+  const isFormValid = assignName.trim() && role.trim();
+
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger asChild>
-        <Button>Add Assignee</Button>
+        <Button className="bg-gradient-to-r from-[#1638df] to-[#192fb4] hover:from-[#192fb4] hover:to-[#1638df] transition-all duration-300 shadow-md hover:shadow-lg">
+          <UserPlus className="w-4 h-4 mr-2" />
+          Add Assignee
+        </Button>
       </DialogTrigger>
-      <DialogContent className="w-[500px] h-[400px] max-w-none bg-[#eef4ff]">
-        <DialogHeader>
-          <DialogTitle className="text-2xl drop-shadow-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#1638df] to-[#192fb4]">
-            Add Assignee
-          </DialogTitle>
-          <DialogDescription>Input details here. Click save when you're done.</DialogDescription>
+      <DialogContent className="sm:max-w-[525px] w-[95vw] max-h-[90vh] overflow-y-auto bg-gradient-to-br from-white to-blue-50/30 border-blue-200/60 shadow-xl">
+        <DialogHeader className="space-y-3">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 rounded-lg bg-gradient-to-r from-[#1638df] to-[#192fb4]">
+              <UserPlus className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <DialogTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#1638df] to-[#192fb4]">
+                Add Assignee
+              </DialogTitle>
+              <DialogDescription className="text-gray-600 mt-1">
+                Enter assignee details below. All fields are required.
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
-        <div className="grid gap-4 h-full   pl-4">
-          <Label htmlFor="assignName" className="text-base font-bold">
-            <p>Name </p>
-          </Label>
-          <Input
-            name="assignName"
-            placeholder="Assignee"
-            type="text"
-            required
-            className="!mb-2"
-            value={assignName}
-            onChange={handleCategoryChange}
-          />
-          <Label htmlFor="role" className="text-base font-bold">
-            Department
-          </Label>
-          <Select onValueChange={handleRoleChange} required>
-            <SelectTrigger className="mb-2">
-              <SelectValue placeholder="role" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value="IT">IT Department</SelectItem>
-                <SelectItem value="HR">HR Department</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+
+        <div className="grid gap-6 py-4">
+          <div className="space-y-3">
+            <Label htmlFor="assignName" className="text-sm font-semibold text-gray-700 flex items-center">
+              Name
+              <span className="text-red-500 ml-1">*</span>
+            </Label>
+            <Input
+              id="assignName"
+              name="assignName"
+              placeholder="Enter assignee name"
+              type="text"
+              required
+              value={assignName}
+              onChange={handleCategoryChange}
+              className="w-full transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 border-gray-300 rounded-lg px-4 py-3 text-base"
+              disabled={isSaving}
+            />
+          </div>
+
+          <div className="space-y-3">
+            <Label htmlFor="role" className="text-sm font-semibold text-gray-700 flex items-center">
+              Department
+              <span className="text-red-500 ml-1">*</span>
+            </Label>
+            <Select onValueChange={handleRoleChange} required disabled={isSaving}>
+              <SelectTrigger className="w-full transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 border-gray-300 rounded-lg px-4 py-3 text-base">
+                <SelectValue placeholder="Select department" />
+              </SelectTrigger>
+              <SelectContent className="border-gray-200 shadow-lg rounded-lg">
+                <SelectGroup>
+                  <SelectItem value="IT" className="py-3 text-base hover:bg-blue-50 cursor-pointer">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <span>IT Department</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="HR" className="py-3 text-base hover:bg-blue-50 cursor-pointer">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span>HR Department</span>
+                    </div>
+                  </SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {role && (
+            <div className="p-3 bg-blue-50/50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-700 font-medium">
+                Selected: <span className="font-semibold">{role === "IT" ? "IT Department" : "HR Department"}</span>
+              </p>
+            </div>
+          )}
         </div>
-        <DialogFooter>
-          <Button type="submit" className="mr-10 px-10" onClick={handleSave} disabled={isSaving}>
-            {isSaving ? "Saving..." : "Save"}
+
+        <DialogFooter className="flex flex-col sm:flex-row gap-3 sm:gap-0 sm:justify-between sm:items-center border-t border-gray-200 pt-6">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setIsDialogOpen(false)}
+            className="w-full sm:w-auto order-2 sm:order-1 border-gray-300 text-gray-700 hover:bg-gray-50"
+            disabled={isSaving}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            onClick={handleSave}
+            disabled={isSaving || !isFormValid}
+            className="w-full sm:w-auto order-1 sm:order-2 bg-gradient-to-r from-[#1638df] to-[#192fb4] hover:from-[#192fb4] hover:to-[#1638df] transition-all duration-300 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                Save Assignee
+              </>
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
