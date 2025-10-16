@@ -11,28 +11,6 @@ function timeToMinutes(timeString) {
     return hours * 60 + minutes;
 }
 
-// Helper function to convert minutes to hours
-function minutesToHours(minutes) {
-    return minutes / 60;
-}
-
-// Helper function to get work days in a month
-function getWorkDaysInMonth(year, month) {
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    let workDays = 0;
-
-    for (let day = 1; day <= daysInMonth; day++) {
-        const date = new Date(year, month, day);
-        const dayOfWeek = date.getDay();
-        // Count weekdays (Monday = 1 to Friday = 5)
-        if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-            workDays++;
-        }
-    }
-
-    return workDays;
-}
-
 // Auto-calculation function for payroll data with dynamic periods
 async function calculatePayrollData(userId, startDate, endDate) {
     try {
@@ -563,7 +541,6 @@ exports.updatePayroll = async (req, res) => {
             const now = new Date();
             const year = now.getFullYear();
             const month = now.getMonth();
-            const totalWorkDays = getWorkDaysInMonth(year, month);
 
             req.body.payrollRate.dailyRate = monthlyRate / totalWorkDays;
             req.body.payrollRate.hourlyRate = req.body.payrollRate.dailyRate / 8;

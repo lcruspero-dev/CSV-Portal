@@ -454,7 +454,6 @@ const payrollColumns: ColumnDef<Payroll>[] = [
   },
 ];
 
-// ================= Sticky Column Helper =================
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getStickyStyle = (index: number, items: any[]) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

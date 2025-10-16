@@ -22,7 +22,7 @@ export interface UserProfile {
   middleName?: string;
   lastName: string;
   jobPosition: string;
-  email: string;
+  personalEmail: string;
   fullName?: string;
 }
 
@@ -30,7 +30,7 @@ export interface Payroll {
   latesAndAbsent: any;
   _id?: string;
   employee: UserProfile & {
-    email?: string;
+    personalEmail?: string;
     fullName?: string;
     position?: string;
   };
@@ -64,8 +64,8 @@ export interface Payroll {
 
 const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
   const [open, setOpen] = useState(false);
-  const [employees, setEmployees] = useState<any[]>([]);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [employees, setEmployees] = useState<UserProfile[]>([]);
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
 
   const [form, setForm] = useState({
     monthlyRate: 0,
@@ -93,9 +93,14 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
     const fetchUsers = async () => {
       try {
         const res = await UserProfileAPI.getAllUsers();
-        setEmployees(res.data || []);
+        // Ensure we have an array and handle potential nested data structure
+        const usersData = Array.isArray(res.data) ? res.data : 
+                         Array.isArray(res.data?.users) ? res.data.users : 
+                         Array.isArray(res.data?.data) ? res.data.data : [];
+        setEmployees(usersData || []);
       } catch (err) {
         console.error("Error fetching employees:", err);
+        setEmployees([]);
       }
     };
     fetchUsers();
@@ -107,6 +112,18 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
   };
 
   const round2 = (n: number) => Math.round((n || 0) * 100) / 100;
+
+  // Helper function to safely get personalEmail
+  const getPersonalEmail = (user: UserProfile | null): string => {
+    if (!user) return "";
+    
+    // Check various possible locations for personalEmail
+    return (user.personalEmail || 
+            (user as any)?.email || 
+            (user as any)?.user?.personalEmail || 
+            (user as any)?.user?.email || 
+            "");
+  };
 
   useEffect(() => {
     if (!selectedUser) return;
@@ -129,14 +146,19 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
     const netPay = round2(grossSalary - totalDeductions);
 
     setPayrollPreview({
-      latesAndAbsent: {}, // Add a default or computed value here as needed
+      latesAndAbsent: {},
       employee: {
         ...selectedUser,
-        email: selectedUser.email || selectedUser.emailAddress || selectedUser.personalEmail || selectedUser?.user?.email || "",
+        personalEmail: getPersonalEmail(selectedUser),
         fullName: `${selectedUser.firstName} ${selectedUser.lastName}`,
         position: selectedUser.jobPosition,
       },
-      payrollRate: { userId: selectedUser.userId || selectedUser._id, monthlyRate, dailyRate, hourlyRate },
+      payrollRate: { 
+        userId: selectedUser.userId || selectedUser._id, 
+        monthlyRate, 
+        dailyRate, 
+        hourlyRate 
+      },
       pay: { basicPay },
       workDays: {
         regularDays: autoComputed.regularDays,
@@ -275,7 +297,7 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                       <Label htmlFor="employee">Select Employee</Label>
                       <Select
                         value={selectedUser?._id || ""}
-                        onValueChange={(value) => setSelectedUser(employees.find((emp) => emp._id === value))}
+                        onValueChange={(value) => setSelectedUser(employees.find((emp) => emp._id === value) || null)}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Choose employee..." />
@@ -293,7 +315,7 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                     {selectedUser && (
                       <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
                         <div>Position: <span className="font-normal">{selectedUser.jobPosition}</span></div>
-                        <div>Email: <span className="font-normal">{selectedUser.email}</span></div>
+                        <div>Email: <span className="font-normal">{getPersonalEmail(selectedUser) || "No email"}</span></div>
                       </div>
                     )}
                   </div>

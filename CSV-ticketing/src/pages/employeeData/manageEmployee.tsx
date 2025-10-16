@@ -19,8 +19,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
-import { Check, Pencil, Search, X } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import { 
+  Check, 
+  Pencil, 
+  Search, 
+  X, 
+  Filter,
+  Users,
+  UserX,
+  Loader2
+} from "lucide-react";
+import React, { useEffect, useState, useCallback } from "react";
 import BackButton from "../../components/kit/BackButton";
 
 interface User {
@@ -59,137 +68,101 @@ interface UserProfile {
   createdAt: string;
   updatedAt: string;
   __v: number;
+  
 }
 
 interface UserWithProfile extends User {
   hasProfile?: boolean;
+  profileLoading?: boolean;
 }
+
+type FilterType = "all" | "active" | "inactive";
 
 const ManageEmployees: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [users, setUsers] = useState<UserWithProfile[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedUserProfile, setSelectedUserProfile] =
-    useState<UserProfile | null>(null);
+  const [selectedUserProfile, setSelectedUserProfile] = useState<UserProfile | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
   const { toast } = useToast();
   const [editingLoginLimit, setEditingLoginLimit] = useState<{
     userId: string;
     value: number;
   } | null>(null);
-  const [filter, setFilter] = useState<"all" | "active" | "inactive">("active");
+  const [filter, setFilter] = useState<FilterType>("active");
   const [confirmDeactivateOpen, setConfirmDeactivateOpen] = useState(false);
   const [userToDeactivate, setUserToDeactivate] = useState<{
     id: string;
     name: string;
   } | null>(null);
 
+  // Memoized function to check user profiles
+  const checkUserProfiles = useCallback(async (userList: User[]): Promise<UserWithProfile[]> => {
+    return await Promise.all(
+      userList.map(async (user: User) => {
+        try {
+          const profileResponse = await UserProfileAPI.getProfileById(user._id);
+          return { ...user, hasProfile: !!profileResponse.data, profileLoading: false };
+        } catch (error) {
+          return { ...user, hasProfile: false, profileLoading: false };
+        }
+      })
+    );
+  }, []);
+
   // Load data when filter changes
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        const response = await UserAPI.searchUser("csv-all");
-        let filteredUsers = response.data;
-
-        // Check which users have profiles
-        const usersWithProfileInfo = await Promise.all(
-          filteredUsers.map(async (user: User) => {
-            try {
-              const profileResponse = await UserProfileAPI.getProfileById(
-                user._id
-              );
-              return { ...user, hasProfile: !!profileResponse.data };
-            } catch (error) {
-              return { ...user, hasProfile: false };
-            }
-          })
-        );
-
-        if (filter === "active") {
-          filteredUsers = usersWithProfileInfo.filter(
-            (user) => user.status === "active"
-          );
-        } else if (filter === "inactive") {
-          filteredUsers = usersWithProfileInfo.filter(
-            (user) => user.status === "inactive"
-          );
-        }
-
-        setUsers(filteredUsers);
-
-        if (filteredUsers.length === 0) {
-          toast({
-            title: "No Employees Found",
-            description: `No ${filter} employees found`,
-            variant: "destructive",
-          });
-        }
-      } catch (error: any) {
-        toast({
-          title: "Failed to load employees",
-          description: error.message,
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, [filter, toast]);
-
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
+  const loadUsers = useCallback(async (searchTerm?: string) => {
     setLoading(true);
     try {
-      const response = await UserAPI.searchUser(searchQuery);
+      const response = await UserAPI.searchUser(searchTerm || "csv-all");
       let filteredUsers = response.data;
 
-      // Apply current filter to search results
-      if (filter === "active") {
-        filteredUsers = response.data.filter(
-          (user: { status: string }) => user.status === "active"
-        );
-      } else if (filter === "inactive") {
-        filteredUsers = response.data.filter(
-          (user: { status: string }) => user.status === "inactive"
+      // Apply status filter
+      if (filter !== "all") {
+        filteredUsers = filteredUsers.filter(
+          (user: User) => user.status === filter
         );
       }
 
-      // Check profile status for search results
-      const usersWithProfileInfo = await Promise.all(
-        filteredUsers.map(async (user: User) => {
-          try {
-            const profileResponse = await UserProfileAPI.getProfileById(
-              user._id
-            );
-            return { ...user, hasProfile: !!profileResponse.data };
-          } catch (error) {
-            return { ...user, hasProfile: false };
-          }
-        })
-      );
-
+      const usersWithProfileInfo = await checkUserProfiles(filteredUsers);
       setUsers(usersWithProfileInfo);
 
       if (filteredUsers.length === 0) {
         toast({
           title: "No Employees Found",
-          description: "No employees match your search criteria",
+          description: searchTerm 
+            ? "No employees match your search criteria" 
+            : `No ${filter} employees found`,
           variant: "destructive",
         });
       }
     } catch (error: any) {
       toast({
-        title: "Search Failed",
-        description: error.message,
+        title: "Failed to load employees",
+        description: error.message || "Please try again later",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
+  }, [filter, toast, checkUserProfiles]);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) {
+      loadUsers();
+      return;
+    }
+    await loadUsers(searchQuery);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSearch();
   };
 
   const performStatusChange = async (userId: string, newStatus: string) => {
@@ -200,13 +173,12 @@ const ManageEmployees: React.FC = () => {
         await UserAPI.setUserToActive(userId);
       }
 
-      // Update the users list based on current filter
       setUsers((prevUsers) => {
         const updatedUsers = prevUsers.map((user) =>
           user._id === userId ? { ...user, status: newStatus } : user
         );
 
-        // If the current filter doesn't match the new status, remove the user
+        // Remove user from list if they don't match current filter
         if (
           (filter === "active" && newStatus === "inactive") ||
           (filter === "inactive" && newStatus === "active")
@@ -218,15 +190,12 @@ const ManageEmployees: React.FC = () => {
 
       toast({
         title: "Success",
-        description: `Employee ${
-          newStatus === "active" ? "activated" : "deactivated"
-        } successfully`,
-        variant: "default",
+        description: `Employee ${newStatus === "active" ? "activated" : "deactivated"} successfully`,
       });
     } catch (error: any) {
       toast({
-        title: "Failed",
-        description: error.message,
+        title: "Failed to update status",
+        description: error.message || "Please try again later",
         variant: "destructive",
       });
     } finally {
@@ -300,7 +269,7 @@ const ManageEmployees: React.FC = () => {
       } else {
         toast({
           title: "Failed to Load Profile",
-          description: error.message,
+          description: error.message || "Please try again later",
           variant: "destructive",
         });
       }
@@ -333,12 +302,11 @@ const ManageEmployees: React.FC = () => {
       toast({
         title: "Success",
         description: "Login limit updated successfully",
-        variant: "default",
       });
     } catch (error: any) {
       toast({
-        title: "Failed",
-        description: error.message,
+        title: "Failed to update login limit",
+        description: error.message || "Please try again later",
         variant: "destructive",
       });
     }
@@ -348,205 +316,247 @@ const ManageEmployees: React.FC = () => {
     setEditingLoginLimit(null);
   };
 
+  const getEmployeeCountText = () => {
+    const count = users.length;
+    if (filter === "all") return `${count} employee${count !== 1 ? 's' : ''}`;
+    return `${count} ${filter} employee${count !== 1 ? 's' : ''}`;
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 p-4 pt-10">
+    <div className="min-h-screen bg-gray-50 p-4 pt-6">
       <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <BackButton />
-          <h1 className="text-2xl font-bold text-gray-800">
-            Employee Management
-          </h1>
-          <div></div> {/* Spacer for alignment */}
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <BackButton />
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Employee Management
+              </h1>
+              <p className="text-gray-600 mt-1">
+                Manage employee accounts, profiles, and access
+              </p>
+            </div>
+          </div>
         </div>
 
-        <Card style={{ width: "70%" }} className="mx-auto">
-          <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <CardTitle className="text-xl">Filter by status</CardTitle>
-              <select
-                value={filter}
-                onChange={(e) =>
-                  setFilter(e.target.value as "all" | "active" | "inactive")
-                }
-                className="border p-2 rounded text-sm"
-                disabled={loading}
-              >
-                {/* <option value="all">All Employees</option> */}
-                <option value="active">Active Only</option>
-                <option value="inactive">Inactive Only</option>
-              </select>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              <div className="flex justify-end">
-                <div className="flex w-1/2">
-                  <Input
-                    type="text"
-                    placeholder="Search employee by name ..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+        <Card className="mx-auto">
+          <CardHeader className="pb-4">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <CardTitle className="text-xl flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Employees
+                </CardTitle>
+                <div className="flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full">
+                  <Filter className="h-4 w-4 text-gray-600" />
+                  <select
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value as FilterType)}
+                    className="bg-transparent border-none text-sm focus:outline-none focus:ring-0"
                     disabled={loading}
-                    className="rounded-r-none"
-                  />
-                  <Button
-                    onClick={handleSearch}
-                    disabled={loading}
-                    className="rounded-l-none"
                   >
-                    <Search className="h-4 w-4 mr-2" />
-                    Search
-                  </Button>
+                    <option value="all">All Employees</option>
+                    <option value="active">Active Only</option>
+                    <option value="inactive">Inactive Only</option>
+                  </select>
                 </div>
+                {users.length > 0 && (
+                  <span className="text-sm text-gray-500">
+                    {getEmployeeCountText()}
+                  </span>
+                )}
               </div>
 
-              {users.length > 0 && (
-                <div className="space-y-4">
-                  {users.map((user) => (
-                    <div
-                      key={user._id}
-                      className="flex items-center justify-between p-4 border rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 truncate">
-                          {user.name}
-                        </p>
-                        <p className="text-sm text-gray-500 truncate">
-                          {user.email}
-                        </p>
-                        <div className="flex items-center mt-1 space-x-3">
-                          <span
-                            className={`text-xs px-2 py-1 rounded-full ${
-                              user.status === "active"
-                                ? "bg-green-100 text-green-800"
-                                : "bg-red-100 text-red-800"
-                            }`}
+              {/* Search */}
+              <form onSubmit={handleSearchSubmit} className="flex gap-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    type="text"
+                    placeholder="Search by name or email..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    disabled={loading}
+                    className="pl-10 w-80"
+                  />
+                </div>
+                <Button 
+                  type="submit" 
+                  disabled={loading}
+                  className="flex items-center gap-2"
+                >
+                  {loading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Search className="h-4 w-4" />
+                  )}
+                  Search
+                </Button>
+              </form>
+            </div>
+          </CardHeader>
+
+          <CardContent>
+            {/* Employee List */}
+            <div className="space-y-3">
+              {users.map((user) => (
+                <div
+                  key={user._id}
+                  className="flex items-center justify-between p-4 border rounded-lg bg-white hover:shadow-md transition-all duration-200"
+                >
+                  {/* User Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3">
+                      <p className="font-semibold text-gray-900 truncate">
+                        {user.name}
+                      </p>
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full ${
+                          user.status === "active"
+                            ? "bg-green-100 text-green-800 border border-green-200"
+                            : "bg-red-100 text-red-800 border border-red-200"
+                        }`}
+                      >
+                        {user.status === "active" ? "Active" : "Inactive"}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 truncate mt-1">
+                      {user.email}
+                    </p>
+                    <div className="flex items-center gap-4 mt-2">
+                      <Button
+                        size="sm"
+                        variant="link"
+                        onClick={() => viewUserDetails(user._id)}
+                        disabled={loadingProfile}
+                        className="h-6 px-0 text-blue-600 hover:text-blue-800 text-xs font-medium"
+                      >
+                        {loadingProfile ? (
+                          <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                        ) : (
+                          <>
+                            View Details
+                            {user.hasProfile && (
+                              <Check className="h-3 w-3 text-green-500 ml-1" />
+                            )}
+                          </>
+                        )}
+                      </Button>
+                      {user.isAdmin && (
+                        <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">
+                          Admin
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Controls */}
+                  <div className="flex items-center gap-6 ml-6">
+                    {/* Login Limit */}
+                    <div className="flex flex-col items-center space-y-2">
+                      <Label className="text-xs text-gray-500 font-medium">
+                        Daily Login Limit
+                      </Label>
+                      {editingLoginLimit?.userId === user._id ? (
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={editingLoginLimit.value}
+                            onChange={(e) =>
+                              setEditingLoginLimit({
+                                ...editingLoginLimit,
+                                value: parseInt(e.target.value),
+                              })
+                            }
+                            className="h-8 rounded border border-gray-300 px-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                           >
-                            {user.status === "active" ? "Active" : "Inactive"}
+                            {[1, 2, 3, 4, 5].map((num) => (
+                              <option key={num} value={num}>
+                                {num}
+                              </option>
+                            ))}
+                          </select>
+                          <Button
+                            size="sm"
+                            onClick={handleSaveLoginLimit}
+                            className="h-8 w-8 p-0 bg-green-600 hover:bg-green-700"
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={handleCancelEdit}
+                            className="h-8 w-8 p-0"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium px-3 py-1 bg-gray-100 rounded border min-w-12 text-center">
+                            {user.loginLimit || 1}
                           </span>
                           <Button
                             size="sm"
-                            variant="link"
-                            onClick={() => viewUserDetails(user._id)}
-                            disabled={loadingProfile}
-                            className="text-xs text-blue-600 p-0 h-auto flex items-center gap-1"
+                            variant="ghost"
+                            onClick={() =>
+                              handleEditLoginLimit(user._id, user.loginLimit)
+                            }
+                            className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100"
                           >
-                            View Details
-                            {user.hasProfile && (
-                              <Check className="h-3 w-3 text-green-500" />
-                            )}
+                            <Pencil className="h-3 w-3" />
                           </Button>
                         </div>
-                      </div>
-
-                      <div className="flex items-center space-x-6 ml-4">
-                        <div className="flex flex-col items-center space-y-1">
-                          <Label className="text-xs text-gray-500">
-                            Daily Login Limit
-                          </Label>
-                          {editingLoginLimit?.userId === user._id ? (
-                            <div className="flex items-center gap-2">
-                              <select
-                                value={editingLoginLimit.value}
-                                onChange={(e) =>
-                                  setEditingLoginLimit({
-                                    ...editingLoginLimit,
-                                    value: parseInt(e.target.value),
-                                  })
-                                }
-                                className="h-8 rounded border border-gray-300 px-2 text-sm"
-                              >
-                                <option value={1}>1</option>
-                                <option value={2}>2</option>
-                              </select>
-                              <Button
-                                size="sm"
-                                onClick={handleSaveLoginLimit}
-                                className="h-8 px-2"
-                              >
-                                <Check className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={handleCancelEdit}
-                                className="h-8 px-2"
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium px-2 py-1 bg-gray-100 rounded">
-                                {user.loginLimit || 1}
-                              </span>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() =>
-                                  handleEditLoginLimit(
-                                    user._id,
-                                    user.loginLimit
-                                  )
-                                }
-                                className="h-8 px-2 text-gray-500 hover:text-gray-700"
-                              >
-                                <Pencil className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex flex-col items-center">
-                          <Label
-                            htmlFor={`user-status-${user._id}`}
-                            className="text-xs text-gray-500 mb-1"
-                          >
-                            Account Status
-                          </Label>
-                          <Switch
-                            id={`user-status-${user._id}`}
-                            checked={user.status === "active"}
-                            onCheckedChange={() =>
-                              handleStatusToggle(
-                                user._id,
-                                user.status,
-                                user.name
-                              )
-                            }
-                            className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
-                          />
-                        </div>
-                      </div>
+                      )}
                     </div>
-                  ))}
-                </div>
-              )}
 
-              {users.length === 0 && !loading && (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">
-                    {filter === "all"
-                      ? "No employees found. Try searching for an employee."
-                      : `No ${filter} employees found.`}
-                  </p>
+                    {/* Status Toggle */}
+                    <div className="flex flex-col items-center space-y-2">
+                      <Label className="text-xs text-gray-500 font-medium">
+                        Account Status
+                      </Label>
+                      <Switch
+                        checked={user.status === "active"}
+                        onCheckedChange={() =>
+                          handleStatusToggle(user._id, user.status, user.name)
+                        }
+                        className="data-[state=checked]:bg-green-600 data-[state=unchecked]:bg-gray-300"
+                      />
+                    </div>
+                  </div>
                 </div>
-              )}
-
-              {loading && (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">Loading employees...</p>
-                </div>
-              )}
+              ))}
             </div>
+
+            {/* Empty States */}
+            {users.length === 0 && !loading && (
+              <div className="text-center py-12">
+                <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500 text-lg font-medium">
+                  No employees found
+                </p>
+                <p className="text-gray-400 mt-2">
+                  {searchQuery
+                    ? "Try adjusting your search terms"
+                    : `No ${filter} employees in the system`}
+                </p>
+              </div>
+            )}
+
+            {loading && (
+              <div className="text-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">Loading employees...</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
       {/* Employee Profile Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           {selectedUserProfile && (
             <UserDetails
               userData={selectedUserProfile}
@@ -564,10 +574,13 @@ const ManageEmployees: React.FC = () => {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Deactivation</AlertDialogTitle>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <UserX className="h-5 w-5 text-red-600" />
+              Confirm Deactivation
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to deactivate {userToDeactivate?.name}? They
-              will no longer be able to access the system.
+              Are you sure you want to deactivate <strong>{userToDeactivate?.name}</strong>? 
+              They will no longer be able to access the system until their account is reactivated.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -578,8 +591,9 @@ const ManageEmployees: React.FC = () => {
                   performStatusChange(userToDeactivate.id, "inactive");
                 }
               }}
+              className="bg-red-600 hover:bg-red-700"
             >
-              Confirm
+              Deactivate Employee
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
