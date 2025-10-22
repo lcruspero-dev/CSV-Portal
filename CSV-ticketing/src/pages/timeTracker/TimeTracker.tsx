@@ -691,11 +691,11 @@ export const AttendanceTracker: React.FC = () => {
       setElapsedTime(0); // Reset elapsed time when starting second break
       toast({
         title: "Success",
-        description: "Second break started successfully!",
+        description: "Break 2 started successfully!",
         variant: "default",
       });
     } catch (error) {
-      console.error("Error starting second break:", error);
+      console.error("Error starting break 2:", error);
       toast({
         title: "Error",
         description: "Failed to start second break. Please try again.",
@@ -744,14 +744,14 @@ export const AttendanceTracker: React.FC = () => {
       setSelectedAction(null); // Reset the selected action after second break ends
       toast({
         title: "Success",
-        description: "Second break ended successfully!",
+        description: "Break 2 ended successfully!",
         variant: "default",
       });
     } catch (error) {
-      console.error("Error ending second break:", error);
+      console.error("Error ending break 2:", error);
       toast({
         title: "Error",
-        description: "Failed to end second break. Please try again.",
+        description: "Failed to end secondbreak. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -764,11 +764,11 @@ export const AttendanceTracker: React.FC = () => {
 
     // Check if the user is currently on a break and breakEnd is not set
     if (currentEntry.breakStart && !currentEntry.breakEnd) {
-      actions.push({ value: "endBreak", label: "End Break" });
+      actions.push({ value: "endBreak", label: "End Break 1" });
     }
     // Check if the user is currently on a second break and secondBreakEnd is not set
     else if (currentEntry.secondBreakStart && !currentEntry.secondBreakEnd) {
-      actions.push({ value: "endSecondBreak", label: "End Second Break" });
+      actions.push({ value: "endSecondBreak", label: "End Break 2" });
     }
     // Check if the user is currently on lunch and lunchEnd is not set
     else if (currentEntry.lunchStart && !currentEntry.lunchEnd) {
@@ -778,7 +778,7 @@ export const AttendanceTracker: React.FC = () => {
     else {
       // Only show "Start Break" if break hasn't started or hasn't ended
       if (!currentEntry.breakStart || !currentEntry.breakEnd) {
-        actions.push({ value: "startBreak", label: "Start Break" });
+        actions.push({ value: "startBreak", label: "Break 1" });
       }
 
       // Only show "Start Second Break" if first break has ended and second break hasn't started or hasn't ended
@@ -788,13 +788,13 @@ export const AttendanceTracker: React.FC = () => {
       ) {
         actions.push({
           value: "startSecondBreak",
-          label: "Start Second Break",
+          label: "Break 2",
         });
       }
 
       // Only show "Start Lunch" if lunch hasn't started or hasn't ended
       if (!currentEntry.lunchStart || !currentEntry.lunchEnd) {
-        actions.push({ value: "startLunch", label: "Start Lunch" });
+        actions.push({ value: "startLunch", label: "Lunch" });
       }
 
       // Always show "Time Out" if the user is timed in
@@ -866,21 +866,21 @@ export const AttendanceTracker: React.FC = () => {
               {currentEntry.breakStart && !currentEntry.breakEnd ? (
                 <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-red-600 text-center">
                   <p className="text-sm sm:text-base text-black tracking-wide mb-2">
-                    BREAK TIME
+                    BREAK 1 - 15 Minutes
                   </p>
                   {formatElapsedTime(elapsedTime)}
                 </div>
               ) : currentEntry.secondBreakStart && !currentEntry.secondBreakEnd ? (
                 <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-red-600 text-center">
                   <p className="text-sm sm:text-base text-black tracking-wide mb-2">
-                    SECOND BREAK TIME
+                    BREAK 2 - 15 Minutes
                   </p>
                   {formatElapsedTime(elapsedTime)}
                 </div>
               ) : currentEntry.lunchStart && !currentEntry.lunchEnd ? (
                 <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-red-600 text-center">
                   <p className="text-sm sm:text-base text-black tracking-wide mb-2">
-                    LUNCH TIME
+                    LUNCH - 60 Minutes
                   </p>
                   {formatElapsedTime(elapsedTime)}
                 </div>
@@ -1010,7 +1010,7 @@ export const AttendanceTracker: React.FC = () => {
                       <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-3 border border-green-200">
                         <div className="flex items-center gap-2">
                           <LogIn className="h-4 w-4 text-green-600" />
-                          <span className="text-xs font-medium text-green-800">Time In</span>
+                          <span className="text-xs font-medium text-green-800">Login</span>
                         </div>
                         <p className="text-sm font-semibold mt-1">{currentEntry.timeIn}</p>
                       </div>
@@ -1032,7 +1032,7 @@ export const AttendanceTracker: React.FC = () => {
                       <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-3 border border-orange-200">
                         <div className="flex items-center gap-2">
                           <Coffee className="h-4 w-4 text-orange-600" />
-                          <span className="text-xs font-medium text-orange-800">Break</span>
+                          <span className="text-xs font-medium text-orange-800">Break 1</span>
                         </div>
                         <div className="space-y-1 mt-1">
                           <p className="text-xs"><span className="font-medium">Start:</span> {currentEntry.breakStart}</p>
@@ -1053,7 +1053,7 @@ export const AttendanceTracker: React.FC = () => {
                       <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg p-3 border border-amber-200">
                         <div className="flex items-center gap-2">
                           <Coffee className="h-4 w-4 text-amber-600" />
-                          <span className="text-xs font-medium text-amber-800">Second Break</span>
+                          <span className="text-xs font-medium text-amber-800">Break 2</span>
                         </div>
                         <div className="space-y-1 mt-1">
                           <p className="text-xs"><span className="font-medium">Start:</span> {currentEntry.secondBreakStart}</p>
@@ -1097,7 +1097,7 @@ export const AttendanceTracker: React.FC = () => {
             {/* History Table Section */}
             <Card className="w-full">
               <CardHeader className="p-4 sm:p-6">
-                <CardTitle className="text-lg sm:text-xl">Time Tracker History</CardTitle>
+                <CardTitle className="text-lg sm:text-xl">Daily Time Record</CardTitle>
               </CardHeader>
               <CardContent className="p-0 sm:p-6">
                 {isLoadingHistory ? (
@@ -1110,15 +1110,14 @@ export const AttendanceTracker: React.FC = () => {
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead className="min-w-[80px]">Date</TableHead>
-                            <TableHead className="min-w-[70px]">Log In</TableHead>
-                            <TableHead className="min-w-[70px]">Log Out</TableHead>
+                            <TableHead className="min-w-[90px]">Date</TableHead>
+                            <TableHead className="min-w-[90px]">Log In</TableHead>
+                            <TableHead className="min-w-[90px]">Log Out</TableHead>
                             <TableHead className="min-w-[90px]">Total Hours</TableHead>
-                            <TableHead className="min-w-[90px]">Break Time</TableHead>
-                            <TableHead className="min-w-[120px]">Second Break</TableHead>
-                            <TableHead className="min-w-[90px]">Lunch Time</TableHead>
-                            <TableHead className="min-w-[70px]">Shift</TableHead>
-                            <TableHead className="min-w-[100px]">Notes</TableHead>
+                            <TableHead className="min-w-[90px]">Break 1</TableHead>
+                            <TableHead className="min-w-[90px]">Lunch</TableHead>
+                            <TableHead className="min-w-[90px]">Break 2</TableHead>
+                            <TableHead className="min-w-[90px]">Notes</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -1142,8 +1141,7 @@ export const AttendanceTracker: React.FC = () => {
                                 <TableCell className="py-2">
                                   {formatHoursToMinutes(String(entry.totalLunchTime || ""))}
                                 </TableCell>
-                                <TableCell className="py-2">{entry.shift}</TableCell>
-                                <TableCell className="py-2">
+                                  <TableCell className="py-2">
                                   <div
                                     className="truncate max-w-[80px] sm:max-w-[100px] lg:max-w-[150px] text-ellipsis overflow-hidden"
                                     title={entry.notes || ""}

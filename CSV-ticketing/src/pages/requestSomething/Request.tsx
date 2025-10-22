@@ -658,7 +658,7 @@ const Request = () => {
               <FileText className="h-8 w-8 text-white" />
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-              HR Request Form
+              HR Support Request Form
             </h1>
             <p className="text-blue-100 text-sm sm:text-base">
               Submit your HR-related requests and leave applications

@@ -129,7 +129,7 @@ const CreateMemo: React.FC<CreateMemoProps> = ({ setMemos, setLoading }) => {
       <DialogContent className="w-[900px] h-[600px] max-w-none bg-[#eef4ff]">
         <DialogHeader>
           <DialogTitle className="text-2xl drop-shadow-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#1638df] to-[#192fb4]">
-            Create Memo
+            Compose Memo
           </DialogTitle>
           <DialogDescription>
             Input details here. Click save when you're done.

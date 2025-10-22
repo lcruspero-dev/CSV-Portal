@@ -40,9 +40,11 @@ export interface User {
 
 function ViewMemo() {
   const [memos, setMemos] = useState<Memo[]>([]);
+  const [filteredMemos, setFilteredMemos] = useState<Memo[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
+  const [showPendingOnly, setShowPendingOnly] = useState<boolean>(false);
   const itemsPerPage = 8;
 
   const userString = localStorage.getItem("user");
@@ -54,6 +56,7 @@ function ViewMemo() {
       const response = await TicketAPi.getAllMemo();
       console.log(response.data);
       setMemos(response.data);
+      setFilteredMemos(response.data);
       setTotalPages(Math.ceil(response.data.length / itemsPerPage));
     } catch (error) {
       console.error(error);
@@ -66,14 +69,33 @@ function ViewMemo() {
     getMemos();
   }, []);
 
+  // Update filtered memos and pagination when showPendingOnly changes
+  useEffect(() => {
+    let filtered = memos;
+    if (showPendingOnly) {
+      filtered = memos.filter(memo => !memo.acknowledgedby.some(ack => ack.userId === user?._id));
+    }
+    setFilteredMemos(filtered);
+    setTotalPages(Math.ceil(filtered.length / itemsPerPage));
+    setCurrentPage(1); // Reset to first page when filter changes
+  }, [showPendingOnly, memos, user?._id]);
+
   const getCurrentPageMemos = () => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    return memos.slice(startIndex, endIndex);
+    return filteredMemos.slice(startIndex, endIndex);
   };
 
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
+  };
+
+  const handleShowPendingClick = () => {
+    setShowPendingOnly(true);
+  };
+
+  const handleShowAllClick = () => {
+    setShowPendingOnly(false);
   };
 
   const getStatusColor = (memo: Memo) => {
@@ -85,6 +107,8 @@ function ViewMemo() {
     const isAcknowledged = memo.acknowledgedby.some(ack => ack.userId === user?._id);
     return isAcknowledged ? "Acknowledged" : "Pending";
   };
+
+  const pendingCount = memos.filter(memo => !memo.acknowledgedby.some(ack => ack.userId === user?._id)).length;
 
   if (loading) {
     return <LoadingComponent />;
@@ -149,13 +173,24 @@ function ViewMemo() {
             </div>
           </div>
           
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
+          <div 
+            className={`bg-white rounded-2xl p-6 shadow-lg border border-gray-200 cursor-pointer transition-all duration-200 hover:shadow-xl hover:border-amber-300 ${
+              showPendingOnly ? 'ring-2 ring-amber-500 border-amber-500' : ''
+            }`}
+            onClick={handleShowPendingClick}
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Pending</p>
                 <p className="text-2xl font-bold text-amber-600 mt-1">
-                  {memos.filter(memo => !memo.acknowledgedby.some(ack => ack.userId === user?._id)).length}
+                  {pendingCount}
                 </p>
+                {pendingCount > 0 && (
+                  <p className="text-xs text-amber-600 mt-2 font-medium flex items-center gap-1">
+                    Click here to view all pending memos
+                    <ChevronRight className="h-3 w-3" />
+                  </p>
+                )}
               </div>
               <div className="p-3 bg-amber-100 rounded-xl">
                 <Calendar className="h-6 w-6 text-amber-600" />
@@ -163,6 +198,28 @@ function ViewMemo() {
             </div>
           </div>
         </div>
+
+        {/* Filter Status */}
+        {showPendingOnly && (
+          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 bg-amber-500 rounded-full animate-pulse" />
+                <span className="text-amber-800 font-medium">
+                  Showing only pending memos ({pendingCount} found)
+                </span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleShowAllClick}
+                className="text-amber-700 border-amber-300 hover:bg-amber-100"
+              >
+                Show All Memos
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Memos Table */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
@@ -297,8 +354,9 @@ function ViewMemo() {
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="text-sm text-gray-600 text-center sm:text-left">
                       Showing {((currentPage - 1) * itemsPerPage) + 1} to{" "}
-                      {Math.min(currentPage * itemsPerPage, memos.length)} of{" "}
-                      {memos.length} memos
+                      {Math.min(currentPage * itemsPerPage, filteredMemos.length)} of{" "}
+                      {filteredMemos.length} memos
+                      {showPendingOnly && " (Pending only)"}
                     </div>
                     
                     <div className="flex items-center justify-center gap-2">
@@ -358,13 +416,26 @@ function ViewMemo() {
           )}
 
           {/* Empty State */}
-          {memos.length === 0 && (
+          {filteredMemos.length === 0 && (
             <div className="text-center py-12">
               <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No memos found</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {showPendingOnly ? "No pending memos" : "No memos found"}
+              </h3>
               <p className="text-gray-600 max-w-sm mx-auto">
-                There are no company memos available at the moment. Check back later for updates.
+                {showPendingOnly 
+                  ? "You have acknowledged all memos. Great job!"
+                  : "There are no company memos available at the moment. Check back later for updates."
+                }
               </p>
+              {showPendingOnly && (
+                <Button
+                  onClick={handleShowAllClick}
+                  className="mt-4 bg-amber-600 hover:bg-amber-700"
+                >
+                  Show All Memos
+                </Button>
+              )}
             </div>
           )}
         </div>
