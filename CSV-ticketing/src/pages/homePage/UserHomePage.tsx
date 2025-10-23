@@ -16,7 +16,6 @@ import {
   HeadphonesIcon, 
   Ticket, 
   AlertTriangle,
-  Bell,
   ArrowRight
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -160,8 +159,8 @@ const UserHome = () => {
     },
     {
       id: 2,
-      title: "Memo",
-      description: "View company announcements and updates",
+      title: "Company Memos and Policies",
+      description: "Access company official memos and policies.",
       icon: FileText,
       path: "/all-memo",
       color: "from-emerald-500 to-green-500",
@@ -217,46 +216,29 @@ const UserHome = () => {
       <SurveyModal />
       
       {/* Main Container */}
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 py-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 py-4 sm:py-6 lg:py-8 px-3 sm:px-4 lg:px-6 xl:px-8">
+        <div className="max-w-7xl mx-auto mt-8">
           {/* Header Section */}
           <motion.section
-            className="text-center mb-12"
+            className="text-center mb-8 sm:mb-10 lg:mb-12 px-2 sm:px-4"
             initial={{ opacity: 0, y: -30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            <motion.div
-              className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl shadow-lg mb-6"
-              initial={{ scale: 0, rotate: -180 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
-            >
-              <Bell className="h-10 w-10 text-white" />
-            </motion.div>
-            
+ 
             <motion.h1
-              className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600"
+              className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold mb-5 sm:mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 leading-tight sm:leading-snug"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.6 }}
             >
-              Welcome Back!
+             Everything you need for work, all in one place.
             </motion.h1>
-            
-            <motion.p
-              className="text-xl sm:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5, duration: 0.6 }}
-            >
-              Everything you need is just a click away! Select an option to proceed
-            </motion.p>
           </motion.section>
 
           {/* Features Grid */}
           <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"
+            className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6 xl:gap-8 px-2 sm:px-0"
             variants={container}
             initial="hidden"
             animate="show"
@@ -267,6 +249,7 @@ const UserHome = () => {
                 variants={item}
                 whileHover="hover"
                 whileTap="tap"
+                className="h-full"
               >
                 <TooltipProvider>
                   {feature.tooltip ? (
@@ -277,14 +260,14 @@ const UserHome = () => {
                           className="relative group cursor-pointer h-full"
                           onClick={() => navigate(feature.path)}
                         >
-                          <Card className={`relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 h-full ${feature.bgColor} group-hover:shadow-xl`}>
+                          <Card className={`relative overflow-hidden border-0 shadow-md hover:shadow-xl transition-all duration-300 h-full ${feature.bgColor} group-hover:shadow-lg rounded-xl sm:rounded-2xl`}>
                             {/* Background Gradient */}
                             <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
                             
                             {/* Notification Badge */}
                             {(feature.notification > 0 || feature.exclamation) && (
                               <motion.div
-                                className="absolute top-4 right-4 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg z-10"
+                                className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-red-500 text-white rounded-full w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 flex items-center justify-center text-xs sm:text-sm font-bold shadow-lg z-10"
                                 variants={notificationBadge}
                                 initial="initial"
                                 animate={["animate", "pulse"]}
@@ -294,46 +277,38 @@ const UserHome = () => {
                             )}
 
                             {/* Content */}
-                            <div className="relative p-6 flex flex-col items-center text-center h-full">
+                            <div className="relative p-4 sm:p-5 lg:p-6 flex flex-col items-center text-center h-full">
                               {/* Icon Container */}
-                              <div className={`mb-4 p-4 rounded-2xl bg-gradient-to-br ${feature.color} shadow-lg transform group-hover:scale-110 transition-transform duration-300`}>
-                                <feature.icon className="h-8 w-8 text-white" />
-                              </div>
-
-                              {/* Image */}
-                              <div className="mb-4 transform group-hover:scale-105 transition-transform duration-300">
-                                <img 
-                                  alt={feature.title} 
-                                  className="w-20 h-20 object-contain filter drop-shadow-lg"
-                                />
+                              <div className={`mb-3 sm:mb-4 p-2 sm:p-3 lg:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-br ${feature.color} shadow-md transform group-hover:scale-105 sm:group-hover:scale-110 transition-transform duration-300`}>
+                                <feature.icon className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 xl:h-8 xl:w-8 text-white" />
                               </div>
 
                               {/* Text Content */}
-                              <div className="flex-1 flex flex-col justify-center">
-                                <h3 className="text-xl font-bold text-gray-800 mb-2 group-hover:text-gray-900 transition-colors">
+                              <div className="flex-1 flex flex-col justify-center w-full">
+                                <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-1 sm:mb-2 group-hover:text-gray-900 transition-colors leading-tight line-clamp-2">
                                   {feature.title}
                                 </h3>
-                                <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                                <p className="text-gray-600 text-xs sm:text-sm leading-relaxed sm:leading-normal mb-3 sm:mb-4 line-clamp-2 sm:line-clamp-3">
                                   {feature.description}
                                 </p>
                               </div>
 
                               {/* Action Indicator */}
-                              <div className="flex items-center justify-center text-gray-400 group-hover:text-gray-600 transition-colors mt-2">
-                                <span className="text-sm font-medium mr-2">Open</span>
-                                <ArrowRight className="h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
+                              <div className="flex items-center justify-center text-gray-400 group-hover:text-gray-600 transition-colors mt-1 sm:mt-2">
+                                <span className="text-xs sm:text-sm font-medium mr-1 sm:mr-2">Open</span>
+                                <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 transform group-hover:translate-x-1 transition-transform" />
                               </div>
                             </div>
 
                             {/* Hover Border Effect */}
-                            <div className={`absolute inset-0 rounded-lg bg-gradient-to-r ${feature.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10`}>
-                              <div className="absolute inset-[2px] rounded-lg bg-white" />
+                            <div className={`absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r ${feature.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10`}>
+                              <div className="absolute inset-[1.5px] sm:inset-[2px] rounded-xl sm:rounded-2xl bg-white" />
                             </div>
                           </Card>
                         </motion.div>
                       </TooltipTrigger>
-                      <TooltipContent className="p-4 max-w-xs bg-gray-900 text-white border-0 shadow-xl">
-                        <p className="text-sm leading-relaxed">{feature.tooltip}</p>
+                      <TooltipContent className="p-3 sm:p-4 max-w-xs sm:max-w-sm bg-gray-900 text-white border-0 shadow-xl text-xs sm:text-sm">
+                        <p className="leading-relaxed whitespace-pre-line">{feature.tooltip}</p>
                       </TooltipContent>
                     </Tooltip>
                   ) : (
@@ -342,14 +317,14 @@ const UserHome = () => {
                       className="relative group cursor-pointer h-full"
                       onClick={() => navigate(feature.path)}
                     >
-                      <Card className={`relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 h-full ${feature.bgColor} group-hover:shadow-xl`}>
+                      <Card className={`relative overflow-hidden border-0 shadow-md hover:shadow-xl transition-all duration-300 h-full ${feature.bgColor} group-hover:shadow-lg rounded-xl sm:rounded-2xl`}>
                         {/* Background Gradient */}
                         <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
                         
                         {/* Notification Badge */}
                         {feature.notification > 0 && (
                           <motion.div
-                            className="absolute top-4 right-4 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg z-10"
+                            className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-red-500 text-white rounded-full w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 flex items-center justify-center text-xs sm:text-sm font-bold shadow-lg z-10"
                             variants={notificationBadge}
                             initial="initial"
                             animate={["animate", "pulse"]}
@@ -359,32 +334,32 @@ const UserHome = () => {
                         )}
 
                         {/* Content */}
-                        <div className="relative p-6 flex flex-col items-center text-center h-full">
+                        <div className="relative p-4 sm:p-5 lg:p-6 flex flex-col items-center text-center h-full">
                           {/* Icon Container */}
-                          <div className={`mb-4 p-4 rounded-2xl bg-gradient-to-br ${feature.color} shadow-lg transform group-hover:scale-110 transition-transform duration-300`}>
-                            <feature.icon className="h-8 w-8 text-white" />
+                          <div className={`mb-3 sm:mb-4 p-2 sm:p-3 lg:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-br ${feature.color} shadow-md transform group-hover:scale-105 sm:group-hover:scale-110 transition-transform duration-300`}>
+                            <feature.icon className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 xl:h-8 xl:w-8 text-white" />
                           </div>
 
                           {/* Text Content */}
-                          <div className="flex-1 flex flex-col justify-center">
-                            <h3 className="text-xl font-bold text-gray-800 mb-2 group-hover:text-gray-900 transition-colors">
+                          <div className="flex-1 flex flex-col justify-center w-full">
+                            <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-1 sm:mb-2 group-hover:text-gray-900 transition-colors leading-tight line-clamp-2">
                               {feature.title}
                             </h3>
-                            <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                            <p className="text-gray-600 text-xs sm:text-sm leading-relaxed sm:leading-normal mb-3 sm:mb-4 line-clamp-2 sm:line-clamp-3">
                               {feature.description}
                             </p>
                           </div>
 
                           {/* Action Indicator */}
-                          <div className="flex items-center justify-center text-gray-400 group-hover:text-gray-600 transition-colors mt-2">
-                            <span className="text-sm font-medium mr-2">Open</span>
-                            <ArrowRight className="h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
+                          <div className="flex items-center justify-center text-gray-400 group-hover:text-gray-600 transition-colors mt-1 sm:mt-2">
+                            <span className="text-xs sm:text-sm font-medium mr-1 sm:mr-2">Open</span>
+                            <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 transform group-hover:translate-x-1 transition-transform" />
                           </div>
                         </div>
 
                         {/* Hover Border Effect */}
-                        <div className={`absolute inset-0 rounded-lg bg-gradient-to-r ${feature.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10`}>
-                          <div className="absolute inset-[2px] rounded-lg bg-white" />
+                        <div className={`absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r ${feature.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10`}>
+                          <div className="absolute inset-[1.5px] sm:inset-[2px] rounded-xl sm:rounded-2xl bg-white" />
                         </div>
                       </Card>
                     </motion.div>
@@ -396,15 +371,17 @@ const UserHome = () => {
 
           {/* Footer */}
           <motion.div
-            className="text-center mt-12 pt-8 border-t border-gray-200"
+            className="text-center mt-8 sm:mt-10 lg:mt-12 pt-6 sm:pt-8 border-t border-gray-200 px-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1, duration: 0.6 }}
           >
-            <p className="text-gray-500 text-sm">
-              Need help? Contact support at{" "}
-              <a href="mailto:support@company.com" className="text-blue-600 hover:text-blue-700 font-medium">
-                support@company.com
+            <p className="text-gray-500 text-xs sm:text-sm lg:text-base">
+              Need help? Reach us through the {" "}
+              <a 
+                href="mailto:support@company.com" 
+              >
+                company’s support channels.
               </a>
             </p>
           </motion.div>

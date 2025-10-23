@@ -43,7 +43,8 @@ import {
   LogIn,
   Coffee,
   Utensils,
-  Calendar
+  Calendar,
+  AlertTriangle
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
@@ -78,6 +79,12 @@ interface CurrentTimeResponse {
   time: string;
 }
 
+interface AlertState {
+  show: boolean;
+  type: 'break1' | 'break2' | 'lunch' | null;
+  message: string;
+}
+
 export const AttendanceTracker: React.FC = () => {
   const [isTimeIn, setIsTimeIn] = useState(false);
   const [attendanceEntries, setAttendanceEntries] = useState<AttendanceEntry[]>(
@@ -98,6 +105,11 @@ export const AttendanceTracker: React.FC = () => {
   const [isLoadingSecondBreakStart, setIsLoadingSecondBreakStart] =
     useState(false);
   const [isLoadingSecondBreakEnd, setIsLoadingSecondBreakEnd] = useState(false);
+  const [alert, setAlert] = useState<AlertState>({
+    show: false,
+    type: null,
+    message: ''
+  });
 
   // Loading states
   const [isLoadingInitial, setIsLoadingInitial] = useState(true);
@@ -121,6 +133,9 @@ export const AttendanceTracker: React.FC = () => {
     <Loader2 className="animate-spin h-4 w-4 ml-2" />
   );
 
+  // Alert timeout reference
+  const alertTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
   };
@@ -132,6 +147,67 @@ export const AttendanceTracker: React.FC = () => {
     }
     return pages;
   };
+
+  const showAlert = (type: 'break1' | 'break2' | 'lunch') => {
+    const messages = {
+      break1: "Break 1 will end in 30 seconds!",
+      break2: "Break 2 will end in 30 seconds!",
+      lunch: "Lunch break will end in 30 seconds!"
+    };
+
+    setAlert({
+      show: true,
+      type,
+      message: messages[type]
+    });
+
+    // Auto-hide alert after 10 seconds
+    if (alertTimeoutRef.current) {
+      clearTimeout(alertTimeoutRef.current);
+    }
+    alertTimeoutRef.current = setTimeout(() => {
+      setAlert({ show: false, type: null, message: '' });
+    }, 10000);
+  };
+
+  const hideAlert = () => {
+    setAlert({ show: false, type: null, message: '' });
+    if (alertTimeoutRef.current) {
+      clearTimeout(alertTimeoutRef.current);
+      alertTimeoutRef.current = null;
+    }
+  };
+
+  // Check for break/lunch time alerts
+  useEffect(() => {
+    if (!isTimeIn) return;
+
+    const checkForAlerts = () => {
+      // Break 1: 15 minutes = 900 seconds, alert at 870 seconds (14.5 minutes)
+      if (currentEntry.breakStart && !currentEntry.breakEnd && elapsedTime >= 870 && elapsedTime < 900) {
+        showAlert('break1');
+      }
+      // Break 2: 15 minutes = 900 seconds, alert at 870 seconds (14.5 minutes)
+      else if (currentEntry.secondBreakStart && !currentEntry.secondBreakEnd && elapsedTime >= 870 && elapsedTime < 900) {
+        showAlert('break2');
+      }
+      // Lunch: 60 minutes = 3600 seconds, alert at 3570 seconds (59.5 minutes)
+      else if (currentEntry.lunchStart && !currentEntry.lunchEnd && elapsedTime >= 3570 && elapsedTime < 3600) {
+        showAlert('lunch');
+      }
+    };
+
+    checkForAlerts();
+  }, [elapsedTime, currentEntry, isTimeIn]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (alertTimeoutRef.current) {
+        clearTimeout(alertTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const getAttendance = async () => {
     setIsLoadingHistory(true);
@@ -416,6 +492,7 @@ export const AttendanceTracker: React.FC = () => {
       setIsTimeIn(false);
       setDialogOpen(false);
       setElapsedTime(0);
+      hideAlert(); // Hide any active alerts when timing out
 
       toast({
         title: "Success",
@@ -449,6 +526,7 @@ export const AttendanceTracker: React.FC = () => {
       const response = await timer.updateBreakStart(updatedEntry);
       setCurrentEntry(response.data);
       setElapsedTime(0);
+      hideAlert(); // Hide any previous alerts
       toast({
         title: "Success",
         description: "Break started successfully!",
@@ -502,6 +580,7 @@ export const AttendanceTracker: React.FC = () => {
 
       const response = await timer.updateBreakEnd(updatedEntry);
       setCurrentEntry(response.data);
+      hideAlert(); // Hide alert when break ends
       toast({
         title: "Success",
         description: "End break logged successfully!",
@@ -533,6 +612,7 @@ export const AttendanceTracker: React.FC = () => {
       const response = await timer.updateLunchStart(updatedEntry);
       setCurrentEntry(response.data);
       setElapsedTime(0);
+      hideAlert(); // Hide any previous alerts
       toast({
         title: "Success",
         description: "Lunch started successfully!",
@@ -586,6 +666,7 @@ export const AttendanceTracker: React.FC = () => {
 
       const response = await timer.updateLunchEnd(updatedEntry);
       setCurrentEntry(response.data);
+      hideAlert(); // Hide alert when lunch ends
       toast({
         title: "Success",
         description: "End lunch logged successfully!",
@@ -689,6 +770,7 @@ export const AttendanceTracker: React.FC = () => {
       const response = await timer.updateSecondBreakStart(updatedEntry);
       setCurrentEntry(response.data);
       setElapsedTime(0); // Reset elapsed time when starting second break
+      hideAlert(); // Hide any previous alerts
       toast({
         title: "Success",
         description: "Break 2 started successfully!",
@@ -742,6 +824,7 @@ export const AttendanceTracker: React.FC = () => {
       const response = await timer.updateSecondBreakEnd(updatedEntry);
       setCurrentEntry(response.data);
       setSelectedAction(null); // Reset the selected action after second break ends
+      hideAlert(); // Hide alert when second break ends
       toast({
         title: "Success",
         description: "Break 2 ended successfully!",
@@ -841,6 +924,34 @@ export const AttendanceTracker: React.FC = () => {
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 py-4">
+      {/* Alert Dialog */}
+      {alert.show && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 max-w-sm mx-4 animate-in zoom-in-95">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-shrink-0">
+                <AlertTriangle className="h-6 w-6 text-amber-500" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Time Alert
+              </h3>
+            </div>
+            <p className="text-gray-700 mb-6">
+              {alert.message}
+            </p>
+            <div className="flex justify-end">
+              <Button
+                onClick={hideAlert}
+                className="bg-amber-500 hover:bg-amber-600 text-white"
+                size="sm"
+              >
+                OK
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Card className="w-full">
 
         <CardHeader className="relative pb-4 sm:pb-6">
