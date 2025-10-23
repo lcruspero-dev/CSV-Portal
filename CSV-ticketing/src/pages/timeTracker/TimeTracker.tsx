@@ -14,14 +14,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import LoadingComponent from "@/components/ui/loading";
 import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -44,7 +36,8 @@ import {
   Coffee,
   Utensils,
   Calendar,
-  AlertTriangle
+  AlertTriangle,
+  Filter,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
@@ -85,31 +78,30 @@ interface AlertState {
   message: string;
 }
 
+type CutoffPeriod = '1-15' | '16-31';
+
 export const AttendanceTracker: React.FC = () => {
   const [isTimeIn, setIsTimeIn] = useState(false);
-  const [attendanceEntries, setAttendanceEntries] = useState<AttendanceEntry[]>(
-    []
-  );
-  const [currentEntry, setCurrentEntry] = useState<Partial<AttendanceEntry>>(
-    {}
-  );
+  const [attendanceEntries, setAttendanceEntries] = useState<AttendanceEntry[]>([]);
+  const [filteredEntries, setFilteredEntries] = useState<AttendanceEntry[]>([]);
+  const [currentEntry, setCurrentEntry] = useState<Partial<AttendanceEntry>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [currentServerTime, setCurrentServerTime] =
-    useState<CurrentTimeResponse>({
-      date: "",
-      time: "",
-    });
+  const [currentServerTime, setCurrentServerTime] = useState<CurrentTimeResponse>({
+    date: "",
+    time: "",
+  });
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
-  const [isLoadingSecondBreakStart, setIsLoadingSecondBreakStart] =
-    useState(false);
+  const [isLoadingSecondBreakStart, setIsLoadingSecondBreakStart] = useState(false);
   const [isLoadingSecondBreakEnd, setIsLoadingSecondBreakEnd] = useState(false);
   const [alert, setAlert] = useState<AlertState>({
     show: false,
     type: null,
     message: ''
   });
+  const [selectedCutoff, setSelectedCutoff] = useState<CutoffPeriod>('1-15');
+  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
 
   // Loading states
   const [isLoadingInitial, setIsLoadingInitial] = useState(true);
@@ -121,12 +113,6 @@ export const AttendanceTracker: React.FC = () => {
   const [isLoadingLunchEnd, setIsLoadingLunchEnd] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
-  const entriesPerPage = 10;
-
-  const totalPages = Math.ceil(attendanceEntries.length / entriesPerPage);
-  const startIndex = (currentPage - 1) * entriesPerPage;
-  const endIndex = startIndex + entriesPerPage;
-  const currentEntries = attendanceEntries.slice(startIndex, endIndex);
   const { toast } = useToast();
 
   const LoadingSpinner = () => (
@@ -135,18 +121,6 @@ export const AttendanceTracker: React.FC = () => {
 
   // Alert timeout reference
   const alertTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
-
-  const handlePageChange = (pageNumber: number) => {
-    setCurrentPage(pageNumber);
-  };
-
-  const getPageNumbers = () => {
-    const pages = [];
-    for (let i = 1; i <= totalPages; i++) {
-      pages.push(i);
-    }
-    return pages;
-  };
 
   const showAlert = (type: 'break1' | 'break2' | 'lunch') => {
     const messages = {
@@ -177,6 +151,69 @@ export const AttendanceTracker: React.FC = () => {
       alertTimeoutRef.current = null;
     }
   };
+
+  // Format current date for display
+  const formatCurrentDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    };
+    return date.toLocaleDateString('en-US', options);
+  };
+
+  // Get current formatted date from server time
+  const currentFormattedDate = currentServerTime.date ? formatCurrentDate(currentServerTime.date) : '';
+
+  // Generate months for dropdown
+  const months = [
+    { value: 0, label: 'January' },
+    { value: 1, label: 'February' },
+    { value: 2, label: 'March' },
+    { value: 3, label: 'April' },
+    { value: 4, label: 'May' },
+    { value: 5, label: 'June' },
+    { value: 6, label: 'July' },
+    { value: 7, label: 'August' },
+    { value: 8, label: 'September' },
+    { value: 9, label: 'October' },
+    { value: 10, label: 'November' },
+    { value: 11, label: 'December' }
+  ];
+
+  // Generate years for dropdown (current year and previous 5 years)
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 6 }, (_, i) => currentYear - i);
+
+  // Filter entries based on selected cutoff period, month, and year
+  const filterEntriesByCutoff = (entries: AttendanceEntry[], cutoff: CutoffPeriod, month: number, year: number): AttendanceEntry[] => {
+    return entries.filter(entry => {
+      const entryDate = new Date(entry.date);
+      const entryMonth = entryDate.getMonth();
+      const entryYear = entryDate.getFullYear();
+      const day = entryDate.getDate();
+      
+      // First filter by month and year
+      if (entryMonth !== month || entryYear !== year) {
+        return false;
+      }
+      
+      // Then filter by cutoff period
+      if (cutoff === '1-15') {
+        return day >= 1 && day <= 15;
+      } else { // '16-31'
+        return day >= 16;
+      }
+    });
+  };
+
+  // Apply filter when cutoff selection, month, year, or attendance entries change
+  useEffect(() => {
+    const filtered = filterEntriesByCutoff(attendanceEntries, selectedCutoff, selectedMonth, selectedYear);
+    setFilteredEntries(filtered);
+  }, [attendanceEntries, selectedCutoff, selectedMonth, selectedYear]);
 
   // Check for break/lunch time alerts
   useEffect(() => {
@@ -756,6 +793,7 @@ export const AttendanceTracker: React.FC = () => {
         break;
     }
   };
+
   const handleSecondBreakStart = async () => {
     setIsLoadingSecondBreakStart(true);
     try {
@@ -953,7 +991,6 @@ export const AttendanceTracker: React.FC = () => {
       )}
 
       <Card className="w-full">
-
         <CardHeader className="relative pb-4 sm:pb-6">
           {/* Mobile: Button below title, Desktop: Button top right */}
           <div className="block sm:absolute sm:right-6 sm:top-6 mt-4 sm:mt-0">
@@ -1006,6 +1043,13 @@ export const AttendanceTracker: React.FC = () => {
                   {formatElapsedTime(elapsedTime)}
                 </div>
               )}
+
+              {/* Current Date Display */}
+              <div className="text-center">
+                <p className="text-lg sm:text-xl font-medium text-gray-700">
+                  {currentFormattedDate || 'Loading date...'}
+                </p>
+              </div>
 
               {/* Action Buttons Section */}
               <div className="flex flex-col sm:flex-row justify-center items-center gap-3 w-full max-w-md mx-auto">
@@ -1105,16 +1149,6 @@ export const AttendanceTracker: React.FC = () => {
                 <div className="w-full max-w-2xl mx-auto">
                   <p className="font-semibold text-sm sm:text-base mb-3 text-center">Current Session</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {/* Date Card */}
-                    {currentEntry.date && (
-                      <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-3 border border-blue-200">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-blue-600" />
-                          <span className="text-xs font-medium text-blue-800">Date</span>
-                        </div>
-                        <p className="text-sm font-semibold mt-1">{currentEntry.date}</p>
-                      </div>
-                    )}
 
                     {/* Time In Card */}
                     {currentEntry.timeIn && (
@@ -1208,7 +1242,66 @@ export const AttendanceTracker: React.FC = () => {
             {/* History Table Section */}
             <Card className="w-full">
               <CardHeader className="p-4 sm:p-6">
-                <CardTitle className="text-lg sm:text-xl">Daily Time Record</CardTitle>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <CardTitle className="text-lg sm:text-xl">Daily Time Record</CardTitle>
+                  
+                  {/* Month, Year, and Cut-off Filters */}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    {/* Month Selector */}
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-gray-500" />
+                      <Select
+                        value={selectedMonth.toString()}
+                        onValueChange={(value) => setSelectedMonth(parseInt(value))}
+                      >
+                        <SelectTrigger className="w-32 text-sm">
+                          <SelectValue placeholder="Month" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {months.map(month => (
+                            <SelectItem key={month.value} value={month.value.toString()}>
+                              {month.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Year Selector */}
+                    <Select
+                      value={selectedYear.toString()}
+                      onValueChange={(value) => setSelectedYear(parseInt(value))}
+                    >
+                      <SelectTrigger className="w-24 text-sm">
+                        <SelectValue placeholder="Year" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {years.map(year => (
+                          <SelectItem key={year} value={year.toString()}>
+                            {year}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {/* Cut-off Filter */}
+                    <div className="flex items-center gap-2">
+                      <Filter className="h-4 w-4 text-gray-500" />
+                      <Select
+                        value={selectedCutoff}
+                        onValueChange={(value: CutoffPeriod) => setSelectedCutoff(value)}
+                      >
+                        <SelectTrigger className="w-32 text-sm">
+                          <SelectValue placeholder="Cut-off" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1-15">1-15</SelectItem>
+                          <SelectItem value="16-31">16-31</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className="p-0 sm:p-6">
                 {isLoadingHistory ? (
@@ -1232,8 +1325,8 @@ export const AttendanceTracker: React.FC = () => {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {currentEntries.length > 0 ? (
-                            currentEntries.map((entry, index) => (
+                          {filteredEntries.length > 0 ? (
+                            filteredEntries.map((entry, index) => (
                               <TableRow key={entry.id || `entry-${index}`}>
                                 <TableCell className="py-2">{entry.date}</TableCell>
                                 <TableCell className="py-2">{entry.timeIn}</TableCell>
@@ -1252,7 +1345,7 @@ export const AttendanceTracker: React.FC = () => {
                                 <TableCell className="py-2">
                                   {formatHoursToMinutes(String(entry.totalLunchTime || ""))}
                                 </TableCell>
-                                  <TableCell className="py-2">
+                                <TableCell className="py-2">
                                   <div
                                     className="truncate max-w-[80px] sm:max-w-[100px] lg:max-w-[150px] text-ellipsis overflow-hidden"
                                     title={entry.notes || ""}
@@ -1264,8 +1357,8 @@ export const AttendanceTracker: React.FC = () => {
                             ))
                           ) : (
                             <TableRow>
-                              <TableCell colSpan={9} className="text-center py-4">
-                                No attendance records found
+                              <TableCell colSpan={8} className="text-center py-4">
+                                No attendance records found for {months.find(m => m.value === selectedMonth)?.label} {selectedYear} ({selectedCutoff} cut-off)
                               </TableCell>
                             </TableRow>
                           )}
@@ -1273,51 +1366,10 @@ export const AttendanceTracker: React.FC = () => {
                       </Table>
                     </div>
 
-                    {/* Pagination */}
-                    {totalPages > 0 && (
-                      <div className="mt-4 flex justify-end items-center">
-                        <Pagination>
-                          <PaginationContent className="flex-wrap">
-                            <PaginationItem>
-                              <PaginationPrevious
-                                onClick={() => handlePageChange(currentPage - 1)}
-                                className={
-                                  currentPage === 1
-                                    ? "pointer-events-none opacity-50"
-                                    : "cursor-pointer"
-                                }
-                                size="sm"
-                              />
-                            </PaginationItem>
-
-                            {getPageNumbers().map((pageNumber) => (
-                              <PaginationItem key={pageNumber}>
-                                <PaginationLink
-                                  onClick={() => handlePageChange(pageNumber)}
-                                  isActive={currentPage === pageNumber}
-                                  className="cursor-pointer text-xs h-8 w-8"
-                                  size="sm"
-                                >
-                                  {pageNumber}
-                                </PaginationLink>
-                              </PaginationItem>
-                            ))}
-
-                            <PaginationItem>
-                              <PaginationNext
-                                onClick={() => handlePageChange(currentPage + 1)}
-                                className={
-                                  currentPage === totalPages
-                                    ? "pointer-events-none opacity-50"
-                                    : "cursor-pointer"
-                                }
-                                size="sm"
-                              />
-                            </PaginationItem>
-                          </PaginationContent>
-                        </Pagination>
-                      </div>
-                    )}
+                    {/* Records Count */}
+                    <div className="mt-4 text-sm text-gray-600">
+                      Showing {filteredEntries.length} record(s) for {months.find(m => m.value === selectedMonth)?.label} {selectedYear} ({selectedCutoff} cut-off)
+                    </div>
                   </>
                 )}
               </CardContent>

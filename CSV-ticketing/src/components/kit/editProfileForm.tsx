@@ -27,8 +27,6 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 import { Camera, Upload, User } from "lucide-react";
 import { useEffect, useState } from "react";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 import { useForm } from "react-hook-form";
 
 interface ProfileFormData {
@@ -93,9 +91,6 @@ export default function EditProfileForm({
 }: EditProfileFormProps) {
   const [avatar, setAvatar] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState("");
-  const [birthdate, setBirthdate] = useState<Date | null>(
-    userData?.dateOfBirth ? new Date(userData.dateOfBirth) : null
-  );
   const [age, setAge] = useState<string>("");
   const { toast } = useToast();
 
@@ -106,32 +101,46 @@ export default function EditProfileForm({
       );
     }
     if (userData?.dateOfBirth) {
-      calculateAge(new Date(userData.dateOfBirth));
+      calculateAge(userData.dateOfBirth);
     }
   }, [userData]);
 
-  const calculateAge = (birthDate: Date) => {
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (
-      monthDiff < 0 ||
-      (monthDiff === 0 && today.getDate() < birthDate.getDate())
-    ) {
-      age--;
+  const calculateAge = (birthDateString: string) => {
+    if (!birthDateString) {
+      setAge("");
+      return;
     }
-    setAge(age.toString());
-  };
 
-  const handleBirthdateChange = (date: Date | null) => {
-    setBirthdate(date);
-    if (date) {
-      form.setValue("dateOfBirth", date.toISOString().split("T")[0]);
-      calculateAge(date);
-    } else {
-      form.setValue("dateOfBirth", "");
+    try {
+      const birthDate = new Date(birthDateString);
+      const today = new Date();
+      
+      // Check if the date is valid
+      if (isNaN(birthDate.getTime())) {
+        setAge("");
+        return;
+      }
+
+      let calculatedAge = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      
+      if (
+        monthDiff < 0 ||
+        (monthDiff === 0 && today.getDate() < birthDate.getDate())
+      ) {
+        calculatedAge--;
+      }
+      
+      setAge(calculatedAge.toString());
+    } catch (error) {
+      console.error("Error calculating age:", error);
       setAge("");
     }
+  };
+
+  const handleBirthdateChange = (dateString: string) => {
+    form.setValue("dateOfBirth", dateString);
+    calculateAge(dateString);
   };
 
   const form = useForm<ProfileFormData>({
@@ -426,22 +435,22 @@ export default function EditProfileForm({
                     <FormField
                       control={form.control}
                       name="dateOfBirth"
-                      render={() => (
+                      render={({ field }) => (
                         <FormItem className="space-y-1 pt-2">
                           <FormLabel className="text-sm">
                             Date of Birth
                             <span className="text-red-500"> *</span>
                           </FormLabel>
                           <FormControl>
-                            <div className="w-full">
-                              <DatePicker
-                                selected={birthdate}
-                                onChange={handleBirthdateChange}
-                                dateFormat="MM/dd/yyyy"
-                                placeholderText="mm/dd/yyyy"
-                                className="rounded-md h-10 text-sm py-2 border border-gray-300 px-3 w-full block"
-                              />
-                            </div>
+                            <Input
+                              type="date"
+                              {...field}
+                              onChange={(e) => {
+                                field.onChange(e);
+                                handleBirthdateChange(e.target.value);
+                              }}
+                              className="rounded-md h-10 text-sm py-2"
+                            />
                           </FormControl>
                           <FormMessage className="text-sm" />
                         </FormItem>
