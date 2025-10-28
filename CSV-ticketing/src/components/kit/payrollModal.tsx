@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { payrollAPI, PayrollPayload, UserProfileAPI } from "@/API/endpoint";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -8,16 +10,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import React, { useEffect, useState } from "react";
 
 export interface UserProfile {
   _id: string;
   userId: string;
+  email: string;
   firstName: string;
   middleName?: string;
   lastName: string;
@@ -94,9 +101,13 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
       try {
         const res = await UserProfileAPI.getAllUsers();
         // Ensure we have an array and handle potential nested data structure
-        const usersData = Array.isArray(res.data) ? res.data : 
-                         Array.isArray(res.data?.users) ? res.data.users : 
-                         Array.isArray(res.data?.data) ? res.data.data : [];
+        const usersData = Array.isArray(res.data)
+          ? res.data
+          : Array.isArray(res.data?.users)
+          ? res.data.users
+          : Array.isArray(res.data?.data)
+          ? res.data.data
+          : [];
         setEmployees(usersData || []);
       } catch (err) {
         console.error("Error fetching employees:", err);
@@ -116,13 +127,15 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
   // Helper function to safely get personalEmail
   const getPersonalEmail = (user: UserProfile | null): string => {
     if (!user) return "";
-    
+
     // Check various possible locations for personalEmail
-    return (user.personalEmail || 
-            (user as any)?.email || 
-            (user as any)?.user?.personalEmail || 
-            (user as any)?.user?.email || 
-            "");
+    return (
+      user.personalEmail ||
+      (user as any)?.email ||
+      (user as any)?.user?.personalEmail ||
+      (user as any)?.user?.email ||
+      ""
+    );
   };
 
   useEffect(() => {
@@ -137,11 +150,11 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
     const grossSalary = round2(basicPay);
     const totalDeductions = round2(
       (form.sssEmployeeShare || 0) +
-      (form.wisp || 0) +
-      (form.hdmfEmployeeShare || 0) +
-      (form.taxableIncome || 0) +
-      (form.hdmfLoan || 0) +
-      lateDeduction
+        (form.wisp || 0) +
+        (form.hdmfEmployeeShare || 0) +
+        (form.taxableIncome || 0) +
+        (form.hdmfLoan || 0) +
+        lateDeduction
     );
     const netPay = round2(grossSalary - totalDeductions);
 
@@ -153,11 +166,11 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
         fullName: `${selectedUser.firstName} ${selectedUser.lastName}`,
         position: selectedUser.jobPosition,
       },
-      payrollRate: { 
-        userId: selectedUser.userId || selectedUser._id, 
-        monthlyRate, 
-        dailyRate, 
-        hourlyRate 
+      payrollRate: {
+        userId: selectedUser.userId || selectedUser._id,
+        monthlyRate,
+        dailyRate,
+        hourlyRate,
       },
       pay: { basicPay },
       workDays: {
@@ -188,8 +201,8 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
         // Auto-calc for dynamic period based on actual work days
         const now = new Date();
         const toMdY = (d: Date) => {
-          const month = String(d.getMonth() + 1).padStart(2, '0');
-          const day = String(d.getDate()).padStart(2, '0');
+          const month = String(d.getMonth() + 1).padStart(2, "0");
+          const day = String(d.getDate()).padStart(2, "0");
           const year = d.getFullYear();
           return `${month}/${day}/${year}`;
         };
@@ -214,7 +227,7 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
             absentDays: p.workDays?.absentDays || 0,
           });
 
-          setForm(prev => ({
+          setForm((prev) => ({
             ...prev,
             monthlyRate: p.payrollRate?.monthlyRate ?? prev.monthlyRate,
           }));
@@ -230,7 +243,7 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
           });
         }
       } catch (err) {
-        console.error('Auto-fetch payroll data failed:', err);
+        console.error("Auto-fetch payroll data failed:", err);
         setAutoComputed({
           dailyRate: 0,
           hourlyRate: 0,
@@ -248,9 +261,12 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
   }, [selectedUser]);
 
   const handleCreate = async () => {
-    if (!selectedUser || !payrollPreview) return alert("Select an employee and fill the form.");
+    if (!selectedUser || !payrollPreview)
+      return alert("Select an employee and fill the form.");
     try {
-      const res = await payrollAPI.processPayroll(payrollPreview as unknown as PayrollPayload);
+      const res = await payrollAPI.processPayroll(
+        payrollPreview as unknown as PayrollPayload
+      );
       onAdd(res.data.payroll || res.data);
       setOpen(false);
     } catch (err) {
@@ -259,12 +275,16 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
   };
 
   // Calculate values for the math breakdown
-  const hourlyRate = round2(((form.monthlyRate || 0) / 26) / 8);
+  const hourlyRate = round2((form.monthlyRate || 0) / 26 / 8);
   const basicPay = round2(autoComputed.totalHoursWorked * hourlyRate);
   const lateDeduction = round2((autoComputed.minsLate / 60) * hourlyRate);
   const totalDeductions = round2(
-    form.sssEmployeeShare + form.wisp + form.hdmfEmployeeShare +
-    form.taxableIncome + form.hdmfLoan + lateDeduction
+    form.sssEmployeeShare +
+      form.wisp +
+      form.hdmfEmployeeShare +
+      form.taxableIncome +
+      form.hdmfLoan +
+      lateDeduction
   );
   const netPay = round2(basicPay - totalDeductions);
 
@@ -289,7 +309,9 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
             <div className="lg:col-span-2 space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Employee Information</CardTitle>
+                  <CardTitle className="text-lg">
+                    Employee Information
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -297,7 +319,11 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                       <Label htmlFor="employee">Select Employee</Label>
                       <Select
                         value={selectedUser?._id || ""}
-                        onValueChange={(value) => setSelectedUser(employees.find((emp) => emp._id === value) || null)}
+                        onValueChange={(value) =>
+                          setSelectedUser(
+                            employees.find((emp) => emp._id === value) || null
+                          )
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Choose employee..." />
@@ -314,8 +340,18 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
 
                     {selectedUser && (
                       <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
-                        <div>Position: <span className="font-normal">{selectedUser.jobPosition}</span></div>
-                        <div>Email: <span className="font-normal">{getPersonalEmail(selectedUser) || "No email"}</span></div>
+                        <div>
+                          Position:{" "}
+                          <span className="font-normal">
+                            {selectedUser.jobPosition}
+                          </span>
+                        </div>
+                        <div>
+                          Email:{" "}
+                          <span className="font-normal">
+                            {getPersonalEmail(selectedUser) || "No email"}
+                          </span>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -331,9 +367,13 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* Rates Section */}
                       <div className="space-y-3">
-                        <h4 className="font-semibold text-sm border-b pb-1">Rates & Hours</h4>
+                        <h4 className="font-semibold text-sm border-b pb-1">
+                          Rates & Hours
+                        </h4>
                         {loadingAuto && (
-                          <div className="text-xs text-gray-500">Auto-calculating from time tracker…</div>
+                          <div className="text-xs text-gray-500">
+                            Auto-calculating from time tracker…
+                          </div>
                         )}
                         <div>
                           <Label htmlFor="monthlyRate">Monthly Rate</Label>
@@ -348,36 +388,60 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                         <div className="grid grid-cols-2 gap-2">
                           <div>
                             <Label className="text-xs">Daily Rate (Auto)</Label>
-                            <Input value={round2((form.monthlyRate || 0) / 26)} disabled className="bg-muted" />
+                            <Input
+                              value={round2((form.monthlyRate || 0) / 26)}
+                              disabled
+                              className="bg-muted"
+                            />
                           </div>
                           <div>
-                            <Label className="text-xs">Hourly Rate (Auto)</Label>
-                            <Input value={round2(((form.monthlyRate || 0) / 26) / 8)} disabled className="bg-muted" />
+                            <Label className="text-xs">
+                              Hourly Rate (Auto)
+                            </Label>
+                            <Input
+                              value={round2((form.monthlyRate || 0) / 26 / 8)}
+                              disabled
+                              className="bg-muted"
+                            />
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div>
-                            <Label className="text-xs">Hours Worked (Auto)</Label>
-                            <Input value={round2(autoComputed.totalHoursWorked || 0)} disabled className="bg-muted" />
+                            <Label className="text-xs">
+                              Hours Worked (Auto)
+                            </Label>
+                            <Input
+                              value={round2(autoComputed.totalHoursWorked || 0)}
+                              disabled
+                              className="bg-muted"
+                            />
                           </div>
                           <div>
-                            <Label className="text-xs">Late Minutes (Auto)</Label>
-                            <Input value={autoComputed.minsLate || 0} disabled className="bg-muted" />
+                            <Label className="text-xs">
+                              Late Minutes (Auto)
+                            </Label>
+                            <Input
+                              value={autoComputed.minsLate || 0}
+                              disabled
+                              className="bg-muted"
+                            />
                           </div>
                         </div>
                       </div>
 
                       {/* Deductions Section */}
                       <div className="space-y-3">
-                        <h4 className="font-semibold text-sm border-b pb-1">Deductions</h4>
+                        <h4 className="font-semibold text-sm border-b pb-1">
+                          Deductions
+                        </h4>
                         {[
                           {
                             id: "sssEmployeeShare",
-                            label: "SSS"
+                            label: "SSS",
                           },
                           {
                             id: "wisp",
-                            label: "WISP"
+                            label: "WISP",
                           },
                           { id: "hdmfEmployeeShare", label: "PAG-IBIG" },
                           { id: "taxableIncome", label: "TAXABLE INCOME" },
@@ -408,7 +472,10 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center justify-between">
                       Payroll Breakdown
-                      <Badge variant="outline" className="text-green-600 border-green-600">
+                      <Badge
+                        variant="outline"
+                        className="text-green-600 border-green-600"
+                      >
                         PHP {netPay.toFixed(2)}
                       </Badge>
                     </CardTitle>
@@ -417,16 +484,24 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                     <div className="space-y-3 text-sm">
                       {/* Earnings */}
                       <div className="space-y-2">
-                        <div className="font-medium text-green-600">EARNINGS</div>
+                        <div className="font-medium text-green-600">
+                          EARNINGS
+                        </div>
                         <div className="flex justify-between">
-                          <span>Basic Pay ({autoComputed.totalHoursWorked.toFixed(1)}h × {hourlyRate.toFixed(2)})</span>
+                          <span>
+                            Basic Pay (
+                            {autoComputed.totalHoursWorked.toFixed(1)}h ×{" "}
+                            {hourlyRate.toFixed(2)})
+                          </span>
                           <span>+ {basicPay.toFixed(2)}</span>
                         </div>
                       </div>
 
                       {/* Deductions */}
                       <div className="space-y-2 border-t pt-2">
-                        <div className="font-medium text-red-600">DEDUCTIONS</div>
+                        <div className="font-medium text-red-600">
+                          DEDUCTIONS
+                        </div>
                         {form.sssEmployeeShare > 0 && (
                           <div className="flex justify-between">
                             <span>SSS</span>
@@ -459,7 +534,9 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                         )}
                         {lateDeduction > 0 && (
                           <div className="flex justify-between">
-                            <span>Late Deduction ({autoComputed.minsLate}m)</span>
+                            <span>
+                              Late Deduction ({autoComputed.minsLate}m)
+                            </span>
                             <span>- {lateDeduction.toFixed(2)}</span>
                           </div>
                         )}
@@ -473,11 +550,15 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                         </div>
                         <div className="flex justify-between font-medium">
                           <span>Total Deductions</span>
-                          <span className="text-red-600">- {totalDeductions.toFixed(2)}</span>
+                          <span className="text-red-600">
+                            - {totalDeductions.toFixed(2)}
+                          </span>
                         </div>
                         <div className="flex justify-between font-bold border-t pt-1 text-base">
                           <span>NET PAY</span>
-                          <span className="text-green-600">PHP {netPay.toFixed(2)}</span>
+                          <span className="text-green-600">
+                            PHP {netPay.toFixed(2)}
+                          </span>
                         </div>
                       </div>
                     </div>

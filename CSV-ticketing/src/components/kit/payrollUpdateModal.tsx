@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { payrollAPI } from "@/API/endpoint";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -9,21 +11,19 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  Building,
   Calculator,
-  Send,
-  Download,
-  Eye,
-  Edit3,
-  Clock,
   Calendar,
+  Clock,
   DollarSign,
+  Download,
+  Edit3,
+  Eye,
+  Send,
   User,
-  Building
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { Payroll } from "./payrollModal";
@@ -50,19 +50,46 @@ const tabSections = [
       {
         title: "Payroll Rates",
         fields: [
-          { path: "payrollRate.monthlyRate", label: "Monthly Rate", editable: true, type: "currency" },
-          { path: "payrollRate.dailyRate", label: "Daily Rate", editable: false, type: "currency" },
-          { path: "payrollRate.hourlyRate", label: "Hourly Rate", editable: false, type: "currency" },
+          {
+            path: "payrollRate.monthlyRate",
+            label: "Monthly Rate",
+            editable: true,
+            type: "currency",
+          },
+          {
+            path: "payrollRate.dailyRate",
+            label: "Daily Rate",
+            editable: false,
+            type: "currency",
+          },
+          {
+            path: "payrollRate.hourlyRate",
+            label: "Hourly Rate",
+            editable: false,
+            type: "currency",
+          },
         ],
       },
       {
         title: "Work Days & Hours",
         fields: [
-          { path: "workDays.regularDays", label: "Regular Days", editable: false },
+          {
+            path: "workDays.regularDays",
+            label: "Regular Days",
+            editable: false,
+          },
           { path: "workDays.absentDays", label: "Absent Days", editable: true },
           { path: "workDays.minsLate", label: "Minutes Late", editable: true },
-          { path: "workDays.totalHoursWorked", label: "Hours Worked", editable: true },
-          { path: "workDays.undertimeMinutes", label: "Undertime Minutes", editable: true },
+          {
+            path: "workDays.totalHoursWorked",
+            label: "Hours Worked",
+            editable: true,
+          },
+          {
+            path: "workDays.undertimeMinutes",
+            label: "Undertime Minutes",
+            editable: true,
+          },
         ],
       },
     ],
@@ -75,22 +102,66 @@ const tabSections = [
       {
         title: "Overtime Hours",
         fields: [
-          { path: "totalOvertime.regularOT", label: "Regular OT Hours", editable: true },
-          { path: "totalOvertime.restDayOtHours", label: "Rest Day OT Hours", editable: true },
-          { path: "totalOvertime.restDayOtHoursExcess", label: "Rest Day OT Excess Hours", editable: true },
-          { path: "totalOvertime.regularHolidayWorked", label: "Regular Holiday Worked", editable: true },
-          { path: "totalOvertime.regularHolidayWorkedExcess", label: "Regular Holiday Worked Excess", editable: true },
-          { path: "totalOvertime.specialHolidayWorked", label: "Special Holiday Worked", editable: true },
-          { path: "totalOvertime.specialHolidayWorkedOT", label: "Special Holiday Worked OT", editable: true },
-          { path: "totalOvertime.specialHolidayRDworkedHours", label: "Special Holiday RD Worked Hours", editable: true },
-          { path: "totalOvertime.specialHolidayRDworkedOT", label: "Special Holiday RD Worked OT", editable: true },
+          {
+            path: "totalOvertime.regularOT",
+            label: "Regular OT Hours",
+            editable: true,
+          },
+          {
+            path: "totalOvertime.restDayOtHours",
+            label: "Rest Day OT Hours",
+            editable: true,
+          },
+          {
+            path: "totalOvertime.restDayOtHoursExcess",
+            label: "Rest Day OT Excess Hours",
+            editable: true,
+          },
+          {
+            path: "totalOvertime.regularHolidayWorked",
+            label: "Regular Holiday Worked",
+            editable: true,
+          },
+          {
+            path: "totalOvertime.regularHolidayWorkedExcess",
+            label: "Regular Holiday Worked Excess",
+            editable: true,
+          },
+          {
+            path: "totalOvertime.specialHolidayWorked",
+            label: "Special Holiday Worked",
+            editable: true,
+          },
+          {
+            path: "totalOvertime.specialHolidayWorkedOT",
+            label: "Special Holiday Worked OT",
+            editable: true,
+          },
+          {
+            path: "totalOvertime.specialHolidayRDworkedHours",
+            label: "Special Holiday RD Worked Hours",
+            editable: true,
+          },
+          {
+            path: "totalOvertime.specialHolidayRDworkedOT",
+            label: "Special Holiday RD Worked OT",
+            editable: true,
+          },
         ],
       },
       {
         title: "Holidays",
         fields: [
-          { path: "holidays.regHoliday", label: "Regular Holidays (days)", editable: true },
-          { path: "holidays.speHoliday", label: "Special Holidays (days)", editable: true },
+          {
+            path: "holidays.regHoliday",
+            label: "Regular Holidays (days)",
+            editable: true,
+          },
+          {
+            path: "holidays.speHoliday",
+            label: "Special Holidays (days)",
+            editable: true,
+          },
         ],
       },
     ],
@@ -103,11 +174,31 @@ const tabSections = [
       {
         title: "Night Differential Hours",
         fields: [
-          { path: "totalSupplementary.nightDiffHours", label: "Night Diff Hours", editable: true },
-          { path: "totalSupplementary.regOTnightDiffHours", label: "Reg OT Night Diff Hours", editable: true },
-          { path: "totalSupplementary.restDayNDhours", label: "Rest Day Night Diff Hours", editable: true },
-          { path: "totalSupplementary.regHolNDHours", label: "Reg Holiday Night Diff Hours", editable: true },
-          { path: "totalSupplementary.specialHolidayNDhours", label: "Special Holiday Night Diff Hours", editable: true },
+          {
+            path: "totalSupplementary.nightDiffHours",
+            label: "Night Diff Hours",
+            editable: true,
+          },
+          {
+            path: "totalSupplementary.regOTnightDiffHours",
+            label: "Reg OT Night Diff Hours",
+            editable: true,
+          },
+          {
+            path: "totalSupplementary.restDayNDhours",
+            label: "Rest Day Night Diff Hours",
+            editable: true,
+          },
+          {
+            path: "totalSupplementary.regHolNDHours",
+            label: "Reg Holiday Night Diff Hours",
+            editable: true,
+          },
+          {
+            path: "totalSupplementary.specialHolidayNDhours",
+            label: "Special Holiday Night Diff Hours",
+            editable: true,
+          },
         ],
       },
     ],
@@ -120,15 +211,34 @@ const tabSections = [
       {
         title: "Salary Adjustments",
         fields: [
-          { path: "salaryAdjustments.unpaid", label: "Unpaid Days", editable: true },
-          { path: "salaryAdjustments.increase", label: "Salary Increase", editable: true, type: "currency" },
+          {
+            path: "salaryAdjustments.unpaid",
+            label: "Unpaid Days",
+            editable: true,
+          },
+          {
+            path: "salaryAdjustments.increase",
+            label: "Salary Increase",
+            editable: true,
+            type: "currency",
+          },
         ],
       },
       {
         title: "Allowances & Bonuses",
         fields: [
-          { path: "grossSalary.nonTaxableAllowance", label: "Non-Taxable Allowance", editable: true, type: "currency" },
-          { path: "grossSalary.performanceBonus", label: "Performance Bonus", editable: true, type: "currency" },
+          {
+            path: "grossSalary.nonTaxableAllowance",
+            label: "Non-Taxable Allowance",
+            editable: true,
+            type: "currency",
+          },
+          {
+            path: "grossSalary.performanceBonus",
+            label: "Performance Bonus",
+            editable: true,
+            type: "currency",
+          },
         ],
       },
     ],
@@ -141,19 +251,59 @@ const tabSections = [
       {
         title: "Government Deductions",
         fields: [
-          { path: "totalDeductions.sssEmployeeShare", label: "SSS Employee Share", editable: true, type: "currency" },
-          { path: "totalDeductions.phicEmployeeShare", label: "PhilHealth Employee Share", editable: true, type: "currency" },
-          { path: "totalDeductions.hdmfEmployeeShare", label: "Pag-IBIG Employee Share", editable: true, type: "currency" },
-          { path: "totalDeductions.wisp", label: "WISP", editable: true, type: "currency" },
-          { path: "totalDeductions.totalSSScontribution", label: "Total SSS Contribution", editable: true, type: "currency" },
+          {
+            path: "totalDeductions.sssEmployeeShare",
+            label: "SSS Employee Share",
+            editable: true,
+            type: "currency",
+          },
+          {
+            path: "totalDeductions.phicEmployeeShare",
+            label: "PhilHealth Employee Share",
+            editable: true,
+            type: "currency",
+          },
+          {
+            path: "totalDeductions.hdmfEmployeeShare",
+            label: "Pag-IBIG Employee Share",
+            editable: true,
+            type: "currency",
+          },
+          {
+            path: "totalDeductions.wisp",
+            label: "WISP",
+            editable: true,
+            type: "currency",
+          },
+          {
+            path: "totalDeductions.totalSSScontribution",
+            label: "Total SSS Contribution",
+            editable: true,
+            type: "currency",
+          },
         ],
       },
       {
         title: "Tax & Loans",
         fields: [
-          { path: "totalDeductions.withHoldingTax", label: "Withholding Tax", editable: true, type: "currency" },
-          { path: "totalDeductions.sssSalaryLoan", label: "SSS Salary Loan", editable: true, type: "currency" },
-          { path: "totalDeductions.hdmfLoan", label: "HDMF Loan", editable: true, type: "currency" },
+          {
+            path: "totalDeductions.withHoldingTax",
+            label: "Withholding Tax",
+            editable: true,
+            type: "currency",
+          },
+          {
+            path: "totalDeductions.sssSalaryLoan",
+            label: "SSS Salary Loan",
+            editable: true,
+            type: "currency",
+          },
+          {
+            path: "totalDeductions.hdmfLoan",
+            label: "HDMF Loan",
+            editable: true,
+            type: "currency",
+          },
         ],
       },
     ],
@@ -210,12 +360,12 @@ const UpdatePayrollModal = ({
     // Auto-derive daily/hourly from monthly rate for display
     if (path === "payrollRate.dailyRate") {
       const monthly = Number(obj?.payrollRate?.monthlyRate ?? 0);
-      return Math.round(((monthly / 26) || 0) * 100) / 100;
+      return Math.round((monthly / 26 || 0) * 100) / 100;
     }
     if (path === "payrollRate.hourlyRate") {
       const monthly = Number(obj?.payrollRate?.monthlyRate ?? 0);
       const daily = monthly / 26;
-      return Math.round((((daily / 8) || 0) * 100)) / 100;
+      return Math.round((daily / 8 || 0) * 100) / 100;
     }
     return path.split(".").reduce((acc, key) => acc?.[key], obj) ?? 0;
   };
@@ -228,26 +378,36 @@ const UpdatePayrollModal = ({
         // Use a wide date range to capture all unsent work days
         const now = new Date();
         const toMdY = (d: Date) => {
-          const mm = String(d.getMonth() + 1).padStart(2, '0');
-          const dd = String(d.getDate()).padStart(2, '0');
+          const mm = String(d.getMonth() + 1).padStart(2, "0");
+          const dd = String(d.getDate()).padStart(2, "0");
           const yyyy = d.getFullYear();
           return `${mm}/${dd}/${yyyy}`;
         };
         const startDate = toMdY(new Date(now.getFullYear(), 0, 1)); // Start of year
         const endDate = toMdY(now); // Today
 
-        const userId = (formData.payrollRate as any)?.userId || (payroll as any)?.payrollRate?.userId;
+        const userId =
+          (formData.payrollRate as any)?.userId ||
+          (payroll as any)?.payrollRate?.userId;
         if (!userId) return;
-        const res = await payrollAPI.autoCalculatePayroll(userId, { startDate, endDate });
+        const res = await payrollAPI.autoCalculatePayroll(userId, {
+          startDate,
+          endDate,
+        });
         const p = res.data?.payroll;
         if (p) {
           setFormData((prev) => ({
             ...prev,
             payrollRate: {
               ...(prev.payrollRate as any),
-              monthlyRate: p.payrollRate?.monthlyRate ?? (prev.payrollRate?.monthlyRate || 0),
-              dailyRate: p.payrollRate?.dailyRate ?? (prev.payrollRate?.dailyRate || 0),
-              hourlyRate: p.payrollRate?.hourlyRate ?? (prev.payrollRate?.hourlyRate || 0),
+              monthlyRate:
+                p.payrollRate?.monthlyRate ??
+                (prev.payrollRate?.monthlyRate || 0),
+              dailyRate:
+                p.payrollRate?.dailyRate ?? (prev.payrollRate?.dailyRate || 0),
+              hourlyRate:
+                p.payrollRate?.hourlyRate ??
+                (prev.payrollRate?.hourlyRate || 0),
             } as any,
             workDays: {
               ...(prev.workDays as any),
@@ -260,27 +420,32 @@ const UpdatePayrollModal = ({
           }));
         }
       } catch (e) {
-        console.error('Auto-calc from time tracker failed:', e);
+        console.error("Auto-calc from time tracker failed:", e);
       } finally {
         setLoadingAuto(false);
       }
     };
-    
+
     // Only run auto-calculation when modal opens or payroll changes
     if (isOpen) {
       run();
     }
-  }, [isOpen, payroll]);
+  }, [formData.payrollRate, isOpen, payroll]);
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-PH', {
-      style: 'currency',
-      currency: 'PHP',
+    return new Intl.NumberFormat("en-PH", {
+      style: "currency",
+      currency: "PHP",
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(value);
   };
 
+  /**
+   * Handles update of payroll data
+   * @async
+   * @returns {Promise<void>} - resolved when update is successful, rejected when update fails
+   */
   const handleUpdate = async () => {
     try {
       const monthly = Number(formData.payrollRate?.monthlyRate ?? 0);
@@ -410,8 +575,13 @@ const UpdatePayrollModal = ({
       );
       if (!confirmSend) return;
 
-      const updated = await payrollAPI.updatePayroll((payroll as any)._id, payload);
-      const userId = (formData.payrollRate as any)?.userId || (payroll as any)?.payrollRate?.userId;
+      const updated = await payrollAPI.updatePayroll(
+        (payroll as any)._id,
+        payload
+      );
+      const userId =
+        (formData.payrollRate as any)?.userId ||
+        (payroll as any)?.payrollRate?.userId;
       const payrollId = updated?.data?._id || (payroll as any)._id;
 
       await payrollAPI.sendPayroll(userId as string, { payrollId });
@@ -455,44 +625,83 @@ const UpdatePayrollModal = ({
 
     const regularOTpay = round2((ot.regularOT ?? 0) * hourlyRate * 1.25);
     const restDayOtPay = round2((ot.restDayOtHours ?? 0) * hourlyRate * 1.3);
-    const restDayOtExcessPay = round2((ot.restDayOtHoursExcess ?? 0) * hourlyRate * 1.5);
-    const regularHolidayWorkedPay = round2((ot.regularHolidayWorked ?? 0) * dailyRate * 2);
-    const regularHolidayWorkedExcessPay = round2((ot.regularHolidayWorkedExcess ?? 0) * hourlyRate * 2.6);
-    const specialHolidayWorkedPay = round2((ot.specialHolidayWorked ?? 0) * dailyRate * 1.3);
-    const specialHolidayWorkedOTpay = round2((ot.specialHolidayWorkedOT ?? 0) * hourlyRate * 1.69);
-    const specialHolidayRDworkedPay = round2((ot.specialHolidayRDworkedHours ?? 0) * hourlyRate * 1.69);
-    const specialHolidayRDworkedOTpay = round2((ot.specialHolidayRDworkedOT ?? 0) * hourlyRate * 2);
+    const restDayOtExcessPay = round2(
+      (ot.restDayOtHoursExcess ?? 0) * hourlyRate * 1.5
+    );
+    const regularHolidayWorkedPay = round2(
+      (ot.regularHolidayWorked ?? 0) * dailyRate * 2
+    );
+    const regularHolidayWorkedExcessPay = round2(
+      (ot.regularHolidayWorkedExcess ?? 0) * hourlyRate * 2.6
+    );
+    const specialHolidayWorkedPay = round2(
+      (ot.specialHolidayWorked ?? 0) * dailyRate * 1.3
+    );
+    const specialHolidayWorkedOTpay = round2(
+      (ot.specialHolidayWorkedOT ?? 0) * hourlyRate * 1.69
+    );
+    const specialHolidayRDworkedPay = round2(
+      (ot.specialHolidayRDworkedHours ?? 0) * hourlyRate * 1.69
+    );
+    const specialHolidayRDworkedOTpay = round2(
+      (ot.specialHolidayRDworkedOT ?? 0) * hourlyRate * 2
+    );
 
     const nightDiffPay = round2((supp.nightDiffHours ?? 0) * hourlyRate * 0.1);
-    const regOTnightDiffPay = round2((supp.regOTnightDiffHours ?? 0) * hourlyRate * 0.1);
+    const regOTnightDiffPay = round2(
+      (supp.regOTnightDiffHours ?? 0) * hourlyRate * 0.1
+    );
     const restDayNDPay = round2((supp.restDayNDhours ?? 0) * hourlyRate * 0.1);
     const regHolNDPay = round2((supp.regHolNDHours ?? 0) * hourlyRate * 0.1);
-    const specialHolidayNDpay = round2((supp.specialHolidayNDhours ?? 0) * hourlyRate * 0.1);
+    const specialHolidayNDpay = round2(
+      (supp.specialHolidayNDhours ?? 0) * hourlyRate * 0.1
+    );
 
     const totalOvertime = round2(
-      regularOTpay + restDayOtPay + restDayOtExcessPay + regularHolidayWorkedPay +
-      regularHolidayWorkedExcessPay + specialHolidayWorkedPay + specialHolidayWorkedOTpay +
-      specialHolidayRDworkedPay + specialHolidayRDworkedOTpay
+      regularOTpay +
+        restDayOtPay +
+        restDayOtExcessPay +
+        regularHolidayWorkedPay +
+        regularHolidayWorkedExcessPay +
+        specialHolidayWorkedPay +
+        specialHolidayWorkedOTpay +
+        specialHolidayRDworkedPay +
+        specialHolidayRDworkedOTpay
     );
 
     const totalSupplementaryIncome = round2(
-      nightDiffPay + regOTnightDiffPay + restDayNDPay + regHolNDPay + specialHolidayNDpay
+      nightDiffPay +
+        regOTnightDiffPay +
+        restDayNDPay +
+        regHolNDPay +
+        specialHolidayNDpay
     );
 
     const grossSalary = round2(
-      basicPay + regHolidayPay + speHolidayPay + totalOvertime +
-      totalSupplementaryIncome + (adj.increase ?? 0) +
-      (gross.nonTaxableAllowance ?? 0) + (gross.performanceBonus ?? 0)
+      basicPay +
+        regHolidayPay +
+        speHolidayPay +
+        totalOvertime +
+        totalSupplementaryIncome +
+        (adj.increase ?? 0) +
+        (gross.nonTaxableAllowance ?? 0) +
+        (gross.performanceBonus ?? 0)
     );
 
     const unpaidAmount = round2((adj.unpaid ?? 0) * dailyRate);
 
     const totalDeductions = round2(
-      absentDeduction + lateDeduction + (ded.sssEmployeeShare ?? 0) +
-      (ded.phicEmployeeShare ?? 0) + (ded.hdmfEmployeeShare ?? 0) +
-      (ded.wisp ?? 0) + (ded.totalSSScontribution ?? 0) +
-      (ded.withHoldingTax ?? 0) + (ded.sssSalaryLoan ?? 0) +
-      (ded.hdmfLoan ?? 0) + unpaidAmount
+      absentDeduction +
+        lateDeduction +
+        (ded.sssEmployeeShare ?? 0) +
+        (ded.phicEmployeeShare ?? 0) +
+        (ded.hdmfEmployeeShare ?? 0) +
+        (ded.wisp ?? 0) +
+        (ded.totalSSScontribution ?? 0) +
+        (ded.withHoldingTax ?? 0) +
+        (ded.sssSalaryLoan ?? 0) +
+        (ded.hdmfLoan ?? 0) +
+        unpaidAmount
     );
 
     const netPay = round2(grossSalary - totalDeductions);
@@ -532,7 +741,12 @@ const UpdatePayrollModal = ({
   return (
     <>
       {!isControlled && (
-        <Button onClick={() => setOpen(true)} size="sm" variant="outline" className="gap-2">
+        <Button
+          onClick={() => setOpen(true)}
+          size="sm"
+          variant="outline"
+          className="gap-2"
+        >
           <Edit3 className="h-4 w-4" />
           Edit
         </Button>
@@ -558,7 +772,10 @@ const UpdatePayrollModal = ({
               </div>
               <Badge variant="outline" className="px-3 py-1 bg-white">
                 <Calendar className="h-3 w-3 mr-1" />
-                {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                {new Date().toLocaleDateString("en-US", {
+                  month: "long",
+                  year: "numeric",
+                })}
               </Badge>
             </div>
           </DialogHeader>
@@ -566,7 +783,11 @@ const UpdatePayrollModal = ({
           <div className="flex h-full">
             {/* Left Panel - Form Fields */}
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+              <Tabs
+                value={activeTab}
+                onValueChange={setActiveTab}
+                className="flex-1 flex flex-col"
+              >
                 <TabsList className="grid grid-cols-5 rounded-none border-b px-6 py-0 h-12">
                   {tabSections.map((tab) => {
                     const Icon = tab.icon;
@@ -586,10 +807,16 @@ const UpdatePayrollModal = ({
                 <div className="flex-1 overflow-y-auto">
                   <div className="p-6">
                     {loadingAuto && (
-                      <div className="text-xs text-gray-500 mb-2">Auto-calculating hours from time tracker…</div>
+                      <div className="text-xs text-gray-500 mb-2">
+                        Auto-calculating hours from time tracker…
+                      </div>
                     )}
                     {tabSections.map((tab) => (
-                      <TabsContent key={tab.id} value={tab.id} className="space-y-6 m-0">
+                      <TabsContent
+                        key={tab.id}
+                        value={tab.id}
+                        className="space-y-6 m-0"
+                      >
                         {tab.fields.map((section) => (
                           <Card key={section.title}>
                             <CardHeader className="pb-3">
@@ -599,34 +826,54 @@ const UpdatePayrollModal = ({
                             </CardHeader>
                             <CardContent className="pt-0">
                               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {section.fields.map(({ path, label, editable = true, type }) => (
-                                  <div key={path} className="space-y-2">
-                                    <Label className="text-xs font-medium text-gray-600">
-                                      {label}
-                                      {!editable && (
-                                        <Badge variant="secondary" className="ml-2 text-xs">Auto</Badge>
-                                      )}
-                                    </Label>
-                                    <Input
-                                      type="number"
-                                      value={getValue(formData, path)}
-                                      onChange={(e) =>
-                                        editable ? handleChange(path, parseFloat(e.target.value) || 0) : undefined
-                                      }
-                                      disabled={!editable}
-                                      className={`
-                                    ${!editable ? 'bg-gray-50 text-gray-600' : ''}
-                                    ${type === 'currency' ? 'font-mono' : ''}
+                                {section.fields.map(
+                                  ({ path, label, editable = true, type }) => (
+                                    <div key={path} className="space-y-2">
+                                      <Label className="text-xs font-medium text-gray-600">
+                                        {label}
+                                        {!editable && (
+                                          <Badge
+                                            variant="secondary"
+                                            className="ml-2 text-xs"
+                                          >
+                                            Auto
+                                          </Badge>
+                                        )}
+                                      </Label>
+                                      <Input
+                                        type="number"
+                                        value={getValue(formData, path)}
+                                        onChange={(e) =>
+                                          editable
+                                            ? handleChange(
+                                                path,
+                                                parseFloat(e.target.value) || 0
+                                              )
+                                            : undefined
+                                        }
+                                        disabled={!editable}
+                                        className={`
+                                    ${
+                                      !editable
+                                        ? "bg-gray-50 text-gray-600"
+                                        : ""
+                                    }
+                                    ${type === "currency" ? "font-mono" : ""}
                                   `}
-                                      step={type === 'currency' ? '0.01' : '1'}
-                                    />
-                                    {type === 'currency' && (
-                                      <p className="text-xs text-gray-500 font-mono">
-                                        {formatCurrency(getValue(formData, path))}
-                                      </p>
-                                    )}
-                                  </div>
-                                ))}
+                                        step={
+                                          type === "currency" ? "0.01" : "1"
+                                        }
+                                      />
+                                      {type === "currency" && (
+                                        <p className="text-xs text-gray-500 font-mono">
+                                          {formatCurrency(
+                                            getValue(formData, path)
+                                          )}
+                                        </p>
+                                      )}
+                                    </div>
+                                  )
+                                )}
                               </div>
                             </CardContent>
                           </Card>
@@ -641,8 +888,13 @@ const UpdatePayrollModal = ({
             {/* Right Panel - Preview with guaranteed scroll */}
             <div className="w-[400px] border-l bg-gradient-to-b from-gray-50 to-white flex flex-col overflow-hidden">
               {/* Scrollable container with fixed height */}
-              <div className="h-full overflow-y-auto" style={{ maxHeight: 'calc(70vh - 80px)' }}>
-                <div className="p-5 space-y-4"> {/* Increased space-y for better spacing */}
+              <div
+                className="h-full overflow-y-auto"
+                style={{ maxHeight: "calc(70vh - 80px)" }}
+              >
+                <div className="p-5 space-y-4">
+                  {" "}
+                  {/* Increased space-y for better spacing */}
                   {/* Summary Card */}
                   <Card className="bg-gradient-to-br from-blue-50 to-indigo-100 border-blue-200">
                     <CardHeader className="pb-3">
@@ -670,12 +922,18 @@ const UpdatePayrollModal = ({
 
                         <div className="text-gray-600">Allowances:</div>
                         <div className="text-right font-mono text-green-600">
-                          +{formatCurrency((formData.grossSalary?.nonTaxableAllowance || 0) + (formData.grossSalary?.performanceBonus || 0))}
+                          +
+                          {formatCurrency(
+                            (formData.grossSalary?.nonTaxableAllowance || 0) +
+                              (formData.grossSalary?.performanceBonus || 0)
+                          )}
                         </div>
 
                         <Separator className="col-span-2 my-1" />
 
-                        <div className="text-gray-600 font-semibold">Gross Salary:</div>
+                        <div className="text-gray-600 font-semibold">
+                          Gross Salary:
+                        </div>
                         <div className="font-bold text-right font-mono text-green-700">
                           {formatCurrency(preview.grossSalary)}
                         </div>
@@ -694,55 +952,73 @@ const UpdatePayrollModal = ({
                       </div>
                     </CardContent>
                   </Card>
-
                   {/* Rates Card */}
                   <Card>
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-sm font-semibold">Rates</CardTitle>
+                      <CardTitle className="text-sm font-semibold">
+                        Rates
+                      </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span>Monthly:</span>
-                        <span className="font-mono">{formatCurrency(preview.monthlyRate)}</span>
+                        <span className="font-mono">
+                          {formatCurrency(preview.monthlyRate)}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span>Daily:</span>
-                        <span className="font-mono">{formatCurrency(preview.dailyRate)}</span>
+                        <span className="font-mono">
+                          {formatCurrency(preview.dailyRate)}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span>Hourly:</span>
-                        <span className="font-mono">{formatCurrency(preview.hourlyRate)}</span>
+                        <span className="font-mono">
+                          {formatCurrency(preview.hourlyRate)}
+                        </span>
                       </div>
                     </CardContent>
                   </Card>
-
                   {/* Work Details Card */}
                   <Card>
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-sm font-semibold">Work Details</CardTitle>
+                      <CardTitle className="text-sm font-semibold">
+                        Work Details
+                      </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span>Hours Worked:</span>
-                        <span>{formData.workDays?.totalHoursWorked?.toFixed(1) || 0}h</span>
+                        <span>
+                          {formData.workDays?.totalHoursWorked?.toFixed(1) || 0}
+                          h
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span>Absent Days:</span>
-                        <span className="text-red-600">{formData.workDays?.absentDays || 0}</span>
+                        <span className="text-red-600">
+                          {formData.workDays?.absentDays || 0}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span>Late Minutes:</span>
-                        <span className="text-orange-600">{formData.workDays?.minsLate || 0}m</span>
+                        <span className="text-orange-600">
+                          {formData.workDays?.minsLate || 0}m
+                        </span>
                       </div>
                     </CardContent>
                   </Card>
-
                   {/* Quick Actions */}
                   <Card>
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-sm font-semibold">Actions</CardTitle>
+                      <CardTitle className="text-sm font-semibold">
+                        Actions
+                      </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-3"> {/* Increased spacing */}
+                    <CardContent className="space-y-3">
+                      {" "}
+                      {/* Increased spacing */}
                       <Button
                         onClick={handleUpdate}
                         className="w-full gap-2"
@@ -768,7 +1044,6 @@ const UpdatePayrollModal = ({
                       </Button>
                     </CardContent>
                   </Card>
-
                   <div className="h-4"></div>
                 </div>
               </div>

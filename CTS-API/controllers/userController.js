@@ -256,10 +256,6 @@ const updateLoginLimit = asyncHandler(async (req, res) => {
   res.status(200).json({ message: "Login limit updated successfully" });
 });
 
-const fetchAllUsers = asyncHandler(async (req, res) => {
-
-})
-
 module.exports = {
   registerUser,
   loginUser,
