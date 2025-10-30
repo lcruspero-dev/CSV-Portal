@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import LoadingComponent from "@/components/ui/loading";
 import {
   Select,
   SelectContent,
@@ -30,14 +29,12 @@ import {
 } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
 import {
-  Clock,
-  Loader2,
-  LogIn,
-  Coffee,
-  Utensils,
-  Calendar,
-  AlertTriangle,
   Filter,
+  Ghost,
+  Skull,
+  ShipWheel,
+  Eclipse ,
+  Moon
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
@@ -80,6 +77,13 @@ interface AlertState {
 }
 
 type CutoffPeriod = "1-15" | "16-31";
+
+// Halloween-themed loading spinner
+const HalloweenSpinner = () => (
+  <div className="flex items-center justify-center">
+    <ShipWheel className="animate-pulse h-6 w-6 text-orange-400" />
+  </div>
+);
 
 export const AttendanceTracker: React.FC = () => {
   const [isTimeIn, setIsTimeIn] = useState(false);
@@ -133,9 +137,18 @@ export const AttendanceTracker: React.FC = () => {
 
   const { toast } = useToast();
 
-  const LoadingSpinner = () => (
-    <Loader2 className="animate-spin h-4 w-4 ml-2" />
-  );
+
+  // Halloween-themed toast
+  const showHalloweenToast = (title: string, description: string, variant: "default" | "destructive" = "default") => {
+    toast({
+      title,
+      description,
+      variant,
+      className: variant === "default" 
+        ? "bg-gradient-to-r from-purple-900 to-orange-900 border border-orange-400 text-white"
+        : "bg-red-900 border border-red-400 text-white"
+    });
+  };
 
   // Time formatting functions
   const formatTimeTo12Hour = (timeString: string): string => {
@@ -217,9 +230,9 @@ export const AttendanceTracker: React.FC = () => {
 
   const showAlert = (type: "break1" | "break2" | "lunch") => {
     const messages = {
-      break1: "Break 1 will end in 1 minute!",
-      break2: "Break 2 will end in 1 minute!",
-      lunch: "Lunch break will end in 1 minute!",
+      break1: "🧛 Break 1 will end in 1 minute! Don't get caught!",
+      break2: "🦇 Break 2 will end in 1 minute! The night is watching!",
+      lunch: "🎃 Lunch break will end in 1 minute! The feast awaits!",
     };
 
     setAlert({
@@ -409,12 +422,11 @@ export const AttendanceTracker: React.FC = () => {
           return; // Don't show the toast for this specific error
         }
       }
-      toast({
-        title: "Error",
-        description:
-          "Failed to load attendance history. Please try refreshing.",
-        variant: "destructive",
-      });
+      showHalloweenToast(
+        "Error",
+        "Failed to load attendance history. Please try refreshing.",
+        "destructive"
+      );
     } finally {
       setIsLoadingHistory(false);
     }
@@ -602,15 +614,14 @@ export const AttendanceTracker: React.FC = () => {
       getAttendance();
       setIsTimeIn(true);
       setElapsedTime(0);
-      toast({
-        title: "Success",
-        description: "Time-in logged successfully!",
-        variant: "default",
-      });
+      showHalloweenToast(
+        "🎃 Spooky Success!",
+        "You've entered the haunted workplace!"
+      );
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Error logging time:", error);
-      let errorMessage = "An error occurred while logging time";
+      let errorMessage = "A spooky error occurred while logging time";
 
       // Handle API error responses (409 Conflict)
       if (error.response?.status === 409 && error.response?.data?.message) {
@@ -618,18 +629,18 @@ export const AttendanceTracker: React.FC = () => {
       }
       // Handle local storage error
       else if (error.message === "User data not found in local storage") {
-        errorMessage = "User data not found";
+        errorMessage = "User data not found in the haunted storage";
       }
       // Handle network errors or other API errors
       else if (error.message) {
         errorMessage = error.message;
       }
 
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      showHalloweenToast(
+        "💀 Error",
+        errorMessage,
+        "destructive"
+      );
     } finally {
       setIsLoadingTimeIn(false);
     }
@@ -686,19 +697,17 @@ export const AttendanceTracker: React.FC = () => {
       // Reset all alert tracking
       setAlertShown({ break1: false, break2: false, lunch: false });
 
-      toast({
-        title: "Success",
-        description: "Time-out logged successfully!",
-        variant: "default",
-      });
+      showHalloweenToast(
+        "👻 Escape Successful!",
+        "You've survived the haunted workday!"
+      );
     } catch (error) {
       console.error("Error logging timeout:", error);
-      toast({
-        title: "Error",
-        description:
-          "Failed to log time-out. Please try again. If the issue persists, contact IT support.",
-        variant: "destructive",
-      });
+      showHalloweenToast(
+        "💀 Error",
+        "Failed to escape! Please try again. If the issue persists, contact the haunted IT support.",
+        "destructive"
+      );
     } finally {
       setIsLoadingTimeOut(false);
     }
@@ -720,19 +729,17 @@ export const AttendanceTracker: React.FC = () => {
       setElapsedTime(0);
       hideAlert(); // Hide any previous alerts
       setAlertShown(prev => ({ ...prev, break1: false })); // Reset break1 alert tracking
-      toast({
-        title: "Success",
-        description: "Break started successfully!",
-        variant: "default",
-      });
+      showHalloweenToast(
+        "🧛 Break Started!",
+        "Time for a spooky break! 15 minutes of haunting relaxation."
+      );
     } catch (error) {
       console.error("Error starting break:", error);
-      toast({
-        title: "Error",
-        description:
-          "Failed to start break. Please try again. If the issue persists, contact IT support.",
-        variant: "destructive",
-      });
+      showHalloweenToast(
+        "💀 Error",
+        "Failed to start break. Please try again. If the issue persists, contact the haunted IT support.",
+        "destructive"
+      );
     } finally {
       setIsLoadingBreakStart(false);
     }
@@ -775,18 +782,17 @@ export const AttendanceTracker: React.FC = () => {
       setCurrentEntry(response.data);
       hideAlert(); // Hide alert when break ends
       setAlertShown(prev => ({ ...prev, break1: false })); // Reset break1 alert tracking
-      toast({
-        title: "Success",
-        description: "End break logged successfully!",
-        variant: "default",
-      });
+      showHalloweenToast(
+        "🦇 Break Ended!",
+        "Back to haunting work!"
+      );
     } catch (error) {
       console.error("Error ending break:", error);
-      toast({
-        title: "Error",
-        description: "Failed to log end break. Please try again.",
-        variant: "destructive",
-      });
+      showHalloweenToast(
+        "💀 Error",
+        "Failed to log end break. Please try again.",
+        "destructive"
+      );
     } finally {
       setIsLoadingBreakEnd(false);
     }
@@ -808,19 +814,17 @@ export const AttendanceTracker: React.FC = () => {
       setElapsedTime(0);
       hideAlert(); // Hide any previous alerts
       setAlertShown(prev => ({ ...prev, lunch: false })); // Reset lunch alert tracking
-      toast({
-        title: "Success",
-        description: "Lunch started successfully!",
-        variant: "default",
-      });
+      showHalloweenToast(
+        "🎃 Lunch Started!",
+        "Time for a haunted feast! 60 minutes of spooky dining."
+      );
     } catch (error) {
       console.error("Error starting lunch:", error);
-      toast({
-        title: "Error",
-        description:
-          "Failed to start lunch. Please try again. If the issue persists, contact IT support.",
-        variant: "destructive",
-      });
+      showHalloweenToast(
+        "💀 Error",
+        "Failed to start lunch. Please try again. If the issue persists, contact the haunted IT support.",
+        "destructive"
+      );
     } finally {
       setIsLoadingLunchStart(false);
     }
@@ -863,18 +867,17 @@ export const AttendanceTracker: React.FC = () => {
       setCurrentEntry(response.data);
       hideAlert(); // Hide alert when lunch ends
       setAlertShown(prev => ({ ...prev, lunch: false })); // Reset lunch alert tracking
-      toast({
-        title: "Success",
-        description: "End lunch logged successfully!",
-        variant: "default",
-      });
+      showHalloweenToast(
+        "🍫 Lunch Ended!",
+        "Back to the haunted workplace!"
+      );
     } catch (error) {
       console.error("Error ending lunch:", error);
-      toast({
-        title: "Error",
-        description: "Failed to log end lunch. Please try again.",
-        variant: "destructive",
-      });
+      showHalloweenToast(
+        "💀 Error",
+        "Failed to log end lunch. Please try again.",
+        "destructive"
+      );
     } finally {
       setIsLoadingLunchEnd(false);
     }
@@ -969,18 +972,17 @@ export const AttendanceTracker: React.FC = () => {
       setElapsedTime(0); // Reset elapsed time when starting second break
       hideAlert(); // Hide any previous alerts
       setAlertShown(prev => ({ ...prev, break2: false })); // Reset break2 alert tracking
-      toast({
-        title: "Success",
-        description: "Break 2 started successfully!",
-        variant: "default",
-      });
+      showHalloweenToast(
+        "🧟 Break 2 Started!",
+        "Second spooky break! 15 more minutes of haunting relaxation."
+      );
     } catch (error) {
       console.error("Error starting break 2:", error);
-      toast({
-        title: "Error",
-        description: "Failed to start second break. Please try again.",
-        variant: "destructive",
-      });
+      showHalloweenToast(
+        "💀 Error",
+        "Failed to start second break. Please try again.",
+        "destructive"
+      );
     } finally {
       setIsLoadingSecondBreakStart(false);
     }
@@ -1024,18 +1026,17 @@ export const AttendanceTracker: React.FC = () => {
       setSelectedAction(null); // Reset the selected action after second break ends
       hideAlert(); // Hide alert when second break ends
       setAlertShown(prev => ({ ...prev, break2: false })); // Reset break2 alert tracking
-      toast({
-        title: "Success",
-        description: "Break 2 ended successfully!",
-        variant: "default",
-      });
+      showHalloweenToast(
+        "👻 Break 2 Ended!",
+        "Back to haunting work once more!"
+      );
     } catch (error) {
       console.error("Error ending break 2:", error);
-      toast({
-        title: "Error",
-        description: "Failed to end secondbreak. Please try again.",
-        variant: "destructive",
-      });
+      showHalloweenToast(
+        "💀 Error",
+        "Failed to end secondbreak. Please try again.",
+        "destructive"
+      );
     } finally {
       setIsLoadingSecondBreakEnd(false);
     }
@@ -1046,21 +1047,21 @@ export const AttendanceTracker: React.FC = () => {
 
     // Check if the user is currently on a break and breakEnd is not set
     if (currentEntry.breakStart && !currentEntry.breakEnd) {
-      actions.push({ value: "endBreak", label: "End Break 1" });
+      actions.push({ value: "endBreak", label: "🧛 End Break 1" });
     }
     // Check if the user is currently on a second break and secondBreakEnd is not set
     else if (currentEntry.secondBreakStart && !currentEntry.secondBreakEnd) {
-      actions.push({ value: "endSecondBreak", label: "End Break 2" });
+      actions.push({ value: "endSecondBreak", label: "🧟 End Break 2" });
     }
     // Check if the user is currently on lunch and lunchEnd is not set
     else if (currentEntry.lunchStart && !currentEntry.lunchEnd) {
-      actions.push({ value: "endLunch", label: "End Lunch" });
+      actions.push({ value: "endLunch", label: "🎃 End Lunch" });
     }
     // If not on any break or lunch, show available actions
     else {
       // Only show "Start Break" if break hasn't started or hasn't ended
       if (!currentEntry.breakStart || !currentEntry.breakEnd) {
-        actions.push({ value: "startBreak", label: "Break 1" });
+        actions.push({ value: "startBreak", label: "🧛 Break 1" });
       }
 
       // Only show "Start Second Break" if first break has ended and second break hasn't started or hasn't ended
@@ -1070,18 +1071,18 @@ export const AttendanceTracker: React.FC = () => {
       ) {
         actions.push({
           value: "startSecondBreak",
-          label: "Break 2",
+          label: "🧟 Break 2",
         });
       }
 
       // Only show "Start Lunch" if lunch hasn't started or hasn't ended
       if (!currentEntry.lunchStart || !currentEntry.lunchEnd) {
-        actions.push({ value: "startLunch", label: "Lunch" });
+        actions.push({ value: "startLunch", label: "🎃 Lunch" });
       }
 
       // Always show "Time Out" if the user is timed in
       if (isTimeIn) {
-        actions.push({ value: "timeOut", label: "Log Out" });
+        actions.push({ value: "timeOut", label: "👻 Log Out" });
       }
     }
 
@@ -1091,55 +1092,66 @@ export const AttendanceTracker: React.FC = () => {
   if (isLoadingInitial) {
     return (
       <div className="flex justify-center items-start w-full pt-4">
-        <LoadingComponent />
+        <div className="bg-gradient-to-br from-purple-900 to-orange-900 rounded-lg p-8">
+          <HalloweenSpinner />
+          <p className="text-orange-200 mt-4 text-center">Loading haunted time tracker...</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 py-4">
-      {/* Alert Dialog - Bigger Width */}
+      {/* Halloween Alert Dialog */}
       {alert.show && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md mx-4 animate-in zoom-in-95">
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-70">
+          <div className="bg-gradient-to-br from-purple-900 to-orange-900 rounded-lg shadow-2xl p-6 max-w-md mx-4 animate-in zoom-in-95 border-2 border-orange-400">
             <div className="flex items-center gap-3 mb-4">
               <div className="flex-shrink-0">
-                <AlertTriangle className="h-8 w-8 text-amber-500" />
+                <Skull className="h-8 w-8 text-orange-400 animate-pulse" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900">
-                Time Alert
+              <h3 className="text-xl font-semibold text-white font-serif">
+                🎃 Spooky Alert!
               </h3>
             </div>
-            <p className="text-lg text-gray-700 mb-6 text-center">{alert.message}</p>
+            <p className="text-lg text-orange-200 mb-6 text-center font-medium">
+              {alert.message}
+            </p>
             <div className="flex justify-end">
               <Button
                 onClick={hideAlert}
-                className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-2"
+                className="bg-gradient-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 text-white px-6 py-2 border border-orange-400 font-bold"
                 size="lg"
               >
-                OK
+                I'm Scared! 👻
               </Button>
             </div>
           </div>
         </div>
       )}
 
-      <Card className="w-full">
+      <Card className="w-full bg-gradient-to-br from-gray-900 via-purple-900 to-orange-900 border-2 border-orange-400 shadow-2xl">
         <CardHeader className="relative pb-4 sm:pb-6">
+          {/* Halloween decorations */}
+          <div className="absolute top-2 left-2 flex gap-1">
+            <ShipWheel className="h-4 w-4 text-orange-400 animate-pulse" />
+            <Eclipse  className="h-4 w-4 text-gray-300" />
+          </div>
+          
           {/* Mobile: Button below title, Desktop: Button top right */}
           <div className="block sm:absolute sm:right-6 sm:top-6 mt-4 sm:mt-0">
             <ViewScheduleButton />
           </div>
-          <CardTitle className="flex items-center justify-center text-lg sm:text-xl lg:text-2xl flex-col sm:flex-row gap-2">
-            <Clock className="h-5 w-5 sm:h-6 sm:w-6" />
-            Time Tracker
+          <CardTitle className="flex items-center justify-center text-lg sm:text-xl lg:text-2xl flex-col sm:flex-row gap-2 text-white font-serif">
+            <Moon className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-300" />
+            🎃 Haunted Time Tracker 🦇
           </CardTitle>
         </CardHeader>
 
         {/* Current Date Display */}
         <div className="text-center">
-          <p className="text-xl sm:text-3xl font-bold text-blue-600">
-            {currentFormattedDate || "Loading date..."}
+          <p className="text-xl sm:text-3xl font-bold text-orange-300 font-serif drop-shadow-lg">
+            {currentFormattedDate || "Loading haunted date..."}
           </p>
         </div>
 
@@ -1153,35 +1165,35 @@ export const AttendanceTracker: React.FC = () => {
             {/* Timer Display Section */}
             <div className="flex flex-col items-center space-y-4 sm:space-y-6">
               {currentEntry.breakStart && !currentEntry.breakEnd ? (
-                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-red-600 text-center">
-                  <p className="text-sm sm:text-base text-black tracking-wide mb-2">
-                    BREAK 1 - 15 Minutes
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-orange-400 text-center font-mono bg-black bg-opacity-50 p-4 rounded-lg border border-orange-500">
+                  <p className="text-sm sm:text-base text-orange-200 tracking-wide mb-2">
+                    🧛 BREAK 1 - 15 Minutes of Haunting
                   </p>
                   {formatElapsedTime(elapsedTime)}
                 </div>
               ) : currentEntry.secondBreakStart &&
                 !currentEntry.secondBreakEnd ? (
-                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-red-600 text-center">
-                  <p className="text-sm sm:text-base text-black tracking-wide mb-2">
-                    BREAK 2 - 15 Minutes
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-orange-400 text-center font-mono bg-black bg-opacity-50 p-4 rounded-lg border border-orange-500">
+                  <p className="text-sm sm:text-base text-orange-200 tracking-wide mb-2">
+                    🧟 BREAK 2 - 15 Spooky Minutes
                   </p>
                   {formatElapsedTime(elapsedTime)}
                 </div>
               ) : currentEntry.lunchStart && !currentEntry.lunchEnd ? (
-                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-red-600 text-center">
-                  <p className="text-sm sm:text-base text-black tracking-wide mb-2">
-                    LUNCH - 60 Minutes
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-orange-400 text-center font-mono bg-black bg-opacity-50 p-4 rounded-lg border border-orange-500">
+                  <p className="text-sm sm:text-base text-orange-200 tracking-wide mb-2">
+                    🎃 LUNCH - 60 Minutes of Feasting
                   </p>
                   {formatElapsedTime(elapsedTime)}
                 </div>
               ) : (
                 <div
-                  className={`mb-2 text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-center text-green-700 ${
+                  className={`mb-2 text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-center text-green-400 font-mono bg-black bg-opacity-50 p-4 rounded-lg border border-green-500 ${
                     isTimeIn ? "" : "hidden"
                   }`}
                 >
-                  <p className="text-sm sm:text-base text-black tracking-wide mb-2">
-                    RUNNING TIME
+                  <p className="text-sm sm:text-base text-green-200 tracking-wide mb-2">
+                    👻 HAUNTING WORK TIME
                   </p>
                   {formatElapsedTime(elapsedTime)}
                 </div>
@@ -1192,16 +1204,16 @@ export const AttendanceTracker: React.FC = () => {
                 {!isTimeIn ? (
                   <Button
                     onClick={handleTimeIn}
-                    className="flex items-center w-full sm:w-auto min-w-[120px]"
+                    className="flex items-center w-full sm:w-auto min-w-[120px] bg-gradient-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 text-white border border-orange-400 font-bold shadow-lg"
                     disabled={isLoadingTimeIn}
                     size="sm"
                   >
                     {isLoadingTimeIn ? (
-                      <LoadingSpinner />
+                      <HalloweenSpinner />
                     ) : (
-                      <LogIn className="mr-2 h-4 w-4" />
+                      <Ghost className="mr-2 h-4 w-4" />
                     )}
-                    Log In
+                    Enter Haunted Workplace
                   </Button>
                 ) : (
                   <>
@@ -1209,12 +1221,12 @@ export const AttendanceTracker: React.FC = () => {
                       value={selectedAction || undefined}
                       onValueChange={handleActionChange}
                     >
-                      <SelectTrigger className="w-full sm:w-40 text-sm">
-                        <SelectValue placeholder="Select Action" />
+                      <SelectTrigger className="w-full sm:w-48 text-sm bg-gray-800 border-orange-400 text-white">
+                        <SelectValue placeholder="Select Spooky Action" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-gray-900 border-orange-400 text-white">
                         {getAvailableActions().map((action) => (
-                          <SelectItem key={action.value} value={action.value}>
+                          <SelectItem key={action.value} value={action.value} className="hover:bg-orange-500">
                             {action.label}
                           </SelectItem>
                         ))}
@@ -1224,7 +1236,7 @@ export const AttendanceTracker: React.FC = () => {
                     {selectedAction && (
                       <Button
                         onClick={handleConfirmAction}
-                        className="flex items-center text-sm w-full sm:w-auto min-w-[100px]"
+                        className="flex items-center text-sm w-full sm:w-auto min-w-[100px] bg-gradient-to-r from-green-500 to-purple-600 hover:from-green-600 hover:to-purple-700 text-white border border-green-400"
                         disabled={
                           isLoadingBreakStart ||
                           isLoadingBreakEnd ||
@@ -1236,24 +1248,26 @@ export const AttendanceTracker: React.FC = () => {
                         }
                         size="sm"
                       >
-                        Confirm
+                        Cast Spell
                       </Button>
                     )}
 
                     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                      <DialogContent className="sm:max-w-md">
+                      <DialogContent className="sm:max-w-md bg-gradient-to-br from-gray-900 to-purple-900 border-2 border-orange-400">
                         <DialogHeader>
-                          <DialogTitle className="text-lg">Log Out</DialogTitle>
+                          <DialogTitle className="text-lg text-orange-300 font-serif">
+                            🎃 Escape the Haunted Workplace
+                          </DialogTitle>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
                           <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-                            <Label htmlFor="notes" className="sm:text-right">
-                              Notes (Optional)
+                            <Label htmlFor="notes" className="sm:text-right text-orange-200">
+                              Spooky Notes (Optional)
                             </Label>
                             <Input
                               id="notes"
-                              className="col-span-1 sm:col-span-3"
-                              placeholder="Add any notes about your work day"
+                              className="col-span-1 sm:col-span-3 bg-gray-800 border-orange-400 text-white"
+                              placeholder="Add any haunted notes about your work day..."
                             />
                           </div>
                           <div className="flex justify-end">
@@ -1268,9 +1282,10 @@ export const AttendanceTracker: React.FC = () => {
                               }}
                               disabled={isLoadingTimeOut}
                               size="sm"
+                              className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white border border-orange-400"
                             >
-                              {isLoadingTimeOut ? <LoadingSpinner /> : null}
-                              Confirm Log Out
+                              {isLoadingTimeOut ? <HalloweenSpinner /> : null}
+                              👻 Confirm Escape
                             </Button>
                           </div>
                         </div>
@@ -1283,20 +1298,20 @@ export const AttendanceTracker: React.FC = () => {
               {/* Current Session Info */}
               {isTimeIn && (
                 <div className="w-full max-w-2xl mx-auto">
-                  <p className="font-semibold text-sm sm:text-base mb-3 text-center">
-                    Current Session
+                  <p className="font-semibold text-sm sm:text-base mb-3 text-center text-orange-300 font-serif">
+                    🕸️ Current Haunting Session
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                     {/* Time In Card */}
                     {currentEntry.timeIn && (
-                      <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-3 border border-green-200">
+                      <div className="bg-gradient-to-br from-green-900 to-green-800 rounded-lg p-3 border border-green-400 shadow-lg">
                         <div className="flex items-center gap-2">
-                          <LogIn className="h-4 w-4 text-green-600" />
-                          <span className="text-xs font-medium text-green-800">
-                            Login
+                          <Ghost className="h-4 w-4 text-green-400" />
+                          <span className="text-xs font-medium text-green-300">
+                            🎃 Entry Time
                           </span>
                         </div>
-                        <p className="text-sm font-semibold mt-1">
+                        <p className="text-sm font-semibold mt-1 text-white">
                           {formatTime(currentEntry.timeIn)}
                         </p>
                       </div>
@@ -1304,14 +1319,14 @@ export const AttendanceTracker: React.FC = () => {
 
                     {/* Shift Card */}
                     {currentEntry.shift && (
-                      <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-3 border border-purple-200">
+                      <div className="bg-gradient-to-br from-purple-900 to-purple-800 rounded-lg p-3 border border-purple-400 shadow-lg">
                         <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-purple-600" />
-                          <span className="text-xs font-medium text-purple-800">
-                            Shift
+                          <Moon className="h-4 w-4 text-purple-400" />
+                          <span className="text-xs font-medium text-purple-300">
+                            🦇 Haunting Shift
                           </span>
                         </div>
-                        <p className="text-sm font-semibold mt-1">
+                        <p className="text-sm font-semibold mt-1 text-white">
                           {currentEntry.shift}
                         </p>
                       </div>
@@ -1319,27 +1334,27 @@ export const AttendanceTracker: React.FC = () => {
 
                     {/* Break Times */}
                     {currentEntry.breakStart && (
-                      <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-3 border border-orange-200">
+                      <div className="bg-gradient-to-br from-orange-900 to-orange-800 rounded-lg p-3 border border-orange-400 shadow-lg">
                         <div className="flex items-center gap-2">
-                          <Coffee className="h-4 w-4 text-orange-600" />
-                          <span className="text-xs font-medium text-orange-800">
-                            Break 1
+                          <Skull className="h-4 w-4 text-orange-400" />
+                          <span className="text-xs font-medium text-orange-300">
+                            🧛 Break 1
                           </span>
                         </div>
                         <div className="space-y-1 mt-1">
-                          <p className="text-xs">
+                          <p className="text-xs text-orange-200">
                             <span className="font-medium">Start:</span>{" "}
                             {formatTime(currentEntry.breakStart)}
                           </p>
                           {currentEntry.breakEnd && (
-                            <p className="text-xs">
+                            <p className="text-xs text-orange-200">
                               <span className="font-medium">End:</span>{" "}
                               {formatTime(currentEntry.breakEnd)}
                             </p>
                           )}
                           {currentEntry.totalBreakTime !== undefined &&
                             currentEntry.totalBreakTime !== null && (
-                              <p className="text-xs font-semibold">
+                              <p className="text-xs font-semibold text-white">
                                 Total: {formatMinutesToHoursMinutes(Math.round(currentEntry.totalBreakTime * 60))}
                               </p>
                             )}
@@ -1349,27 +1364,27 @@ export const AttendanceTracker: React.FC = () => {
 
                     {/* Second Break Times */}
                     {currentEntry.secondBreakStart && (
-                      <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg p-3 border border-amber-200">
+                      <div className="bg-gradient-to-br from-amber-900 to-amber-800 rounded-lg p-3 border border-amber-400 shadow-lg">
                         <div className="flex items-center gap-2">
-                          <Coffee className="h-4 w-4 text-amber-600" />
-                          <span className="text-xs font-medium text-amber-800">
-                            Break 2
+                          <Eclipse  className="h-4 w-4 text-amber-400" />
+                          <span className="text-xs font-medium text-amber-300">
+                            🧟 Break 2
                           </span>
                         </div>
                         <div className="space-y-1 mt-1">
-                          <p className="text-xs">
+                          <p className="text-xs text-amber-200">
                             <span className="font-medium">Start:</span>{" "}
                             {formatTime(currentEntry.secondBreakStart)}
                           </p>
                           {currentEntry.secondBreakEnd && (
-                            <p className="text-xs">
+                            <p className="text-xs text-amber-200">
                               <span className="font-medium">End:</span>{" "}
                               {formatTime(currentEntry.secondBreakEnd)}
                             </p>
                           )}
                           {currentEntry.totalSecondBreakTime !== undefined &&
                             currentEntry.totalSecondBreakTime !== null && (
-                              <p className="text-xs font-semibold">
+                              <p className="text-xs font-semibold text-white">
                                 Total: {formatMinutesToHoursMinutes(Math.round(currentEntry.totalSecondBreakTime * 60))}
                               </p>
                             )}
@@ -1379,27 +1394,27 @@ export const AttendanceTracker: React.FC = () => {
 
                     {/* Lunch Times */}
                     {currentEntry.lunchStart && (
-                      <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-3 border border-red-200">
+                      <div className="bg-gradient-to-br from-red-900 to-red-800 rounded-lg p-3 border border-red-400 shadow-lg">
                         <div className="flex items-center gap-2">
-                          <Utensils className="h-4 w-4 text-red-600" />
-                          <span className="text-xs font-medium text-red-800">
-                            Lunch
+                          <ShipWheel className="h-4 w-4 text-red-400" />
+                          <span className="text-xs font-medium text-red-300">
+                            🎃 Haunted Feast
                           </span>
                         </div>
                         <div className="space-y-1 mt-1">
-                          <p className="text-xs">
+                          <p className="text-xs text-red-200">
                             <span className="font-medium">Start:</span>{" "}
                             {formatTime(currentEntry.lunchStart)}
                           </p>
                           {currentEntry.lunchEnd && (
-                            <p className="text-xs">
+                            <p className="text-xs text-red-200">
                               <span className="font-medium">End:</span>{" "}
                               {formatTime(currentEntry.lunchEnd)}
                             </p>
                           )}
                           {currentEntry.totalLunchTime !== undefined &&
                             currentEntry.totalLunchTime !== null && (
-                              <p className="text-xs font-semibold">
+                              <p className="text-xs font-semibold text-white">
                                 Total: {formatMinutesToHoursMinutes(Math.round(currentEntry.totalLunchTime * 60))}
                               </p>
                             )}
@@ -1412,11 +1427,11 @@ export const AttendanceTracker: React.FC = () => {
             </div>
 
             {/* History Table Section */}
-            <Card className="w-full">
+            <Card className="w-full bg-gradient-to-br from-gray-800 to-purple-900 border-2 border-orange-400">
               <CardHeader className="p-4 sm:p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <CardTitle className="text-lg sm:text-xl">
-                    Daily Time Record
+                  <CardTitle className="text-lg sm:text-xl text-orange-300 font-serif">
+                    🕸️ Haunted Time Records
                   </CardTitle>
 
                   {/* Month, Year, and Cut-off Filters */}
@@ -1428,10 +1443,10 @@ export const AttendanceTracker: React.FC = () => {
                         setSelectedYear(parseInt(value))
                       }
                     >
-                      <SelectTrigger className="w-24 text-sm">
+                      <SelectTrigger className="w-24 text-sm bg-gray-800 border-orange-400 text-white">
                         <SelectValue placeholder="Year" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-gray-900 border-orange-400 text-white">
                         {years.map((year) => (
                           <SelectItem key={year} value={year.toString()}>
                             {year}
@@ -1442,17 +1457,17 @@ export const AttendanceTracker: React.FC = () => {
 
                     {/* Month Selector */}
                     <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-gray-500" />
+                      <Moon className="h-4 w-4 text-orange-400" />
                       <Select
                         value={selectedMonth.toString()}
                         onValueChange={(value) =>
                           setSelectedMonth(parseInt(value))
                         }
                       >
-                        <SelectTrigger className="w-32 text-sm">
+                        <SelectTrigger className="w-32 text-sm bg-gray-800 border-orange-400 text-white">
                           <SelectValue placeholder="Month" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-gray-900 border-orange-400 text-white">
                           {months.map((month) => (
                             <SelectItem
                               key={month.value}
@@ -1467,17 +1482,17 @@ export const AttendanceTracker: React.FC = () => {
 
                     {/* Cut-off Filter */}
                     <div className="flex items-center gap-2">
-                      <Filter className="h-4 w-4 text-gray-500" />
+                      <Filter className="h-4 w-4 text-orange-400" />
                       <Select
                         value={selectedCutoff}
                         onValueChange={(value: CutoffPeriod) =>
                           setSelectedCutoff(value)
                         }
                       >
-                        <SelectTrigger className="w-32 text-sm">
+                        <SelectTrigger className="w-32 text-sm bg-gray-800 border-orange-400 text-white">
                           <SelectValue placeholder="Cut-off" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-gray-900 border-orange-400 text-white">
                           <SelectItem value="1-15">1-15</SelectItem>
                           <SelectItem value="16-31">16-31</SelectItem>
                         </SelectContent>
@@ -1489,37 +1504,37 @@ export const AttendanceTracker: React.FC = () => {
               <CardContent className="p-0 sm:p-6">
                 {isLoadingHistory ? (
                   <div className="flex justify-center py-8">
-                    <LoadingSpinner />
+                    <HalloweenSpinner />
                   </div>
                 ) : (
                   <>
                     <div className="overflow-x-auto">
                       <Table>
                         <TableHeader>
-                          <TableRow>
-                            <TableHead className="min-w-[90px]">Date</TableHead>
-                            <TableHead className="min-w-[90px]">
+                          <TableRow className="bg-gray-800 hover:bg-gray-700">
+                            <TableHead className="min-w-[90px] text-orange-300">Date</TableHead>
+                            <TableHead className="min-w-[90px] text-orange-300">
                               Log In
                             </TableHead>
-                            <TableHead className="min-w-[90px]">
+                            <TableHead className="min-w-[90px] text-orange-300">
                               Log Out
                             </TableHead>
-                            <TableHead className="min-w-[90px]">
+                            <TableHead className="min-w-[90px] text-orange-300">
                               Total Hours
                             </TableHead>
-                            <TableHead className="min-w-[90px]">
+                            <TableHead className="min-w-[90px] text-orange-300">
                               Break 1
                             </TableHead>
-                            <TableHead className="min-w-[90px]">
+                            <TableHead className="min-w-[90px] text-orange-300">
                               Lunch
                             </TableHead>
-                            <TableHead className="min-w-[90px]">
+                            <TableHead className="min-w-[90px] text-orange-300">
                               Break 2
                             </TableHead>
-                            <TableHead className="min-w-[90px]">
+                            <TableHead className="min-w-[90px] text-orange-300">
                               Overbreak
                             </TableHead>
-                            <TableHead className="min-w-[90px]">
+                            <TableHead className="min-w-[90px] text-orange-300">
                               Notes
                             </TableHead>
                           </TableRow>
@@ -1527,47 +1542,45 @@ export const AttendanceTracker: React.FC = () => {
                         <TableBody>
                           {filteredEntries.length > 0 ? (
                             filteredEntries.map((entry, index) => (
-                              <TableRow key={entry.id || `entry-${index}`}>
-                                <TableCell className="py-2">
-                                  {entry.date}
-                                </TableCell>
-                                <TableCell className="py-2">
+                              <TableRow key={entry.id || `entry-${index}`} className="border-orange-400 hover:bg-gray-800">
+                                <TableCell className="py-2 text-white">{entry.date}</TableCell>
+                                <TableCell className="py-2 text-green-300">
                                   {formatTime(entry.timeIn)}
                                 </TableCell>
-                                <TableCell className="py-2">
-                                  {entry.timeOut ? formatTime(entry.timeOut) : "In Progress"}
+                                <TableCell className="py-2 text-red-300">
+                                  {entry.timeOut ? formatTime(entry.timeOut) : "🕸️ In Progress"}
                                 </TableCell>
-                                <TableCell className="py-2">
+                                <TableCell className="py-2 text-white">
                                   {formatHoursToHoursMinutes(
                                     String(entry.totalHours || "")
                                   )}
                                 </TableCell>
-                                <TableCell className="py-2">
+                                <TableCell className="py-2 text-orange-300">
                                   {formatHoursToHoursMinutes(
                                     String(entry.totalBreakTime || "")
                                   )}
                                 </TableCell>
-                                <TableCell className="py-2">
+                                <TableCell className="py-2 text-red-300">
                                   {formatHoursToHoursMinutes(
                                     String(entry.totalLunchTime || "")
                                   )}
                                 </TableCell>
-                                <TableCell className="py-2">
+                                <TableCell className="py-2 text-amber-300">
                                   {formatHoursToHoursMinutes(
                                     String(entry.totalSecondBreakTime || "")
                                   )}
                                 </TableCell>
-                                <TableCell className="py-2">
+                                <TableCell className="py-2 text-red-400">
                                   {entry.overbreak && entry.overbreak > 0 
-                                    ? `${entry.overbreak} minutes` 
-                                    : "-"}
+                                    ? `💀 ${entry.overbreak} minutes` 
+                                    : "👻"}
                                 </TableCell>
-                                <TableCell className="py-2">
+                                <TableCell className="py-2 text-gray-300">
                                   <div
                                     className="truncate max-w-[80px] sm:max-w-[100px] lg:max-w-[150px] text-ellipsis overflow-hidden"
                                     title={entry.notes || ""}
                                   >
-                                    {entry.notes || "-"}
+                                    {entry.notes || "🎃"}
                                   </div>
                                 </TableCell>
                               </TableRow>
@@ -1576,9 +1589,9 @@ export const AttendanceTracker: React.FC = () => {
                             <TableRow>
                               <TableCell
                                 colSpan={9}
-                                className="text-center py-4"
+                                className="text-center py-4 text-orange-200"
                               >
-                                No attendance records found for{" "}
+                                👻 No haunted records found for{" "}
                                 {
                                   months.find((m) => m.value === selectedMonth)
                                     ?.label
@@ -1592,8 +1605,8 @@ export const AttendanceTracker: React.FC = () => {
                     </div>
 
                     {/* Records Count */}
-                    <div className="mt-4 text-sm text-gray-600">
-                      Showing {filteredEntries.length} record(s) for{" "}
+                    <div className="mt-4 text-sm text-orange-200">
+                      🦇 Showing {filteredEntries.length} haunted record(s) for{" "}
                       {months.find((m) => m.value === selectedMonth)?.label}{" "}
                       {selectedYear} ({selectedCutoff} cut-off)
                     </div>

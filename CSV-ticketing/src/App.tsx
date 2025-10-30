@@ -39,7 +39,7 @@ function App() {
     <AuthProvider>
       <>
         <Header />
-        <div className="bg-gradient-to-b from-[#eef4ff] to-white">
+        <div className="bg-gradient-to-br from-purple-900 to-orange-900">
           <Routes>
             {/* Public Routes */}
 
