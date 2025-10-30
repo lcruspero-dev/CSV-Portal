@@ -65,6 +65,7 @@ interface AttendanceEntry {
   dateLunchStart?: string;
   dateLunchEnd?: string;
   loginLimit?: number;
+  overbreak?: number;
 }
 
 interface CurrentTimeResponse {
@@ -74,34 +75,51 @@ interface CurrentTimeResponse {
 
 interface AlertState {
   show: boolean;
-  type: 'break1' | 'break2' | 'lunch' | null;
+  type: "break1" | "break2" | "lunch" | null;
   message: string;
 }
 
-type CutoffPeriod = '1-15' | '16-31';
+type CutoffPeriod = "1-15" | "16-31";
 
 export const AttendanceTracker: React.FC = () => {
   const [isTimeIn, setIsTimeIn] = useState(false);
-  const [attendanceEntries, setAttendanceEntries] = useState<AttendanceEntry[]>([]);
+  const [attendanceEntries, setAttendanceEntries] = useState<AttendanceEntry[]>(
+    []
+  );
   const [filteredEntries, setFilteredEntries] = useState<AttendanceEntry[]>([]);
-  const [currentEntry, setCurrentEntry] = useState<Partial<AttendanceEntry>>({});
+  const [currentEntry, setCurrentEntry] = useState<Partial<AttendanceEntry>>(
+    {}
+  );
   const [dialogOpen, setDialogOpen] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [currentServerTime, setCurrentServerTime] = useState<CurrentTimeResponse>({
-    date: "",
-    time: "",
-  });
+  const [currentServerTime, setCurrentServerTime] =
+    useState<CurrentTimeResponse>({
+      date: "",
+      time: "",
+    });
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
-  const [isLoadingSecondBreakStart, setIsLoadingSecondBreakStart] = useState(false);
+  const [isLoadingSecondBreakStart, setIsLoadingSecondBreakStart] =
+    useState(false);
   const [isLoadingSecondBreakEnd, setIsLoadingSecondBreakEnd] = useState(false);
   const [alert, setAlert] = useState<AlertState>({
     show: false,
     type: null,
-    message: ''
+    message: "",
   });
-  const [selectedCutoff, setSelectedCutoff] = useState<CutoffPeriod>('1-15');
-  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
-  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [selectedCutoff, setSelectedCutoff] = useState<CutoffPeriod>("1-15");
+  const [selectedMonth, setSelectedMonth] = useState<number>(
+    new Date().getMonth()
+  );
+  const [selectedYear, setSelectedYear] = useState<number>(
+    new Date().getFullYear()
+  );
+
+  // Alert tracking to prevent duplicate alerts
+  const [alertShown, setAlertShown] = useState({
+    break1: false,
+    break2: false,
+    lunch: false
+  });
 
   // Loading states
   const [isLoadingInitial, setIsLoadingInitial] = useState(true);
@@ -119,91 +137,193 @@ export const AttendanceTracker: React.FC = () => {
     <Loader2 className="animate-spin h-4 w-4 ml-2" />
   );
 
+  // Time formatting functions
+  const formatTimeTo12Hour = (timeString: string): string => {
+    if (!timeString) return '';
+    
+    try {
+      // Handle both "HH:mm:ss" and "HH:mm" formats
+      const [hours, minutes] = timeString.split(':');
+      const hourNum = parseInt(hours, 10);
+      const minuteNum = parseInt(minutes, 10);
+      
+      if (isNaN(hourNum) || isNaN(minuteNum)) return timeString;
+      
+      const period = hourNum >= 12 ? 'PM' : 'AM';
+      const twelveHour = hourNum % 12 || 12;
+      
+      return `${twelveHour}:${minuteNum.toString().padStart(2, '0')} ${period}`;
+    } catch (error) {
+      console.error('Error formatting time:', error);
+      return timeString;
+    }
+  };
+
+  const formatTime = (timeString: string): string => {
+    return formatTimeTo12Hour(timeString);
+  };
+
+  // Format hours to "X hours, Y minutes" format
+  const formatHoursToHoursMinutes = (hoursString: string): string => {
+    // Handle null/undefined/empty values
+    if (!hoursString || hoursString === "0" || hoursString === "0.00") {
+      return "-";
+    }
+
+    const hours = parseFloat(hoursString);
+    if (isNaN(hours) || hours === 0) {
+      return "-";
+    }
+
+    const totalMinutes = Math.round(hours * 60);
+    const hoursPart = Math.floor(totalMinutes / 60);
+    const minutesPart = totalMinutes % 60;
+
+    if (hoursPart === 0) {
+      return `${minutesPart} minutes`;
+    } else if (minutesPart === 0) {
+      return `${hoursPart} hours`;
+    } else {
+      return `${hoursPart} hours, ${minutesPart} minutes`;
+    }
+  };
+
+  // Format minutes to "X hours, Y minutes" format
+  const formatMinutesToHoursMinutes = (minutes: number): string => {
+    if (!minutes || minutes === 0) {
+      return "-";
+    }
+
+    const hoursPart = Math.floor(minutes / 60);
+    const minutesPart = minutes % 60;
+
+    if (hoursPart === 0) {
+      return `${minutesPart} minutes`;
+    } else if (minutesPart === 0) {
+      return `${hoursPart} hours`;
+    } else {
+      return `${hoursPart} hours, ${minutesPart} minutes`;
+    }
+  };
+
+  // Calculate overbreak time
+  const calculateOverbreak = (breakTime: number, allowedBreakTime: number): number => {
+    if (!breakTime || breakTime <= allowedBreakTime) return 0;
+    return Math.round((breakTime - allowedBreakTime) * 60); // Return in minutes
+  };
+
   // Alert timeout reference
   const alertTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
-  const showAlert = (type: 'break1' | 'break2' | 'lunch') => {
+  const showAlert = (type: "break1" | "break2" | "lunch") => {
     const messages = {
-      break1: "Break 1 will end in 30 seconds!",
-      break2: "Break 2 will end in 30 seconds!",
-      lunch: "Lunch break will end in 30 seconds!"
+      break1: "Break 1 will end in 1 minute!",
+      break2: "Break 2 will end in 1 minute!",
+      lunch: "Lunch break will end in 1 minute!",
     };
 
     setAlert({
       show: true,
       type,
-      message: messages[type]
+      message: messages[type],
     });
+
+    // Mark this alert as shown
+    setAlertShown(prev => ({
+      ...prev,
+      [type]: true
+    }));
 
     // Auto-hide alert after 10 seconds
     if (alertTimeoutRef.current) {
       clearTimeout(alertTimeoutRef.current);
     }
     alertTimeoutRef.current = setTimeout(() => {
-      setAlert({ show: false, type: null, message: '' });
+      setAlert({ show: false, type: null, message: "" });
     }, 10000);
   };
 
   const hideAlert = () => {
-    setAlert({ show: false, type: null, message: '' });
+    setAlert({ show: false, type: null, message: "" });
     if (alertTimeoutRef.current) {
       clearTimeout(alertTimeoutRef.current);
       alertTimeoutRef.current = null;
     }
   };
 
+  // Reset alert tracking when breaks/lunch end
+  useEffect(() => {
+    if (currentEntry.breakEnd) {
+      setAlertShown(prev => ({ ...prev, break1: false }));
+    }
+    if (currentEntry.secondBreakEnd) {
+      setAlertShown(prev => ({ ...prev, break2: false }));
+    }
+    if (currentEntry.lunchEnd) {
+      setAlertShown(prev => ({ ...prev, lunch: false }));
+    }
+  }, [currentEntry.breakEnd, currentEntry.secondBreakEnd, currentEntry.lunchEnd]);
+
   // Format current date for display
   const formatCurrentDate = (dateString: string): string => {
     const date = new Date(dateString);
-    const options: Intl.DateTimeFormatOptions = { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    const options: Intl.DateTimeFormatOptions = {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     };
-    return date.toLocaleDateString('en-US', options);
+    return date.toLocaleDateString("en-US", options);
   };
 
   // Get current formatted date from server time
-  const currentFormattedDate = currentServerTime.date ? formatCurrentDate(currentServerTime.date) : '';
+  const currentFormattedDate = currentServerTime.date
+    ? formatCurrentDate(currentServerTime.date)
+    : "";
 
   // Generate months for dropdown
   const months = [
-    { value: 0, label: 'January' },
-    { value: 1, label: 'February' },
-    { value: 2, label: 'March' },
-    { value: 3, label: 'April' },
-    { value: 4, label: 'May' },
-    { value: 5, label: 'June' },
-    { value: 6, label: 'July' },
-    { value: 7, label: 'August' },
-    { value: 8, label: 'September' },
-    { value: 9, label: 'October' },
-    { value: 10, label: 'November' },
-    { value: 11, label: 'December' }
+    { value: 0, label: "January" },
+    { value: 1, label: "February" },
+    { value: 2, label: "March" },
+    { value: 3, label: "April" },
+    { value: 4, label: "May" },
+    { value: 5, label: "June" },
+    { value: 6, label: "July" },
+    { value: 7, label: "August" },
+    { value: 8, label: "September" },
+    { value: 9, label: "October" },
+    { value: 10, label: "November" },
+    { value: 11, label: "December" },
   ];
 
   // Generate years for dropdown (current year and previous 5 years)
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 6 }, (_, i) => currentYear - i);
+  const years = Array.from({ length: 3 }, (_, i) => currentYear - i);
 
   // Filter entries based on selected cutoff period, month, and year
-  const filterEntriesByCutoff = (entries: AttendanceEntry[], cutoff: CutoffPeriod, month: number, year: number): AttendanceEntry[] => {
-    return entries.filter(entry => {
+  const filterEntriesByCutoff = (
+    entries: AttendanceEntry[],
+    cutoff: CutoffPeriod,
+    month: number,
+    year: number
+  ): AttendanceEntry[] => {
+    return entries.filter((entry) => {
       const entryDate = new Date(entry.date);
       const entryMonth = entryDate.getMonth();
       const entryYear = entryDate.getFullYear();
       const day = entryDate.getDate();
-      
+
       // First filter by month and year
       if (entryMonth !== month || entryYear !== year) {
         return false;
       }
-      
+
       // Then filter by cutoff period
-      if (cutoff === '1-15') {
+      if (cutoff === "1-15") {
         return day >= 1 && day <= 15;
-      } else { // '16-31'
+      } else {
+        // '16-31'
         return day >= 16;
       }
     });
@@ -211,31 +331,54 @@ export const AttendanceTracker: React.FC = () => {
 
   // Apply filter when cutoff selection, month, year, or attendance entries change
   useEffect(() => {
-    const filtered = filterEntriesByCutoff(attendanceEntries, selectedCutoff, selectedMonth, selectedYear);
+    const filtered = filterEntriesByCutoff(
+      attendanceEntries,
+      selectedCutoff,
+      selectedMonth,
+      selectedYear
+    );
     setFilteredEntries(filtered);
   }, [attendanceEntries, selectedCutoff, selectedMonth, selectedYear]);
 
-  // Check for break/lunch time alerts
+  // Check for break/lunch time alerts (1 minute before end)
   useEffect(() => {
     if (!isTimeIn) return;
 
     const checkForAlerts = () => {
-      // Break 1: 15 minutes = 900 seconds, alert at 870 seconds (14.5 minutes)
-      if (currentEntry.breakStart && !currentEntry.breakEnd && elapsedTime >= 870 && elapsedTime < 900) {
-        showAlert('break1');
+      // Break 1: 15 minutes = 900 seconds, alert at 840 seconds (14 minutes - 1 minute before)
+      if (
+        currentEntry.breakStart &&
+        !currentEntry.breakEnd &&
+        elapsedTime >= 840 &&
+        elapsedTime < 900 &&
+        !alertShown.break1
+      ) {
+        showAlert("break1");
       }
-      // Break 2: 15 minutes = 900 seconds, alert at 870 seconds (14.5 minutes)
-      else if (currentEntry.secondBreakStart && !currentEntry.secondBreakEnd && elapsedTime >= 870 && elapsedTime < 900) {
-        showAlert('break2');
+      // Break 2: 15 minutes = 900 seconds, alert at 840 seconds (14 minutes - 1 minute before)
+      else if (
+        currentEntry.secondBreakStart &&
+        !currentEntry.secondBreakEnd &&
+        elapsedTime >= 840 &&
+        elapsedTime < 900 &&
+        !alertShown.break2
+      ) {
+        showAlert("break2");
       }
-      // Lunch: 60 minutes = 3600 seconds, alert at 3570 seconds (59.5 minutes)
-      else if (currentEntry.lunchStart && !currentEntry.lunchEnd && elapsedTime >= 3570 && elapsedTime < 3600) {
-        showAlert('lunch');
+      // Lunch: 60 minutes = 3600 seconds, alert at 3540 seconds (59 minutes - 1 minute before)
+      else if (
+        currentEntry.lunchStart &&
+        !currentEntry.lunchEnd &&
+        elapsedTime >= 3540 &&
+        elapsedTime < 3600 &&
+        !alertShown.lunch
+      ) {
+        showAlert("lunch");
       }
     };
 
     checkForAlerts();
-  }, [elapsedTime, currentEntry, isTimeIn]);
+  }, [elapsedTime, currentEntry, isTimeIn, alertShown]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -250,7 +393,12 @@ export const AttendanceTracker: React.FC = () => {
     setIsLoadingHistory(true);
     try {
       const response = await timer.getAttendanceEntries();
-      setAttendanceEntries(response.data);
+      // Calculate overbreak for each entry
+      const entriesWithOverbreak = response.data.map((entry: AttendanceEntry) => ({
+        ...entry,
+        overbreak: calculateOverbreak((entry.totalBreakTime || 0) + (entry.totalSecondBreakTime || 0), 0.5) // 30 minutes total break time allowed
+      }));
+      setAttendanceEntries(entriesWithOverbreak);
     } catch (error) {
       console.error("Error getting attendance entries:", error);
       // Check if the error message is "Employee time not found" and prevent showing the toast
@@ -339,19 +487,22 @@ export const AttendanceTracker: React.FC = () => {
 
       if (isOnBreak) {
         const breakStartTime = new Date(
-          `${currentEntry.dateBreakStart || currentEntry.date} ${currentEntry.breakStart
+          `${currentEntry.dateBreakStart || currentEntry.date} ${
+            currentEntry.breakStart
           }`
         ).getTime();
         diffMs = currentTime - breakStartTime;
       } else if (isOnSecondBreak) {
         const secondBreakStartTime = new Date(
-          `${currentEntry.dateSecondBreakStart || currentEntry.date} ${currentEntry.secondBreakStart
+          `${currentEntry.dateSecondBreakStart || currentEntry.date} ${
+            currentEntry.secondBreakStart
           }`
         ).getTime();
         diffMs = currentTime - secondBreakStartTime;
       } else if (isOnLunch) {
         const lunchStartTime = new Date(
-          `${currentEntry.dateLunchStart || currentEntry.date} ${currentEntry.lunchStart
+          `${currentEntry.dateLunchStart || currentEntry.date} ${
+            currentEntry.lunchStart
           }`
         ).getTime();
         diffMs = currentTime - lunchStartTime;
@@ -364,11 +515,13 @@ export const AttendanceTracker: React.FC = () => {
         let totalLunchMs = 0;
         if (currentEntry.lunchStart && currentEntry.lunchEnd) {
           const lunchStart = new Date(
-            `${currentEntry.dateLunchStart || currentEntry.date} ${currentEntry.lunchStart
+            `${currentEntry.dateLunchStart || currentEntry.date} ${
+              currentEntry.lunchStart
             }`
           );
           const lunchEnd = new Date(
-            `${currentEntry.dateLunchEnd || currentEntry.date} ${currentEntry.lunchEnd
+            `${currentEntry.dateLunchEnd || currentEntry.date} ${
+              currentEntry.lunchEnd
             }`
           );
 
@@ -530,6 +683,8 @@ export const AttendanceTracker: React.FC = () => {
       setDialogOpen(false);
       setElapsedTime(0);
       hideAlert(); // Hide any active alerts when timing out
+      // Reset all alert tracking
+      setAlertShown({ break1: false, break2: false, lunch: false });
 
       toast({
         title: "Success",
@@ -564,6 +719,7 @@ export const AttendanceTracker: React.FC = () => {
       setCurrentEntry(response.data);
       setElapsedTime(0);
       hideAlert(); // Hide any previous alerts
+      setAlertShown(prev => ({ ...prev, break1: false })); // Reset break1 alert tracking
       toast({
         title: "Success",
         description: "Break started successfully!",
@@ -618,6 +774,7 @@ export const AttendanceTracker: React.FC = () => {
       const response = await timer.updateBreakEnd(updatedEntry);
       setCurrentEntry(response.data);
       hideAlert(); // Hide alert when break ends
+      setAlertShown(prev => ({ ...prev, break1: false })); // Reset break1 alert tracking
       toast({
         title: "Success",
         description: "End break logged successfully!",
@@ -650,6 +807,7 @@ export const AttendanceTracker: React.FC = () => {
       setCurrentEntry(response.data);
       setElapsedTime(0);
       hideAlert(); // Hide any previous alerts
+      setAlertShown(prev => ({ ...prev, lunch: false })); // Reset lunch alert tracking
       toast({
         title: "Success",
         description: "Lunch started successfully!",
@@ -704,6 +862,7 @@ export const AttendanceTracker: React.FC = () => {
       const response = await timer.updateLunchEnd(updatedEntry);
       setCurrentEntry(response.data);
       hideAlert(); // Hide alert when lunch ends
+      setAlertShown(prev => ({ ...prev, lunch: false })); // Reset lunch alert tracking
       toast({
         title: "Success",
         description: "End lunch logged successfully!",
@@ -809,6 +968,7 @@ export const AttendanceTracker: React.FC = () => {
       setCurrentEntry(response.data);
       setElapsedTime(0); // Reset elapsed time when starting second break
       hideAlert(); // Hide any previous alerts
+      setAlertShown(prev => ({ ...prev, break2: false })); // Reset break2 alert tracking
       toast({
         title: "Success",
         description: "Break 2 started successfully!",
@@ -863,6 +1023,7 @@ export const AttendanceTracker: React.FC = () => {
       setCurrentEntry(response.data);
       setSelectedAction(null); // Reset the selected action after second break ends
       hideAlert(); // Hide alert when second break ends
+      setAlertShown(prev => ({ ...prev, break2: false })); // Reset break2 alert tracking
       toast({
         title: "Success",
         description: "Break 2 ended successfully!",
@@ -927,31 +1088,6 @@ export const AttendanceTracker: React.FC = () => {
     return actions;
   };
 
-  // Helper function to convert hours to minutes format
-  const formatHoursToMinutes = (hoursString: string): string => {
-    // Handle null/undefined/empty values
-    if (!hoursString || hoursString === "0" || hoursString === "0.00") {
-      return "-";
-    }
-
-    const hours = parseFloat(hoursString);
-    if (isNaN(hours) || hours === 0) {
-      return "-";
-    }
-
-    const totalMinutes = Math.round(hours * 60);
-    const hoursPart = Math.floor(totalMinutes / 60);
-    const minutesPart = totalMinutes % 60;
-
-    if (hoursPart === 0) {
-      return `${minutesPart}m`;
-    } else if (minutesPart === 0) {
-      return `${hoursPart}h`;
-    } else {
-      return `${hoursPart}h ${minutesPart}m`;
-    }
-  };
-
   if (isLoadingInitial) {
     return (
       <div className="flex justify-center items-start w-full pt-4">
@@ -962,26 +1098,24 @@ export const AttendanceTracker: React.FC = () => {
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 py-4">
-      {/* Alert Dialog */}
+      {/* Alert Dialog - Bigger Width */}
       {alert.show && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-xl p-6 max-w-sm mx-4 animate-in zoom-in-95">
+          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md mx-4 animate-in zoom-in-95">
             <div className="flex items-center gap-3 mb-4">
               <div className="flex-shrink-0">
-                <AlertTriangle className="h-6 w-6 text-amber-500" />
+                <AlertTriangle className="h-8 w-8 text-amber-500" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-xl font-semibold text-gray-900">
                 Time Alert
               </h3>
             </div>
-            <p className="text-gray-700 mb-6">
-              {alert.message}
-            </p>
+            <p className="text-lg text-gray-700 mb-6 text-center">{alert.message}</p>
             <div className="flex justify-end">
               <Button
                 onClick={hideAlert}
-                className="bg-amber-500 hover:bg-amber-600 text-white"
-                size="sm"
+                className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-2"
+                size="lg"
               >
                 OK
               </Button>
@@ -1002,6 +1136,13 @@ export const AttendanceTracker: React.FC = () => {
           </CardTitle>
         </CardHeader>
 
+        {/* Current Date Display */}
+        <div className="text-center">
+          <p className="text-xl sm:text-3xl font-bold text-blue-600">
+            {currentFormattedDate || "Loading date..."}
+          </p>
+        </div>
+
         <CardContent className="p-4 sm:p-6">
           {/* Back Button - Responsive positioning */}
           <div className="absolute left-2 sm:left-4 top-24 sm:top-28 text-xs">
@@ -1018,7 +1159,8 @@ export const AttendanceTracker: React.FC = () => {
                   </p>
                   {formatElapsedTime(elapsedTime)}
                 </div>
-              ) : currentEntry.secondBreakStart && !currentEntry.secondBreakEnd ? (
+              ) : currentEntry.secondBreakStart &&
+                !currentEntry.secondBreakEnd ? (
                 <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-red-600 text-center">
                   <p className="text-sm sm:text-base text-black tracking-wide mb-2">
                     BREAK 2 - 15 Minutes
@@ -1034,8 +1176,9 @@ export const AttendanceTracker: React.FC = () => {
                 </div>
               ) : (
                 <div
-                  className={`mb-2 text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-center text-green-700 ${isTimeIn ? "" : "hidden"
-                    }`}
+                  className={`mb-2 text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-center text-green-700 ${
+                    isTimeIn ? "" : "hidden"
+                  }`}
                 >
                   <p className="text-sm sm:text-base text-black tracking-wide mb-2">
                     RUNNING TIME
@@ -1043,13 +1186,6 @@ export const AttendanceTracker: React.FC = () => {
                   {formatElapsedTime(elapsedTime)}
                 </div>
               )}
-
-              {/* Current Date Display */}
-              <div className="text-center">
-                <p className="text-lg sm:text-xl font-medium text-gray-700">
-                  {currentFormattedDate || 'Loading date...'}
-                </p>
-              </div>
 
               {/* Action Buttons Section */}
               <div className="flex flex-col sm:flex-row justify-center items-center gap-3 w-full max-w-md mx-auto">
@@ -1147,17 +1283,22 @@ export const AttendanceTracker: React.FC = () => {
               {/* Current Session Info */}
               {isTimeIn && (
                 <div className="w-full max-w-2xl mx-auto">
-                  <p className="font-semibold text-sm sm:text-base mb-3 text-center">Current Session</p>
+                  <p className="font-semibold text-sm sm:text-base mb-3 text-center">
+                    Current Session
+                  </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-
                     {/* Time In Card */}
                     {currentEntry.timeIn && (
                       <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-3 border border-green-200">
                         <div className="flex items-center gap-2">
                           <LogIn className="h-4 w-4 text-green-600" />
-                          <span className="text-xs font-medium text-green-800">Login</span>
+                          <span className="text-xs font-medium text-green-800">
+                            Login
+                          </span>
                         </div>
-                        <p className="text-sm font-semibold mt-1">{currentEntry.timeIn}</p>
+                        <p className="text-sm font-semibold mt-1">
+                          {formatTime(currentEntry.timeIn)}
+                        </p>
                       </div>
                     )}
 
@@ -1166,9 +1307,13 @@ export const AttendanceTracker: React.FC = () => {
                       <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-3 border border-purple-200">
                         <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4 text-purple-600" />
-                          <span className="text-xs font-medium text-purple-800">Shift</span>
+                          <span className="text-xs font-medium text-purple-800">
+                            Shift
+                          </span>
                         </div>
-                        <p className="text-sm font-semibold mt-1">{currentEntry.shift}</p>
+                        <p className="text-sm font-semibold mt-1">
+                          {currentEntry.shift}
+                        </p>
                       </div>
                     )}
 
@@ -1177,18 +1322,27 @@ export const AttendanceTracker: React.FC = () => {
                       <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-3 border border-orange-200">
                         <div className="flex items-center gap-2">
                           <Coffee className="h-4 w-4 text-orange-600" />
-                          <span className="text-xs font-medium text-orange-800">Break 1</span>
+                          <span className="text-xs font-medium text-orange-800">
+                            Break 1
+                          </span>
                         </div>
                         <div className="space-y-1 mt-1">
-                          <p className="text-xs"><span className="font-medium">Start:</span> {currentEntry.breakStart}</p>
+                          <p className="text-xs">
+                            <span className="font-medium">Start:</span>{" "}
+                            {formatTime(currentEntry.breakStart)}
+                          </p>
                           {currentEntry.breakEnd && (
-                            <p className="text-xs"><span className="font-medium">End:</span> {currentEntry.breakEnd}</p>
-                          )}
-                          {currentEntry.totalBreakTime !== undefined && currentEntry.totalBreakTime !== null && (
-                            <p className="text-xs font-semibold">
-                              Total: {Math.round(currentEntry.totalBreakTime * 60)} min
+                            <p className="text-xs">
+                              <span className="font-medium">End:</span>{" "}
+                              {formatTime(currentEntry.breakEnd)}
                             </p>
                           )}
+                          {currentEntry.totalBreakTime !== undefined &&
+                            currentEntry.totalBreakTime !== null && (
+                              <p className="text-xs font-semibold">
+                                Total: {formatMinutesToHoursMinutes(Math.round(currentEntry.totalBreakTime * 60))}
+                              </p>
+                            )}
                         </div>
                       </div>
                     )}
@@ -1198,18 +1352,27 @@ export const AttendanceTracker: React.FC = () => {
                       <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg p-3 border border-amber-200">
                         <div className="flex items-center gap-2">
                           <Coffee className="h-4 w-4 text-amber-600" />
-                          <span className="text-xs font-medium text-amber-800">Break 2</span>
+                          <span className="text-xs font-medium text-amber-800">
+                            Break 2
+                          </span>
                         </div>
                         <div className="space-y-1 mt-1">
-                          <p className="text-xs"><span className="font-medium">Start:</span> {currentEntry.secondBreakStart}</p>
+                          <p className="text-xs">
+                            <span className="font-medium">Start:</span>{" "}
+                            {formatTime(currentEntry.secondBreakStart)}
+                          </p>
                           {currentEntry.secondBreakEnd && (
-                            <p className="text-xs"><span className="font-medium">End:</span> {currentEntry.secondBreakEnd}</p>
-                          )}
-                          {currentEntry.totalSecondBreakTime !== undefined && currentEntry.totalSecondBreakTime !== null && (
-                            <p className="text-xs font-semibold">
-                              Total: {Math.round(currentEntry.totalSecondBreakTime * 60)} min
+                            <p className="text-xs">
+                              <span className="font-medium">End:</span>{" "}
+                              {formatTime(currentEntry.secondBreakEnd)}
                             </p>
                           )}
+                          {currentEntry.totalSecondBreakTime !== undefined &&
+                            currentEntry.totalSecondBreakTime !== null && (
+                              <p className="text-xs font-semibold">
+                                Total: {formatMinutesToHoursMinutes(Math.round(currentEntry.totalSecondBreakTime * 60))}
+                              </p>
+                            )}
                         </div>
                       </div>
                     )}
@@ -1219,18 +1382,27 @@ export const AttendanceTracker: React.FC = () => {
                       <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-3 border border-red-200">
                         <div className="flex items-center gap-2">
                           <Utensils className="h-4 w-4 text-red-600" />
-                          <span className="text-xs font-medium text-red-800">Lunch</span>
+                          <span className="text-xs font-medium text-red-800">
+                            Lunch
+                          </span>
                         </div>
                         <div className="space-y-1 mt-1">
-                          <p className="text-xs"><span className="font-medium">Start:</span> {currentEntry.lunchStart}</p>
+                          <p className="text-xs">
+                            <span className="font-medium">Start:</span>{" "}
+                            {formatTime(currentEntry.lunchStart)}
+                          </p>
                           {currentEntry.lunchEnd && (
-                            <p className="text-xs"><span className="font-medium">End:</span> {currentEntry.lunchEnd}</p>
-                          )}
-                          {currentEntry.totalLunchTime !== undefined && currentEntry.totalLunchTime !== null && (
-                            <p className="text-xs font-semibold">
-                              Total: {Math.round(currentEntry.totalLunchTime * 60)} min
+                            <p className="text-xs">
+                              <span className="font-medium">End:</span>{" "}
+                              {formatTime(currentEntry.lunchEnd)}
                             </p>
                           )}
+                          {currentEntry.totalLunchTime !== undefined &&
+                            currentEntry.totalLunchTime !== null && (
+                              <p className="text-xs font-semibold">
+                                Total: {formatMinutesToHoursMinutes(Math.round(currentEntry.totalLunchTime * 60))}
+                              </p>
+                            )}
                         </div>
                       </div>
                     )}
@@ -1243,40 +1415,24 @@ export const AttendanceTracker: React.FC = () => {
             <Card className="w-full">
               <CardHeader className="p-4 sm:p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <CardTitle className="text-lg sm:text-xl">Daily Time Record</CardTitle>
-                  
+                  <CardTitle className="text-lg sm:text-xl">
+                    Daily Time Record
+                  </CardTitle>
+
                   {/* Month, Year, and Cut-off Filters */}
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                    {/* Month Selector */}
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-gray-500" />
-                      <Select
-                        value={selectedMonth.toString()}
-                        onValueChange={(value) => setSelectedMonth(parseInt(value))}
-                      >
-                        <SelectTrigger className="w-32 text-sm">
-                          <SelectValue placeholder="Month" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {months.map(month => (
-                            <SelectItem key={month.value} value={month.value.toString()}>
-                              {month.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
                     {/* Year Selector */}
                     <Select
                       value={selectedYear.toString()}
-                      onValueChange={(value) => setSelectedYear(parseInt(value))}
+                      onValueChange={(value) =>
+                        setSelectedYear(parseInt(value))
+                      }
                     >
                       <SelectTrigger className="w-24 text-sm">
                         <SelectValue placeholder="Year" />
                       </SelectTrigger>
                       <SelectContent>
-                        {years.map(year => (
+                        {years.map((year) => (
                           <SelectItem key={year} value={year.toString()}>
                             {year}
                           </SelectItem>
@@ -1284,12 +1440,39 @@ export const AttendanceTracker: React.FC = () => {
                       </SelectContent>
                     </Select>
 
+                    {/* Month Selector */}
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-gray-500" />
+                      <Select
+                        value={selectedMonth.toString()}
+                        onValueChange={(value) =>
+                          setSelectedMonth(parseInt(value))
+                        }
+                      >
+                        <SelectTrigger className="w-32 text-sm">
+                          <SelectValue placeholder="Month" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {months.map((month) => (
+                            <SelectItem
+                              key={month.value}
+                              value={month.value.toString()}
+                            >
+                              {month.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
                     {/* Cut-off Filter */}
                     <div className="flex items-center gap-2">
                       <Filter className="h-4 w-4 text-gray-500" />
                       <Select
                         value={selectedCutoff}
-                        onValueChange={(value: CutoffPeriod) => setSelectedCutoff(value)}
+                        onValueChange={(value: CutoffPeriod) =>
+                          setSelectedCutoff(value)
+                        }
                       >
                         <SelectTrigger className="w-32 text-sm">
                           <SelectValue placeholder="Cut-off" />
@@ -1315,35 +1498,69 @@ export const AttendanceTracker: React.FC = () => {
                         <TableHeader>
                           <TableRow>
                             <TableHead className="min-w-[90px]">Date</TableHead>
-                            <TableHead className="min-w-[90px]">Log In</TableHead>
-                            <TableHead className="min-w-[90px]">Log Out</TableHead>
-                            <TableHead className="min-w-[90px]">Total Hours</TableHead>
-                            <TableHead className="min-w-[90px]">Break 1</TableHead>
-                            <TableHead className="min-w-[90px]">Lunch</TableHead>
-                            <TableHead className="min-w-[90px]">Break 2</TableHead>
-                            <TableHead className="min-w-[90px]">Notes</TableHead>
+                            <TableHead className="min-w-[90px]">
+                              Log In
+                            </TableHead>
+                            <TableHead className="min-w-[90px]">
+                              Log Out
+                            </TableHead>
+                            <TableHead className="min-w-[90px]">
+                              Total Hours
+                            </TableHead>
+                            <TableHead className="min-w-[90px]">
+                              Break 1
+                            </TableHead>
+                            <TableHead className="min-w-[90px]">
+                              Lunch
+                            </TableHead>
+                            <TableHead className="min-w-[90px]">
+                              Break 2
+                            </TableHead>
+                            <TableHead className="min-w-[90px]">
+                              Overbreak
+                            </TableHead>
+                            <TableHead className="min-w-[90px]">
+                              Notes
+                            </TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {filteredEntries.length > 0 ? (
                             filteredEntries.map((entry, index) => (
                               <TableRow key={entry.id || `entry-${index}`}>
-                                <TableCell className="py-2">{entry.date}</TableCell>
-                                <TableCell className="py-2">{entry.timeIn}</TableCell>
                                 <TableCell className="py-2">
-                                  {entry.timeOut || "In Progress"}
+                                  {entry.date}
                                 </TableCell>
                                 <TableCell className="py-2">
-                                  {formatHoursToMinutes(String(entry.totalHours || ""))}
+                                  {formatTime(entry.timeIn)}
                                 </TableCell>
                                 <TableCell className="py-2">
-                                  {formatHoursToMinutes(String(entry.totalBreakTime || ""))}
+                                  {entry.timeOut ? formatTime(entry.timeOut) : "In Progress"}
                                 </TableCell>
                                 <TableCell className="py-2">
-                                  {formatHoursToMinutes(String(entry.totalSecondBreakTime || ""))}
+                                  {formatHoursToHoursMinutes(
+                                    String(entry.totalHours || "")
+                                  )}
                                 </TableCell>
                                 <TableCell className="py-2">
-                                  {formatHoursToMinutes(String(entry.totalLunchTime || ""))}
+                                  {formatHoursToHoursMinutes(
+                                    String(entry.totalBreakTime || "")
+                                  )}
+                                </TableCell>
+                                <TableCell className="py-2">
+                                  {formatHoursToHoursMinutes(
+                                    String(entry.totalLunchTime || "")
+                                  )}
+                                </TableCell>
+                                <TableCell className="py-2">
+                                  {formatHoursToHoursMinutes(
+                                    String(entry.totalSecondBreakTime || "")
+                                  )}
+                                </TableCell>
+                                <TableCell className="py-2">
+                                  {entry.overbreak && entry.overbreak > 0 
+                                    ? `${entry.overbreak} minutes` 
+                                    : "-"}
                                 </TableCell>
                                 <TableCell className="py-2">
                                   <div
@@ -1357,8 +1574,16 @@ export const AttendanceTracker: React.FC = () => {
                             ))
                           ) : (
                             <TableRow>
-                              <TableCell colSpan={8} className="text-center py-4">
-                                No attendance records found for {months.find(m => m.value === selectedMonth)?.label} {selectedYear} ({selectedCutoff} cut-off)
+                              <TableCell
+                                colSpan={9}
+                                className="text-center py-4"
+                              >
+                                No attendance records found for{" "}
+                                {
+                                  months.find((m) => m.value === selectedMonth)
+                                    ?.label
+                                }{" "}
+                                {selectedYear} ({selectedCutoff} cut-off)
                               </TableCell>
                             </TableRow>
                           )}
@@ -1368,7 +1593,9 @@ export const AttendanceTracker: React.FC = () => {
 
                     {/* Records Count */}
                     <div className="mt-4 text-sm text-gray-600">
-                      Showing {filteredEntries.length} record(s) for {months.find(m => m.value === selectedMonth)?.label} {selectedYear} ({selectedCutoff} cut-off)
+                      Showing {filteredEntries.length} record(s) for{" "}
+                      {months.find((m) => m.value === selectedMonth)?.label}{" "}
+                      {selectedYear} ({selectedCutoff} cut-off)
                     </div>
                   </>
                 )}

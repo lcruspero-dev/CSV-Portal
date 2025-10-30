@@ -98,6 +98,21 @@ const calculateAge = (dateOfBirth?: string): string => {
   return age.toString();
 };
 
+const getInitials = (name?: string) => {
+  if (!name) return "U";
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .substring(0, 2);
+};
+
+const capitalCaseFirstLetter = (name?: string) => {
+  if (!name || name.trim() === "") return "U";
+  return name.charAt(0).toUpperCase() + name.slice(1);
+};
+
 // GitHub-style Section Component
 const GitHubSection = ({ 
   children, 
@@ -169,7 +184,7 @@ export default function ViewProfile({
 
             <div className="text-center mb-4">
               <h3 className="font-semibold text-gray-900 text-lg mb-1">
-                {userData?.firstName || "—"} {userData?.lastName || "—"}
+                {userData?.firstName || "—"} {getInitials(userData?.middleName || ".")}. {userData?.lastName || "—"}
               </h3>
               <p className="text-gray-500 text-sm">{user?.email || "—"}</p>
               <p className="text-gray-600 text-sm mt-1">{userData?.jobPosition || "—"}</p>
@@ -217,8 +232,7 @@ export default function ViewProfile({
             <InfoItem label="Last name" value={userData?.lastName} />
             <InfoItem label="Birth date" value={formattedDateOfBirth} />
             <InfoItem label="Age" value={computedAge} />
-            <InfoItem label="Gender" value={userData?.gender} />
-            <InfoItem label="Tax status" value={userData?.taxStatus} />
+            <InfoItem label="Gender" value={capitalCaseFirstLetter(userData?.gender)}/>
           </div>
         </GitHubSection>
 
@@ -231,6 +245,7 @@ export default function ViewProfile({
             <InfoItem label="Date hired" value={formatDate(userData?.dateHired)} />
             <InfoItem label="Probationary date" value={formatDate(userData?.probationaryDate)} />
             <InfoItem label="Regularization date" value={formatDate(userData?.regularizationDate)} />
+            <InfoItem label="Tax status" value={userData?.taxStatus} />
           </div>
         </GitHubSection>
 
