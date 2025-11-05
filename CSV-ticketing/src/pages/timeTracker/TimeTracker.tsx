@@ -33,7 +33,7 @@ import {
   Ghost,
   Skull,
   ShipWheel,
-  Eclipse ,
+  Eclipse,
   Moon
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
@@ -136,7 +136,6 @@ export const AttendanceTracker: React.FC = () => {
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
   const { toast } = useToast();
-
 
   // Halloween-themed toast
   const showHalloweenToast = (title: string, description: string, variant: "default" | "destructive" = "default") => {
@@ -1135,7 +1134,7 @@ export const AttendanceTracker: React.FC = () => {
           {/* Halloween decorations */}
           <div className="absolute top-2 left-2 flex gap-1">
             <ShipWheel className="h-4 w-4 text-orange-400 animate-pulse" />
-            <Eclipse  className="h-4 w-4 text-gray-300" />
+            <Eclipse className="h-4 w-4 text-gray-300" />
           </div>
           
           {/* Mobile: Button below title, Desktop: Button top right */}
@@ -1358,6 +1357,12 @@ export const AttendanceTracker: React.FC = () => {
                                 Total: {formatMinutesToHoursMinutes(Math.round(currentEntry.totalBreakTime * 60))}
                               </p>
                             )}
+                          {/* Overbreak for Break 1 */}
+                          {currentEntry.totalBreakTime && currentEntry.totalBreakTime > 0.25 && (
+                            <p className="text-xs font-semibold text-red-400">
+                              💀 Overbreak: {calculateOverbreak(currentEntry.totalBreakTime, 0.25)} minutes
+                            </p>
+                          )}
                         </div>
                       </div>
                     )}
@@ -1366,7 +1371,7 @@ export const AttendanceTracker: React.FC = () => {
                     {currentEntry.secondBreakStart && (
                       <div className="bg-gradient-to-br from-amber-900 to-amber-800 rounded-lg p-3 border border-amber-400 shadow-lg">
                         <div className="flex items-center gap-2">
-                          <Eclipse  className="h-4 w-4 text-amber-400" />
+                          <Eclipse className="h-4 w-4 text-amber-400" />
                           <span className="text-xs font-medium text-amber-300">
                             🧟 Break 2
                           </span>
@@ -1388,6 +1393,12 @@ export const AttendanceTracker: React.FC = () => {
                                 Total: {formatMinutesToHoursMinutes(Math.round(currentEntry.totalSecondBreakTime * 60))}
                               </p>
                             )}
+                          {/* Overbreak for Break 2 */}
+                          {currentEntry.totalSecondBreakTime && currentEntry.totalSecondBreakTime > 0.25 && (
+                            <p className="text-xs font-semibold text-red-400">
+                              💀 Overbreak: {calculateOverbreak(currentEntry.totalSecondBreakTime, 0.25)} minutes
+                            </p>
+                          )}
                         </div>
                       </div>
                     )}
@@ -1418,6 +1429,32 @@ export const AttendanceTracker: React.FC = () => {
                                 Total: {formatMinutesToHoursMinutes(Math.round(currentEntry.totalLunchTime * 60))}
                               </p>
                             )}
+                          {/* Overbreak for Lunch */}
+                          {currentEntry.totalLunchTime && currentEntry.totalLunchTime > 1 && (
+                            <p className="text-xs font-semibold text-red-400">
+                              💀 Overbreak: {calculateOverbreak(currentEntry.totalLunchTime, 1)} minutes
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Total Overbreak Card */}
+                    {currentEntry.overbreak && currentEntry.overbreak > 0 && (
+                      <div className="bg-gradient-to-br from-red-900 to-red-800 rounded-lg p-3 border border-red-400 shadow-lg">
+                        <div className="flex items-center gap-2">
+                          <Skull className="h-4 w-4 text-red-400" />
+                          <span className="text-xs font-medium text-red-300">
+                            💀 Total Overbreak
+                          </span>
+                        </div>
+                        <div className="space-y-1 mt-1">
+                          <p className="text-xs font-semibold text-white">
+                            {currentEntry.overbreak} minutes
+                          </p>
+                          <p className="text-xs text-red-200">
+                            Combined break time exceeded 30 minutes
+                          </p>
                         </div>
                       </div>
                     )}
@@ -1532,9 +1569,6 @@ export const AttendanceTracker: React.FC = () => {
                               Break 2
                             </TableHead>
                             <TableHead className="min-w-[90px] text-orange-300">
-                              Overbreak
-                            </TableHead>
-                            <TableHead className="min-w-[90px] text-orange-300">
                               Notes
                             </TableHead>
                           </TableRow>
@@ -1570,11 +1604,6 @@ export const AttendanceTracker: React.FC = () => {
                                     String(entry.totalSecondBreakTime || "")
                                   )}
                                 </TableCell>
-                                <TableCell className="py-2 text-red-400">
-                                  {entry.overbreak && entry.overbreak > 0 
-                                    ? `💀 ${entry.overbreak} minutes` 
-                                    : "👻"}
-                                </TableCell>
                                 <TableCell className="py-2 text-gray-300">
                                   <div
                                     className="truncate max-w-[80px] sm:max-w-[100px] lg:max-w-[150px] text-ellipsis overflow-hidden"
@@ -1588,7 +1617,7 @@ export const AttendanceTracker: React.FC = () => {
                           ) : (
                             <TableRow>
                               <TableCell
-                                colSpan={9}
+                                colSpan={8}
                                 className="text-center py-4 text-orange-200"
                               >
                                 👻 No haunted records found for{" "}
