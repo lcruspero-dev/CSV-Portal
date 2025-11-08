@@ -84,6 +84,18 @@ const employeeTimeSchema = mongoose.Schema(
       type: String,
       default: null,
     },
+    overBreak1: {
+      type: String,
+      default: null,
+    },
+    overBreak2: {
+      type: String,
+      default: null
+    },
+    overLunch: {
+      type: String,
+      default: null,
+    },
     notes: {
       type: String,
       default: null,

@@ -73,17 +73,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       name: "Haunted Main",
       items: [
         {
-          title: "Spooky Dashboard",
+          title: "Dashboard",
           path: "/",
           icon: <LayoutDashboard className="h-5 w-5" />,
         },
         {
-          title: "Ghostly Time Tracker",
+          title: "Time Tracker",
           path: "/timetracker",
           icon: <Clock className="h-5 w-5" />,
         },
         {
-          title: "Witch's Payroll",
+          title: "Payroll",
           path: "/payroll",
           icon: <BadgeDollarSign className="h-5 w-5" />,
           badge: "New",
@@ -91,20 +91,20 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       ],
     },
     {
-      name: "Ticket Hauntings",
+      name: "Ticket Management",
       items: [
         {
-          title: "Manage Hauntings",
+          title: "Manage tickets",
           path: "/all-tickets",
           icon: <Ticket className="h-5 w-5" />,
         },
         {
-          title: "Summon Assignee",
+          title: "Add Assignee",
           path: "/addassign",
           icon: <UserPlus className="h-5 w-5" />,
         },
         {
-          title: "Add Spooky Category",
+          title: "Add Category",
           path: "/addcategory",
           icon: <Tag className="h-5 w-5" />,
         },
@@ -114,12 +114,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       name: "Time Spells",
       items: [
         {
-          title: "Ghostly Records",
+          title: "Time Records",
           path: "/timerecord",
           icon: <Edit className="h-5 w-5" />,
         },
         {
-          title: "Export Haunt Tracker",
+          title: "Export Tracker",
           path: "/exporttimetracker",
           icon: <CalendarCheck className="h-5 w-5" />,
         },
@@ -129,17 +129,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       name: "Data & Scrolls",
       items: [
         {
-          title: "Export Spooky Memo",
+          title: "Export Memo",
           path: "/exportmemo",
           icon: <FileText className="h-5 w-5" />,
         },
         {
-          title: "Export Witch Survey",
+          title: "Export Survey",
           path: "/exportsurveydata",
           icon: <BarChart3 className="h-5 w-5" />,
         },
         {
-          title: "Export Hauntings",
+          title: "Export Tickets",
           path: "/exportdata",
           icon: <FileSpreadsheet className="h-5 w-5" />,
         },
@@ -149,23 +149,23 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       name: "Witch's Coven",
       items: [
         {
-          title: "Leave Spells",
+          title: "Leave Credits",
           path: "/leavecredits",
           icon: <FileText className="h-5 w-5" />,
           protected: true,
         },
         {
-          title: "Ghostly Employees",
+          title: "Employees",
           path: "/manageemployees",
           icon: <Users className="h-5 w-5" />,
         },
         {
-          title: "Reset Magic Password",
+          title: "Reset Password",
           path: "/resetuserpassword",
           icon: <Key className="h-5 w-5" />,
         },
         {
-          title: "Manage Witch Survey",
+          title: "Manage Survey",
           path: "/createsurvey",
           icon: <Settings className="h-5 w-5" />,
         },
@@ -189,14 +189,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       setIsPasswordDialogOpen(false);
       setPassword("");
       toast({
-        title: "🎃 Access Granted!",
+        title: "Access Granted!",
         description: "You may now enter the haunted section.",
         variant: "default",
         className: "bg-gradient-to-r from-purple-900 to-orange-900 text-white border-orange-400"
       });
     } else {
       toast({
-        title: "💀 Incorrect Spell!",
+        title: "Incorrect Spell!",
         description: "The magical password does not match.",
         variant: "destructive",
       });

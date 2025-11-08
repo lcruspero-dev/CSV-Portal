@@ -132,7 +132,7 @@ const AdminHome = () => {
   );
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-orange-900">
+    <div className="flex min-h-screen ">
       {/* Sidebar */}
       <div className={`${isMobile ? "fixed inset-y-0 left-0 z-50" : "relative flex-shrink-0"} transition-all duration-300`}>
         <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />

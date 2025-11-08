@@ -237,7 +237,7 @@ const UserHome = () => {
       <SurveyModal />
       
       {/* Main Container */}
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-orange-900 py-4 sm:py-6 lg:py-8 px-3 sm:px-4 lg:px-6 xl:px-8 relative overflow-hidden">
+      <div className="min-h-screen py-4 sm:py-6 lg:py-8 px-3 sm:px-4 lg:px-6 xl:px-8 relative overflow-hidden">
         {/* Halloween Decorations */}
         <motion.div
           className="absolute top-10 left-10 opacity-20"
@@ -453,12 +453,10 @@ const UserHome = () => {
                 href="mailto:support@company.com" 
                 className="text-yellow-300 hover:text-yellow-200 underline"
               >
-                company's haunted support channels.
+                company's support channels.
               </a>
             </p>
-            <p className="text-gray-400 text-xs mt-2">
-              🎃 Happy Halloween! 🦇
-            </p>
+          
           </motion.div>
         </div>
       </div>

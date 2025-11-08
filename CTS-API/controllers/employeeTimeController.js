@@ -113,6 +113,9 @@ const updateEmployeeTime = async (req, res) => {
       secondBreakStart,
       secondBreakEnd,
       totalSecondBreakTime,
+      overBreak1,
+      overBreak2,
+      overLunch
     } = req.body;
 
     // Validate secret key from environment variable
@@ -145,6 +148,9 @@ const updateEmployeeTime = async (req, res) => {
     employeeTime.secondBreakStart = secondBreakStart;
     employeeTime.secondBreakEnd = secondBreakEnd;
     employeeTime.totalSecondBreakTime = totalSecondBreakTime;
+    employeeTime.overBreak1 = overBreak1;
+    employeeTime.overBreak2 = overBreak2;
+    employeeTime.overLunch = overLunch;
 
     const updatedEmployeeTime = await employeeTime.save();
     res.status(200).json(updatedEmployeeTime);

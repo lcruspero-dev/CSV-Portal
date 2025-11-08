@@ -63,6 +63,10 @@ interface AttendanceEntry {
   dateLunchEnd?: string;
   loginLimit?: number;
   overbreak?: number;
+  overlunch?: number;
+  overbreak1?: number;
+  overbreak2?: number;
+  overLunch?: number;
 }
 
 interface CurrentTimeResponse {
@@ -405,10 +409,12 @@ export const AttendanceTracker: React.FC = () => {
     setIsLoadingHistory(true);
     try {
       const response = await timer.getAttendanceEntries();
-      // Calculate overbreak for each entry
+      // Calculate overbreak for each entry - use backend values if available, otherwise calculate
       const entriesWithOverbreak = response.data.map((entry: AttendanceEntry) => ({
         ...entry,
-        overbreak: calculateOverbreak((entry.totalBreakTime || 0) + (entry.totalSecondBreakTime || 0), 0.5) // 30 minutes total break time allowed
+        overbreak1: entry.overbreak1 || calculateOverbreak(entry.totalBreakTime || 0, 0.25), // 15 minutes for break 1
+        overbreak2: entry.overbreak2 || calculateOverbreak(entry.totalSecondBreakTime || 0, 0.25), // 15 minutes for break 2
+        overlunch: entry.overLunch || calculateOverbreak(entry.totalLunchTime || 0, 1) // 60 minutes lunch time allowed
       }));
       setAttendanceEntries(entriesWithOverbreak);
     } catch (error) {
@@ -1100,7 +1106,7 @@ export const AttendanceTracker: React.FC = () => {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 py-4">
+    <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6 py-4">
       {/* Halloween Alert Dialog */}
       {alert.show && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-70">
@@ -1357,7 +1363,7 @@ export const AttendanceTracker: React.FC = () => {
                                 Total: {formatMinutesToHoursMinutes(Math.round(currentEntry.totalBreakTime * 60))}
                               </p>
                             )}
-                          {/* Overbreak for Break 1 */}
+                          {/* Overbreak for Break 1 - Show if this specific break exceeded 15 minutes */}
                           {currentEntry.totalBreakTime && currentEntry.totalBreakTime > 0.25 && (
                             <p className="text-xs font-semibold text-red-400">
                               💀 Overbreak: {calculateOverbreak(currentEntry.totalBreakTime, 0.25)} minutes
@@ -1393,7 +1399,7 @@ export const AttendanceTracker: React.FC = () => {
                                 Total: {formatMinutesToHoursMinutes(Math.round(currentEntry.totalSecondBreakTime * 60))}
                               </p>
                             )}
-                          {/* Overbreak for Break 2 */}
+                          {/* Overbreak for Break 2 - Show if this specific break exceeded 15 minutes */}
                           {currentEntry.totalSecondBreakTime && currentEntry.totalSecondBreakTime > 0.25 && (
                             <p className="text-xs font-semibold text-red-400">
                               💀 Overbreak: {calculateOverbreak(currentEntry.totalSecondBreakTime, 0.25)} minutes
@@ -1429,17 +1435,17 @@ export const AttendanceTracker: React.FC = () => {
                                 Total: {formatMinutesToHoursMinutes(Math.round(currentEntry.totalLunchTime * 60))}
                               </p>
                             )}
-                          {/* Overbreak for Lunch */}
+                          {/* Overbreak for Lunch - Show if lunch exceeded 60 minutes */}
                           {currentEntry.totalLunchTime && currentEntry.totalLunchTime > 1 && (
                             <p className="text-xs font-semibold text-red-400">
-                              💀 Overbreak: {calculateOverbreak(currentEntry.totalLunchTime, 1)} minutes
+                              💀 Overlunch: {calculateOverbreak(currentEntry.totalLunchTime, 1)} minutes
                             </p>
                           )}
                         </div>
                       </div>
                     )}
 
-                    {/* Total Overbreak Card */}
+                    {/* Total Overbreak Card - This shows the combined overbreak from both breaks */}
                     {currentEntry.overbreak && currentEntry.overbreak > 0 && (
                       <div className="bg-gradient-to-br from-red-900 to-red-800 rounded-lg p-3 border border-red-400 shadow-lg">
                         <div className="flex items-center gap-2">
@@ -1454,6 +1460,26 @@ export const AttendanceTracker: React.FC = () => {
                           </p>
                           <p className="text-xs text-red-200">
                             Combined break time exceeded 30 minutes
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Overlunch Card - This shows lunch-specific overbreak */}
+                    {currentEntry.overlunch && currentEntry.overlunch > 0 && (
+                      <div className="bg-gradient-to-br from-red-900 to-red-800 rounded-lg p-3 border border-red-400 shadow-lg">
+                        <div className="flex items-center gap-2">
+                          <Skull className="h-4 w-4 text-red-400" />
+                          <span className="text-xs font-medium text-red-300">
+                            💀 Lunch Overbreak
+                          </span>
+                        </div>
+                        <div className="space-y-1 mt-1">
+                          <p className="text-xs font-semibold text-white">
+                            {currentEntry.overlunch} minutes
+                          </p>
+                          <p className="text-xs text-red-200">
+                            Lunch time exceeded 60 minutes
                           </p>
                         </div>
                       </div>
@@ -1546,7 +1572,7 @@ export const AttendanceTracker: React.FC = () => {
                 ) : (
                   <>
                     <div className="overflow-x-auto">
-                      <Table>
+                      <Table className="">
                         <TableHeader>
                           <TableRow className="bg-gray-800 hover:bg-gray-700">
                             <TableHead className="min-w-[90px] text-orange-300">Date</TableHead>
@@ -1567,6 +1593,15 @@ export const AttendanceTracker: React.FC = () => {
                             </TableHead>
                             <TableHead className="min-w-[90px] text-orange-300">
                               Break 2
+                            </TableHead>
+                            <TableHead className="min-w-[90px] text-orange-300">
+                              Overbreak 1
+                            </TableHead>
+                            <TableHead className="min-w-[90px] text-orange-300">
+                              Overbreak 2
+                            </TableHead>
+                            <TableHead className="min-w-[90px] text-orange-300">
+                              Overlunch
                             </TableHead>
                             <TableHead className="min-w-[90px] text-orange-300">
                               Notes
@@ -1604,6 +1639,21 @@ export const AttendanceTracker: React.FC = () => {
                                     String(entry.totalSecondBreakTime || "")
                                   )}
                                 </TableCell>
+                                <TableCell className="py-2 text-red-300">
+                                  {entry.overbreak1 && entry.overbreak1 > 0 
+                                    ? `${entry.overbreak1} minutes` 
+                                    : "-"}
+                                </TableCell>
+                                <TableCell className="py-2 text-red-300">
+                                  {entry.overbreak2 && entry.overbreak2 > 0 
+                                    ? `${entry.overbreak2} minutes` 
+                                    : "-"}
+                                </TableCell>
+                                <TableCell className="py-2 text-red-300">
+                                  {entry.overlunch && entry.overlunch > 0 
+                                    ? `${entry.overlunch} minutes` 
+                                    : "-"}
+                                </TableCell>
                                 <TableCell className="py-2 text-gray-300">
                                   <div
                                     className="truncate max-w-[80px] sm:max-w-[100px] lg:max-w-[150px] text-ellipsis overflow-hidden"
@@ -1617,7 +1667,7 @@ export const AttendanceTracker: React.FC = () => {
                           ) : (
                             <TableRow>
                               <TableCell
-                                colSpan={8}
+                                colSpan={12} // Updated from 11 to 12
                                 className="text-center py-4 text-orange-200"
                               >
                                 👻 No haunted records found for{" "}
