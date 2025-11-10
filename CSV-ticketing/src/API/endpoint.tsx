@@ -98,6 +98,8 @@ export const timer = {
     apiHelper("/api/employeeTimes/lunch/update", "PUT", body),
   updateLunchEnd: (body: object) =>
     apiHelper("/api/employeeTimes/lunch/update", "PUT", body),
+  updateEmployeeBioBreak:(body: object) =>
+    apiHelper("/api/employeeTimes/bio/update", "PUT", body),
   getCurrentTimeIn: () => apiHelper("/api/employeeTimes/null", "GET"),
   getAttendanceEntries: () => apiHelper("/api/employeeTimes/time", "GET"),
   getServerTime: () => apiHelper("/api/current-time", "GET"),
