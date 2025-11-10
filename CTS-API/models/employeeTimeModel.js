@@ -90,9 +90,13 @@ const employeeTimeSchema = mongoose.Schema(
     },
     overBreak2: {
       type: String,
-      default: null
+      default: null,
     },
     overLunch: {
+      type: String,
+      default: null,
+    },
+    bioBreak: {
       type: String,
       default: null,
     },
@@ -105,7 +109,7 @@ const employeeTimeSchema = mongoose.Schema(
     },
   },
   {
-    timestamps: true, // Adds `createdAt` and `updatedAt` fields automatically
+    timestamps: true, 
   }
 );
 

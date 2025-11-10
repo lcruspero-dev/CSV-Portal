@@ -115,7 +115,9 @@ const updateEmployeeTime = async (req, res) => {
       totalSecondBreakTime,
       overBreak1,
       overBreak2,
-      overLunch
+      overLunch,
+      bioBreak,
+      bioBreakEnd,
     } = req.body;
 
     // Validate secret key from environment variable
@@ -151,6 +153,8 @@ const updateEmployeeTime = async (req, res) => {
     employeeTime.overBreak1 = overBreak1;
     employeeTime.overBreak2 = overBreak2;
     employeeTime.overLunch = overLunch;
+    employeeTime.bioBreak = bioBreak;
+    employeeTime.bioBreakEnd = bioBreakEnd;
 
     const updatedEmployeeTime = await employeeTime.save();
     res.status(200).json(updatedEmployeeTime);
@@ -445,7 +449,20 @@ const getIncompleteBreaks = async (req, res) => {
           end: record.lunchEnd,
         });
       }
-    });
+
+      if (record.bioBreak && !record.bioBreakEnd) {
+        formattedResponse.push({
+          employeeId: record.employeeId,
+          employeeName: record.employeeName,
+          data: record.data,
+          type: "Bio Break",
+          start: record.bioBreak,
+          end: record.bioBreakEnd,
+        })
+      };
+
+    
+    })
 
     res.status(200).json({
       message: "Incomplete breaks retrieved successfully",
