@@ -61,6 +61,11 @@ interface AttendanceEntry {
   totalLunchTime?: number;
   dateLunchStart?: string;
   dateLunchEnd?: string;
+  bioBreakStart?: string;
+  bioBreakEnd?: string;
+  totalBioBreakTime?: number;
+  dateBioBreakStart?: string;
+  dateBioBreakEnd?: string;
   loginLimit?: number;
   overbreak?: number;
   overlunch?: number;
@@ -76,11 +81,11 @@ interface CurrentTimeResponse {
 
 interface AlertState {
   show: boolean;
-  type: "break1" | "break2" | "lunch" | null;
+  type: "break1" | "break2" | "lunch" | "bioBreak" | null;
   message: string;
 }
 
-type CutoffPeriod = "1-15" | "16-31";
+type CutoffPeriod = "1-15" | "16-31"; 
 
 // Halloween-themed loading spinner
 const HalloweenSpinner = () => (
@@ -126,7 +131,8 @@ export const AttendanceTracker: React.FC = () => {
   const [alertShown, setAlertShown] = useState({
     break1: false,
     break2: false,
-    lunch: false
+    lunch: false,
+    bioBreak: false
   });
 
   // Loading states
@@ -137,6 +143,8 @@ export const AttendanceTracker: React.FC = () => {
   const [isLoadingBreakEnd, setIsLoadingBreakEnd] = useState(false);
   const [isLoadingLunchStart, setIsLoadingLunchStart] = useState(false);
   const [isLoadingLunchEnd, setIsLoadingLunchEnd] = useState(false);
+  const [isLoadingBioBreakStart, setIsLoadingBioBreakStart] = useState(false);
+  const [isLoadingBioBreakEnd, setIsLoadingBioBreakEnd] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
   const { toast } = useToast();
@@ -231,11 +239,12 @@ export const AttendanceTracker: React.FC = () => {
   // Alert timeout reference
   const alertTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
-  const showAlert = (type: "break1" | "break2" | "lunch") => {
+  const showAlert = (type: "break1" | "break2" | "lunch" | "bioBreak") => {
     const messages = {
       break1: "🧛 Break 1 will end in 1 minute! Don't get caught!",
       break2: "🦇 Break 2 will end in 1 minute! The night is watching!",
       lunch: "🎃 Lunch break will end in 1 minute! The feast awaits!",
+      bioBreak: "🚽 Bio Break will end in 1 minute! Don't linger too long!"
     };
 
     setAlert({
@@ -278,7 +287,10 @@ export const AttendanceTracker: React.FC = () => {
     if (currentEntry.lunchEnd) {
       setAlertShown(prev => ({ ...prev, lunch: false }));
     }
-  }, [currentEntry.breakEnd, currentEntry.secondBreakEnd, currentEntry.lunchEnd]);
+    if (currentEntry.bioBreakEnd) {
+      setAlertShown(prev => ({ ...prev, bioBreak: false }));
+    }
+  }, [currentEntry.breakEnd, currentEntry.secondBreakEnd, currentEntry.lunchEnd, currentEntry.bioBreakEnd]);
 
   // Format current date for display
   const formatCurrentDate = (dateString: string): string => {
@@ -391,6 +403,16 @@ export const AttendanceTracker: React.FC = () => {
       ) {
         showAlert("lunch");
       }
+      // Bio Break: 5 minutes = 300 seconds, alert at 240 seconds (4 minutes - 1 minute before)
+      else if (
+        currentEntry.bioBreakStart &&
+        !currentEntry.bioBreakEnd &&
+        elapsedTime >= 240 &&
+        elapsedTime < 300 &&
+        !alertShown.bioBreak
+      ) {
+        showAlert("bioBreak");
+      }
     };
 
     checkForAlerts();
@@ -497,6 +519,7 @@ export const AttendanceTracker: React.FC = () => {
     const isOnSecondBreak =
       currentEntry.secondBreakStart && !currentEntry.secondBreakEnd;
     const isOnLunch = currentEntry.lunchStart && !currentEntry.lunchEnd;
+    const isOnBioBreak = currentEntry.bioBreakStart && !currentEntry.bioBreakEnd;
 
     intervalId = setInterval(() => {
       const currentTime = Date.now() + timeOffset;
@@ -523,6 +546,13 @@ export const AttendanceTracker: React.FC = () => {
           }`
         ).getTime();
         diffMs = currentTime - lunchStartTime;
+      } else if (isOnBioBreak) {
+        const bioBreakStartTime = new Date(
+          `${currentEntry.dateBioBreakStart || currentEntry.date} ${
+            currentEntry.bioBreakStart
+          }`
+        ).getTime();
+        diffMs = currentTime - bioBreakStartTime;
       } else {
         const timeInDate = new Date(
           `${currentEntry.date} ${currentEntry.timeIn}`
@@ -700,7 +730,7 @@ export const AttendanceTracker: React.FC = () => {
       setElapsedTime(0);
       hideAlert(); // Hide any active alerts when timing out
       // Reset all alert tracking
-      setAlertShown({ break1: false, break2: false, lunch: false });
+      setAlertShown({ break1: false, break2: false, lunch: false, bioBreak: false });
 
       showHalloweenToast(
         "👻 Escape Successful!",
@@ -888,6 +918,153 @@ export const AttendanceTracker: React.FC = () => {
     }
   };
 
+  const handleBioBreakStart = async () => {
+    setIsLoadingBioBreakStart(true);
+    try {
+      const currentTimeData = await getCurrentTimeFromAPI();
+
+      const updatedEntry = {
+        ...currentEntry,
+        bioBreakStart: currentTimeData.time,
+        dateBioBreakStart: currentTimeData.date,
+      };
+
+      // Use the existing break start endpoint but mark it as bio break
+      const response = await timer.updateBreakStart({
+        ...updatedEntry,
+        isBioBreak: true // Add a flag to distinguish bio breaks
+      });
+      
+      setCurrentEntry({
+        ...response.data,
+        bioBreakStart: currentTimeData.time,
+        dateBioBreakStart: currentTimeData.date,
+      });
+      
+      setElapsedTime(0);
+      hideAlert();
+      setAlertShown(prev => ({ ...prev, bioBreak: false }));
+      showHalloweenToast(
+        "🚽 Bio Break Started!",
+        "Quick bio break! 5 minutes maximum."
+      );
+    } catch (error) {
+      console.error("Error starting bio break:", error);
+      showHalloweenToast(
+        "💀 Error",
+        "Failed to start bio break. Please try again.",
+        "destructive"
+      );
+    } finally {
+      setIsLoadingBioBreakStart(false);
+    }
+  };
+
+  const handleBioBreakEnd = async () => {
+    setIsLoadingBioBreakEnd(true);
+    try {
+      const currentTimeData = await getCurrentTimeFromAPI();
+
+      // Create date objects for bio break start and end
+      const bioBreakStart = new Date(
+        `${currentEntry.dateBioBreakStart} ${currentEntry.bioBreakStart}`
+      );
+      const bioBreakEnd = new Date(
+        `${currentTimeData.date} ${currentTimeData.time}`
+      );
+
+      // Adjust bio break end date if it's the next day
+      if (bioBreakEnd < bioBreakStart) {
+        bioBreakEnd.setDate(bioBreakEnd.getDate() + 1);
+      }
+
+      // Calculate the bio break duration in milliseconds
+      const bioBreakDurationMs = bioBreakEnd.getTime() - bioBreakStart.getTime();
+      const bioBreakTimeHours = bioBreakDurationMs / (1000 * 60 * 60);
+      const bioBreakTimeMinutes = Math.round(bioBreakTimeHours * 60);
+
+      // Determine which break to deduct from
+      let updatedEntry = { ...currentEntry };
+      let deductionMessage = "";
+      
+      // Check if break 1 is available (not started or started but not ended)
+      if (!currentEntry.breakStart || (currentEntry.breakStart && !currentEntry.breakEnd)) {
+        // Deduct from break 1
+        const currentBreakTime = currentEntry.totalBreakTime || 0;
+        const newBreakTime = Math.max(0, currentBreakTime - bioBreakTimeHours);
+        
+        updatedEntry = {
+          ...currentEntry,
+          bioBreakEnd: currentTimeData.time,
+          dateBioBreakEnd: currentTimeData.date,
+          totalBioBreakTime: Number(bioBreakTimeHours.toFixed(2)),
+          totalBreakTime: Number(newBreakTime.toFixed(2)),
+        };
+        
+        deductionMessage = `Bio break time (${bioBreakTimeMinutes} minutes) deducted from Break 1. Remaining Break 1 time: ${formatMinutesToHoursMinutes(Math.round(newBreakTime * 60))}`;
+      }
+      // If break 1 is used, check break 2
+      else if (!currentEntry.secondBreakStart || (currentEntry.secondBreakStart && !currentEntry.secondBreakEnd)) {
+        // Deduct from break 2
+        const currentSecondBreakTime = currentEntry.totalSecondBreakTime || 0;
+        const newSecondBreakTime = Math.max(0, currentSecondBreakTime - bioBreakTimeHours);
+        
+        updatedEntry = {
+          ...currentEntry,
+          bioBreakEnd: currentTimeData.time,
+          dateBioBreakEnd: currentTimeData.date,
+          totalBioBreakTime: Number(bioBreakTimeHours.toFixed(2)),
+          totalSecondBreakTime: Number(newSecondBreakTime.toFixed(2)),
+        };
+        
+        deductionMessage = `Bio break time (${bioBreakTimeMinutes} minutes) deducted from Break 2. Remaining Break 2 time: ${formatMinutesToHoursMinutes(Math.round(newSecondBreakTime * 60))}`;
+      }
+      // If both breaks are used, just record the bio break without deduction
+      else {
+        updatedEntry = {
+          ...currentEntry,
+          bioBreakEnd: currentTimeData.time,
+          dateBioBreakEnd: currentTimeData.date,
+          totalBioBreakTime: Number(bioBreakTimeHours.toFixed(2)),
+        };
+        
+        deductionMessage = `Bio break recorded (${bioBreakTimeMinutes} minutes). Both regular breaks already used.`;
+      }
+
+      // Use the existing break end endpoint but mark it as bio break
+      const response = await timer.updateBreakEnd({
+        ...updatedEntry,
+        isBioBreak: true, // Add a flag to distinguish bio breaks
+        bioBreakDuration: bioBreakTimeMinutes       
+      });
+      
+      setCurrentEntry({
+        ...response.data,
+        bioBreakEnd: currentTimeData.time,
+        dateBioBreakEnd: currentTimeData.date,
+        totalBioBreakTime: updatedEntry.totalBioBreakTime,
+        totalBreakTime: updatedEntry.totalBreakTime,
+        totalSecondBreakTime: updatedEntry.totalSecondBreakTime,
+      });
+      
+      hideAlert();
+      setAlertShown(prev => ({ ...prev, bioBreak: false }));
+      showHalloweenToast(
+        "🚽 Bio Break Ended!",
+        deductionMessage
+      );
+    } catch (error) {
+      console.error("Error ending bio break:", error);
+      showHalloweenToast(
+        "💀 Error",
+        "Failed to log end bio break. Please try again.",
+        "destructive"
+      );
+    } finally {
+      setIsLoadingBioBreakEnd(false);
+    }
+  };
+
   const handleActionChange = (value: string) => {
     setSelectedAction(value);
   };
@@ -952,6 +1129,18 @@ export const AttendanceTracker: React.FC = () => {
         await handleLunchEnd();
         setSelectedAction(null); // Reset the selected action
         setIsLoadingLunchEnd(false);
+        break;
+      case "startBioBreak":
+        setIsLoadingBioBreakStart(true);
+        await handleBioBreakStart();
+        setSelectedAction("endBioBreak");
+        setIsLoadingBioBreakStart(false);
+        break;
+      case "endBioBreak":
+        setIsLoadingBioBreakEnd(true);
+        await handleBioBreakEnd();
+        setSelectedAction(null); // Reset the selected action
+        setIsLoadingBioBreakEnd(false);
         break;
       case "timeOut":
         setDialogOpen(true);
@@ -1062,6 +1251,10 @@ export const AttendanceTracker: React.FC = () => {
     else if (currentEntry.lunchStart && !currentEntry.lunchEnd) {
       actions.push({ value: "endLunch", label: "🎃 End Lunch" });
     }
+    // Check if the user is currently on bio break and bioBreakEnd is not set
+    else if (currentEntry.bioBreakStart && !currentEntry.bioBreakEnd) {
+      actions.push({ value: "endBioBreak", label: "🚽 End Bio Break" });
+    }
     // If not on any break or lunch, show available actions
     else {
       // Only show "Start Break" if break hasn't started or hasn't ended
@@ -1083,6 +1276,11 @@ export const AttendanceTracker: React.FC = () => {
       // Only show "Start Lunch" if lunch hasn't started or hasn't ended
       if (!currentEntry.lunchStart || !currentEntry.lunchEnd) {
         actions.push({ value: "startLunch", label: "🎃 Lunch" });
+      }
+
+      // Always show "Start Bio Break" if the user is timed in
+      if (isTimeIn) {
+        actions.push({ value: "startBioBreak", label: "🚽 Bio Break" });
       }
 
       // Always show "Time Out" if the user is timed in
@@ -1191,6 +1389,13 @@ export const AttendanceTracker: React.FC = () => {
                   </p>
                   {formatElapsedTime(elapsedTime)}
                 </div>
+              ) : currentEntry.bioBreakStart && !currentEntry.bioBreakEnd ? (
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-blue-400 text-center font-mono bg-black bg-opacity-50 p-4 rounded-lg border border-blue-500">
+                  <p className="text-sm sm:text-base text-blue-200 tracking-wide mb-2">
+                    🚽 BIO BREAK - 5 Minutes Maximum
+                  </p>
+                  {formatElapsedTime(elapsedTime)}
+                </div>
               ) : (
                 <div
                   className={`mb-2 text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-center text-green-400 font-mono bg-black bg-opacity-50 p-4 rounded-lg border border-green-500 ${
@@ -1249,6 +1454,8 @@ export const AttendanceTracker: React.FC = () => {
                           isLoadingSecondBreakEnd ||
                           isLoadingLunchStart ||
                           isLoadingLunchEnd ||
+                          isLoadingBioBreakStart ||
+                          isLoadingBioBreakEnd ||
                           isLoadingTimeOut
                         }
                         size="sm"
@@ -1445,6 +1652,36 @@ export const AttendanceTracker: React.FC = () => {
                       </div>
                     )}
 
+                    {/* Bio Break Times */}
+                    {currentEntry.bioBreakStart && (
+                      <div className="bg-gradient-to-br from-blue-900 to-blue-800 rounded-lg p-3 border border-blue-400 shadow-lg">
+                        <div className="flex items-center gap-2">
+                          <ShipWheel className="h-4 w-4 text-blue-400" />
+                          <span className="text-xs font-medium text-blue-300">
+                            🚽 Bio Break
+                          </span>
+                        </div>
+                        <div className="space-y-1 mt-1">
+                          <p className="text-xs text-blue-200">
+                            <span className="font-medium">Start:</span>{" "}
+                            {formatTime(currentEntry.bioBreakStart)}
+                          </p>
+                          {currentEntry.bioBreakEnd && (
+                            <p className="text-xs text-blue-200">
+                              <span className="font-medium">End:</span>{" "}
+                              {formatTime(currentEntry.bioBreakEnd)}
+                            </p>
+                          )}
+                          {currentEntry.totalBioBreakTime !== undefined &&
+                            currentEntry.totalBioBreakTime !== null && (
+                              <p className="text-xs font-semibold text-white">
+                                Total: {formatMinutesToHoursMinutes(Math.round(currentEntry.totalBioBreakTime * 60))}
+                              </p>
+                            )}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Total Overbreak Card - This shows the combined overbreak from both breaks */}
                     {currentEntry.overbreak && currentEntry.overbreak > 0 && (
                       <div className="bg-gradient-to-br from-red-900 to-red-800 rounded-lg p-3 border border-red-400 shadow-lg">
@@ -1595,6 +1832,9 @@ export const AttendanceTracker: React.FC = () => {
                               Break 2
                             </TableHead>
                             <TableHead className="min-w-[90px] text-orange-300">
+                              Bio Break
+                            </TableHead>
+                            <TableHead className="min-w-[90px] text-orange-300">
                               Overbreak 1
                             </TableHead>
                             <TableHead className="min-w-[90px] text-orange-300">
@@ -1639,6 +1879,11 @@ export const AttendanceTracker: React.FC = () => {
                                     String(entry.totalSecondBreakTime || "")
                                   )}
                                 </TableCell>
+                                <TableCell className="py-2 text-blue-300">
+                                  {formatHoursToHoursMinutes(
+                                    String(entry.totalBioBreakTime || "")
+                                  )}
+                                </TableCell>
                                 <TableCell className="py-2 text-red-300">
                                   {entry.overbreak1 && entry.overbreak1 > 0 
                                     ? `${entry.overbreak1} minutes` 
@@ -1667,7 +1912,7 @@ export const AttendanceTracker: React.FC = () => {
                           ) : (
                             <TableRow>
                               <TableCell
-                                colSpan={12} // Updated from 11 to 12
+                                colSpan={13} // Updated from 12 to 13
                                 className="text-center py-4 text-orange-200"
                               >
                                 👻 No haunted records found for{" "}
@@ -1686,7 +1931,7 @@ export const AttendanceTracker: React.FC = () => {
                     {/* Records Count */}
                     <div className="mt-4 text-sm text-orange-200">
                       🦇 Showing {filteredEntries.length} haunted record(s) for{" "}
-                      {months.find((m) => m.value === selectedMonth)?.label}{" "}
+                      {months.find((m) => m.value === selectedMonth)?.label}{ " "}
                       {selectedYear} ({selectedCutoff} cut-off)
                     </div>
                   </>

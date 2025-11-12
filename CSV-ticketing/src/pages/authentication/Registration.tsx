@@ -6,7 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/context/useAuth";
 import { ChangeEvent, useState } from "react";
 import { Navigate, useNavigate, Link } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 interface Form {
   firstName: string;
@@ -26,6 +26,7 @@ const Registration = () => {
     password: "",
     confirm_password: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { toast } = useToast();
@@ -39,6 +40,7 @@ const Registration = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsLoading(true);
 
     // Combine names into a single string
     const middleInitial = form.middleName
@@ -55,6 +57,7 @@ const Registration = () => {
           "Password must be at least 12 characters long and include alphanumeric and special characters.",
         variant: "destructive",
       });
+      setIsLoading(false)
       return;
     }
 
@@ -134,6 +137,8 @@ const Registration = () => {
         variant: "destructive",
       });
       console.error(error);
+    } finally{
+      setIsLoading(false)
     }
   };
 
@@ -153,22 +158,24 @@ const Registration = () => {
   };
 
   return (
-    <div className="flex w-full justify-center items-center min-h-[70vh] px-4 py-8">
-      <form className="w-full max-w-md space-y-6 p-8" onSubmit={handleSubmit}>
+    <div className="max-w-xl w-full space-y-2 bg-gradient-to-b from-amber-50 via-orange-100 to-yellow-50 p-10 rounded-2xl shadow-xl border border-amber-200">
+      <form className="w-full max-w-xl space-y-6" onSubmit={handleSubmit}>
         <div className="text-center mb-2">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-600 to-gray-900 text-transparent bg-clip-text md:text-5xl">
+          <h1 className="text-xl font-bold bg-gradient-to-r from-amber-700 via-orange-600 to-yellow-600 text-transparent bg-clip-text md:text-3xl">
             Create Account
           </h1>
-          <p className="text-gray-600 mt-2 text-sm">Join our employee portal</p>
+          <p className="text-amber-700 font-medium mt-2">
+            Join our employee portal
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div className="space-y-4">
             <Input
               placeholder="First Name"
               name="firstName"
               type="text"
-              className="w-full"
+              className="w-full border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
               onChange={handleChange}
               required
             />
@@ -176,7 +183,7 @@ const Registration = () => {
               placeholder="Last Name"
               name="lastName"
               type="text"
-              className="w-full"
+              className="w-full border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
               onChange={handleChange}
               required
             />
@@ -187,14 +194,14 @@ const Registration = () => {
               placeholder="Middle Name"
               name="middleName"
               type="text"
-              className="w-full"
+              className="w-full border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
               onChange={handleChange}
             />
             <Input
               placeholder="Company Email"
               name="email"
               type="email"
-              className="w-full"
+              className="w-full border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
               onChange={handleChange}
               required
             />
@@ -208,7 +215,7 @@ const Registration = () => {
               placeholder="Password"
               name="password"
               type={showPassword ? "text" : "password"}
-              className="w-full pr-10"
+              className="w-full border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
               onChange={handleChange}
               required
             />
@@ -231,7 +238,7 @@ const Registration = () => {
               placeholder="Confirm Password"
               name="confirm_password"
               type={showConfirmPassword ? "text" : "password"}
-              className="w-full pr-10"
+              className="w-full border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
               onChange={handleChange}
               required
             />
@@ -250,19 +257,34 @@ const Registration = () => {
         </div>
 
         <div className="pt-2">
-          <Button className="w-full bg-gradient-to-r from-[#1638df] to-[#192fb4] hover:from-[#192fb4] hover:to-[#1638df] text-white font-semibold py-2.5 text-base" type="submit">
-            Create Account
+          <Button
+            typeof="submit"
+            className="w-full py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-amber-700 hover:to-orange-700 text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-amber-500/40"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              "Create Account 🍂"
+            )}
           </Button>
         </div>
 
-        <div className="text-center text-sm text-gray-500 pt-2">
-          <p>Already have an account?{" "}
-            <Link to={"/sign-in"}
-              className="text-blue-600 hover:underline font-normal">
-              Sign-in
+        <div className="text-center text-sm text-amber-700">
+          <p>
+            Already have an account?{" "}
+            <Link
+              to={"/sign-in"}
+              className="text-orange-700 hover:underline font-semibold"
+            >
+              Sign-in <span className="animate-pulse">🧡</span>
             </Link>
           </p>
         </div>
+
       </form>
     </div>
   );

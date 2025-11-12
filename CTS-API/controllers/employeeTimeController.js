@@ -175,7 +175,7 @@ const updateEmployeeTime = async (req, res) => {
       overBreak1,
       overBreak2,
       overLunch,
-      bioBreak,
+      bioBreakStart,
       bioBreakEnd,
       bioBreakDuration,
       bioBreakDeductedFrom,
@@ -215,7 +215,7 @@ const updateEmployeeTime = async (req, res) => {
     employeeTime.overBreak1 = overBreak1;
     employeeTime.overBreak2 = overBreak2;
     employeeTime.overLunch = overLunch;
-    employeeTime.bioBreak = bioBreak;
+    employeeTime.bioBreak = bioBreakStart;
     employeeTime.bioBreakEnd = bioBreakEnd;
     employeeTime.bioBreakDuration = bioBreakDuration;
     employeeTime.bioBreakDeductedFrom = bioBreakDeductedFrom;

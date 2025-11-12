@@ -1,30 +1,24 @@
 import { Outlet } from "react-router-dom";
-import loginImage from "../../assets/Customer-Service.gif";
+import Background from "../../assets/bg.jpg";
 
 const Layout = () => {
   return (
-    <section className="container mx-auto flex min-h-[75vh] items-center justify-center px-4 py-6">
-      <div className="grid w-full max-w-5xl grid-cols-1 items-center justify-center gap-12 lg:grid-cols-2">
+    <section
+      className="relative flex min-h-screen w-full items-center justify-center bg-cover bg-center bg-no-repeat px-4 py-6"
+      style={{
+        backgroundImage: `url(${Background})`,
+      }}
+    >
+      <div className="absolute inset-0 bg-black/20" />
 
-        {/* Left Column - Form Content */}
-        <div className="order-2 flex w-full justify-center lg:order-1">
-          <div className="w-full max-w-md">
-            <Outlet />
-          </div>
+      <div className="relative z-10 flex w-full max-w-5xl items-center justify-center">
+        {/* Centered Form Container */}
+        <div className="w-full max-w-md backdrop-blur-xl rounded-2xl shadow-2xl p-8">
+          <Outlet />
         </div>
-
-        {/* Right Column - Title & Image */}
-        <div className="order-1 flex flex-col items-center justify-center lg:order-2">
-          <img
-            src={loginImage}
-            alt="Login"
-            className="hidden lg:block w-full max-w-md lg:max-w-lg"
-          />
-        </div>
-
       </div>
     </section>
   );
 };
 
-export default Layout;  
+export default Layout;
