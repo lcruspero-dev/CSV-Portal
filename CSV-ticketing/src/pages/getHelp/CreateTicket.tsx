@@ -14,7 +14,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import axios from "axios";
-import { Paperclip, User, Mail, FolderOpen, FileText } from "lucide-react";
+import { Paperclip, User, Mail, Heart, Clover } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BackButton from "../../components/kit/BackButton";
@@ -114,8 +114,8 @@ const CreateTicket = () => {
     try {
       const response = await TicketAPi.createTicket(form);
       toast({
-        title: "Ticket created successfully",
-        description: `Ticket #${response.data.ticketNumber} has been created`,
+        title: "Ticket created successfully! 🦃",
+        description: `We're thankful you reached out! Ticket #${response.data.ticketNumber} has been created`,
         variant: "default",
       });
       navigate("/view-ticket");
@@ -151,21 +151,35 @@ const CreateTicket = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4 sm:px-6 lg:px-8">
-          <BackButton />
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 py-8 px-4 sm:px-6 lg:px-8">
+      <BackButton />
       <div className="max-w-2xl mx-auto">
         {/* Main Card */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-xl border border-amber-200 overflow-hidden">
           {/* Header Section */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-8 text-center">
+          <div className="bg-gradient-to-r from-amber-600 to-orange-700 px-6 py-8 text-center relative overflow-hidden">
+            {/* Thanksgiving decorative elements */}
+            <div className="absolute top-2 left-4 text-amber-300">
+              🍂
+            </div>
+            <div className="absolute top-4 right-6 text-amber-300">
+              🦃
+            </div>
+            <div className="absolute bottom-2 left-8 text-amber-300">
+              🌽
+            </div>
+            <div className="absolute bottom-4 right-4 text-amber-300">
+              🥧
+            </div>
+            
             <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FileText className="h-8 w-8 text-white" />
+              <Heart className="h-8 w-8 text-white" />
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-              Create IT Support Ticket
+              We're Thankful You're Here!
             </h1>
-            <p className="text-blue-100 text-sm sm:text-base">
-              Fill out the form below and our team will assist you promptly
+            <p className="text-amber-100 text-sm sm:text-base">
+              Share your needs with us this season - we're grateful to help!
             </p>
           </div>
 
@@ -174,11 +188,11 @@ const CreateTicket = () => {
             <div className="space-y-6">
               {/* Attachment Section */}
               <div className="space-y-3">
-                <Label htmlFor="attachment" className="text-sm font-semibold flex items-center text-gray-700">
+                <Label htmlFor="attachment" className="text-sm font-semibold flex items-center text-amber-800">
                   <Paperclip className="mr-2 h-4 w-4" />
                   Attach File (Optional)
                 </Label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-400 transition-colors duration-200">
+                <div className="border-2 border-dashed border-amber-300 rounded-lg p-4 text-center hover:border-amber-400 transition-colors duration-200 bg-amber-50">
                   <Input
                     id="attachment"
                     name="attachment"
@@ -188,22 +202,22 @@ const CreateTicket = () => {
                     disabled={isSubmitting}
                   />
                   <label htmlFor="attachment" className="cursor-pointer">
-                    <Paperclip className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                    <p className="text-sm text-gray-600 mb-1">
+                    <Paperclip className="mx-auto h-8 w-8 text-amber-500 mb-2" />
+                    <p className="text-sm text-amber-700 mb-1">
                       Click to upload or drag and drop
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-amber-600">
                       Maximum file size: 5MB
                     </p>
                   </label>
                 </div>
                 {selectedFileName && (
-                  <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-                    <span className="text-sm text-green-700 flex items-center">
+                  <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                    <span className="text-sm text-amber-800 flex items-center">
                       <Paperclip className="h-3 w-3 mr-2" />
                       {selectedFileName}
                     </span>
-                    <span className="text-xs text-green-600">Uploaded ✓</span>
+                    <span className="text-xs text-amber-600">Uploaded ✓</span>
                   </div>
                 )}
               </div>
@@ -212,7 +226,7 @@ const CreateTicket = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 {/* Name Field */}
                 <div className="space-y-2">
-                  <Label htmlFor="name" className="text-sm font-semibold flex items-center text-gray-700">
+                  <Label htmlFor="name" className="text-sm font-semibold flex items-center text-amber-800">
                     <User className="mr-2 h-4 w-4" />
                     Name
                   </Label>
@@ -223,15 +237,15 @@ const CreateTicket = () => {
                       required
                       value={form.name}
                       readOnly
-                      className="bg-gray-50 border-gray-200 text-gray-600 pl-10"
+                      className="bg-amber-50 border-amber-200 text-amber-800 pl-10"
                     />
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-amber-500" />
                   </div>
                 </div>
 
                 {/* Email Field */}
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-semibold flex items-center text-gray-700">
+                  <Label htmlFor="email" className="text-sm font-semibold flex items-center text-amber-800">
                     <Mail className="mr-2 h-4 w-4" />
                     Email
                   </Label>
@@ -242,17 +256,17 @@ const CreateTicket = () => {
                       required
                       value={form.email}
                       readOnly
-                      className="bg-gray-50 border-gray-200 text-gray-600 pl-10"
+                      className="bg-amber-50 border-amber-200 text-amber-800 pl-10"
                     />
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-amber-500" />
                   </div>
                 </div>
               </div>
 
               {/* Category Field */}
               <div className="space-y-2">
-                <Label htmlFor="category" className="text-sm font-semibold flex items-center text-gray-700">
-                  <FolderOpen className="mr-2 h-4 w-4" />
+                <Label htmlFor="category" className="text-sm font-semibold flex items-center text-amber-800">
+                  <Clover className="mr-2 h-4 w-4" />
                   Category *
                 </Label>
                 <Select
@@ -260,7 +274,7 @@ const CreateTicket = () => {
                   required
                   disabled={isSubmitting}
                 >
-                  <SelectTrigger className="w-full h-11">
+                  <SelectTrigger className="w-full h-11 border-amber-200 focus:border-amber-500">
                     <SelectValue placeholder="Select a category for your ticket" />
                   </SelectTrigger>
                   <SelectContent>
@@ -277,19 +291,19 @@ const CreateTicket = () => {
 
               {/* Description Field */}
               <div className="space-y-2">
-                <Label htmlFor="description" className="text-sm font-semibold text-gray-700">
+                <Label htmlFor="description" className="text-sm font-semibold text-amber-800">
                   Description of the issue/request *
                 </Label>
                 <Textarea
-                  className="min-h-[120px] resize-none border-gray-200 focus:border-blue-500 transition-colors duration-200"
+                  className="min-h-[120px] resize-none border-amber-200 focus:border-amber-500 transition-colors duration-200 bg-amber-50"
                   name="description"
-                  placeholder="Please describe your issue or request in detail. Include any error messages, steps to reproduce, and what you were trying to accomplish..."
+                  placeholder="We're thankful you're sharing this with us. Please describe your issue or request in detail..."
                   required
                   onChange={handleChange}
                   disabled={isSubmitting}
                 />
-                <p className="text-xs text-gray-500">
-                  Provide as much detail as possible to help us assist you better
+                <p className="text-xs text-amber-600">
+                  We're grateful for the opportunity to assist you - please provide as much detail as possible
                 </p>
               </div>
 
@@ -297,7 +311,7 @@ const CreateTicket = () => {
               <Button 
                 type="submit" 
                 disabled={isSubmitting}
-                className="w-full h-12 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-semibold text-base rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+                className="w-full h-12 bg-gradient-to-r from-amber-600 to-orange-700 hover:from-amber-700 hover:to-orange-800 text-white font-semibold text-base rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
               >
                 {isSubmitting ? (
                   <span className="flex items-center justify-center">
@@ -321,12 +335,12 @@ const CreateTicket = () => {
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       ></path>
                     </svg>
-                    Creating Ticket...
+                    Creating with Gratitude...
                   </span>
                 ) : (
                   <span className="flex items-center justify-center">
-                    <FileText className="mr-2 h-5 w-5" />
-                    Create Support Ticket
+                    <Heart className="mr-2 h-5 w-5" />
+                    Share Your Request 🦃
                   </span>
                 )}
               </Button>
@@ -336,12 +350,15 @@ const CreateTicket = () => {
 
         {/* Help Text */}
         <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
-            Need immediate assistance? Contact IT Support at{" "}
-            <a href="tel:+1234567890" className="text-blue-600 hover:text-blue-700 font-medium">
+          <p className="text-sm text-amber-700">
+            We're thankful to serve you! Need immediate assistance? Contact us at{" "}
+            <a href="tel:+1234567890" className="text-amber-600 hover:text-amber-700 font-medium">
               (123) 456-7890
             </a>
           </p>
+          <div className="mt-2 text-amber-600">
+            🍂 Happy Thanksgiving! 🦃
+          </div>
         </div>
       </div>
     </div>

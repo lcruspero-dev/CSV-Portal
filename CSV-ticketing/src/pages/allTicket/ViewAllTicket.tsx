@@ -22,7 +22,10 @@ import {
   Calendar,
   User,
   FileText,
-  Ticket as TicketIcon
+  Ticket as TicketIcon,
+  Heart,
+  Clover,
+  PieChart
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom"; 
@@ -121,7 +124,7 @@ const ViewAllTicket: React.FC = () => {
       case "rejected":
         return "bg-red-100 text-red-800 border-red-200";
       case "in progress":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+        return "bg-amber-100 text-amber-800 border-amber-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
@@ -134,7 +137,7 @@ const ViewAllTicket: React.FC = () => {
       case "2-high":
         return "bg-orange-500";
       case "3-moderate":
-        return "bg-yellow-500";
+        return "bg-amber-500";
       case "4-low":
         return "bg-green-500";
       default:
@@ -150,51 +153,53 @@ const ViewAllTicket: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 to-orange-100">
         <LoadingComponent />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-6">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 py-6">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
           <div className="flex items-center gap-4">
             <BackButton />
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2">
-                <TicketIcon className="h-7 w-7 text-blue-600" />
-                My Tickets
+              <h1 className="text-2xl sm:text-3xl font-bold text-amber-900 flex items-center gap-2">
+                <div className="p-2 bg-gradient-to-r from-amber-600 to-orange-600 rounded-xl">
+                  <TicketIcon className="h-6 w-6 text-white" />
+                </div>
+                Thanksgiving Support Requests
               </h1>
-              <p className="text-gray-600 text-sm mt-1">
-                View and manage all your submitted tickets
+              <p className="text-amber-700 text-sm mt-1">
+                We're grateful to assist you with your needs this season
               </p>
             </div>
           </div>
           
-          <div className="bg-white px-4 py-3 rounded-lg border shadow-sm">
-            <div className="text-sm text-gray-600">Total Tickets</div>
-            <div className="text-2xl font-bold text-gray-900">
+          <div className="bg-white px-4 py-3 rounded-lg border border-amber-200 shadow-sm">
+            <div className="text-sm text-amber-600">Total Blessings Shared</div>
+            <div className="text-2xl font-bold text-amber-900">
               {filteredTickets.length}
             </div>
           </div>
         </div>
 
         {/* Search and Filters */}
-        <Card className="mb-6 shadow-sm">
+        <Card className="mb-6 shadow-sm border border-amber-200">
           <CardContent className="p-6">
             <div className="flex flex-col sm:flex-row gap-4">
               {/* Search Bar */}
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-amber-500" />
                 <input
                   type="text"
-                  placeholder="Search by ticket number, description, or category..."
+                  placeholder="Search with gratitude by ticket number, description, or category..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-amber-50 placeholder-amber-400"
                 />
               </div>
               
@@ -202,12 +207,12 @@ const ViewAllTicket: React.FC = () => {
               <Button
                 variant="outline"
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 border-amber-300 text-amber-700 hover:bg-amber-100"
               >
                 <Filter className="h-4 w-4" />
                 Filters
                 {(statusFilter !== "all") && (
-                  <Badge variant="secondary" className="ml-1">
+                  <Badge variant="secondary" className="ml-1 bg-amber-500">
                     1
                   </Badge>
                 )}
@@ -218,31 +223,32 @@ const ViewAllTicket: React.FC = () => {
                 <Button
                   variant="ghost"
                   onClick={clearFilters}
-                  className="text-gray-600 hover:text-gray-800"
+                  className="text-amber-600 hover:text-amber-800 hover:bg-amber-100"
                 >
-                  Clear
+                  Clear Blessings
                 </Button>
               )}
             </div>
 
             {/* Expanded Filters */}
             {showFilters && (
-              <div className="mt-4 pt-4 border-t grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="mt-4 pt-4 border-t border-amber-200 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-amber-700 mb-2">
+                    <Heart className="h-4 w-4 inline mr-1" />
                     Status
                   </label>
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full border border-amber-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-amber-50"
                   >
-                    <option value="all">All Statuses</option>
-                    <option value="open">Open</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="Approved">Approved</option>
-                    <option value="closed">Closed</option>
-                    <option value="Rejected">Rejected</option>
+                    <option value="all">All Blessings</option>
+                    <option value="open">Open with Gratitude</option>
+                    <option value="In Progress">In Progress 🍂</option>
+                    <option value="Approved">Approved with Thanks</option>
+                    <option value="closed">Closed with Blessings</option>
+                    <option value="Rejected">Needs More Gratitude</option>
                   </select>
                 </div>
               </div>
@@ -250,28 +256,98 @@ const ViewAllTicket: React.FC = () => {
           </CardContent>
         </Card>
 
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <Card className="border border-amber-200 bg-white">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-amber-600">Open Requests</p>
+                  <p className="text-xl font-bold text-amber-900">
+                    {allTicket.filter(t => t.status.toLowerCase() === 'open').length}
+                  </p>
+                </div>
+                <div className="p-2 bg-amber-100 rounded-lg">
+                  <Heart className="h-5 w-5 text-amber-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-green-200 bg-white">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-green-600">Blessings Completed</p>
+                  <p className="text-xl font-bold text-green-900">
+                    {allTicket.filter(t => t.status.toLowerCase() === 'closed').length}
+                  </p>
+                </div>
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <Clover className="h-5 w-5 text-green-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-orange-200 bg-white">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-orange-600">In Progress</p>
+                  <p className="text-xl font-bold text-orange-900">
+                    {allTicket.filter(t => t.status.toLowerCase() === 'in progress').length}
+                  </p>
+                </div>
+                <div className="p-2 bg-orange-100 rounded-lg">
+                  <PieChart className="h-5 w-5 text-orange-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-blue-200 bg-white">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-blue-600">Total Gratitude</p>
+                  <p className="text-xl font-bold text-blue-900">
+                    {allTicket.length}
+                  </p>
+                </div>
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <TicketIcon className="h-5 w-5 text-blue-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Mobile Cards View */}
         <div className="block lg:hidden space-y-4 mb-6">
           {getCurrentPageTickets().length === 0 ? (
-            <Card>
+            <Card className="border border-amber-200">
               <CardContent className="text-center py-12">
-                <TicketIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No tickets found</h3>
-                <p className="text-gray-600">
+                <div className="text-4xl mb-4">🦃</div>
+                <TicketIcon className="h-12 w-12 text-amber-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-amber-900 mb-2">No blessings found</h3>
+                <p className="text-amber-600">
                   {searchTerm || statusFilter !== "all" 
-                    ? "Try adjusting your search or filters" 
-                    : "You haven't submitted any tickets yet"}
+                    ? "Try adjusting your Clover filters" 
+                    : "You haven't shared any requests yet"}
                 </p>
               </CardContent>
             </Card>
           ) : (
             getCurrentPageTickets().map((ticket) => (
-              <Card key={ticket._id} className="hover:shadow-md transition-shadow">
+              <Card key={ticket._id} className="hover:shadow-md transition-shadow border border-amber-200">
                 <CardContent className="p-4">
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center gap-2">
-                      <TicketIcon className="h-4 w-4 text-blue-600" />
-                      <span className="font-mono font-semibold text-gray-900">
+                      <div className="p-1 bg-amber-100 rounded">
+                        <TicketIcon className="h-3 w-3 text-amber-600" />
+                      </div>
+                      <span className="font-mono font-semibold text-amber-900">
                         {ticket.ticketNumber}
                       </span>
                     </div>
@@ -282,23 +358,23 @@ const ViewAllTicket: React.FC = () => {
 
                   <div className="space-y-2 mb-3">
                     <div className="flex items-center gap-2 text-sm">
-                      <Calendar className="h-4 w-4 text-gray-400" />
-                      <span className="text-gray-600">{formattedDate(ticket.createdAt)}</span>
+                      <Calendar className="h-4 w-4 text-amber-500" />
+                      <span className="text-amber-700">{formattedDate(ticket.createdAt)}</span>
                     </div>
                     
                     <div className="flex items-center gap-2 text-sm">
-                      <FileText className="h-4 w-4 text-gray-400" />
-                      <span className="text-gray-900 font-medium">{ticket.category}</span>
+                      <FileText className="h-4 w-4 text-amber-500" />
+                      <span className="text-amber-900 font-medium">{ticket.category}</span>
                     </div>
 
                     <div className="flex items-center gap-2 text-sm">
-                      <User className="h-4 w-4 text-gray-400" />
-                      <span className="text-gray-600">{ticket.assignedTo || "Unassigned"}</span>
+                      <User className="h-4 w-4 text-amber-500" />
+                      <span className="text-amber-700">{ticket.assignedTo || "Awaiting Helper"}</span>
                     </div>
                   </div>
 
                   <div className="mb-3">
-                    <p className="text-sm text-gray-700 line-clamp-2">
+                    <p className="text-sm text-amber-800 line-clamp-2">
                       {ticket.description}
                     </p>
                   </div>
@@ -306,15 +382,15 @@ const ViewAllTicket: React.FC = () => {
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
                       <div className={`w-2 h-2 rounded-full ${getPriorityColor(ticket.priority)}`} />
-                      <span className="text-xs text-gray-500">{ticket.priority}</span>
+                      <span className="text-xs text-amber-600">{ticket.priority}</span>
                     </div>
                     <Button
                       onClick={() => navigate(`/ticket/${ticket._id}`)}
                       size="sm"
-                      className="flex items-center gap-1"
+                      className="flex items-center gap-1 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700"
                     >
                       <Eye className="h-3 w-3" />
-                      View
+                      View Blessing
                     </Button>
                   </div>
                 </CardContent>
@@ -324,32 +400,50 @@ const ViewAllTicket: React.FC = () => {
         </div>
 
         {/* Desktop Table View */}
-        <Card className="hidden lg:block shadow-sm">
+        <Card className="hidden lg:block shadow-sm border border-amber-200">
           <Table>
-            <TableHeader className="bg-gray-50">
-              <TableRow>
-                <TableHead className="font-semibold text-gray-700 w-32">
-                  Ticket #
+            <TableHeader className="bg-gradient-to-r from-amber-600 to-orange-600">
+              <TableRow className="border-0 hover:bg-transparent">
+                <TableHead className="font-semibold text-white w-32">
+                  <div className="flex items-center gap-2">
+                    <TicketIcon className="h-4 w-4" />
+                    Blessing #
+                  </div>
                 </TableHead>
-                <TableHead className="font-semibold text-gray-700 w-36">
-                  Date
+                <TableHead className="font-semibold text-white w-36">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Clover Date
+                  </div>
                 </TableHead>
-                <TableHead className="font-semibold text-gray-700 w-40">
-                  Category
+                <TableHead className="font-semibold text-white w-40">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    Category
+                  </div>
                 </TableHead>
-                <TableHead className="font-semibold text-gray-700">
-                  Description
+                <TableHead className="font-semibold text-white">
+                  <div className="flex items-center gap-2">
+                    <Heart className="h-4 w-4" />
+                    Request Details
+                  </div>
                 </TableHead>
-                <TableHead className="font-semibold text-gray-700 w-28">
+                <TableHead className="font-semibold text-white w-28">
                   Priority
                 </TableHead>
-                <TableHead className="font-semibold text-gray-700 w-32">
-                  Status
+                <TableHead className="font-semibold text-white w-32">
+                  <div className="flex items-center gap-2">
+                    <Clover className="h-4 w-4" />
+                    Status
+                  </div>
                 </TableHead>
-                <TableHead className="font-semibold text-gray-700 w-40">
-                  Assigned To
+                <TableHead className="font-semibold text-white w-40">
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    Helper
+                  </div>
                 </TableHead>
-                <TableHead className="font-semibold text-gray-700 w-20">
+                <TableHead className="font-semibold text-white w-20">
                   Action
                 </TableHead>
               </TableRow>
@@ -358,12 +452,13 @@ const ViewAllTicket: React.FC = () => {
               {getCurrentPageTickets().length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-12">
-                    <TicketIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No tickets found</h3>
-                    <p className="text-gray-600">
+                    <div className="text-4xl mb-4">🍂</div>
+                    <TicketIcon className="h-12 w-12 text-amber-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-amber-900 mb-2">No blessings found</h3>
+                    <p className="text-amber-600">
                       {searchTerm || statusFilter !== "all" 
-                        ? "Try adjusting your search or filters" 
-                        : "You haven't submitted any tickets yet"}
+                        ? "Try adjusting your Clover filters" 
+                        : "You haven't shared any requests yet"}
                     </p>
                   </TableCell>
                 </TableRow>
@@ -371,25 +466,25 @@ const ViewAllTicket: React.FC = () => {
                 getCurrentPageTickets().map((ticket, index) => (
                   <TableRow 
                     key={ticket._id} 
-                    className={`hover:bg-gray-50 transition-colors ${
-                      index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                    className={`hover:bg-amber-50 transition-colors ${
+                      index % 2 === 0 ? "bg-white" : "bg-amber-25"
                     }`}
                   >
-                    <TableCell className="font-mono font-semibold text-blue-600">
+                    <TableCell className="font-mono font-semibold text-amber-700">
                       {ticket.ticketNumber}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-gray-400" />
+                        <Calendar className="h-4 w-4 text-amber-500" />
                         {formattedDate(ticket.createdAt)}
                       </div>
                     </TableCell>
-                    <TableCell className="font-medium text-gray-900">
+                    <TableCell className="font-medium text-amber-900">
                       {ticket.category}
                     </TableCell>
                     <TableCell>
                       <div className="max-w-xs">
-                        <p className="truncate" title={ticket.description}>
+                        <p className="truncate text-amber-800" title={ticket.description}>
                           {ticket.description}
                         </p>
                       </div>
@@ -397,7 +492,7 @@ const ViewAllTicket: React.FC = () => {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <div className={`w-2 h-2 rounded-full ${getPriorityColor(ticket.priority)}`} />
-                        <span className="text-xs text-gray-600">{ticket.priority}</span>
+                        <span className="text-xs text-amber-600">{ticket.priority}</span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -407,8 +502,8 @@ const ViewAllTicket: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-gray-400" />
-                        <span className="text-gray-600">{ticket.assignedTo || "Unassigned"}</span>
+                        <User className="h-4 w-4 text-amber-500" />
+                        <span className="text-amber-700">{ticket.assignedTo || "Awaiting Helper"}</span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -416,7 +511,7 @@ const ViewAllTicket: React.FC = () => {
                         onClick={() => navigate(`/ticket/${ticket._id}`)}
                         variant="outline"
                         size="sm"
-                        className="flex items-center gap-1"
+                        className="flex items-center gap-1 border-amber-300 text-amber-700 hover:bg-amber-100"
                       >
                         <Eye className="h-3 w-3" />
                         View
@@ -432,10 +527,10 @@ const ViewAllTicket: React.FC = () => {
         {/* Pagination */}
         {filteredTickets.length > 0 && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-amber-700">
               Showing {((currentPage - 1) * itemsPerPage) + 1} to{" "}
               {Math.min(currentPage * itemsPerPage, filteredTickets.length)} of{" "}
-              {filteredTickets.length} tickets
+              {filteredTickets.length} blessing{filteredTickets.length !== 1 ? 's' : ''}
             </div>
             
             <div className="flex items-center gap-2">
@@ -444,7 +539,7 @@ const ViewAllTicket: React.FC = () => {
                 size="sm"
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 border-amber-300 text-amber-700 hover:bg-amber-100"
               >
                 <ChevronLeft className="h-4 w-4" />
                 Previous
@@ -469,7 +564,11 @@ const ViewAllTicket: React.FC = () => {
                       variant={pageNum === currentPage ? "default" : "outline"}
                       size="sm"
                       onClick={() => handlePageChange(pageNum)}
-                      className="w-8 h-8 p-0"
+                      className={`w-8 h-8 p-0 ${
+                        pageNum === currentPage 
+                          ? 'bg-amber-600 hover:bg-amber-700' 
+                          : 'border-amber-300 text-amber-700 hover:bg-amber-100'
+                      }`}
                     >
                       {pageNum}
                     </Button>
@@ -478,12 +577,12 @@ const ViewAllTicket: React.FC = () => {
                 
                 {totalPages > 5 && currentPage < totalPages - 2 && (
                   <>
-                    <span className="px-2 text-gray-500">...</span>
+                    <span className="px-2 text-amber-500">...</span>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handlePageChange(totalPages)}
-                      className="w-8 h-8 p-0"
+                      className="w-8 h-8 p-0 border-amber-300 text-amber-700 hover:bg-amber-100"
                     >
                       {totalPages}
                     </Button>
@@ -496,7 +595,7 @@ const ViewAllTicket: React.FC = () => {
                 size="sm"
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 border-amber-300 text-amber-700 hover:bg-amber-100"
               >
                 Next
                 <ChevronRight className="h-4 w-4" />
@@ -504,6 +603,15 @@ const ViewAllTicket: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* Thanksgiving Footer */}
+        <div className="mt-8 text-center">
+          <div className="text-amber-600 text-sm flex items-center justify-center gap-2">
+            <span>🦃</span>
+            <span>Thankful for the opportunity to serve you this season</span>
+            <span>🍂</span>
+          </div>
+        </div>
       </div>
     </div>
   );

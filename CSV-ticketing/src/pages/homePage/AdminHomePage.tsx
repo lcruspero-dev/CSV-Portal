@@ -12,12 +12,12 @@ import {
   AlertTriangle,
   TrendingUp,
   RefreshCw,
-  Ghost,
-  Skull,
-  ShipWheel,
-  Eclipse ,
-  Moon,
-  Candy
+  Heart,
+  Leaf,
+  PieChart,
+  Cannabis ,
+  Clover ,
+  LeafyGreen 
 } from "lucide-react";  
 
 interface Ticket {
@@ -106,33 +106,33 @@ const AdminHome = () => {
     switch (status.toLowerCase()) {
       case 'open':
       case 'new':
-        return 'text-green-400 bg-green-900/30 border-green-600';
+        return 'text-green-600 bg-green-50 border-green-200';
       case 'in progress':
-        return 'text-blue-400 bg-blue-900/30 border-blue-600';
+        return 'text-blue-600 bg-blue-50 border-blue-200';
       case 'closed':
       case 'approved':
-        return 'text-gray-400 bg-gray-900/30 border-gray-600';
+        return 'text-gray-600 bg-gray-50 border-gray-200';
       case 'rejected':
-        return 'text-red-400 bg-red-900/30 border-red-600';
+        return 'text-red-600 bg-red-50 border-red-200';
       default:
-        return 'text-gray-400 bg-gray-900/30 border-gray-600';
+        return 'text-gray-600 bg-gray-50 border-gray-200';
     }
   };
 
-  // Halloween-themed loading component
-  const HalloweenLoader = () => (
+  // Thanksgiving-themed loading component
+  const ThanksgivingLoader = () => (
     <div className="flex items-center justify-center">
       <div className="relative">
-        <ShipWheel className="h-8 w-8 text-orange-400 animate-pulse" />
+        <PieChart className="h-8 w-8 text-amber-600 animate-pulse" />
         <div className="absolute inset-0 flex items-center justify-center">
-          <Eclipse  className="h-3 w-3 text-gray-800 animate-bounce" />
+          <Leaf className="h-4 w-4 text-green-600 animate-bounce" />
         </div>
       </div>
     </div>
   );
 
   return (
-    <div className="flex min-h-screen ">
+    <div className="flex min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-brown-50">
       {/* Sidebar */}
       <div className={`${isMobile ? "fixed inset-y-0 left-0 z-50" : "relative flex-shrink-0"} transition-all duration-300`}>
         <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
@@ -148,94 +148,94 @@ const AdminHome = () => {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-h-screen">
-        {/* Halloween decorations */}
+        {/* Thanksgiving decorations */}
         <div className="absolute top-4 right-4 flex gap-2 z-10">
-          <Ghost className="h-6 w-6 text-white/40 animate-float" />
-          <Eclipse  className="h-5 w-5 text-gray-400/40 animate-float" style={{ animationDelay: '1s' }} />
-          <ShipWheel className="h-6 w-6 text-orange-400/40 animate-float" style={{ animationDelay: '2s' }} />
+          <Leaf className="h-6 w-6 text-green-500/40 animate-float" />
+          <Clover  className="h-5 w-5 text-yellow-600/40 animate-float" style={{ animationDelay: '1s' }} />
+          <Heart className="h-6 w-6 text-rose-500/40 animate-float" style={{ animationDelay: '2s' }} />
         </div>
 
         {/* Main content area */}
         <main className="flex-1 max-w-[120rem] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
           {/* Header */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-orange-400 via-yellow-400 to-purple-400 bg-clip-text text-transparent font-serif">
-              🎃 Haunted Dashboard 🦇
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-600 via-orange-600 to-brown-600 bg-clip-text text-transparent font-serif">
+              🦃 Thanksgiving Dashboard 🍂
             </h1>
-            <p className="text-orange-200 mt-2">Monitoring spooky tickets and ghostly activities</p>
+            <p className="text-amber-700 mt-2">Monitoring blessings and grateful activities</p>
           </div>
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="relative overflow-hidden border-2 border-orange-400 shadow-2xl bg-gradient-to-br from-purple-900 to-orange-900 text-white">
+            <Card className="relative overflow-hidden border-2 border-amber-400 shadow-2xl bg-gradient-to-br from-amber-50 to-orange-100 text-brown-900">
               <div className="absolute top-2 right-2">
-                <Ghost className="h-6 w-6 text-white/20" />
+                <Cannabis  className="h-6 w-6 text-amber-600/20" />
               </div>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-orange-200 text-sm font-medium">👻 Total Hauntings</p>
-                    <p className="text-3xl font-bold mt-2">{stats.total}</p>
+                    <p className="text-amber-700 text-sm font-medium">🦃 Total Blessings</p>
+                    <p className="text-3xl font-bold mt-2 text-brown-900">{stats.total}</p>
                     <div className="flex items-center gap-1 mt-2">
-                      <TrendingUp className="h-4 w-4 text-green-400" />
-                      <span className="text-orange-200 text-sm">All time scares</span>
+                      <TrendingUp className="h-4 w-4 text-green-600" />
+                      <span className="text-amber-700 text-sm">All time gratitude</span>
                     </div>
                   </div>
-                  <div className="p-3 bg-orange-500/20 rounded-lg border border-orange-400">
-                    <Skull className="h-6 w-6" />
+                  <div className="p-3 bg-amber-500/20 rounded-lg border border-amber-400">
+                    <PieChart className="h-6 w-6 text-amber-700" />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-2 border-green-500 shadow-2xl bg-gradient-to-br from-gray-800 to-green-900">
+            <Card className="border-2 border-green-500 shadow-2xl bg-gradient-to-br from-green-50 to-emerald-100">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-green-200 text-sm font-medium">🕸️ Open Hauntings</p>
-                    <p className="text-3xl font-bold text-green-400 mt-2">{stats.open}</p>
-                    <Badge className="bg-green-900/50 text-green-300 border-green-500 mt-2">
+                    <p className="text-green-700 text-sm font-medium">🍂 Open LeafyGreen </p>
+                    <p className="text-3xl font-bold text-green-600 mt-2">{stats.open}</p>
+                    <Badge className="bg-green-100 text-green-700 border-green-300 mt-2">
                       <Clock className="h-3 w-3 mr-1" />
-                      Needs exorcism
+                      Ready for gathering
                     </Badge>
                   </div>
-                  <div className="p-3 bg-green-900/30 rounded-lg border border-green-500">
-                    <Moon className="h-6 w-6 text-green-400" />
+                  <div className="p-3 bg-green-500/20 rounded-lg border border-green-400">
+                    <LeafyGreen  className="h-6 w-6 text-green-600" />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-2 border-blue-400 shadow-2xl bg-gradient-to-br from-gray-800 to-blue-900">
+            <Card className="border-2 border-blue-400 shadow-2xl bg-gradient-to-br from-blue-50 to-cyan-100">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-blue-200 text-sm font-medium">🧟 In Progress</p>
-                    <p className="text-3xl font-bold text-blue-400 mt-2">{stats.inProgress}</p>
-                    <Badge className="bg-blue-900/50 text-blue-300 border-blue-400 mt-2">
-                      Active haunting
+                    <p className="text-blue-700 text-sm font-medium">👨‍🌾 In Progress</p>
+                    <p className="text-3xl font-bold text-blue-600 mt-2">{stats.inProgress}</p>
+                    <Badge className="bg-blue-100 text-blue-700 border-blue-300 mt-2">
+                      Active LeafyGreen 
                     </Badge>
                   </div>
-                  <div className="p-3 bg-blue-900/30 rounded-lg border border-blue-400">
-                    <RefreshCw className="h-6 w-6 text-blue-400" />
+                  <div className="p-3 bg-blue-500/20 rounded-lg border border-blue-400">
+                    <RefreshCw className="h-6 w-6 text-blue-600" />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-2 border-red-500 shadow-2xl bg-gradient-to-br from-gray-800 to-red-900">
+            <Card className="border-2 border-red-500 shadow-2xl bg-gradient-to-br from-red-50 to-rose-100">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-red-200 text-sm font-medium">💀 Critical Scares</p>
-                    <p className="text-3xl font-bold text-red-400 mt-2">{stats.highPriority}</p>
-                    <Badge className="bg-red-900/50 text-red-300 border-red-500 mt-2">
+                    <p className="text-red-700 text-sm font-medium">🎯 Priority Tasks</p>
+                    <p className="text-3xl font-bold text-red-600 mt-2">{stats.highPriority}</p>
+                    <Badge className="bg-red-100 text-red-700 border-red-300 mt-2">
                       <AlertTriangle className="h-3 w-3 mr-1" />
-                      Urgent exorcism needed
+                      Needs attention
                     </Badge>
                   </div>
-                  <div className="p-3 bg-red-900/30 rounded-lg border border-red-500">
-                    <Eclipse  className="h-6 w-6 text-red-400" />
+                  <div className="p-3 bg-red-500/20 rounded-lg border border-red-500">
+                    <Clover  className="h-6 w-6 text-red-600" />
                   </div>
                 </div>
               </CardContent>
@@ -245,25 +245,25 @@ const AdminHome = () => {
           {/* Charts and Analytics Section */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Main Chart */}
-            <Card className="lg:col-span-2 border-2 border-orange-400 shadow-2xl bg-gradient-to-br from-gray-800 to-purple-900">
+            <Card className="lg:col-span-2 border-2 border-amber-400 shadow-2xl bg-gradient-to-br from-amber-50 to-orange-100">
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2 text-lg text-orange-300 font-serif">
-                    <BarChart3 className="h-5 w-5 text-orange-400" />
-                    🎃 Haunting Analytics
+                  <CardTitle className="flex items-center gap-2 text-lg text-amber-700 font-serif">
+                    <BarChart3 className="h-5 w-5 text-amber-600" />
+                    🍁 LeafyGreen  Analytics
                   </CardTitle>
-                  <Badge className="bg-orange-900/50 text-orange-300 border-orange-400 text-xs">
-                    Real-time scares
+                  <Badge className="bg-amber-100 text-amber-700 border-amber-400 text-xs">
+                    Real-time blessings
                   </Badge>
                 </div>
               </CardHeader>
               <CardContent>
                 {loading ? (
                   <div className="flex items-center justify-center h-64">
-                    <HalloweenLoader />
+                    <ThanksgivingLoader />
                   </div>
                 ) : (
-                  <div className="bg-gray-900/50 rounded-lg p-4 border border-orange-400/30">
+                  <div className="bg-white/50 rounded-lg p-4 border border-amber-400/30">
                     <Chart tickets={tickets} />
                   </div>
                 )}
@@ -272,63 +272,63 @@ const AdminHome = () => {
 
             {/* Quick Stats Sidebar */}
             <div className="space-y-6">
-              <Card className="border-2 border-purple-400 shadow-2xl bg-gradient-to-br from-gray-800 to-purple-900">
+              <Card className="border-2 border-purple-400 shadow-2xl bg-gradient-to-br from-purple-50 to-violet-100">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg text-purple-300 font-serif">
-                    <Ghost className="h-5 w-5 text-purple-400" />
-                    👻 Haunt Status
+                  <CardTitle className="flex items-center gap-2 text-lg text-purple-700 font-serif">
+                    <Heart className="h-5 w-5 text-purple-600" />
+                    🙏 Blessing Status
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex justify-between items-center p-3 bg-purple-900/30 rounded-lg border border-purple-400/50">
-                    <span className="text-sm font-medium text-purple-200">Exorcised Haunts</span>
-                    <Badge className="bg-green-900/50 text-green-300 border-green-500">
+                  <div className="flex justify-between items-center p-3 bg-purple-100 rounded-lg border border-purple-300">
+                    <span className="text-sm font-medium text-purple-700">Completed LeafyGreen </span>
+                    <Badge className="bg-green-100 text-green-700 border-green-300">
                       {stats.closed}
                     </Badge>
                   </div>
-                  <div className="flex justify-between items-center p-3 bg-purple-900/30 rounded-lg border border-purple-400/50">
-                    <span className="text-sm font-medium text-purple-200">Exorcism Rate</span>
-                    <Badge className="bg-blue-900/50 text-blue-300 border-blue-400">
+                  <div className="flex justify-between items-center p-3 bg-purple-100 rounded-lg border border-purple-300">
+                    <span className="text-sm font-medium text-purple-700">Completion Rate</span>
+                    <Badge className="bg-blue-100 text-blue-700 border-blue-300">
                       {stats.total > 0 ? Math.round((stats.closed / stats.total) * 100) : 0}%
                     </Badge>
                   </div>
-                  <div className="flex justify-between items-center p-3 bg-purple-900/30 rounded-lg border border-purple-400/50">
-                    <span className="text-sm font-medium text-purple-200">Avg. Scare Time</span>
-                    <Badge className="bg-orange-900/50 text-orange-300 border-orange-400">
+                  <div className="flex justify-between items-center p-3 bg-purple-100 rounded-lg border border-purple-300">
+                    <span className="text-sm font-medium text-purple-700">Avg. Resolution</span>
+                    <Badge className="bg-amber-100 text-amber-700 border-amber-400">
                       2.4h
                     </Badge>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="border-2 border-red-400 shadow-2xl bg-gradient-to-br from-gray-800 to-red-900">
+              <Card className="border-2 border-red-400 shadow-2xl bg-gradient-to-br from-red-50 to-pink-100">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg text-red-300 font-serif">
-                    <Skull className="h-5 w-5 text-red-400" />
-                    💀 Priority Alerts
+                  <CardTitle className="flex items-center gap-2 text-lg text-red-700 font-serif">
+                    <AlertTriangle className="h-5 w-5 text-red-600" />
+                    🎯 Priority Tasks
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {stats.highPriority > 0 ? (
                     <div className="space-y-3">
-                      <div className="p-3 bg-red-900/40 border-2 border-red-500 rounded-lg">
+                      <div className="p-3 bg-red-100 border-2 border-red-400 rounded-lg">
                         <div className="flex items-center gap-2 mb-1">
-                          <AlertTriangle className="h-4 w-4 text-red-400 animate-pulse" />
-                          <span className="font-medium text-red-200">Critical Hauntings!</span>
+                          <AlertTriangle className="h-4 w-4 text-red-600 animate-pulse" />
+                          <span className="font-medium text-red-700">Attention Needed!</span>
                         </div>
-                        <p className="text-sm text-red-300">
-                          {stats.highPriority} hauntings need immediate exorcism!
+                        <p className="text-sm text-red-600">
+                          {stats.highPriority} tasks need immediate attention!
                         </p>
                       </div>
-                      <Button className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white border border-orange-400" size="sm">
-                        🚨 View All Emergencies
+                      <Button className="w-full bg-gradient-to-r from-amber-500 to-red-600 hover:from-amber-600 hover:to-red-700 text-white border border-amber-400" size="sm">
+                        🚨 View Priority Tasks
                       </Button>
                     </div>
                   ) : (
                     <div className="text-center py-4">
-                      <Candy className="h-8 w-8 text-green-400 mx-auto mb-2" />
-                      <p className="text-green-300 text-sm">No spooky emergencies!</p>
-                      <p className="text-green-200 text-xs mt-1">All hauntings are under control</p>
+                      <Heart className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                      <p className="text-green-700 text-sm">All tasks are on track!</p>
+                      <p className="text-green-600 text-xs mt-1">Everything is running smoothly</p>
                     </div>
                   )}
                 </CardContent>
@@ -337,33 +337,33 @@ const AdminHome = () => {
           </div>
 
           {/* Recent Activity Section */}
-          <Card className="border-2 border-yellow-400 shadow-2xl bg-gradient-to-br from-gray-800 to-yellow-900">
+          <Card className="border-2 border-yellow-400 shadow-2xl bg-gradient-to-br from-yellow-50 to-amber-100">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-yellow-300 font-serif">
-                <Eclipse  className="h-5 w-5 text-yellow-400" />
-                🦇 Recent Hauntings
+              <CardTitle className="flex items-center gap-2 text-yellow-700 font-serif">
+                <Leaf className="h-5 w-5 text-yellow-600" />
+                🍂 Recent Activities
               </CardTitle>
             </CardHeader>
             <CardContent>
               {loading ? (
                 <div className="flex items-center justify-center py-8">
-                  <HalloweenLoader />
+                  <ThanksgivingLoader />
                 </div>
               ) : tickets.length > 0 ? (
                 <div className="space-y-3">
                   {tickets.slice(0, 5).map((ticket) => (
                     <div
                       key={ticket._id}
-                      className="flex items-center justify-between p-3 bg-yellow-900/20 rounded-lg border border-yellow-400/30 hover:bg-yellow-900/30 transition-colors"
+                      className="flex items-center justify-between p-3 bg-amber-100 rounded-lg border border-amber-300 hover:bg-amber-200 transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <ShipWheel className="h-4 w-4 text-orange-400" />
+                        <LeafyGreen  className="h-4 w-4 text-amber-600" />
                         <div>
-                          <p className="text-sm font-medium text-yellow-200">
+                          <p className="text-sm font-medium text-amber-900">
                             {ticket.category}
                           </p>
-                          <p className="text-xs text-yellow-300">
-                            Haunted by: {ticket.assignedTo || 'Ghost'}
+                          <p className="text-xs text-amber-700">
+                            Handled by: {ticket.assignedTo || 'Team'}
                           </p>
                         </div>
                       </div>
@@ -372,26 +372,26 @@ const AdminHome = () => {
                       </Badge>
                     </div>
                   ))}
-                  <Button variant="outline" className="w-full bg-transparent border-orange-400 text-orange-300 hover:bg-orange-900/30" size="sm">
-                    🕸️ View All Hauntings
+                  <Button variant="outline" className="w-full bg-transparent border-amber-400 text-amber-700 hover:bg-amber-200" size="sm">
+                    🍁 View All Activities
                   </Button>
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <Ghost className="h-12 w-12 text-gray-400 mx-auto mb-3 animate-float" />
-                  <p className="text-gray-300">No hauntings detected</p>
-                  <p className="text-sm text-gray-400 mt-1">
-                    Ghostly activities will appear here once they start haunting
+                  <Cannabis  className="h-12 w-12 text-amber-400 mx-auto mb-3 animate-float" />
+                  <p className="text-amber-700">No activities yet</p>
+                  <p className="text-sm text-amber-600 mt-1">
+                    Tasks and activities will appear here once they start
                   </p>
                 </div>
               )}
             </CardContent>
           </Card>
 
-          {/* Halloween Footer */}
-          <div className="text-center pt-6 border-t border-orange-400/30">
-            <p className="text-orange-200 text-sm">
-              🎃 Happy Halloween! May your dashboard be spooky and your tickets be treat-filled! 🦇
+          {/* Thanksgiving Footer */}
+          <div className="text-center pt-6 border-t border-amber-400/30">
+            <p className="text-amber-700 text-sm">
+              🦃 Happy Thanksgiving! May your dashboard be blessed and your tasks be filled with gratitude! 🍂
             </p>
           </div>
         </main>
