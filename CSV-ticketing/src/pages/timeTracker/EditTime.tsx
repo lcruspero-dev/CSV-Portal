@@ -43,7 +43,7 @@ import {
   RefreshCw,
   AlertTriangle,
   CheckCircle,
-  Building
+  Leaf,
 } from "lucide-react";
 import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -202,11 +202,11 @@ const formatHoursToMinutes = (hoursString: string): string => {
 };
 
 const employeeGroupOptions = [
-  { label: "All Employees", value: "csv-all" },
-  { label: "Shift 1", value: "csv-shift1" },
-  { label: "Shift 2", value: "csv-shift2" },
-  { label: "Shift 3", value: "csv-shift3" },
-  { label: "Staff", value: "csv-staff" },
+  { label: "All Family Members", value: "csv-all" },
+  { label: "Leaf Shift 1", value: "csv-shift1" },
+  { label: "Leaf Shift 2", value: "csv-shift2" },
+  { label: "Leaf Shift 3", value: "csv-shift3" },
+  { label: "Family Staff", value: "csv-staff" },
   { label: "Search by Name", value: "search-by-name" },
 ];
 
@@ -222,6 +222,18 @@ const AdminTimeRecordEdit: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
+  // Thanksgiving-themed toast
+  const showThanksgivingToast = (title: string, description: string, variant: "default" | "destructive" = "default") => {
+    toast({
+      title,
+      description,
+      variant,
+      className: variant === "default" 
+        ? "bg-gradient-to-r from-amber-600 to-orange-600 border border-amber-400 text-white"
+        : "bg-red-600 border border-red-400 text-white"
+    });
+  };
+
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
@@ -229,7 +241,7 @@ const AdminTimeRecordEdit: React.FC = () => {
 
   const validateSecretKey = () => {
     if (!secretKey) {
-      setSecretKeyError("Secret key is required");
+      setSecretKeyError("Leaf key is required");
       return false;
     }
     setSecretKeyError("");
@@ -238,20 +250,20 @@ const AdminTimeRecordEdit: React.FC = () => {
 
   const handleSearch = async () => {
     if (!searchDate) {
-      toast({
-        title: "Validation Error",
-        description: "Please select a date",
-        variant: "destructive",
-      });
+      showThanksgivingToast(
+        "Validation Error",
+        "Please select a Leaf date",
+        "destructive"
+      );
       return;
     }
 
     if (searchType === "search-by-name" && !searchName) {
-      toast({
-        title: "Validation Error",
-        description: "Please enter an employee name",
-        variant: "destructive",
-      });
+      showThanksgivingToast(
+        "Validation Error",
+        "Please enter a family member name",
+        "destructive"
+      );
       return;
     }
 
@@ -273,25 +285,23 @@ const AdminTimeRecordEdit: React.FC = () => {
       setTimeRecords(response.data);
 
       if (response.data.length === 0) {
-        toast({
-          title: "No Records Found",
-          description: "No time records found for the given criteria",
-          variant: "default",
-        });
+        showThanksgivingToast(
+          "No Records Found",
+          "No Leaf time records found for the given criteria"
+        );
       } else {
-        toast({
-          title: "Search Complete",
-          description: `Found ${response.data.length} record(s)`,
-          variant: "default",
-        });
+        showThanksgivingToast(
+          "Leaf Search Complete! 🦃",
+          `Found ${response.data.length} grateful record(s)`
+        );
       }
     } catch (error) {
       console.error("Search failed", error);
-      toast({
-        title: "Search Error",
-        description: "Failed to fetch time records",
-        variant: "destructive",
-      });
+      showThanksgivingToast(
+        "Search Error",
+        "Failed to fetch Leaf time records",
+        "destructive"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -344,21 +354,20 @@ const AdminTimeRecordEdit: React.FC = () => {
         )
       );
 
-      toast({
-        title: "Success",
-        description: "Time record updated successfully",
-        variant: "default",
-      });
+      showThanksgivingToast(
+        "Success! 🍂",
+        "Leaf time record updated with gratitude"
+      );
 
       setEditingRecord(null);
       setSecretKey("");
     } catch (error) {
       console.error("Update failed", error);
-      toast({
-        title: "Update Error",
-        description: "Failed to update time record",
-        variant: "destructive",
-      });
+      showThanksgivingToast(
+        "Update Error",
+        "Failed to update Leaf time record",
+        "destructive"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -369,18 +378,17 @@ const AdminTimeRecordEdit: React.FC = () => {
       await TimeRecordAPI.deleteTimeRecord(_id);
       setTimeRecords((prev) => prev.filter((record) => record._id !== _id));
 
-      toast({
-        title: "Success",
-        description: "Time record deleted successfully",
-        variant: "default",
-      });
+      showThanksgivingToast(
+        "Record Cleared! 🍁",
+        "Leaf time record removed with gratitude"
+      );
     } catch (error) {
       console.error("Delete failed", error);
-      toast({
-        title: "Delete Error",
-        description: "Failed to delete time record",
-        variant: "destructive",
-      });
+      showThanksgivingToast(
+        "Delete Error",
+        "Failed to clear Leaf time record",
+        "destructive"
+      );
     }
   };
 
@@ -411,9 +419,9 @@ const AdminTimeRecordEdit: React.FC = () => {
 
   const getHoursColor = (hours: string) => {
     const numHours = parseFloat(hours);
-    if (numHours >= 8) return "text-green-600 bg-green-50";
-    if (numHours >= 6) return "text-yellow-600 bg-yellow-50";
-    return "text-red-600 bg-red-50";
+    if (numHours >= 8) return "text-green-600 bg-green-50 border border-green-200";
+    if (numHours >= 6) return "text-amber-600 bg-amber-50 border border-amber-200";
+    return "text-red-600 bg-red-50 border border-red-200";
   };
 
   const clearSearch = () => {
@@ -423,55 +431,55 @@ const AdminTimeRecordEdit: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 py-6">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100/30 py-6">
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
           <div className="flex items-center gap-4">
             <BackButton />
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
-                Time Record Management
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+                🦃 Leaf Time Records
               </h1>
-              <p className="text-gray-600 mt-2">
-                Manage and edit employee time records
+              <p className="text-amber-700 mt-2">
+                Manage and edit family member Leaf time with gratitude
               </p>
             </div>
           </div>
           
           <div className="flex items-center gap-3">
-            <Button variant="outline" className="flex items-center gap-2">
+            <Button variant="outline" className="flex items-center gap-2 border-amber-300 text-amber-700 hover:bg-amber-100">
               <Download className="h-4 w-4" />
-              Export
+              Export Leaf
             </Button>
           </div>
         </div>
 
         {/* Search Section */}
-        <Card className="mb-6 shadow-sm border-0">
+        <Card className="mb-6 shadow-sm border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <Filter className="h-5 w-5 text-blue-600" />
+            <CardTitle className="flex items-center gap-2 text-xl text-amber-800">
+              <Filter className="h-5 w-5 text-amber-600" />
               Search Records
             </CardTitle>
-            <CardDescription>
-              Find time records by employee or group
+            <CardDescription className="text-amber-600">
+              Find time records by family member or Leaf group
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
               <div className="lg:col-span-3">
-                <Label className="flex items-center gap-2 mb-2">
-                  <Building className="h-4 w-4 text-blue-600" />
+                <Label className="flex items-center gap-2 mb-2 text-amber-700">
+                  <Leaf className="h-4 w-4 text-amber-600" />
                   Search Type
                 </Label>
                 <Select onValueChange={setSearchType} value={searchType}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select search type" />
+                  <SelectTrigger className="border-amber-300 bg-white">
+                    <SelectValue placeholder="Select Leaf type" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-amber-50 border-amber-300">
                     {employeeGroupOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
+                      <SelectItem key={option.value} value={option.value} className="hover:bg-amber-200">
                         {option.label}
                       </SelectItem>
                     ))}
@@ -481,27 +489,29 @@ const AdminTimeRecordEdit: React.FC = () => {
 
               {searchType === "search-by-name" && (
                 <div className="lg:col-span-3">
-                  <Label className="flex items-center gap-2 mb-2">
-                    <User className="h-4 w-4 text-blue-600" />
-                    Employee Name
+                  <Label className="flex items-center gap-2 mb-2 text-amber-700">
+                    <User className="h-4 w-4 text-amber-600" />
+                    Family Member Name
                   </Label>
                   <Input
-                    placeholder="Enter employee name"
+                    placeholder="Enter family member name"
                     value={searchName}
                     onChange={(e) => setSearchName(e.target.value)}
+                    className="border-amber-300 bg-white"
                   />
                 </div>
               )}
 
               <div className="lg:col-span-3">
-                <Label className="flex items-center gap-2 mb-2">
-                  <Calendar className="h-4 w-4 text-blue-600" />
+                <Label className="flex items-center gap-2 mb-2 text-amber-700">
+                  <Calendar className="h-4 w-4 text-amber-600" />
                   Date
                 </Label>
                 <Input
                   type="date"
                   value={searchDate}
                   onChange={(e) => setSearchDate(e.target.value)}
+                  className="border-amber-300 bg-white"
                 />
               </div>
 
@@ -509,19 +519,19 @@ const AdminTimeRecordEdit: React.FC = () => {
                 <Button 
                   onClick={handleSearch} 
                   disabled={isLoading}
-                  className="flex items-center gap-2 flex-1"
+                  className="flex items-center gap-2 flex-1 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white border-amber-400"
                 >
                   {isLoading ? (
                     <RefreshCw className="h-4 w-4 animate-spin" />
                   ) : (
                     <Search className="h-4 w-4" />
                   )}
-                  {isLoading ? "Searching..." : "Search"}
+                  {isLoading ? "Leafing..." : "Search Records"}
                 </Button>
                 <Button 
                   variant="outline" 
                   onClick={clearSearch}
-                  className="flex-1"
+                  className="flex-1 border-amber-300 text-amber-700 hover:bg-amber-100"
                 >
                   Clear
                 </Button>
@@ -532,56 +542,60 @@ const AdminTimeRecordEdit: React.FC = () => {
 
         {/* Edit Form */}
         {editingRecord && (
-          <Card className="mb-6 shadow-sm border-0 border-l-4 border-l-blue-500">
+          <Card className="mb-6 shadow-sm border-2 border-amber-200 border-l-4 border-l-amber-500 bg-gradient-to-br from-amber-50 to-orange-50">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <Pencil className="h-5 w-5 text-blue-600" />
-                Edit Time Record
-                <Badge variant="secondary" className="ml-2">
+              <CardTitle className="flex items-center gap-2 text-xl text-amber-800">
+                <Pencil className="h-5 w-5 text-amber-600" />
+                Edit  Record
+                <Badge variant="secondary" className="ml-2 bg-amber-100 text-amber-800 border-amber-300">
                   {editingRecord.employeeName}
                 </Badge>
               </CardTitle>
-              <CardDescription>
-                Update the time record details below
+              <CardDescription className="text-amber-600">
+                Update the  time record details below with gratitude
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 {/* Basic Information */}
                 <div className="space-y-3">
-                  <Label>Date</Label>
+                  <Label className="text-amber-700"> Date</Label>
                   <Input
                     value={editingRecord.date}
                     onChange={(e) =>
                       handleTimeInputChange("date", e.target.value, editingRecord)
                     }
+                    className="border-amber-300 bg-white"
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label>Shift</Label>
+                  <Label className="text-amber-700"> Shift</Label>
                   <Input
                     value={editingRecord.shift || ""}
                     onChange={(e) =>
                       handleTimeInputChange("shift", e.target.value, editingRecord)
                     }
+                    className="border-amber-300 bg-white"
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label>Time In</Label>
+                  <Label className="text-amber-700">Time In</Label>
                   <Input
                     value={editingRecord.timeIn || ""}
                     onChange={(e) =>
                       handleTimeInputChange("timeIn", e.target.value, editingRecord)
                     }
+                    className="border-amber-300 bg-white"
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label>Time Out</Label>
+                  <Label className="text-amber-700">Time Out</Label>
                   <Input
                     value={editingRecord.timeOut || ""}
                     onChange={(e) =>
                       handleTimeInputChange("timeOut", e.target.value, editingRecord)
                     }
+                    className="border-amber-300 bg-white"
                   />
                 </div>
               </div>
@@ -589,39 +603,43 @@ const AdminTimeRecordEdit: React.FC = () => {
               {/* Break Times */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <div className="space-y-3">
-                  <Label>Break Start</Label>
+                  <Label className="text-amber-700">Break Start</Label>
                   <Input
                     value={editingRecord.breakStart || ""}
                     onChange={(e) =>
                       handleTimeInputChange("breakStart", e.target.value, editingRecord)
                     }
+                    className="border-amber-300 bg-white"
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label>Break End</Label>
+                  <Label className="text-amber-700">Break End</Label>
                   <Input
                     value={editingRecord.breakEnd || ""}
                     onChange={(e) =>
                       handleTimeInputChange("breakEnd", e.target.value, editingRecord)
                     }
+                    className="border-amber-300 bg-white"
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label>Lunch Start</Label>
+                  <Label className="text-amber-700"> Start</Label>
                   <Input
                     value={editingRecord.lunchStart || ""}
                     onChange={(e) =>
                       handleTimeInputChange("lunchStart", e.target.value, editingRecord)
                     }
+                    className="border-amber-300 bg-white"
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label>Lunch End</Label>
+                  <Label className="text-amber-700"> End</Label>
                   <Input
                     value={editingRecord.lunchEnd || ""}
                     onChange={(e) =>
                       handleTimeInputChange("lunchEnd", e.target.value, editingRecord)
                     }
+                    className="border-amber-300 bg-white"
                   />
                 </div>
               </div>
@@ -629,81 +647,88 @@ const AdminTimeRecordEdit: React.FC = () => {
               {/* Second Break Times */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <div className="space-y-3">
-                  <Label>2nd Break Start</Label>
+                  <Label className="text-amber-700">2nd Break Start</Label>
                   <Input
                     value={editingRecord.secondBreakStart || ""}
                     onChange={(e) =>
                       handleTimeInputChange("secondBreakStart", e.target.value, editingRecord)
                     }
+                    className="border-amber-300 bg-white"
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label>2nd Break End</Label>
+                  <Label className="text-amber-700">2nd Break End</Label>
                   <Input
                     value={editingRecord.secondBreakEnd || ""}
                     onChange={(e) =>
                       handleTimeInputChange("secondBreakEnd", e.target.value, editingRecord)
                     }
+                    className="border-amber-300 bg-white"
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label>Notes</Label>
+                  <Label className="text-amber-700">Grateful Notes</Label>
                   <Input
                     value={editingRecord.notes || ""}
                     onChange={(e) =>
                       handleTimeInputChange("notes", e.target.value, editingRecord)
                     }
+                    className="border-amber-300 bg-white"
+                    placeholder="Add grateful notes..."
                   />
                 </div>
               </div>
 
               {/* Calculated Totals */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 bg-blue-50 rounded-lg">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 bg-amber-100 rounded-lg border border-amber-300">
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Total Hours</Label>
+                  <Label className="text-sm font-medium text-amber-800">Total Hours</Label>
                   <div className="flex items-center gap-2">
                     <Input
                       value={editingRecord.totalHours}
                       readOnly
-                      className={`font-semibold ${getHoursColor(editingRecord.totalHours)}`}
+                      className={`font-semibold border-amber-300 ${getHoursColor(editingRecord.totalHours)}`}
                     />
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-amber-600">
                       {formatHoursToMinutes(editingRecord.totalHours)}
                     </span>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Break Time</Label>
+                  <Label className="text-sm font-medium text-amber-800">Break Time</Label>
                   <div className="flex items-center gap-2">
                     <Input
                       value={editingRecord.totalBreakTime || "0.00"}
                       readOnly
+                      className="border-amber-300"
                     />
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-amber-600">
                       {formatHoursToMinutes(editingRecord.totalBreakTime || "0.00")}
                     </span>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Lunch Time</Label>
+                  <Label className="text-sm font-medium text-amber-800">Time</Label>
                   <div className="flex items-center gap-2">
                     <Input
                       value={editingRecord.totalLunchTime || "0.00"}
                       readOnly
+                      className="border-amber-300"
                     />
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-amber-600">
                       {formatHoursToMinutes(editingRecord.totalLunchTime || "0.00")}
                     </span>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">2nd Break</Label>
+                  <Label className="text-sm font-medium text-amber-800">2nd Break</Label>
                   <div className="flex items-center gap-2">
                     <Input
                       value={editingRecord.totalSecondBreakTime || "0.00"}
                       readOnly
+                      className="border-amber-300"
                     />
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-amber-600">
                       {formatHoursToMinutes(editingRecord.totalSecondBreakTime || "0.00")}
                     </span>
                   </div>
@@ -711,25 +736,25 @@ const AdminTimeRecordEdit: React.FC = () => {
               </div>
 
               {/* Security Section */}
-              <div className="border-t pt-4">
-                <Label className="flex items-center gap-2 mb-3 text-sm font-medium">
-                  <AlertTriangle className="h-4 w-4 text-orange-600" />
-                  Security Verification
+              <div className="border-t border-amber-300 pt-4">
+                <Label className="flex items-center gap-2 mb-3 text-sm font-medium text-amber-800">
+                  <AlertTriangle className="h-4 w-4 text-amber-600" />
+                   Verification
                 </Label>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <div className="relative">
-                    <Label>Secret Key</Label>
+                    <Label className="text-amber-700">Key</Label>
                     <Input
                       type={showSecretKey ? "text" : "password"}
                       value={secretKey}
                       onChange={(e) => setSecretKey(e.target.value)}
-                      className={secretKeyError ? "border-red-500" : ""}
-                      placeholder="Enter secret key"
+                      className={`border-amber-300 bg-white ${secretKeyError ? "border-red-500" : ""}`}
+                      placeholder="Enter  key"
                     />
                     <button
                       type="button"
                       onClick={toggleSecretKeyVisibility}
-                      className="absolute right-3 top-8 text-gray-500 hover:text-gray-700"
+                      className="absolute right-3 top-8 text-amber-500 hover:text-amber-700"
                     >
                       {showSecretKey ? (
                         <EyeOffIcon size={18} />
@@ -751,21 +776,21 @@ const AdminTimeRecordEdit: React.FC = () => {
                         setSecretKey("");
                         setSecretKeyError("");
                       }}
-                      className="flex-1"
+                      className="flex-1 border-amber-300 text-amber-700 hover:bg-amber-100"
                     >
                       Cancel
                     </Button>
                     <Button 
                       onClick={handleUpdate} 
                       disabled={isLoading}
-                      className="flex-1 flex items-center gap-2"
+                      className="flex-1 flex items-center gap-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white border-amber-400"
                     >
                       {isLoading ? (
                         <RefreshCw className="h-4 w-4 animate-spin" />
                       ) : (
                         <CheckCircle className="h-4 w-4" />
                       )}
-                      {isLoading ? "Updating..." : "Update Record"}
+                      {isLoading ? "Updating..." : "Update with Gratitude"}
                     </Button>
                   </div>
                 </div>
@@ -776,71 +801,71 @@ const AdminTimeRecordEdit: React.FC = () => {
 
         {/* Results Table */}
         {timeRecords.length > 0 && (
-          <Card className="shadow-sm border-0">
+          <Card className="shadow-sm border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <Clock className="h-5 w-5 text-blue-600" />
-                Time Records
-                <Badge variant="secondary" className="ml-2">
-                  {timeRecords.length} records
+              <CardTitle className="flex items-center gap-2 text-xl text-amber-800">
+                <Clock className="h-5 w-5 text-amber-600" />
+                Leaf Time Records
+                <Badge variant="secondary" className="ml-2 bg-amber-100 text-amber-800 border-amber-300">
+                  {timeRecords.length} grateful records
                 </Badge>
               </CardTitle>
-              <CardDescription>
-                Found {timeRecords.length} time record(s) for the selected criteria
+              <CardDescription className="text-amber-600">
+                Found {timeRecords.length} Leaf time record(s) for the selected criteria
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <Table>
-                  <TableHeader className="bg-gray-50">
+                  <TableHeader className="bg-amber-100">
                     <TableRow>
-                      <TableHead className="font-semibold">Employee</TableHead>
-                      <TableHead className="font-semibold">Date</TableHead>
-                      <TableHead className="font-semibold">Time In</TableHead>
-                      <TableHead className="font-semibold">Time Out</TableHead>
-                      <TableHead className="font-semibold">Total Hours</TableHead>
-                      <TableHead className="font-semibold">Break</TableHead>
-                      <TableHead className="font-semibold">Lunch</TableHead>
-                      <TableHead className="font-semibold">2nd Break</TableHead>
-                      <TableHead className="font-semibold">Shift</TableHead>
-                      <TableHead className="font-semibold">Notes</TableHead>
-                      <TableHead className="font-semibold text-right">Actions</TableHead>
+                      <TableHead className="font-semibold text-amber-800">Family Member</TableHead>
+                      <TableHead className="font-semibold text-amber-800">Date</TableHead>
+                      <TableHead className="font-semibold text-amber-800">Time In</TableHead>
+                      <TableHead className="font-semibold text-amber-800">Time Out</TableHead>
+                      <TableHead className="font-semibold text-amber-800">Total Hours</TableHead>
+                      <TableHead className="font-semibold text-amber-800">Break</TableHead>
+                      <TableHead className="font-semibold text-amber-800">Feast</TableHead>
+                      <TableHead className="font-semibold text-amber-800">2nd Break</TableHead>
+                      <TableHead className="font-semibold text-amber-800">Shift</TableHead>
+                      <TableHead className="font-semibold text-amber-800">Grateful Notes</TableHead>
+                      <TableHead className="font-semibold text-amber-800 text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {timeRecords.map((record) => (
-                      <TableRow key={record._id} className="hover:bg-gray-50/50">
+                      <TableRow key={record._id} className="hover:bg-amber-50/50 border-amber-200">
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
-                            <User className="h-4 w-4 text-gray-500" />
+                            <User className="h-4 w-4 text-amber-500" />
                             {record.employeeName}
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-gray-500" />
+                            <Calendar className="h-4 w-4 text-amber-500" />
                             {record.date}
                           </div>
                         </TableCell>
-                        <TableCell>{record.timeIn || "-"}</TableCell>
-                        <TableCell>{record.timeOut || "-"}</TableCell>
+                        <TableCell className="text-amber-700">{record.timeIn || "-"}</TableCell>
+                        <TableCell className="text-amber-700">{record.timeOut || "-"}</TableCell>
                         <TableCell>
                           <Badge className={getHoursColor(record.totalHours)}>
                             {record.totalHours}
                           </Badge>
                         </TableCell>
-                        <TableCell>{record.totalBreakTime || "0.00"}</TableCell>
-                        <TableCell>{record.totalLunchTime || "0.00"}</TableCell>
-                        <TableCell>{record.totalSecondBreakTime || "0.00"}</TableCell>
+                        <TableCell className="text-amber-700">{record.totalBreakTime || "0.00"}</TableCell>
+                        <TableCell className="text-amber-700">{record.totalLunchTime || "0.00"}</TableCell>
+                        <TableCell className="text-amber-700">{record.totalSecondBreakTime || "0.00"}</TableCell>
                         <TableCell>
                           {record.shift ? (
-                            <Badge variant="outline">{record.shift}</Badge>
+                            <Badge variant="outline" className="border-amber-300 text-amber-700">{record.shift}</Badge>
                           ) : (
                             "-"
                           )}
                         </TableCell>
-                        <TableCell className="max-w-xs truncate">
-                          {record.notes || "-"}
+                        <TableCell className="max-w-xs truncate text-amber-700">
+                          {record.notes || "🦃"}
                         </TableCell>
                         <TableCell>
                           <div className="flex justify-end gap-2">
@@ -848,7 +873,7 @@ const AdminTimeRecordEdit: React.FC = () => {
                               variant="outline"
                               size="sm"
                               onClick={() => handleEdit(record)}
-                              className="flex items-center gap-1"
+                              className="flex items-center gap-1 border-amber-300 text-amber-700 hover:bg-amber-100"
                             >
                               <Pencil size={14} />
                               Edit
@@ -857,24 +882,24 @@ const AdminTimeRecordEdit: React.FC = () => {
                               <DialogTrigger asChild>
                                 <Button variant="destructive" size="sm" className="flex items-center gap-1">
                                   <Trash2 size={14} />
-                                  Delete
+                                  Clear
                                 </Button>
                               </DialogTrigger>
-                              <DialogContent>
+                              <DialogContent className="bg-gradient-to-br from-amber-50 to-orange-100 border-2 border-amber-300">
                                 <DialogHeader>
-                                  <DialogTitle className="flex items-center gap-2">
-                                    <AlertTriangle className="h-5 w-5 text-red-600" />
-                                    Confirm Deletion
+                                  <DialogTitle className="flex items-center gap-2 text-amber-800">
+                                    <AlertTriangle className="h-5 w-5 text-amber-600" />
+                                    Confirm Leaf Clearance
                                   </DialogTitle>
                                 </DialogHeader>
-                                <p className="text-gray-600">
-                                  Are you sure you want to delete the time record for{" "}
+                                <p className="text-amber-700">
+                                  Are you sure you want to clear the Leaf time record for{" "}
                                   <strong>{record.employeeName}</strong> on {record.date}?
                                   This action cannot be undone.
                                 </p>
                                 <div className="flex justify-end gap-3">
                                   <DialogClose asChild>
-                                    <Button variant="outline">Cancel</Button>
+                                    <Button variant="outline" className="border-amber-300 text-amber-700">Cancel</Button>
                                   </DialogClose>
                                   <Button
                                     variant="destructive"
@@ -882,7 +907,7 @@ const AdminTimeRecordEdit: React.FC = () => {
                                     className="flex items-center gap-2"
                                   >
                                     <Trash2 size={14} />
-                                    Delete Record
+                                    Clear Record
                                   </Button>
                                 </div>
                               </DialogContent>
