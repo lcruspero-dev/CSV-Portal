@@ -28,7 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import axios from "axios";
 import { format } from "date-fns";
-import { Paperclip, User, Mail, FolderOpen, CalendarIcon, FileText, Clock, Building } from "lucide-react";
+import { Paperclip, User, Mail, FolderOpen, CalendarIcon, FileText, Clock, Building, Leaf, Clover } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BackButton from "../../components/kit/BackButton";
@@ -338,14 +338,14 @@ const Request = () => {
       <div className="space-y-6 mt-6">
         {/* Leave Balance Display - Only show for paid leave */}
         {form.isPaidLeave && leaveBalance && (
-          <div className="p-4 border border-blue-200 rounded-xl bg-blue-50">
+          <div className="p-4 border border-amber-200 rounded-xl bg-amber-50 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
               <div className="flex items-center">
-                <Clock className="h-4 w-4 text-blue-600 mr-2" />
+                <Leaf className="h-4 w-4 text-amber-600 mr-2" />
                 <span className="text-sm font-semibold text-gray-700">
                   Current Leave Balance:
                 </span>
-                <span className="ml-2 font-bold text-blue-700">
+                <span className="ml-2 font-bold text-amber-700">
                   {leaveBalance.currentBalance}{" "}
                   {leaveBalance.currentBalance <= 1 ? "day" : "days"}
                 </span>
@@ -355,24 +355,24 @@ const Request = () => {
                   <span className="text-sm font-semibold text-gray-700">
                     Balance After Leave:
                   </span>
-                  <span className="ml-2 font-bold text-red-600">
+                  <span className="ml-2 font-bold text-orange-600">
                     {updatedBalance} {updatedBalance <= 1 ? "day" : "days"}
                   </span>
                 </div>
               )}
             </div>
-            <div className="mt-2 text-xs text-blue-600">
+            <div className="mt-2 text-xs text-amber-600">
               Next accrual: {new Date(leaveBalance.nextAccrualDate).toLocaleDateString()}
             </div>
           </div>
         )}
 
         {/* Leave Status Indicator */}
-        <div className="p-3 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100">
+        <div className="p-3 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 shadow-sm">
           <span className="font-semibold text-gray-700">Leave Status: </span>
           <span
             className={`font-bold ml-2 ${
-              form.isPaidLeave ? "text-blue-600" : "text-gray-600"
+              form.isPaidLeave ? "text-amber-600" : "text-gray-600"
             }`}
           >
             {form.isPaidLeave ? "Paid Leave" : "Unpaid Leave"}
@@ -396,7 +396,7 @@ const Request = () => {
               onValueChange={(value) => setForm({ ...form, leaveType: value })}
               required
             >
-              <SelectTrigger className="h-11">
+              <SelectTrigger className="h-11 border-amber-200 focus:border-amber-500">
                 <SelectValue placeholder="Select leave type" />
               </SelectTrigger>
               <SelectContent>
@@ -430,7 +430,7 @@ const Request = () => {
               }}
               required
             >
-              <SelectTrigger className="h-11">
+              <SelectTrigger className="h-11 border-amber-200 focus:border-amber-500">
                 <SelectValue placeholder="Select leave category" />
               </SelectTrigger>
               <SelectContent>
@@ -455,7 +455,7 @@ const Request = () => {
             onValueChange={(value) => setForm({ ...form, formDepartment: value })}
             required
           >
-            <SelectTrigger className="h-11">
+            <SelectTrigger className="h-11 border-amber-200 focus:border-amber-500">
               <SelectValue placeholder="Select department" />
             </SelectTrigger>
             <SelectContent>
@@ -480,7 +480,7 @@ const Request = () => {
               <PopoverTrigger asChild>
                 <Button
                   variant={"outline"}
-                  className="w-full h-11 justify-start text-left font-normal border-gray-200 hover:border-gray-300"
+                  className="w-full h-11 justify-start text-left font-normal border-amber-200 hover:border-amber-300 bg-amber-50"
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {form.selectedDates.length > 0
@@ -500,12 +500,12 @@ const Request = () => {
               </PopoverContent>
             </Popover>
             {form.selectedDates.length > 0 && (
-              <div className="text-sm text-gray-600 p-2 bg-gray-50 rounded-lg">
+              <div className="text-sm text-gray-600 p-2 bg-amber-50 rounded-lg border border-amber-100">
                 <span className="font-medium">Selected dates:</span> {formatSelectedDates()}
                 {leaveBalance &&
                   form.selectedDates.length === leaveBalance.currentBalance &&
                   form.isPaidLeave === true && (
-                    <div className="text-red-600 text-xs mt-1 font-medium">
+                    <div className="text-orange-600 text-xs mt-1 font-medium">
                       You've reached your maximum leave balance. Cannot select more dates.
                     </div>
                   )}
@@ -524,7 +524,7 @@ const Request = () => {
                 name="startDate"
                 type="date"
                 required
-                className="h-11"
+                className="h-11 border-amber-200 focus:border-amber-500"
                 onChange={handleChange}
                 disabled={isSubmitting}
               />
@@ -549,7 +549,7 @@ const Request = () => {
               Why are you requesting for a leave? *
             </Label>
             <Textarea
-              className="min-h-[100px] resize-none border-gray-200 focus:border-blue-500"
+              className="min-h-[100px] resize-none border-amber-200 focus:border-amber-500"
               name="leaveReason"
               placeholder="Please provide the reason for your leave..."
               required
@@ -563,7 +563,7 @@ const Request = () => {
               Tasks to be delegated while out of office *
             </Label>
             <Textarea
-              className="min-h-[100px] resize-none border-gray-200 focus:border-blue-500"
+              className="min-h-[100px] resize-none border-amber-200 focus:border-amber-500"
               name="delegatedTasks"
               placeholder="List tasks that need to be handled by others during your absence..."
               onChange={handleChange}
@@ -578,7 +578,7 @@ const Request = () => {
             <Paperclip className="h-4 w-4 mr-2" />
             Attach File (Optional)
           </Label>
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-400 transition-colors duration-200">
+          <div className="border-2 border-dashed border-amber-300 rounded-lg p-4 text-center hover:border-amber-400 transition-colors duration-200 bg-amber-50">
             <Input
               id="attachment"
               name="attachment"
@@ -588,7 +588,7 @@ const Request = () => {
               disabled={isSubmitting}
             />
             <label htmlFor="attachment" className="cursor-pointer">
-              <Paperclip className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+              <Paperclip className="mx-auto h-8 w-8 text-amber-400 mb-2" />
               <p className="text-sm text-gray-600 mb-1">
                 Click to upload or drag and drop
               </p>
@@ -612,7 +612,7 @@ const Request = () => {
         <Button 
           type="submit" 
           disabled={isSubmitting}
-          className="w-full h-12 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
+          className="w-full h-12 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
         >
           {isSubmitting ? (
             <span className="flex items-center justify-center">
@@ -647,20 +647,31 @@ const Request = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 py-8 px-4 sm:px-6 lg:px-8">
           <BackButton />
       <div className="max-w-4xl mx-auto">
         {/* Main Card */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-xl border border-amber-200 overflow-hidden">
           {/* Header Section */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-8 text-center">
-            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="bg-gradient-to-r from-amber-600 to-orange-600 px-6 py-8 text-center relative overflow-hidden">
+            {/* Thanksgiving decorative elements */}
+            <div className="absolute top-2 left-4 opacity-20">
+              <Leaf className="h-8 w-8 text-amber-300" />
+            </div>
+            <div className="absolute bottom-2 right-4 opacity-20">
+              <Clover className="h-8 w-8 text-amber-300" />
+            </div>
+            <div className="absolute top-4 right-8 opacity-20">
+              <Leaf className="h-6 w-6 text-amber-300 transform rotate-45" />
+            </div>
+            
+            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 relative z-10">
               <FileText className="h-8 w-8 text-white" />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2 relative z-10">
               HR Support Request Form
             </h1>
-            <p className="text-blue-100 text-sm sm:text-base">
+            <p className="text-amber-100 text-sm sm:text-base relative z-10">
               Submit your HR-related requests and leave applications
             </p>
           </div>
@@ -683,9 +694,9 @@ const Request = () => {
                       required
                       value={form.name}
                       readOnly
-                      className="bg-gray-50 border-gray-200 text-gray-600 pl-10 h-11"
+                      className="bg-amber-50 border-amber-200 text-gray-600 pl-10 h-11"
                     />
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-amber-400" />
                   </div>
                 </div>
 
@@ -702,9 +713,9 @@ const Request = () => {
                       required
                       value={form.email}
                       readOnly
-                      className="bg-gray-50 border-gray-200 text-gray-600 pl-10 h-11"
+                      className="bg-amber-50 border-amber-200 text-gray-600 pl-10 h-11"
                     />
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-amber-400" />
                   </div>
                 </div>
               </div>
@@ -716,7 +727,7 @@ const Request = () => {
                   Request Category *
                 </Label>
                 <Select onValueChange={handleCategoryChange} required>
-                  <SelectTrigger className="h-11">
+                  <SelectTrigger className="h-11 border-amber-200 focus:border-amber-500">
                     <SelectValue placeholder="Select request category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -745,7 +756,7 @@ const Request = () => {
                         placeholder="Purpose for requesting Certificate of Employment"
                         type="text"
                         required
-                        className="h-11"
+                        className="h-11 border-amber-200 focus:border-amber-500"
                         onChange={handleChange}
                         disabled={isSubmitting}
                       />
@@ -758,7 +769,7 @@ const Request = () => {
                       Description of the request *
                     </Label>
                     <Textarea
-                      className="min-h-[120px] resize-none border-gray-200 focus:border-blue-500"
+                      className="min-h-[120px] resize-none border-amber-200 focus:border-amber-500"
                       name="description"
                       placeholder="Please describe your request in detail..."
                       required
@@ -773,7 +784,7 @@ const Request = () => {
                       <Paperclip className="h-4 w-4 mr-2" />
                       Attach File (Optional)
                     </Label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-400 transition-colors duration-200">
+                    <div className="border-2 border-dashed border-amber-300 rounded-lg p-4 text-center hover:border-amber-400 transition-colors duration-200 bg-amber-50">
                       <Input
                         id="attachment"
                         name="attachment"
@@ -783,7 +794,7 @@ const Request = () => {
                         disabled={isSubmitting}
                       />
                       <label htmlFor="attachment" className="cursor-pointer">
-                        <Paperclip className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                        <Paperclip className="mx-auto h-8 w-8 text-amber-400 mb-2" />
                         <p className="text-sm text-gray-600 mb-1">
                           Click to upload or drag and drop
                         </p>
@@ -807,7 +818,7 @@ const Request = () => {
                   <Button 
                     type="submit" 
                     disabled={isSubmitting}
-                    className="w-full h-12 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
+                    className="w-full h-12 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
                   >
                     {isSubmitting ? (
                       <span className="flex items-center justify-center">
@@ -850,7 +861,7 @@ const Request = () => {
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-600">
             Need immediate assistance? Contact HR at{" "}
-            <a href="tel:+1234567890" className="text-blue-600 hover:text-blue-700 font-medium">
+            <a href="tel:+1234567890" className="text-amber-600 hover:text-amber-700 font-medium">
               (123) 456-7890
             </a>
           </p>
@@ -859,10 +870,10 @@ const Request = () => {
 
       {/* Leave Type Selection Dialog */}
       <Dialog open={showLeaveTypeDialog} onOpenChange={setShowLeaveTypeDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-amber-50 border-amber-200">
           <DialogHeader>
-            <DialogTitle className="text-center text-xl">Select Leave Type</DialogTitle>
-            <DialogDescription className="text-center">
+            <DialogTitle className="text-center text-xl text-amber-800">Select Leave Type</DialogTitle>
+            <DialogDescription className="text-center text-amber-600">
               Choose between paid or unpaid leave
             </DialogDescription>
           </DialogHeader>
@@ -870,7 +881,7 @@ const Request = () => {
             <div className="flex flex-col gap-3">
               <Button
                 onClick={() => handleLeaveTypeSelect("paid")}
-                className="py-6 text-lg bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-xl shadow-lg"
+                className="py-6 text-lg bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-semibold rounded-xl shadow-lg"
                 disabled={!isRegularEmployee}
               >
                 <div className="text-center">
@@ -879,7 +890,7 @@ const Request = () => {
                     Uses Leave Credits
                   </div>
                   {!isRegularEmployee && (
-                    <div className="text-xs text-yellow-200 mt-1">
+                    <div className="text-xs text-amber-200 mt-1">
                       Available for regular employees only
                     </div>
                   )}
@@ -887,7 +898,7 @@ const Request = () => {
               </Button>
               <Button
                 onClick={() => handleLeaveTypeSelect("unpaid")}
-                className="py-6 text-lg bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-semibold rounded-xl shadow-lg"
+                className="py-6 text-lg bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white font-semibold rounded-xl shadow-lg"
               >
                 <div className="text-center">
                   <div className="font-bold">Unpaid Leave</div>

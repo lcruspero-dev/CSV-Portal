@@ -27,6 +27,7 @@ import {
   ClipboardCheck,
   Eye,
   MessageSquare,
+  Leaf
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
@@ -173,9 +174,9 @@ const NteSummaryTable: React.FC = () => {
   } => {
     const statusMap = {
       PER: {
-        color: "text-purple-800",
-        bgColor: "bg-purple-100",
-        hoverColor: "hover:bg-purple-200",
+        color: "text-amber-800",
+        bgColor: "bg-amber-100",
+        hoverColor: "hover:bg-amber-200",
         text:
           item?.nte.employeeSignatureDate === null
             ? "Pending Receipt"
@@ -183,9 +184,9 @@ const NteSummaryTable: React.FC = () => {
         icon: <ClipboardCheck className="h-4 w-4" />,
       },
       PNOD: {
-        color: "text-blue-800",
-        bgColor: "bg-blue-100",
-        hoverColor: "hover:bg-blue-200",
+        color: "text-orange-800",
+        bgColor: "bg-orange-100",
+        hoverColor: "hover:bg-orange-200",
         text: "Decision Pending",
         icon: <Eye className="h-4 w-4" />,
       },
@@ -292,10 +293,25 @@ const NteSummaryTable: React.FC = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
-          <TabsList className="grid grid-cols-3 w-full max-w-md mb-4">
-            <TabsTrigger value="all">All Notices</TabsTrigger>
-            <TabsTrigger value="pending">Pending</TabsTrigger>
-            <TabsTrigger value="completed">Completed</TabsTrigger>
+          <TabsList className="grid grid-cols-3 w-full max-w-md mb-4 bg-amber-50 border border-amber-200">
+            <TabsTrigger 
+              value="all"
+              className="data-[state=active]:bg-amber-600 data-[state=active]:text-white"
+            >
+              All Notices
+            </TabsTrigger>
+            <TabsTrigger 
+              value="pending"
+              className="data-[state=active]:bg-amber-600 data-[state=active]:text-white"
+            >
+              Pending
+            </TabsTrigger>
+            <TabsTrigger 
+              value="completed"
+              className="data-[state=active]:bg-amber-600 data-[state=active]:text-white"
+            >
+              Completed
+            </TabsTrigger>
           </TabsList>
         </motion.div>
 
@@ -303,7 +319,7 @@ const NteSummaryTable: React.FC = () => {
           {loading ? (
             <div className="space-y-4">
               {[1, 2].map((i) => (
-                <Card key={i} className="overflow-hidden">
+                <Card key={i} className="overflow-hidden border-amber-200">
                   <CardHeader className="pb-2">
                     <Skeleton className="h-6 w-32" />
                     <Skeleton className="h-4 w-24 mt-1" />
@@ -324,10 +340,11 @@ const NteSummaryTable: React.FC = () => {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
             >
-              <Card className="bg-gray-50 border-dashed">
+              <Card className="bg-amber-50 border-amber-200 border-dashed">
                 <CardContent className="flex flex-col items-center justify-center py-10">
-                  <p className="text-gray-500 mb-2">No notices found</p>
-                  <p className="text-gray-400 text-sm">
+                  <Leaf className="h-12 w-12 text-amber-400 mb-4 opacity-50" />
+                  <p className="text-amber-700 mb-2">No notices found</p>
+                  <p className="text-amber-600 text-sm">
                     Any notices issued to you will appear here
                   </p>
                 </CardContent>
@@ -357,15 +374,15 @@ const NteSummaryTable: React.FC = () => {
                       animate="visible"
                       transition={{ delay: index * 0.1 }}
                     >
-                      <Card className="overflow-hidden transition-all hover:shadow-md">
+                      <Card className="overflow-hidden transition-all hover:shadow-md border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50">
                         <CardHeader className="pb-2 flex flex-row items-start justify-between">
                           <div>
                             <div className="flex items-center space-x-2">
-                              <CardTitle className="text-lg">
+                              <CardTitle className="text-lg text-amber-900">
                                 {item.nte.name}
                               </CardTitle>
                               <Badge
-                                className={`${statusInfo.bgColor} ${statusInfo.color} ${statusInfo.hoverColor} transition-colors duration-200`}
+                                className={`${statusInfo.bgColor} ${statusInfo.color} ${statusInfo.hoverColor} transition-colors duration-200 border-amber-200`}
                               >
                                 <span className="flex items-center">
                                   {statusInfo.icon}
@@ -375,7 +392,7 @@ const NteSummaryTable: React.FC = () => {
                                 </span>
                               </Badge>
                             </div>
-                            <CardDescription>
+                            <CardDescription className="text-amber-700">
                               {item.nte.position} • Issue Date:{" "}
                               {formatDate(item.nte.dateIssued)}
                             </CardDescription>
@@ -391,7 +408,7 @@ const NteSummaryTable: React.FC = () => {
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    className="flex items-center gap-1 scale-95"
+                                    className="flex items-center gap-1 scale-95 border-amber-300 text-amber-700 hover:bg-amber-100"
                                     onClick={() => handleView(item, 1)}
                                   >
                                     <Eye className="h-4 w-4" />
@@ -399,7 +416,7 @@ const NteSummaryTable: React.FC = () => {
                                   </Button>
                                 </motion.div>
                               </TooltipTrigger>
-                              <TooltipContent>
+                              <TooltipContent className="bg-amber-800 text-white">
                                 <p>View full details of this notice</p>
                               </TooltipContent>
                             </Tooltip>
@@ -413,21 +430,21 @@ const NteSummaryTable: React.FC = () => {
                               className="space-y-2"
                               whileHover={{ scale: 1.01 }}
                             >
-                              <h3 className="font-semibold text-gray-800 flex items-center">
-                                <span className="h-6 w-1 bg-blue-500 rounded mr-2"></span>
+                              <h3 className="font-semibold text-amber-800 flex items-center">
+                                <span className="h-6 w-1 bg-amber-500 rounded mr-2"></span>
                                 Notice to Explain
                               </h3>
                               <div className="text-sm">
-                                <p className="font-medium">
+                                <p className="font-medium text-amber-900">
                                   {item.nte.offenseType}
                                 </p>
-                                <p className="text-gray-600 mt-1">
+                                <p className="text-amber-700 mt-1">
                                   {offenseDesc.text}
                                 </p>
                                 {offenseDesc.text !== "-" && (
                                   <motion.button
                                     onClick={() => handleView(item, 1)}
-                                    className="text-blue-600 hover:text-blue-800 mt-1 text-xs font-medium"
+                                    className="text-amber-600 hover:text-amber-800 mt-1 text-xs font-medium"
                                     whileHover={{ scale: 1.05 }}
                                   >
                                     Read more
@@ -441,27 +458,27 @@ const NteSummaryTable: React.FC = () => {
                               className="space-y-2"
                               whileHover={{ scale: 1.01 }}
                             >
-                              <h3 className="font-semibold text-gray-800 flex items-center">
-                                <span className="h-6 w-1 bg-green-500 rounded mr-2"></span>
+                              <h3 className="font-semibold text-amber-800 flex items-center">
+                                <span className="h-6 w-1 bg-orange-500 rounded mr-2"></span>
                                 Employee Feedback
                               </h3>
                               <div className="text-sm">
                                 {item.employeeFeedback ? (
                                   <>
-                                    <p className="text-xs text-gray-500">
+                                    <p className="text-xs text-amber-600">
                                       Responded on{" "}
                                       {formatDate(
                                         item.employeeFeedback.responseDate
                                       )}
                                     </p>
-                                    <p className="text-gray-600 mt-1">
+                                    <p className="text-amber-700 mt-1">
                                       {feedbackDetail.text}
                                     </p>
                                     {feedbackDetail.text !==
                                       "No feedback submitted yet" && (
                                       <motion.button
                                         onClick={() => handleView(item, 2)}
-                                        className="text-blue-600 hover:text-blue-800 mt-1 text-xs font-medium"
+                                        className="text-amber-600 hover:text-amber-800 mt-1 text-xs font-medium"
                                         whileHover={{ scale: 1.05 }}
                                       >
                                         Read more
@@ -469,7 +486,7 @@ const NteSummaryTable: React.FC = () => {
                                     )}
                                   </>
                                 ) : (
-                                  <p className="text-gray-400 italic">
+                                  <p className="text-amber-500 italic">
                                     No feedback submitted yet
                                   </p>
                                 )}
@@ -481,27 +498,27 @@ const NteSummaryTable: React.FC = () => {
                               className="space-y-2"
                               whileHover={{ scale: 1.01 }}
                             >
-                              <h3 className="font-semibold text-gray-800 flex items-center">
-                                <span className="h-6 w-1 bg-purple-500 rounded mr-2"></span>
+                              <h3 className="font-semibold text-amber-800 flex items-center">
+                                <span className="h-6 w-1 bg-amber-400 rounded mr-2"></span>
                                 Notice of Decision
                               </h3>
                               <div className="text-sm">
                                 {item.noticeOfDecision ? (
                                   <>
-                                    <p className="text-xs text-gray-500">
+                                    <p className="text-xs text-amber-600">
                                       Decision date:{" "}
                                       {formatDate(
                                         item.noticeOfDecision.nteIssuanceDate
                                       )}
                                     </p>
-                                    <p className="text-gray-600 mt-1">
+                                    <p className="text-amber-700 mt-1">
                                       {decisionText.text}
                                     </p>
                                     {decisionText.text !==
                                       "No decision yet" && (
                                       <motion.button
                                         onClick={() => handleView(item, 3)}
-                                        className="text-blue-600 hover:text-blue-800 mt-1 text-xs font-medium"
+                                        className="text-amber-600 hover:text-amber-800 mt-1 text-xs font-medium"
                                         whileHover={{ scale: 1.05 }}
                                       >
                                         Read more
@@ -509,7 +526,7 @@ const NteSummaryTable: React.FC = () => {
                                     )}
                                   </>
                                 ) : (
-                                  <p className="text-gray-400 italic">
+                                  <p className="text-amber-500 italic">
                                     Decision pending
                                   </p>
                                 )}
@@ -518,8 +535,8 @@ const NteSummaryTable: React.FC = () => {
                           </div>
 
                           {/* Action Buttons */}
-                          <div className="mt-4 pt-3 border-t border-gray-100 flex justify-end">
-                            <p className="text-sm text-gray-500 flex-1 mt-1">
+                          <div className="mt-4 pt-3 border-t border-amber-200 flex justify-end">
+                            <p className="text-sm text-amber-700 flex-1 mt-1">
                               {getStatusDescription(item.status, item)}
                             </p>
 
@@ -537,14 +554,13 @@ const NteSummaryTable: React.FC = () => {
                                         onClick={() =>
                                           handleConfirmReceipt(item._id, item)
                                         }
-                                        className="bg-blue-600 hover:bg-blue-700 text-white scale-95"
+                                        className="bg-amber-600 hover:bg-amber-700 text-white scale-95 border-amber-700"
                                       >
                                         <ClipboardCheck className="h-4 w-4 mr-1" />
                                         Confirm Receipt
                                       </Button>
                                     </motion.div>
                                   ) : (
-                                    // Submit Response Button (simplified without arrow)
                                     <motion.div
                                       variants={buttonVariants}
                                       whileHover="hover"
@@ -554,7 +570,7 @@ const NteSummaryTable: React.FC = () => {
                                         size="sm"
                                         variant="ghost"
                                         onClick={() => handleRespond(item)}
-                                        className="bg-green-600 hover:bg-green-700 text-white scale-95"
+                                        className="bg-orange-600 hover:bg-orange-700 text-white scale-95 border-orange-700"
                                       >
                                         <MessageSquare className="h-4 w-4 mr-1" />
                                         Submit Response
@@ -574,7 +590,7 @@ const NteSummaryTable: React.FC = () => {
                                     onClick={() =>
                                       handleAcknowledge(item._id, item)
                                     }
-                                    className="bg-amber-600 hover:bg-amber-700"
+                                    className="bg-amber-600 hover:bg-amber-700 text-white border-amber-700"
                                   >
                                     <CheckSquare className="h-4 w-4 mr-1" />
                                     Sign & Acknowledge

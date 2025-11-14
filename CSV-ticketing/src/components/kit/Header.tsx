@@ -1,5 +1,5 @@
 import { UserProfileAPI } from "@/API/endpoint";
-import logo from "@/assets/logo.webp";
+import logo from "@/assets/csvlogo.png";
 import NotificationBell from "@/components/kit/NotificationBell";
 import { useViewMode } from "@/components/kit/ViewModeContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -21,26 +21,27 @@ import {
   Receipt,
   Leaf,
   Bird,
+  Clock,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Background from "../../assets/bg.jpg";
 
-/* 🍂 Floating autumn leaves with warm fall colors */
+/* 🍂 Floating autumn leaves with warm fall colors - Improved positioning */
 const FallingLeaves = () => {
   const leafColors = [
-    "text-orange-400/70",
-    "text-yellow-400/70",
-    "text-red-500/70",
-    "text-amber-500/70",
+    "text-orange-400/60",
+    "text-yellow-400/60",
+    "text-red-500/60",
+    "text-amber-500/60",
   ];
 
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-      {[...Array(35)].map((_, i) => {
-        const size = Math.random() * 18 + 12;
-        const duration = Math.random() * 15 + 15;
-        const delay = Math.random() * 10;
+      {[...Array(25)].map((_, i) => {
+        const size = Math.random() * 16 + 10;
+        const duration = Math.random() * 20 + 20;
+        const delay = Math.random() * 15;
         const left = Math.random() * 100;
         const rotation = Math.random() * 360;
         const color = leafColors[Math.floor(Math.random() * leafColors.length)];
@@ -50,40 +51,65 @@ const FallingLeaves = () => {
             key={i}
             className="absolute thanksgiving-leaf"
             style={{
-              top: `${Math.random() * -20}vh`,
+              top: `${Math.random() * -30}vh`,
               left: `${left}vw`,
               width: `${size}px`,
               height: `${size}px`,
-              animation: `falling-leaf ${duration}s linear ${delay}s infinite`,
+              animation: `falling-leaf ${duration}s ease-in-out ${delay}s infinite`,
               transform: `rotate(${rotation}deg)`,
-              opacity: 0.9,
+              opacity: 0.8,
             }}
           >
-            <Leaf className={`w-full h-full ${color}`} />
+            <Leaf 
+              className={`w-full h-full ${color}`} 
+              style={{
+                animation: `sway-leaf ${duration * 0.8}s ease-in-out ${delay}s infinite`
+              }}
+            />
           </div>
         );
       })}
       <style>{`
         @keyframes falling-leaf {
-          0% { transform: translateY(0) rotate(0deg); }
-          25% { transform: translateY(25vh) rotate(45deg); }
-          50% { transform: translateY(50vh) rotate(90deg); }
-          75% { transform: translateY(75vh) rotate(135deg); }
-          100% { transform: translateY(100vh) rotate(180deg); opacity: 0; }
+          0% { 
+            transform: translateY(0) translateX(0) rotate(0deg); 
+            opacity: 0.8;
+          }
+          25% { 
+            transform: translateY(25vh) translateX(${Math.random() * 20 - 10}px) rotate(90deg); 
+          }
+          50% { 
+            transform: translateY(50vh) translateX(${Math.random() * 30 - 15}px) rotate(180deg); 
+          }
+          75% { 
+            transform: translateY(75vh) translateX(${Math.random() * 20 - 10}px) rotate(270deg); 
+          }
+          100% { 
+            transform: translateY(100vh) translateX(0) rotate(360deg); 
+            opacity: 0; 
+          }
+        }
+        
+        @keyframes sway-leaf {
+          0%, 100% { transform: translateX(0) rotate(0deg); }
+          25% { transform: translateX(-5px) rotate(-5deg); }
+          50% { transform: translateX(5px) rotate(5deg); }
+          75% { transform: translateX(-3px) rotate(-3deg); }
         }
       `}</style>
     </div>
   );
 };
 
-/* 🦃 Gentle bird/turkey flight animation */
+/* 🦃 Gentle bird/turkey flight animation - Improved positioning */
 const TurkeyFlyAnimation = () => {
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {[...Array(6)].map((_, i) => {
-        const delay = Math.random() * 8;
-        const duration = Math.random() * 15 + 10;
-        const top = Math.random() * 80;
+    <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+      {[...Array(4)].map((_, i) => {
+        const delay = Math.random() * 12;
+        const duration = Math.random() * 25 + 20;
+        const top = Math.random() * 40 + 10; // Keep birds in middle section
+        const size = Math.random() * 8 + 16;
 
         return (
           <div
@@ -91,21 +117,84 @@ const TurkeyFlyAnimation = () => {
             className="absolute turkey"
             style={{
               top: `${top}%`,
-              left: "-10%",
+              left: '-5%',
               animation: `turkey-fly ${duration}s ease-in-out ${delay}s infinite`,
+              zIndex: 0,
             }}
           >
-            <Bird className="w-6 h-6 text-amber-300/40 drop-shadow-[0_0_6px_rgba(255,200,0,0.3)]" />
+            <Bird 
+              className="text-amber-300/50 drop-shadow-[0_0_8px_rgba(255,200,0,0.4)]" 
+              style={{ width: `${size}px`, height: `${size}px` }}
+            />
           </div>
         );
       })}
       <style>{`
         @keyframes turkey-fly {
-          0% { transform: translateX(0) translateY(0) rotate(0deg); }
-          50% { transform: translateX(50vw) translateY(-10px) rotate(5deg); }
-          100% { transform: translateX(110vw) translateY(0) rotate(0deg); }
+          0% { 
+            transform: translateX(0) translateY(0) rotate(0deg); 
+            opacity: 0.8;
+          }
+          25% { 
+            transform: translateX(25vw) translateY(-15px) rotate(8deg); 
+          }
+          50% { 
+            transform: translateX(50vw) translateY(10px) rotate(-5deg); 
+          }
+          75% { 
+            transform: translateX(75vw) translateY(-8px) rotate(3deg); 
+          }
+          100% { 
+            transform: translateX(110vw) translateY(0) rotate(0deg); 
+            opacity: 0.8;
+          }
         }
       `}</style>
+    </div>
+  );
+};
+
+/* 🕒 Real-time Clock Component */
+const RealTimeClock = () => {
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', {
+      hour12: true,
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  };
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  return (
+    <div className="flex flex-col items-end bg-amber-900/40 backdrop-blur-sm rounded-lg px-3 py-2 border border-amber-500/30 shadow-lg">
+      <div className="flex items-center gap-2">
+        <Clock className="h-3 w-3 text-yellow-300 animate-pulse" />
+        <span className="text-xs text-yellow-200 font-mono font-bold">
+          {formatTime(currentTime)}
+        </span>
+      </div>
+      <span className="text-[10px] text-amber-200 mt-1">
+        {formatDate(currentTime)}
+      </span>
     </div>
   );
 };
@@ -196,6 +285,11 @@ const Header: React.FC = () => {
           <div className="flex items-center justify-end w-full sm:w-auto">
             {isAuthenticated && user ? (
               <div className="flex items-center gap-3 sm:gap-4 lg:gap-6">
+                {/* Real-time Clock */}
+                <div className="hidden sm:block">
+                  <RealTimeClock />
+                </div>
+
                 {/* Text */}
                 <div className="flex flex-col items-end text-right">
                   <span className="text-xs sm:text-sm text-yellow-200 font-medium drop-shadow-sm">
@@ -204,6 +298,11 @@ const Header: React.FC = () => {
                   <span className="text-sm sm:text-base lg:text-lg font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
                     {user.name}
                   </span>
+                </div>
+
+                {/* Mobile Clock (shown only on small screens) */}
+                <div className="sm:hidden">
+                  <RealTimeClock />
                 </div>
 
                 {/* Notifications + Avatar */}
@@ -238,6 +337,17 @@ const Header: React.FC = () => {
                           <p className="text-xs text-yellow-200 truncate">
                             {user.email}
                           </p>
+                          {/* Clock in dropdown */}
+                          <div className="flex items-center gap-1 mt-1">
+                            <Clock className="h-3 w-3 text-yellow-400" />
+                            <span className="text-[10px] text-amber-300 font-mono">
+                              {new Date().toLocaleTimeString('en-US', {
+                                hour12: true,
+                                hour: 'numeric',
+                                minute: '2-digit'
+                              })}
+                            </span>
+                          </div>
                         </div>
                       </div>
 
@@ -304,18 +414,22 @@ const Header: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <Button
-                className="text-xs sm:text-sm px-4 py-2 h-9 sm:h-10 bg-gradient-to-r from-amber-600 to-orange-700 text-white hover:from-amber-700 hover:to-orange-800 border border-amber-500 font-medium shadow-lg hover:shadow-amber-500/25 transition-all duration-300"
-                asChild
-              >
-                <a
-                  href="https://www.csvnow.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
+              <div className="flex items-center gap-3">
+                {/* Clock for non-authenticated users */}
+                <RealTimeClock />
+                <Button
+                  className="text-xs sm:text-sm px-4 py-2 h-9 sm:h-10 bg-gradient-to-r from-amber-600 to-orange-700 text-white hover:from-amber-700 hover:to-orange-800 border border-amber-500 font-medium shadow-lg hover:shadow-amber-500/25 transition-all duration-300"
+                  asChild
                 >
-                  🦃 Visit Harvest Home
-                </a>
-              </Button>
+                  <a
+                    href="https://www.csvnow.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    🦃 Visit Harvest Home
+                  </a>
+                </Button>
+              </div>
             )}
           </div>
         </div>
