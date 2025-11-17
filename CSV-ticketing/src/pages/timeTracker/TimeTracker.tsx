@@ -163,27 +163,33 @@ export const AttendanceTracker: React.FC = () => {
   };
 
   // Time formatting functions
-  const formatTimeTo12Hour = (timeString: string): string => {
-    if (!timeString) return '';
-    
-    try {
-      // Handle both "HH:mm:ss" and "HH:mm" formats
-      const [hours, minutes] = timeString.split(':');
-      const hourNum = parseInt(hours, 10);
-      const minuteNum = parseInt(minutes, 10);
-      
-      if (isNaN(hourNum) || isNaN(minuteNum)) return timeString;
-      
-      const period = hourNum >= 12 ? 'PM' : 'AM';
-      const twelveHour = hourNum % 12 || 12;
-      
-      return `${twelveHour}:${minuteNum.toString().padStart(2, '0')} ${period}`;
-    } catch (error) {
-      console.error('Error formatting time:', error);
+const formatTimeTo12Hour = (timeString: string): string => {
+  if (!timeString) return '';
+  
+  try {
+    // If it already has AM/PM, return as is
+    const upperTime = timeString.toUpperCase();
+    if (upperTime.includes('AM') || upperTime.includes('PM')) {
       return timeString;
     }
-  };
-
+    
+    // Extract hours and minutes
+    const timeParts = timeString.split(':');
+    let hourNum = parseInt(timeParts[0], 10);
+    const minuteNum = timeParts[1] ? parseInt(timeParts[1], 10) : 0;
+    
+    if (isNaN(hourNum) || isNaN(minuteNum)) return timeString;
+    
+    // Determine AM/PM and convert to 12-hour format
+    const period = hourNum >= 12 ? 'PM' : 'AM';
+    hourNum = hourNum % 12 || 12; // Convert 0, 13-23 to 12, 1-11
+    
+    return `${hourNum}:${minuteNum.toString().padStart(2, '0')} ${period}`;
+  } catch (error) {
+    console.error('Error formatting time:', error, 'Input:', timeString);
+    return timeString;
+  }
+};
   const formatTime = (timeString: string): string => {
     return formatTimeTo12Hour(timeString);
   };
