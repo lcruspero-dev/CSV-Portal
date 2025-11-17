@@ -13,10 +13,10 @@ const BackButton: React.FC = () => {
   return (
     <Button
       onClick={handleBack}
-      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex items-center  justify-center gap-1"
+      className="bg-gradient-to-r from-[#8B4513] to-[#D2691E] hover:from-[#A0522D] hover:to-[#CD853F] text-white font-bold py-2 px-4 rounded flex items-center justify-center gap-1 transition-all duration-300 transform hover:scale-105"
     >
       <IonArrowBackCircleSharp className="w-5 h-5" />
-      Back
+      Back 🦃
     </Button>
   );
 };

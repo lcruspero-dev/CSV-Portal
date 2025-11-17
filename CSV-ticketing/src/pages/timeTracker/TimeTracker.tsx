@@ -38,6 +38,8 @@ import {
   LeafyGreen
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import Background from "../../assets/bg.jpg"
+
 
 interface AttendanceEntry {
   id: string;
@@ -190,6 +192,7 @@ const formatTimeTo12Hour = (timeString: string): string => {
     return timeString;
   }
 };
+
   const formatTime = (timeString: string): string => {
     return formatTimeTo12Hour(timeString);
   };
@@ -249,7 +252,7 @@ const formatTimeTo12Hour = (timeString: string): string => {
   const showAlert = (type: "break1" | "break2" | "lunch" | "bioBreak") => {
     const messages = {
       break1: "🦃 Break 1 will end in 1 minute! Time to return with gratitude!",
-      break2: "🍂 Break 2 will end in 1 minute! The Clover awaits your return!",
+      break2: "🍂 Break 2 will end in 1 minute! The awaits your return!",
       lunch: "🥧 Lunch break will end in 1 minute! Finish your feast!",
       bioBreak: "🚽 Bio Break will end in 1 minute! Don't linger too long!"
     };
@@ -658,7 +661,7 @@ const formatTimeTo12Hour = (timeString: string): string => {
       setElapsedTime(0);
       showThanksgivingToast(
         "🦃 Welcome with Gratitude!",
-        "You've joined the Clover workplace!"
+        "You've joined the workplace!"
       );
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
@@ -671,7 +674,7 @@ const formatTimeTo12Hour = (timeString: string): string => {
       }
       // Handle local storage error
       else if (error.message === "User data not found in local storage") {
-        errorMessage = "User data not found in the Clover storage";
+        errorMessage = "User data not found in the storage";
       }
       // Handle network errors or other API errors
       else if (error.message) {
@@ -740,14 +743,14 @@ const formatTimeTo12Hour = (timeString: string): string => {
       setAlertShown({ break1: false, break2: false, lunch: false, bioBreak: false });
 
       showThanksgivingToast(
-        "🍁 Clover Complete!",
+        "🍁 Complete!",
         "You've completed your work with gratitude!"
       );
     } catch (error) {
       console.error("Error logging timeout:", error);
       showThanksgivingToast(
         "🍂 Error",
-        "Failed to complete Clover! Please try again. If the issue persists, contact the Clover support.",
+        "Failed to complete ! Please try again. If the issue persists, contact the support.",
         "destructive"
       );
     } finally {
@@ -773,13 +776,13 @@ const formatTimeTo12Hour = (timeString: string): string => {
       setAlertShown(prev => ({ ...prev, break1: false })); // Reset break1 alert tracking
       showThanksgivingToast(
         "🦃 Break Started!",
-        "Time for a grateful break! 15 minutes of Clover relaxation."
+        "Time for a grateful break! 15 minutes of relaxation."
       );
     } catch (error) {
       console.error("Error starting break:", error);
       showThanksgivingToast(
         "🍂 Error",
-        "Failed to start break. Please try again. If the issue persists, contact the Clover support.",
+        "Failed to start break. Please try again. If the issue persists, contact the support.",
         "destructive"
       );
     } finally {
@@ -826,7 +829,7 @@ const formatTimeTo12Hour = (timeString: string): string => {
       setAlertShown(prev => ({ ...prev, break1: false })); // Reset break1 alert tracking
       showThanksgivingToast(
         "🍂 Break Ended!",
-        "Back to Clover work!"
+        "Back to work!"
       );
     } catch (error) {
       console.error("Error ending break:", error);
@@ -858,13 +861,13 @@ const formatTimeTo12Hour = (timeString: string): string => {
       setAlertShown(prev => ({ ...prev, lunch: false })); // Reset lunch alert tracking
       showThanksgivingToast(
         "🥧 Lunch Started!",
-        "Time for a Clover feast! 60 minutes of grateful dining."
+        "Time for a feast! 60 minutes of grateful dining."
       );
     } catch (error) {
       console.error("Error starting lunch:", error);
       showThanksgivingToast(
         "🍂 Error",
-        "Failed to start lunch. Please try again. If the issue persists, contact the Clover support.",
+        "Failed to start lunch. Please try again. If the issue persists, contact the support.",
         "destructive"
       );
     } finally {
@@ -911,7 +914,7 @@ const formatTimeTo12Hour = (timeString: string): string => {
       setAlertShown(prev => ({ ...prev, lunch: false })); // Reset lunch alert tracking
       showThanksgivingToast(
         "🍁 Lunch Ended!",
-        "Back to the Clover workplace!"
+        "Back to the workplace!"
       );
     } catch (error) {
       console.error("Error ending lunch:", error);
@@ -1175,7 +1178,7 @@ const formatTimeTo12Hour = (timeString: string): string => {
       setAlertShown(prev => ({ ...prev, break2: false })); // Reset break2 alert tracking
       showThanksgivingToast(
         "🍂 Break 2 Started!",
-        "Second Clover break! 15 more minutes of grateful relaxation."
+        "Second break! 15 more minutes of grateful relaxation."
       );
     } catch (error) {
       console.error("Error starting break 2:", error);
@@ -1229,7 +1232,7 @@ const formatTimeTo12Hour = (timeString: string): string => {
       setAlertShown(prev => ({ ...prev, break2: false })); // Reset break2 alert tracking
       showThanksgivingToast(
         "🍁 Break 2 Ended!",
-        "Back to Clover work once more!"
+        "Back to work once more!"
       );
     } catch (error) {
       console.error("Error ending break 2:", error);
@@ -1304,13 +1307,18 @@ const formatTimeTo12Hour = (timeString: string): string => {
       <div className="flex justify-center items-start w-full pt-4">
         <div className="bg-gradient-to-br from-amber-50 to-orange-100 rounded-lg p-8 border border-amber-300">
           <ThanksgivingSpinner />
-          <p className="text-amber-700 mt-4 text-center">Loading Clover time tracker...</p>
+          <p className="text-amber-700 mt-4 text-center">Loading time tracker...</p>
         </div>
       </div>
     );
   }
 
   return (
+    <section className="min-h-screen py-4 sm:py-6 lg:py-8 px-3 sm:px-4 lg:px-6 xl:px-8 relative overflow-hidden bg-gradient-to-br from-amber-50 via-orange-50 to-brown-50" 
+    style={{
+      backgroundImage: `url(${Background})`
+    }}
+    >
     <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6 py-4">
       {/* Thanksgiving Alert Dialog */}
       {alert.show && (
@@ -1321,7 +1329,7 @@ const formatTimeTo12Hour = (timeString: string): string => {
                 <Leaf className="h-8 w-8 text-amber-600 animate-pulse" />
               </div>
               <h3 className="text-xl font-semibold text-amber-800 font-serif">
-                🦃 Clover Alert!
+                🦃 Alert!
               </h3>
             </div>
             <p className="text-lg text-amber-700 mb-6 text-center font-medium">
@@ -1354,7 +1362,7 @@ const formatTimeTo12Hour = (timeString: string): string => {
           </div>
           <CardTitle className="flex items-center justify-center text-lg sm:text-xl lg:text-2xl flex-col sm:flex-row gap-2 text-amber-800 font-serif">
             <Heart className="h-5 w-5 sm:h-6 sm:w-6 text-amber-600" />
-            🦃 Clover Time Tracker 🍂
+             Time Tracker 
           </CardTitle>
         </CardHeader>
 
@@ -1372,7 +1380,7 @@ const formatTimeTo12Hour = (timeString: string): string => {
           </div>
 
           <div className="flex flex-col space-y-4 sm:space-y-6">
-            {/* Timer Display Section */}
+            {/* Timer Display div */}
             <div className="flex flex-col items-center space-y-4 sm:space-y-6">
               {currentEntry.breakStart && !currentEntry.breakEnd ? (
                 <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-amber-600 text-center font-mono bg-white bg-opacity-80 p-4 rounded-lg border border-amber-500">
@@ -1410,13 +1418,13 @@ const formatTimeTo12Hour = (timeString: string): string => {
                   }`}
                 >
                   <p className="text-sm sm:text-base text-green-700 tracking-wide mb-2">
-                    🍁 Clover WORK TIME
+                    🍁 WORK TIME
                   </p>
                   {formatElapsedTime(elapsedTime)}
                 </div>
               )}
 
-              {/* Action Buttons Section */}
+              {/* Action Buttons div */}
               <div className="flex flex-col sm:flex-row justify-center items-center gap-3 w-full max-w-md mx-auto">
                 {!isTimeIn ? (
                   <Button
@@ -1430,7 +1438,7 @@ const formatTimeTo12Hour = (timeString: string): string => {
                     ) : (
                       <Heart className="mr-2 h-4 w-4" />
                     )}
-                    Join Clover Workplace
+                    Join Workplace
                   </Button>
                 ) : (
                   <>
@@ -1475,7 +1483,7 @@ const formatTimeTo12Hour = (timeString: string): string => {
                       <DialogContent className="sm:max-w-md bg-gradient-to-br from-amber-50 to-orange-100 border-2 border-amber-400">
                         <DialogHeader>
                           <DialogTitle className="text-lg text-amber-700 font-serif">
-                            🍁 Complete Your Clover Day
+                            🍁 Complete Your Day
                           </DialogTitle>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
@@ -1504,7 +1512,7 @@ const formatTimeTo12Hour = (timeString: string): string => {
                               className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white border border-amber-400"
                             >
                               {isLoadingTimeOut ? <ThanksgivingSpinner /> : null}
-                              🍁 Complete Clover
+                              🍁 Complete
                             </Button>
                           </div>
                         </div>
@@ -1518,7 +1526,7 @@ const formatTimeTo12Hour = (timeString: string): string => {
               {isTimeIn && (
                 <div className="w-full max-w-2xl mx-auto">
                   <p className="font-semibold text-sm sm:text-base mb-3 text-center text-amber-700 font-serif">
-                    🍂 Current Clover Session
+                    🍂 Current Session
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                     {/* Time In Card */}
@@ -1542,7 +1550,7 @@ const formatTimeTo12Hour = (timeString: string): string => {
                         <div className="flex items-center gap-2">
                           <Clover className="h-4 w-4 text-amber-600" />
                           <span className="text-xs font-medium text-amber-700">
-                            🍂 Clover Shift
+                            🍂  Shift
                           </span>
                         </div>
                         <p className="text-sm font-semibold mt-1 text-amber-900">
@@ -1629,7 +1637,7 @@ const formatTimeTo12Hour = (timeString: string): string => {
                         <div className="flex items-center gap-2">
                           <PieChart className="h-4 w-4 text-red-600" />
                           <span className="text-xs font-medium text-red-700">
-                            🥧 Clover Feast
+                            🥧 Feast
                           </span>
                         </div>
                         <div className="space-y-1 mt-1">
@@ -1733,12 +1741,12 @@ const formatTimeTo12Hour = (timeString: string): string => {
               )}
             </div>
 
-            {/* History Table Section */}
+            {/* History Table div */}
             <Card className="w-full bg-gradient-to-br from-amber-50 to-orange-100 border-2 border-amber-400">
               <CardHeader className="p-4 sm:p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <CardTitle className="text-lg sm:text-xl text-amber-700 font-serif">
-                    🍂 Clover Time Records
+                    🍂  Time Records
                   </CardTitle>
 
                   {/* Month, Year, and Cut-off Filters */}
@@ -1922,7 +1930,7 @@ const formatTimeTo12Hour = (timeString: string): string => {
                                 colSpan={13} // Updated from 12 to 13
                                 className="text-center py-4 text-amber-600"
                               >
-                                🍂 No Clover records found for{" "}
+                                🍂 No records found for{" "}
                                 {
                                   months.find((m) => m.value === selectedMonth)
                                     ?.label
@@ -1937,7 +1945,7 @@ const formatTimeTo12Hour = (timeString: string): string => {
 
                     {/* Records Count */}
                     <div className="mt-4 text-sm text-amber-600">
-                      🦃 Showing {filteredEntries.length} grateful record(s) for{" "}
+                      🦃 Showing {filteredEntries.length} record(s) for{" "}
                       {months.find((m) => m.value === selectedMonth)?.label}{ " "}
                       {selectedYear} ({selectedCutoff} cut-off)
                     </div>
@@ -1949,6 +1957,8 @@ const formatTimeTo12Hour = (timeString: string): string => {
         </CardContent>
       </Card>
     </div>
+    </section>
+
   );
 };
 

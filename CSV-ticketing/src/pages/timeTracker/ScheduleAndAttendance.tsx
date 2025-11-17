@@ -10,7 +10,13 @@ import {
   startOfMonth,
   startOfWeek,
 } from "date-fns";
-import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+  Leaf,
+  Clover,
+} from "lucide-react";
 import React, { useEffect, useState } from "react";
 
 import {
@@ -137,29 +143,30 @@ export type AttendanceEntry = {
 
 type ViewMode = "weekly" | "monthly" | "dateRange";
 
-// Helper to get shift color
+// Thanksgiving-themed shift colors
 const getShiftColor = (shiftType: ShiftType): string => {
-  if (!shiftType || !shiftType.type) return "bg-gray-100 text-gray-500";
+  if (!shiftType || !shiftType.type)
+    return "bg-amber-50 text-amber-800 border-amber-200";
 
   switch (shiftType.type) {
     case "Morning":
-      return "bg-blue-100 text-blue-800";
+      return "bg-orange-100 text-orange-800 border-orange-200";
     case "Mid":
-      return "bg-yellow-100 text-yellow-800";
+      return "bg-amber-100 text-amber-800 border-amber-200";
     case "Night":
-      return "bg-purple-100 text-purple-800";
+      return "bg-purple-100 text-purple-800 border-purple-200";
     case "restday":
-      return "bg-orange-100 text-orange-800";
+      return "bg-red-100 text-red-800 border-red-200";
     case "paidTimeOff":
-      return "bg-pink-100 text-pink-800";
+      return "bg-green-100 text-green-800 border-green-200";
     case "plannedLeave":
-      return "bg-orange-100 text-orange-800";
+      return "bg-yellow-100 text-yellow-800 border-yellow-200";
     case "holiday":
-      return "bg-red-100 text-red-800";
+      return "bg-red-100 text-red-800 border-red-200";
     case "rdot":
-      return "bg-red-100 text-red-800";
+      return "bg-brown-100 text-brown-800 border-brown-200";
     default:
-      return "bg-gray-100 text-gray-500";
+      return "bg-amber-50 text-amber-800 border-amber-200";
   }
 };
 
@@ -176,7 +183,7 @@ const formatTimeToAMPM = (time: string): string => {
   const minute = minuteStr || "00";
 
   const period = hour >= 12 ? "PM" : "AM";
-  const displayHour = hour % 12 || 12; // Convert 0 to 12 for 12 AM
+  const displayHour = hour % 12 || 12;
 
   return `${displayHour}:${minute} ${period}`;
 };
@@ -191,7 +198,6 @@ const displayShiftInfo = (
   let displayTime = "";
   let details = "";
 
-  // Format the shift type name
   switch (shiftType.type) {
     case "Morning":
       displayName = "Morning";
@@ -221,7 +227,6 @@ const displayShiftInfo = (
       displayName = shiftType.type;
   }
 
-  // Only show time for shift types that have times
   if (
     hasShiftTime(shiftType.type) &&
     shiftType.startTime &&
@@ -231,7 +236,6 @@ const displayShiftInfo = (
       shiftType.startTime
     )} - ${formatTimeToAMPM(shiftType.endTime)}`;
 
-    // Build details string with all available times
     const detailsParts = [];
     if (shiftType.startTime)
       detailsParts.push(`Login: ${formatTimeToAMPM(shiftType.startTime)}`);
@@ -287,23 +291,26 @@ const ScheduleAndAttendance: React.FC = () => {
   const [otMinutes, setOtMinutes] = useState<string>("");
   const [showOtInput, setShowOtInput] = useState<boolean>(false);
 
-  // Department Filter Dropdown Component
+  // Thanksgiving-themed Department Filter Dropdown Component
   const DepartmentFilterDropdown = () => {
     return (
-      <Select
-        value={selectedDepartment}
-        onValueChange={setSelectedDepartment}
-      >
-        <SelectTrigger className="w-48">
+      <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+        <SelectTrigger className="w-48 border-amber-300 bg-amber-50 text-amber-900">
           <SelectValue placeholder="Select Team Leader" />
         </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All Employees</SelectItem>
+        <SelectContent className="bg-amber-50 border-amber-200">
+          <SelectItem value="all" className="text-amber-900 hover:bg-amber-100">
+            All Employees
+          </SelectItem>
           {Array.from(new Set(employees.map((emp) => emp.teamLeader)))
             .filter((leader) => leader && leader.trim() !== "")
-            .sort() // Sort alphabetically
+            .sort()
             .map((leader) => (
-              <SelectItem key={leader} value={leader}>
+              <SelectItem
+                key={leader}
+                value={leader}
+                className="text-amber-900 hover:bg-amber-100"
+              >
                 {leader}
               </SelectItem>
             ))}
@@ -333,14 +340,12 @@ const ScheduleAndAttendance: React.FC = () => {
       setLoading(true);
       const response = await ScheduleAndAttendanceAPI.getScheduleEntries();
 
-      // Normalize employee data with avatar URLs
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const formattedEmployees = response.data.map((entry: any) => {
         const schedule = Array.isArray(entry.schedule) ? entry.schedule : [];
         const avatarFilename = avatarMap[entry.employeeId];
         const avatarUrl = avatarFilename
           ? `${import.meta.env.VITE_UPLOADFILES_URL}/avatars/${avatarFilename}`
-          : `https://ui-avatars.com/api/?background=2563EB&color=fff&name=${entry.employeeName}`;
+          : `https://ui-avatars.com/api/?background=EA580C&color=fff&name=${entry.employeeName}`;
 
         return {
           id: entry.employeeId,
@@ -354,12 +359,9 @@ const ScheduleAndAttendance: React.FC = () => {
 
       setEmployees(formattedEmployees);
 
-      // Normalize schedule data
       let flattenedSchedule: ScheduleEntry[] = [];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       response.data.forEach((entry: any) => {
         if (Array.isArray(entry.schedule)) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const employeeSchedules = entry.schedule.map((sched: any) => {
             const shiftType: ShiftType = {
               type: sched.shiftType as ShiftTypeValue,
@@ -400,7 +402,6 @@ const ScheduleAndAttendance: React.FC = () => {
   const fetchAttendance = async () => {
     try {
       const response = await ScheduleAndAttendanceAPI.getAttendanceEntries();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const formattedAttendance = response.data.map((entry: any) => ({
         ...entry,
         date: new Date(entry.date),
@@ -415,7 +416,6 @@ const ScheduleAndAttendance: React.FC = () => {
   useEffect(() => {
     const fetchAllData = async () => {
       try {
-        // First fetch avatars
         const avatarResponse = await UserProfileAPI.getAllUserAvatar();
         const avatarMap = avatarResponse.data.reduce(
           (
@@ -428,10 +428,7 @@ const ScheduleAndAttendance: React.FC = () => {
           {}
         );
 
-        // Then fetch employees with avatar data
         await fetchEmployees(avatarMap);
-
-        // Finally fetch attendance
         await fetchAttendance();
       } catch (err) {
         console.error("Error fetching data:", err);
@@ -449,8 +446,22 @@ const ScheduleAndAttendance: React.FC = () => {
       ? employees
       : employees.filter((emp) => emp.teamLeader === selectedDepartment);
 
-  if (loading) return <p>Loading employees...</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
+  if (loading)
+    return (
+      <div className="flex items-center justify-center min-h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
+          <p className="mt-4 text-amber-700">Loading employees...</p>
+        </div>
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+        {error}
+      </div>
+    );
 
   const getDaysInView = () => {
     if (viewMode === "weekly") {
@@ -462,16 +473,13 @@ const ScheduleAndAttendance: React.FC = () => {
       const end = endOfMonth(currentDate);
       return eachDayOfInterval({ start, end });
     } else if (viewMode === "dateRange") {
-      // For date range view
       if (fromDate && toDate) {
         return eachDayOfInterval({ start: fromDate, end: toDate });
       }
-      // Fallback to current week if dates are invalid
       const start = startOfWeek(new Date());
       const end = endOfWeek(new Date());
       return eachDayOfInterval({ start, end });
     }
-    // Default fallback
     const start = startOfWeek(currentDate);
     const end = endOfWeek(currentDate);
     return eachDayOfInterval({ start, end });
@@ -522,7 +530,6 @@ const ScheduleAndAttendance: React.FC = () => {
       setFromDate(startOfMonth(new Date()));
       setToDate(endOfMonth(new Date()));
     } else {
-      // For date range view, default to current week
       setFromDate(startOfWeek(new Date()));
       setToDate(endOfWeek(new Date()));
     }
@@ -532,7 +539,6 @@ const ScheduleAndAttendance: React.FC = () => {
     if (date) {
       setFromDate(date);
       setShowFromCalendar(false);
-      // If toDate is before the new fromDate, adjust toDate to be the same as fromDate
       if (toDate && date > toDate) {
         setToDate(date);
       }
@@ -543,7 +549,6 @@ const ScheduleAndAttendance: React.FC = () => {
     if (date) {
       setToDate(date);
       setShowToCalendar(false);
-      // If fromDate is after the new toDate, adjust fromDate to be the same as toDate
       if (fromDate && date < fromDate) {
         setFromDate(date);
       }
@@ -590,14 +595,12 @@ const ScheduleAndAttendance: React.FC = () => {
 
   const handleAddShift = async () => {
     if (selectedEmployee && selectedDate) {
-      const updatedSchedule = [...schedule]; // Create a copy of the current schedule
+      const updatedSchedule = [...schedule];
 
-      // Format the date for the API
       const formattedDate = `${selectedDate.getFullYear()}-${String(
         selectedDate.getMonth() + 1
       ).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`;
 
-      // Create the schedule entry matching the backend schema format
       const scheduleData = {
         date: formattedDate,
         shiftType: selectedShiftType,
@@ -608,12 +611,10 @@ const ScheduleAndAttendance: React.FC = () => {
         lunch: selectedLunch || "",
       };
 
-      // Add time properties only for shift types that need them
       if (hasShiftTime(selectedShiftType)) {
         scheduleData.startTime = selectedStartTime;
         scheduleData.endTime = selectedEndTime;
       } else {
-        // For non-time shift types, still include empty strings to match schema
         scheduleData.startTime = "";
         scheduleData.endTime = "";
         scheduleData.break1 = "";
@@ -627,13 +628,11 @@ const ScheduleAndAttendance: React.FC = () => {
           currentDate.getMonth() + 1
         ).padStart(2, "0")}-${String(currentDate.getDate()).padStart(2, "0")}`;
 
-        // Update the date for the current iteration
         const currentScheduleData = {
           ...scheduleData,
           date: currentFormattedDate,
         };
 
-        // Find the existing schedule entry for the employee and date
         const existingEntryIndex = updatedSchedule.findIndex(
           (entry) =>
             entry.employeeId === selectedEmployee.id &&
@@ -641,7 +640,6 @@ const ScheduleAndAttendance: React.FC = () => {
         );
 
         if (existingEntryIndex !== -1) {
-          // If an entry exists, update it with all properties
           updatedSchedule[existingEntryIndex] = {
             ...updatedSchedule[existingEntryIndex],
             shiftType: {
@@ -656,7 +654,6 @@ const ScheduleAndAttendance: React.FC = () => {
             },
           };
         } else {
-          // If no entry exists, create a new one with all properties
           const newEntry: ScheduleEntry = {
             date: currentFormattedDate,
             shiftType: {
@@ -669,7 +666,7 @@ const ScheduleAndAttendance: React.FC = () => {
                 lunch: selectedLunch,
               }),
             },
-            _id: Date.now().toString() + i, // Generate a unique ID (temporary)
+            _id: Date.now().toString() + i,
             employeeId: selectedEmployee.id,
             employeeName: selectedEmployee.name,
             teamLeader: selectedEmployee.teamLeader,
@@ -681,7 +678,6 @@ const ScheduleAndAttendance: React.FC = () => {
         }
 
         try {
-          // Call the API to update the schedule for each repeated day
           await ScheduleAndAttendanceAPI.updateScheduleEntry(
             selectedEmployee.id,
             currentScheduleData
@@ -696,10 +692,9 @@ const ScheduleAndAttendance: React.FC = () => {
         }
       }
 
-      // Update the state once with all the changes
       setSchedule(updatedSchedule);
       setIsAddShiftOpen(false);
-      setRepeatDays(1); // Reset repeatDays to default value
+      setRepeatDays(1);
     }
   };
 
@@ -725,7 +720,6 @@ const ScheduleAndAttendance: React.FC = () => {
           setSelectedEndTime("00:00");
         }
 
-        // Set break times if they exist
         setSelectedBreak1(entry.shiftType.break1 || undefined);
         setSelectedLunch(entry.shiftType.lunch || undefined);
         setSelectedBreak2(entry.shiftType.break2 || undefined);
@@ -754,11 +748,10 @@ const ScheduleAndAttendance: React.FC = () => {
   const handleUpdateAttendance = async () => {
     if (selectedEmployee && selectedDate) {
       try {
-        // Format the date for the API
-        const formattedDate = `${selectedDate.getMonth() + 1
-          }/${selectedDate.getDate()}/${selectedDate.getFullYear()}`;
+        const formattedDate = `${
+          selectedDate.getMonth() + 1
+        }/${selectedDate.getDate()}/${selectedDate.getFullYear()}`;
 
-        // Determine if the status requires time data
         const needsTimeData = [
           "Tardy",
           "Half Day",
@@ -767,7 +760,6 @@ const ScheduleAndAttendance: React.FC = () => {
           "Present",
         ].includes(selectedAttendanceStatus);
 
-        // Get time record data only if needed
         let timeRecordData = null;
         if (needsTimeData) {
           try {
@@ -779,19 +771,15 @@ const ScheduleAndAttendance: React.FC = () => {
             timeRecordData = response.data;
           } catch (err) {
             console.error("Error fetching time record:", err);
-            // Continue without time data if there's an error
           }
         }
 
-        // Create the attendance data object
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const attendanceData: any = {
           employeeId: selectedEmployee.id,
           date: formattedDate,
           status: selectedAttendanceStatus,
         };
 
-        // Only include OT if the status requires it
         if (needsTimeData && showOtInput && (otHours || otMinutes)) {
           const hours = otHours || "0";
           const minutes = otMinutes || "0";
@@ -800,11 +788,9 @@ const ScheduleAndAttendance: React.FC = () => {
             "0"
           )}`;
         } else if (!needsTimeData) {
-          // Explicitly remove OT if the status doesn't need it
-          attendanceData.ot = null; // or "" depending on API expectations
+          attendanceData.ot = null;
         }
 
-        // Add time data only if the status requires it
         if (needsTimeData && timeRecordData) {
           if (timeRecordData.timeIn) {
             attendanceData.logIn = timeRecordData.timeIn;
@@ -819,17 +805,14 @@ const ScheduleAndAttendance: React.FC = () => {
             attendanceData.shift = timeRecordData.shift;
           }
         } else if (!needsTimeData) {
-          // Explicitly remove time-related fields if the status doesn't need them
           attendanceData.logIn = null;
           attendanceData.logOut = null;
           attendanceData.totalHours = null;
           attendanceData.shift = null;
         }
 
-        // Call the API to update the attendance entry (this should overwrite existing fields)
         await ScheduleAndAttendanceAPI.createAttendanceEntry(attendanceData);
 
-        // Update local state (remove time fields if status doesn't need them)
         const updatedEntry = {
           employeeId: selectedEmployee.id,
           date: selectedDate,
@@ -868,16 +851,22 @@ const ScheduleAndAttendance: React.FC = () => {
   };
 
   return (
-    <section>
+    <section className="bg-gradient-to-br from-orange-50 to-amber-50 min-h-screen">
       <BackButton />
 
-      <div className="container mx-auto">
-        <Card className="w-full">
-          <CardHeader>
+      <div className="container mx-auto py-6">
+        <Card className="w-full border-amber-200 shadow-lg bg-white/90 backdrop-blur-sm">
+          <CardHeader className="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-t-lg border-b-4 border-amber-600">
             <div className="mb-3">
-              <CardTitle>Employee Schedule & Attendance</CardTitle>
-              <CardDescription>
-                Manage employee shifts and track attendance
+              <div className="flex items-center gap-2 mb-2">
+                <Clover className="h-6 w-6" />
+                <CardTitle className="text-white">
+                  Employee Schedule & Attendance
+                </CardTitle>
+              </div>
+              <CardDescription className="text-amber-100">
+                🦃 Give thanks for great teamwork! Manage schedules with
+                gratitude 🍂
               </CardDescription>
               <AbsenteeismAnalytics
                 employees={employees}
@@ -886,19 +875,17 @@ const ScheduleAndAttendance: React.FC = () => {
                 viewMode={viewMode}
                 currentDate={currentDate}
                 filteredEmployees={filteredEmployees.map((emp) => emp.id)}
-                fromDate={fromDate} // Pass fromDate
-                toDate={toDate} // Pass toDate
+                fromDate={fromDate}
+                toDate={toDate}
               />
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                {/* Updated Department Filter Dropdown */}
                 <DepartmentFilterDropdown />
 
                 <Tabs
                   value={viewMode}
                   onValueChange={(value) => {
-                    // Add type assertion to ensure value is ViewMode
                     const mode = value as ViewMode;
                     setViewMode(mode);
                     if (mode === "weekly") {
@@ -908,38 +895,52 @@ const ScheduleAndAttendance: React.FC = () => {
                       setFromDate(startOfMonth(currentDate));
                       setToDate(endOfMonth(currentDate));
                     }
-                    // For dateRange mode, keep the existing from/to dates
                   }}
                 >
-                  <TabsList>
-                    <TabsTrigger value="weekly">Weekly</TabsTrigger>
-                    <TabsTrigger value="monthly">Monthly</TabsTrigger>
-                    <TabsTrigger value="dateRange">Date Range</TabsTrigger>
+                  <TabsList className="bg-amber-100 border-amber-200">
+                    <TabsTrigger
+                      value="weekly"
+                      className="data-[state=active]:bg-orange-500 data-[state=active]:text-white"
+                    >
+                      Weekly
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="monthly"
+                      className="data-[state=active]:bg-orange-500 data-[state=active]:text-white"
+                    >
+                      Monthly
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="dateRange"
+                      className="data-[state=active]:bg-orange-500 data-[state=active]:text-white"
+                    >
+                      Date Range
+                    </TabsTrigger>
                   </TabsList>
                 </Tabs>
 
                 {viewMode === "dateRange" && (
                   <div className="flex items-center space-x-2 text-sm">
-                    {/* From Date Picker */}
                     <div className="relative">
                       <Button
                         variant="outline"
                         onClick={() => {
-                          setShowToCalendar(false); // Close other calendar if open
+                          setShowToCalendar(false);
                           setShowFromCalendar(!showFromCalendar);
                         }}
-                        className="w-[120px] justify-start text-left font-normal"
+                        className="w-[120px] justify-start text-left font-normal border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100"
                       >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        <CalendarIcon className="mr-2 h-4 w-4 text-amber-600" />
                         {fromDate ? format(fromDate, "MMM d") : "From"}
                       </Button>
                       {showFromCalendar && (
                         <div
-                          className="absolute z-10 mt-1 bg-white border rounded-md shadow-lg"
+                          className="absolute z-10 mt-1 bg-white border border-amber-200 rounded-md shadow-lg"
                           ref={(node) => {
-                            // Close calendar when clicking outside
                             if (node) {
-                              const handleClickOutside = (event: MouseEvent) => {
+                              const handleClickOutside = (
+                                event: MouseEvent
+                              ) => {
                                 if (!node.contains(event.target as Node)) {
                                   setShowFromCalendar(false);
                                   document.removeEventListener(
@@ -968,28 +969,28 @@ const ScheduleAndAttendance: React.FC = () => {
                       )}
                     </div>
 
-                    <span>to</span>
+                    <span className="text-amber-700">to</span>
 
-                    {/* To Date Picker */}
                     <div className="relative">
                       <Button
                         variant="outline"
                         onClick={() => {
-                          setShowFromCalendar(false); // Close other calendar if open
+                          setShowFromCalendar(false);
                           setShowToCalendar(!showToCalendar);
                         }}
-                        className="w-[120px] justify-start text-left font-normal"
+                        className="w-[120px] justify-start text-left font-normal border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100"
                       >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        <CalendarIcon className="mr-2 h-4 w-4 text-amber-600" />
                         {toDate ? format(toDate, "MMM d") : "To"}
                       </Button>
                       {showToCalendar && (
                         <div
-                          className="absolute z-10 mt-1 bg-white border rounded-md shadow-lg"
+                          className="absolute z-10 mt-1 bg-white border border-amber-200 rounded-md shadow-lg"
                           ref={(node) => {
-                            // Close calendar when clicking outside
                             if (node) {
-                              const handleClickOutside = (event: MouseEvent) => {
+                              const handleClickOutside = (
+                                event: MouseEvent
+                              ) => {
                                 if (!node.contains(event.target as Node)) {
                                   setShowToCalendar(false);
                                   document.removeEventListener(
@@ -1021,48 +1022,84 @@ const ScheduleAndAttendance: React.FC = () => {
                 )}
               </div>
               <div>
-                <h2 className="text-xl font-bold">{getHeaderText()}</h2>
+                <h2 className="text-xl font-bold text-white bg-amber-600/30 px-3 py-1 rounded-lg">
+                  {getHeaderText()}
+                </h2>
               </div>
               <div className="flex items-center space-x-2">
-                <Button variant="outline" size="sm" onClick={goToPreviousPeriod}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToPreviousPeriod}
+                  className="border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100"
+                >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <Button variant="outline" size="sm" onClick={goToToday}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToToday}
+                  className="border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100"
+                >
                   Today
                 </Button>
-                <Button variant="outline" size="sm" onClick={goToNextPeriod}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToNextPeriod}
+                  className="border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100"
+                >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="bg-amber-50/50">
             <Tabs defaultValue="schedule" onValueChange={setActiveTab}>
-              <TabsList className="mb-0">
-                <TabsTrigger value="schedule">Schedule</TabsTrigger>
-                <TabsTrigger value="attendance">Attendance</TabsTrigger>
+              <TabsList className="mb-0 bg-amber-100 border-amber-200">
+                <TabsTrigger
+                  value="schedule"
+                  className="data-[state=active]:bg-orange-500 data-[state=active]:text-white"
+                >
+                  Schedule
+                </TabsTrigger>
+                <TabsTrigger
+                  value="attendance"
+                  className="data-[state=active]:bg-orange-500 data-[state=active]:text-white"
+                >
+                  Attendance
+                </TabsTrigger>
               </TabsList>
-              <TabsContent value="schedule" className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
+              <TabsContent value="schedule" className="overflow-x-auto mt-4">
+                <table className="min-w-full divide-y divide-amber-200">
                   <thead>
-                    <tr>
-                      <th className="p-2 border sticky left-0 bg-white z-10 min-w-40">
-                        Employee
+                    <tr className="bg-amber-100">
+                      <th className="p-2 border border-amber-200 sticky left-0 bg-amber-100 z-10 min-w-40 text-amber-900">
+                        <div className="flex items-center gap-2">
+                          <Leaf className="h-4 w-4" />
+                          Employee
+                        </div>
                       </th>
                       {days.map((day) => (
                         <th
                           key={day.toString()}
-                          className="p-2 border text-center min-w-32"
+                          className="p-2 border border-amber-200 text-center min-w-32 bg-amber-100"
                         >
                           <div
-                            className={`font-medium ${isToday(day) ? "text-blue-600" : ""
-                              }`}
+                            className={`font-medium ${
+                              isToday(day)
+                                ? "text-orange-600 font-bold"
+                                : "text-amber-700"
+                            }`}
                           >
                             {format(day, "EEE")}
                           </div>
                           <div
-                            className={`text-sm ${isToday(day) ? "text-blue-600 font-bold" : ""
-                              }`}
+                            className={`text-sm ${
+                              isToday(day)
+                                ? "text-orange-600 font-bold"
+                                : "text-amber-600"
+                            }`}
                           >
                             {format(day, "MMM d")}
                           </div>
@@ -1070,26 +1107,29 @@ const ScheduleAndAttendance: React.FC = () => {
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-amber-100">
                     {filteredEmployees.map((employee) => (
-                      <tr key={employee.id} className="group hover:bg-blue-50">
-                        <td className="p-2 border sticky left-0 z-10 group-hover:bg-blue-50 bg-white">
+                      <tr
+                        key={employee.id}
+                        className="group hover:bg-orange-50 transition-colors"
+                      >
+                        <td className="p-2 border border-amber-200 sticky left-0 z-10 group-hover:bg-orange-50 bg-amber-50">
                           <div className="flex items-center">
-                            <Avatar className="h-8 w-8 mr-2 rounded-full overflow-hidden border-2 border-blue-200">
+                            <Avatar className="h-8 w-8 mr-2 rounded-full overflow-hidden border-2 border-amber-300">
                               <AvatarImage
                                 src={employee.avatarUrl}
                                 alt={employee.name}
                                 className="object-cover"
                               />
-                              <AvatarFallback>
+                              <AvatarFallback className="bg-amber-500 text-white">
                                 {employee.name.substring(0, 2).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
                             <div>
-                              <div className="font-bold text-sm">
+                              <div className="font-bold text-sm text-amber-900">
                                 {employee.name}
                               </div>
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-amber-600">
                                 {employee.department}
                               </div>
                             </div>
@@ -1103,10 +1143,11 @@ const ScheduleAndAttendance: React.FC = () => {
                           return (
                             <td
                               key={day.toString()}
-                              className={`p-2 border text-center cursor-pointer ${isToday(day)
-                                ? "bg-blue-50 hover:!bg-blue-100"
-                                : ""
-                                } hover:bg-blue-100`}
+                              className={`p-2 border border-amber-200 text-center cursor-pointer transition-all ${
+                                isToday(day)
+                                  ? "bg-orange-50 hover:!bg-orange-100"
+                                  : ""
+                              } hover:bg-amber-100`}
                               onClick={() =>
                                 handleScheduleCellClick(employee, day)
                               }
@@ -1118,7 +1159,7 @@ const ScheduleAndAttendance: React.FC = () => {
                                       <div className="flex flex-col items-center">
                                         <Badge
                                           variant="outline"
-                                          className={`w-fit flex items-center justify-center px-3 py-1 min-w-24 ${getShiftColor(
+                                          className={`w-fit flex items-center justify-center px-3 py-1 min-w-24 border ${getShiftColor(
                                             scheduleEntry.shiftType
                                           )}`}
                                         >
@@ -1128,19 +1169,20 @@ const ScheduleAndAttendance: React.FC = () => {
                                             ).name
                                           }
                                         </Badge>
-                                        {displayShiftInfo(scheduleEntry.shiftType)
-                                          .time && (
-                                            <span className="text-xs text-gray-500 mt-1">
-                                              {
-                                                displayShiftInfo(
-                                                  scheduleEntry.shiftType
-                                                ).time
-                                              }
-                                            </span>
-                                          )}
+                                        {displayShiftInfo(
+                                          scheduleEntry.shiftType
+                                        ).time && (
+                                          <span className="text-xs text-amber-600 mt-1">
+                                            {
+                                              displayShiftInfo(
+                                                scheduleEntry.shiftType
+                                              ).time
+                                            }
+                                          </span>
+                                        )}
                                       </div>
                                     </TooltipTrigger>
-                                    <TooltipContent className="max-w-xs whitespace-pre-line text-sm">
+                                    <TooltipContent className="max-w-xs whitespace-pre-line text-sm bg-amber-50 border-amber-200 text-amber-900">
                                       <div className="space-y-1">
                                         <p className="font-semibold">
                                           {
@@ -1149,7 +1191,9 @@ const ScheduleAndAttendance: React.FC = () => {
                                             ).name
                                           }
                                         </p>
-                                        {displayShiftInfo(scheduleEntry.shiftType)
+                                        {displayShiftInfo(
+                                          scheduleEntry.shiftType
+                                        )
                                           .details?.split("\n")
                                           .map((line, i) => (
                                             <p key={i}>{line}</p>
@@ -1174,15 +1218,15 @@ const ScheduleAndAttendance: React.FC = () => {
                   filteredEmployees={filteredEmployees}
                   attendance={attendance}
                   handleAttendanceCellClick={handleAttendanceCellClick}
-                  fromDate={fromDate} // Pass fromDate
-                  toDate={toDate} // Pass toDate
+                  fromDate={fromDate}
+                  toDate={toDate}
                 />
               </TabsContent>
             </Tabs>
           </CardContent>
-          <CardFooter className="flex justify-between">
-            <div className="text-sm text-gray-500">
-              Showing {filteredEmployees.length} employees
+          <CardFooter className="flex justify-between bg-amber-100 border-t border-amber-200">
+            <div className="text-sm text-amber-700">
+              Showing {filteredEmployees.length} employees 🦃
             </div>
             <div className="flex gap-2 text-xs">
               <IncompleteBreaksDialog />
@@ -1206,7 +1250,10 @@ const ScheduleAndAttendance: React.FC = () => {
                     await fetchEmployees(avatarMap);
                     await fetchAttendance();
                   } catch (err) {
-                    console.error("Error refreshing after adding employee:", err);
+                    console.error(
+                      "Error refreshing after adding employee:",
+                      err
+                    );
                     setError("Failed to refresh data after adding employee");
                   } finally {
                     setLoading(false);
@@ -1217,7 +1264,7 @@ const ScheduleAndAttendance: React.FC = () => {
           </CardFooter>
         </Card>
 
-        {/* Dialog for adding/editing shifts and attendance */}
+        {/* Thanksgiving-themed Dialog */}
         <Dialog
           open={isAddShiftOpen}
           onOpenChange={(open) => {
@@ -1225,9 +1272,10 @@ const ScheduleAndAttendance: React.FC = () => {
             if (!open) resetDialogState();
           }}
         >
-          <DialogContent>
+          <DialogContent className="bg-amber-50 border-amber-200">
             <DialogHeader>
-              <DialogTitle>
+              <DialogTitle className="text-amber-900 flex items-center gap-2">
+                <Clover className="h-5 w-5" />
                 {selectedEmployee && selectedDate ? (
                   <>
                     Update {format(selectedDate, "MMM d, yyyy")} for{" "}
@@ -1237,20 +1285,32 @@ const ScheduleAndAttendance: React.FC = () => {
                   "Update Schedule"
                 )}
               </DialogTitle>
-              <DialogDescription>
-                Select shift type or attendance status to update
+              <DialogDescription className="text-amber-700">
+                🍁 Set schedules with gratitude and care 🦃
               </DialogDescription>
             </DialogHeader>
             <Tabs
               defaultValue={activeTab === "schedule" ? "shift" : "attendance"}
             >
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="shift">Shift Schedule</TabsTrigger>
-                <TabsTrigger value="attendance">Attendance</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 bg-amber-100 border-amber-200">
+                <TabsTrigger
+                  value="shift"
+                  className="data-[state=active]:bg-orange-500 data-[state=active]:text-white"
+                >
+                  Shift Schedule
+                </TabsTrigger>
+                <TabsTrigger
+                  value="attendance"
+                  className="data-[state=active]:bg-orange-500 data-[state=active]:text-white"
+                >
+                  Attendance
+                </TabsTrigger>
               </TabsList>
               <TabsContent value="shift">
                 <div className="space-y-4 mt-4">
-                  <Label htmlFor="shift-type">Shift Type</Label>
+                  <Label htmlFor="shift-type" className="text-amber-900">
+                    Shift Type
+                  </Label>
                   <RadioGroup
                     id="shift-type"
                     value={selectedShiftType}
@@ -1265,38 +1325,87 @@ const ScheduleAndAttendance: React.FC = () => {
                         setSelectedBreak2(undefined);
                       }
                     }}
+                    className="space-y-2"
                   >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="Morning" id="Morning" />
-                      <Label htmlFor="Morning">Morning</Label>
+                    <div className="flex items-center space-x-2 p-2 rounded hover:bg-amber-100">
+                      <RadioGroupItem
+                        value="Morning"
+                        id="Morning"
+                        className="text-orange-500"
+                      />
+                      <Label htmlFor="Morning" className="text-amber-900">
+                        Morning
+                      </Label>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="Mid" id="Mid" />
-                      <Label htmlFor="Mid">Mid</Label>
+                    <div className="flex items-center space-x-2 p-2 rounded hover:bg-amber-100">
+                      <RadioGroupItem
+                        value="Mid"
+                        id="Mid"
+                        className="text-orange-500"
+                      />
+                      <Label htmlFor="Mid" className="text-amber-900">
+                        Mid
+                      </Label>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="Night" id="Night" />
-                      <Label htmlFor="Night">Night</Label>
+                    <div className="flex items-center space-x-2 p-2 rounded hover:bg-amber-100">
+                      <RadioGroupItem
+                        value="Night"
+                        id="Night"
+                        className="text-orange-500"
+                      />
+                      <Label htmlFor="Night" className="text-amber-900">
+                        Night
+                      </Label>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="restday" id="restday" />
-                      <Label htmlFor="restday">Rest Day</Label>
+                    <div className="flex items-center space-x-2 p-2 rounded hover:bg-amber-100">
+                      <RadioGroupItem
+                        value="restday"
+                        id="restday"
+                        className="text-orange-500"
+                      />
+                      <Label htmlFor="restday" className="text-amber-900">
+                        Rest Day
+                      </Label>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="paidTimeOff" id="paidTimeOff" />
-                      <Label htmlFor="paidTimeOff">Paid Time Off</Label>
+                    <div className="flex items-center space-x-2 p-2 rounded hover:bg-amber-100">
+                      <RadioGroupItem
+                        value="paidTimeOff"
+                        id="paidTimeOff"
+                        className="text-orange-500"
+                      />
+                      <Label htmlFor="paidTimeOff" className="text-amber-900">
+                        Paid Time Off
+                      </Label>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="plannedLeave" id="plannedLeave" />
-                      <Label htmlFor="plannedLeave">Planned Leave</Label>
+                    <div className="flex items-center space-x-2 p-2 rounded hover:bg-amber-100">
+                      <RadioGroupItem
+                        value="plannedLeave"
+                        id="plannedLeave"
+                        className="text-orange-500"
+                      />
+                      <Label htmlFor="plannedLeave" className="text-amber-900">
+                        Planned Leave
+                      </Label>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="holiday" id="holiday" />
-                      <Label htmlFor="holiday">Holiday</Label>
+                    <div className="flex items-center space-x-2 p-2 rounded hover:bg-amber-100">
+                      <RadioGroupItem
+                        value="holiday"
+                        id="holiday"
+                        className="text-orange-500"
+                      />
+                      <Label htmlFor="holiday" className="text-amber-900">
+                        Holiday
+                      </Label>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="rdot" id="rdot" />
-                      <Label htmlFor="rdot">RDOT</Label>
+                    <div className="flex items-center space-x-2 p-2 rounded hover:bg-amber-100">
+                      <RadioGroupItem
+                        value="rdot"
+                        id="rdot"
+                        className="text-orange-500"
+                      />
+                      <Label htmlFor="rdot" className="text-amber-900">
+                        RDOT
+                      </Label>
                     </div>
                   </RadioGroup>
 
@@ -1304,30 +1413,41 @@ const ScheduleAndAttendance: React.FC = () => {
                     <>
                       <div className="flex space-x-4">
                         <div>
-                          <Label htmlFor="start-time">Shift Start </Label>
+                          <Label
+                            htmlFor="start-time"
+                            className="text-amber-900"
+                          >
+                            Shift Start
+                          </Label>
                           <input
                             id="start-time"
                             type="time"
                             value={selectedStartTime}
-                            onChange={(e) => setSelectedStartTime(e.target.value)}
-                            className="border p-2 rounded text-sm"
+                            onChange={(e) =>
+                              setSelectedStartTime(e.target.value)
+                            }
+                            className="border border-amber-300 p-2 rounded text-sm bg-amber-50 text-amber-900"
                           />
                         </div>
                         <div>
-                          <Label htmlFor="end-time">Shift End </Label>
+                          <Label htmlFor="end-time" className="text-amber-900">
+                            Shift End
+                          </Label>
                           <input
                             id="end-time"
                             type="time"
                             value={selectedEndTime}
                             onChange={(e) => setSelectedEndTime(e.target.value)}
-                            className="border p-2 rounded text-sm"
+                            className="border border-amber-300 p-2 rounded text-sm bg-amber-50 text-amber-900"
                           />
                         </div>
                       </div>
 
                       <div className="grid grid-cols-3 gap-4">
                         <div>
-                          <Label htmlFor="break1">1st Break</Label>
+                          <Label htmlFor="break1" className="text-amber-900">
+                            1st Break
+                          </Label>
                           <input
                             id="break1"
                             type="time"
@@ -1335,11 +1455,13 @@ const ScheduleAndAttendance: React.FC = () => {
                             onChange={(e) =>
                               setSelectedBreak1(e.target.value || undefined)
                             }
-                            className="border p-2 rounded text-sm w-full"
+                            className="border border-amber-300 p-2 rounded text-sm w-full bg-amber-50 text-amber-900"
                           />
                         </div>
                         <div>
-                          <Label htmlFor="lunch">Lunch</Label>
+                          <Label htmlFor="lunch" className="text-amber-900">
+                            Lunch
+                          </Label>
                           <input
                             id="lunch"
                             type="time"
@@ -1347,11 +1469,13 @@ const ScheduleAndAttendance: React.FC = () => {
                             onChange={(e) =>
                               setSelectedLunch(e.target.value || undefined)
                             }
-                            className="border p-2 rounded text-sm w-full"
+                            className="border border-amber-300 p-2 rounded text-sm w-full bg-amber-50 text-amber-900"
                           />
                         </div>
                         <div>
-                          <Label htmlFor="break2">2nd Break</Label>
+                          <Label htmlFor="break2" className="text-amber-900">
+                            2nd Break
+                          </Label>
                           <input
                             id="break2"
                             type="time"
@@ -1359,32 +1483,32 @@ const ScheduleAndAttendance: React.FC = () => {
                             onChange={(e) =>
                               setSelectedBreak2(e.target.value || undefined)
                             }
-                            className="border p-2 rounded text-sm w-full"
+                            className="border border-amber-300 p-2 rounded text-sm w-full bg-amber-50 text-amber-900"
                           />
                         </div>
                       </div>
                     </>
                   )}
 
-                  <div className="flex items-center space-x-2 text-sm">
-                    <span>Repeat for</span>
+                  <div className="flex items-center space-x-2 text-sm p-2 bg-amber-100 rounded">
+                    <span className="text-amber-900">Repeat for</span>
                     <Select
                       value={repeatDays.toString()}
                       onValueChange={(value) => setRepeatDays(parseInt(value))}
                     >
-                      <SelectTrigger className="w-40 text-sm">
+                      <SelectTrigger className="w-40 text-sm border-amber-300 bg-amber-50 text-amber-900">
                         <SelectValue placeholder="Repeat days" />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">1 day</SelectItem>
-                        <SelectItem value="2">2 days</SelectItem>
-                        <SelectItem value="3">3 days</SelectItem>
-                        <SelectItem value="4">4 days</SelectItem>
-                        <SelectItem value="5">5 days</SelectItem>
-                        <SelectItem value="6">6 days</SelectItem>
-                        <SelectItem value="7">7 days</SelectItem>
-                        <SelectItem value="15">15 days</SelectItem>
-                        <SelectItem value="30">30 days</SelectItem>
+                      <SelectContent className="bg-amber-50 border-amber-200">
+                        {[1, 2, 3, 4, 5, 6, 7, 15, 30].map((days) => (
+                          <SelectItem
+                            key={days}
+                            value={days.toString()}
+                            className="text-amber-900 hover:bg-amber-100"
+                          >
+                            {days} day{days !== 1 ? "s" : ""}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -1392,7 +1516,9 @@ const ScheduleAndAttendance: React.FC = () => {
               </TabsContent>
               <TabsContent value="attendance">
                 <div className="space-y-4 mt-4">
-                  <Label htmlFor="attendance-status">Attendance Status</Label>
+                  <Label htmlFor="attendance-status" className="text-amber-900">
+                    Attendance Status
+                  </Label>
                   <RadioGroup
                     id="attendance-status"
                     value={selectedAttendanceStatus}
@@ -1400,90 +1526,71 @@ const ScheduleAndAttendance: React.FC = () => {
                       setSelectedAttendanceStatus(value as AttendanceStatus);
                     }}
                   >
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="Present" id="present" />
-                        <Label htmlFor="present">Present</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="NCNS" id="ncns" />
-                        <Label htmlFor="ncns">NCNS</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="Call In" id="call-in" />
-                        <Label htmlFor="call-in">Call In</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="Rest Day" id="rest-day" />
-                        <Label htmlFor="rest-day">Rest Day</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="Tardy" id="tardy" />
-                        <Label htmlFor="tardy">Tardy</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="RDOT" id="rdot" />
-                        <Label htmlFor="rdot">RDOT</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="Suspended" id="suspended" />
-                        <Label htmlFor="suspended">Suspended</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="Attrition" id="attrition" />
-                        <Label htmlFor="attrition">Attrition</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="LOA" id="loa" />
-                        <Label htmlFor="loa">LOA</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="PTO" id="pto" />
-                        <Label htmlFor="pto">PTO</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="Half Day" id="half-day" />
-                        <Label htmlFor="half-day">Half Day</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem
-                          value="Early Log Out"
-                          id="early-log-out"
-                        />
-                        <Label htmlFor="early-log-out">Early Log Out</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="VTO" id="vto" />
-                        <Label htmlFor="vto">VTO</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="TB" id="tb" />
-                        <Label htmlFor="tb">TB</Label>
-                      </div>
+                    <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto">
+                      {[
+                        "Present",
+                        "NCNS",
+                        "Call In",
+                        "Rest Day",
+                        "Tardy",
+                        "RDOT",
+                        "Suspended",
+                        "Attrition",
+                        "LOA",
+                        "PTO",
+                        "Half Day",
+                        "Early Log Out",
+                        "VTO",
+                        "TB",
+                      ].map((status) => (
+                        <div
+                          key={status}
+                          className="flex items-center space-x-2 p-2 rounded hover:bg-amber-100"
+                        >
+                          <RadioGroupItem
+                            value={status}
+                            id={status.toLowerCase().replace(" ", "-")}
+                            className="text-orange-500"
+                          />
+                          <Label
+                            htmlFor={status.toLowerCase().replace(" ", "-")}
+                            className="text-amber-900"
+                          >
+                            {status}
+                          </Label>
+                        </div>
+                      ))}
                     </div>
                   </RadioGroup>
                   {selectedAttendanceStatus === "Present" && (
                     <div className="space-y-2 text-sm">
-                      <div className="flex items-center space-x-2 mt-6">
+                      <div className="flex items-center space-x-2 mt-6 p-2 bg-amber-100 rounded">
                         <Checkbox
                           id="has-ot"
                           checked={showOtInput}
                           onCheckedChange={(checked) => {
                             setShowOtInput(!!checked);
-                            // Clear OT values when unchecking
                             if (!checked) {
                               setOtHours("");
                               setOtMinutes("");
                             }
                           }}
+                          className="text-orange-500 border-amber-300"
                         />
-                        <Label htmlFor="has-ot">With Overtime?</Label>
+                        <Label htmlFor="has-ot" className="text-amber-900">
+                          With Overtime?
+                        </Label>
                       </div>
 
                       {showOtInput && (
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-4 p-2 bg-amber-50 rounded border border-amber-200">
                           <div>
-                            <Label htmlFor="ot-hours">OT Hours</Label>
+                            <Label
+                              htmlFor="ot-hours"
+                              className="text-amber-900"
+                            >
+                              OT Hours
+                            </Label>
                             <input
                               id="ot-hours"
                               type="number"
@@ -1491,12 +1598,17 @@ const ScheduleAndAttendance: React.FC = () => {
                               max="24"
                               value={otHours}
                               onChange={(e) => setOtHours(e.target.value)}
-                              className="border p-2 rounded text-sm w-full"
+                              className="border border-amber-300 p-2 rounded text-sm w-full bg-white text-amber-900"
                               placeholder="Hours"
                             />
                           </div>
                           <div>
-                            <Label htmlFor="ot-minutes">OT Minutes</Label>
+                            <Label
+                              htmlFor="ot-minutes"
+                              className="text-amber-900"
+                            >
+                              OT Minutes
+                            </Label>
                             <input
                               id="ot-minutes"
                               type="number"
@@ -1504,7 +1616,7 @@ const ScheduleAndAttendance: React.FC = () => {
                               max="59"
                               value={otMinutes}
                               onChange={(e) => setOtMinutes(e.target.value)}
-                              className="border p-2 rounded text-sm w-full"
+                              className="border border-amber-300 p-2 rounded text-sm w-full bg-white text-amber-900"
                               placeholder="Minutes"
                             />
                           </div>
@@ -1513,18 +1625,18 @@ const ScheduleAndAttendance: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Auto-fill time data for specific statuses */}
                   {(selectedAttendanceStatus === "Tardy" ||
                     selectedAttendanceStatus === "Half Day" ||
                     selectedAttendanceStatus === "Present" ||
                     selectedAttendanceStatus === "RDOT" ||
                     selectedAttendanceStatus === "Early Log Out") && (
-                      <div className="text-sm text-gray-600">
-                        <p>
-                          Time data will be automatically filled from time records.
-                        </p>
-                      </div>
-                    )}
+                    <div className="text-sm text-amber-700 bg-amber-100 p-2 rounded">
+                      <p>
+                        🦃 Time data will be automatically filled from time
+                        records.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
             </Tabs>
@@ -1535,6 +1647,7 @@ const ScheduleAndAttendance: React.FC = () => {
                   resetDialogState();
                   setIsAddShiftOpen(false);
                 }}
+                className="border-amber-300 text-amber-900 hover:bg-amber-100"
               >
                 Cancel
               </Button>
@@ -1544,6 +1657,7 @@ const ScheduleAndAttendance: React.FC = () => {
                     ? handleAddShift
                     : handleUpdateAttendance
                 }
+                className="bg-orange-500 hover:bg-orange-600 text-white"
               >
                 Save Changes
               </Button>

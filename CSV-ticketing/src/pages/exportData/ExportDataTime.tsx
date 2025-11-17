@@ -61,13 +61,13 @@ const ExportDataTime: React.FC = () => {
   const getShiftTimes = (shift: string): { start: string; end: string } => {
     switch (shift) {
       case "Shift 1":
-        return { start: "14:00", end: "22:00" }; // 2 PM - 10 PM
+        return { start: "14:00", end: "22:00" };
       case "Shift 2":
-        return { start: "22:00", end: "06:00" }; // 10 PM - 6 AM
+        return { start: "22:00", end: "06:00" };
       case "Shift 3":
-        return { start: "06:00", end: "14:00" }; // 6 AM - 2 PM
+        return { start: "06:00", end: "14:00" };
       default:
-        return { start: "09:00", end: "17:00" }; // Default shift for Staff
+        return { start: "09:00", end: "17:00" };
     }
   };
 
@@ -116,23 +116,19 @@ const ExportDataTime: React.FC = () => {
 
       const summary = summaryMap.get(entry.employeeName)!;
 
-      // Count days present
       summary.daysPresent++;
 
-      // Count shifts
       if (entry.shift in summary.shiftsBreakdown) {
         summary.shiftsBreakdown[
           entry.shift as keyof typeof summary.shiftsBreakdown
         ]++;
       }
 
-      // Calculate late minutes and early out (excluding Staff shifts)
       if (entry.timeIn && entry.timeOut && entry.shift !== "Staff") {
         const shiftTimes = getShiftTimes(entry.shift);
         const actualTimeIn = convertTo24Hour(entry.timeIn);
         const actualTimeOut = convertTo24Hour(entry.timeOut);
 
-        // Calculate late minutes
         const lateMinutes = calculateTimeDifference(
           shiftTimes.start,
           actualTimeIn
@@ -141,7 +137,6 @@ const ExportDataTime: React.FC = () => {
           summary.lateMinutes += lateMinutes;
         }
 
-        // Calculate early out minutes
         const earlyOutMinutes = calculateTimeDifference(
           actualTimeOut,
           shiftTimes.end
@@ -158,7 +153,6 @@ const ExportDataTime: React.FC = () => {
   const onSubmit = async (formData: FormData): Promise<void> => {
     setIsLoading(true);
     try {
-      // Fetch data and filter as before
       const response = await ExportDatas.getEmployeeTimes();
       const allEmployeeTimes: EmployeeTimes[] = response.data;
 
@@ -191,7 +185,6 @@ const ExportDataTime: React.FC = () => {
         return;
       }
 
-      // Generate detailed data for first sheet
       const detailedData = filteredEmployeeTimes.map((entry) => ({
         Date: entry.date,
         EmployeeName: entry.employeeName,
@@ -207,7 +200,6 @@ const ExportDataTime: React.FC = () => {
         Notes: entry.notes,
       }));
 
-      // Generate summary data
       const summaryData = generateSummary(filteredEmployeeTimes).map(
         (summary) => ({
           "Employee Name": summary.name,
@@ -221,10 +213,8 @@ const ExportDataTime: React.FC = () => {
         })
       );
 
-      // Create workbook and add sheets
       const workbook = XLSX.utils.book_new();
 
-      // Add detailed sheet
       const detailedWorksheet = XLSX.utils.json_to_sheet(detailedData);
       XLSX.utils.book_append_sheet(
         workbook,
@@ -232,36 +222,33 @@ const ExportDataTime: React.FC = () => {
         "Detailed Time Records"
       );
 
-      // Add summary sheet
       const summaryWorksheet = XLSX.utils.json_to_sheet(summaryData);
       XLSX.utils.book_append_sheet(workbook, summaryWorksheet, "Summary");
 
-      // Set column widths for both sheets
       detailedWorksheet["!cols"] = [
-        { wch: 15 }, // date
-        { wch: 20 }, // EmployeeName
-        { wch: 10 }, // Shift
-        { wch: 15 }, // TimeIn
-        { wch: 15 }, // TimeOut
-        { wch: 10 }, // TotalHours
-        { wch: 10 }, // totalBreakTime
-        { wch: 15 }, // breakStart
-        { wch: 15 }, // breakEnd
-        { wch: 30 }, // Notes
+        { wch: 15 },
+        { wch: 20 },
+        { wch: 10 },
+        { wch: 15 },
+        { wch: 15 },
+        { wch: 10 },
+        { wch: 10 },
+        { wch: 15 },
+        { wch: 15 },
+        { wch: 30 },
       ];
 
       summaryWorksheet["!cols"] = [
-        { wch: 20 }, // Employee Name
-        { wch: 12 }, // Days Present
-        { wch: 12 }, // Shift 1
-        { wch: 12 }, // Shift 2
-        { wch: 12 }, // Shift 3
-        { wch: 15 }, // Staff Shift
-        { wch: 15 }, // Late Minutes
-        { wch: 15 }, // Early Out Minutes
+        { wch: 20 },
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 15 },
+        { wch: 15 },
+        { wch: 15 },
       ];
 
-      // Generate filename and save
       const fileName = `Employee_Time_${
         new Date().toISOString().split("T")[0]
       }.xlsx`;
@@ -279,47 +266,82 @@ const ExportDataTime: React.FC = () => {
       <BackButton />
       <form className="mt-5 w-1/2" onSubmit={handleSubmit(onSubmit)}>
         <div className="text-center">
-          <h1 className="text-xl sm:text-xl md:text-2xl lg:text-3xl font-bold py-1 sm:py-1 md:py-2 bg-clip-text text-transparent bg-gradient-to-r from-[#1638df] to-[#192fb4]">
-            Export Time Tracker Data
+          {/* Thanksgiving-themed header */}
+          <h1 className="text-xl sm:text-xl md:text-2xl lg:text-3xl font-bold py-1 sm:py-1 md:py-2 bg-clip-text text-transparent bg-gradient-to-r from-[#8B4513] to-[#D2691E]">
+            🦃 Give Thanks for Your Team's Time 🍂
           </h1>
-          <p className="text-lg sm:text-xl md:text-xl lg:text-2xl font-bold text-black">
-            Please select the date range
+          <p className="text-lg sm:text-xl md:text-xl lg:text-2xl font-bold text-amber-800">
+            Select dates to harvest your time tracking data
+          </p>
+          <p className="text-sm text-amber-600 mt-2">
+            We're grateful for your team's hard work!
           </p>
         </div>
 
-        <Label htmlFor="startDate" className="text-base font-bold">
-          <p>Start Date</p>
-        </Label>
-        <Controller
-          name="startDate"
-          control={control}
-          rules={{ required: "Start date is required" }}
-          render={({ field }) => (
-            <Input {...field} type="date" required className="!mb-2" />
+        {/* Thanksgiving-styled form fields */}
+        <div className="mt-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
+          <Label htmlFor="startDate" className="text-base font-bold text-amber-800">
+            <p>🦃 Start Date</p>
+          </Label>
+          <Controller
+            name="startDate"
+            control={control}
+            rules={{ required: "Start date is required" }}
+            render={({ field }) => (
+              <Input 
+                {...field} 
+                type="date" 
+                required 
+                className="!mb-2 border-amber-300 focus:border-amber-500 bg-white"
+              />
+            )}
+          />
+          {errors.startDate && (
+            <p className="text-red-600">{errors.startDate.message}</p>
           )}
-        />
-        {errors.startDate && (
-          <p className="text-red-500">{errors.startDate.message}</p>
-        )}
 
-        <Label htmlFor="endDate" className="text-base font-bold">
-          <p>End Date</p>
-        </Label>
-        <Controller
-          name="endDate"
-          control={control}
-          rules={{ required: "End date is required" }}
-          render={({ field }) => (
-            <Input {...field} type="date" required className="!mb-2" />
+          <Label htmlFor="endDate" className="text-base font-bold text-amber-800 mt-4">
+            <p>🍂 End Date</p>
+          </Label>
+          <Controller
+            name="endDate"
+            control={control}
+            rules={{ required: "End date is required" }}
+            render={({ field }) => (
+              <Input 
+                {...field} 
+                type="date" 
+                required 
+                className="!mb-2 border-amber-300 focus:border-amber-500 bg-white"
+              />
+            )}
+          />
+          {errors.endDate && (
+            <p className="text-red-600">{errors.endDate.message}</p>
           )}
-        />
-        {errors.endDate && (
-          <p className="text-red-500">{errors.endDate.message}</p>
-        )}
+        </div>
 
-        <Button className="w-full mt-2" type="submit" disabled={isLoading}>
-          {isLoading ? "Exporting..." : "Export Data"}
+        {/* Thanksgiving-themed button */}
+        <Button 
+          className="w-full mt-4 bg-gradient-to-r from-[#8B4513] to-[#D2691E] hover:from-[#A0522D] hover:to-[#CD853F] text-white font-bold py-3 rounded-lg transition-all duration-300 transform hover:scale-105"
+          type="submit" 
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            "🦃 Gathering Your Harvest..."
+          ) : (
+            "🍁 Export with Gratitude 🍂"
+          )}
         </Button>
+
+        {/* Thanksgiving message */}
+        <div className="text-center mt-4 p-3 bg-amber-100 rounded-lg border border-amber-300">
+          <p className="text-amber-700 text-sm">
+            <strong>Thankful for your team's dedication!</strong>
+            <br />
+            Export their time data and celebrate their contributions.
+          </p>
+        </div>
       </form>
     </div>
   );

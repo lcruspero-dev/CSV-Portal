@@ -39,7 +39,6 @@ function App() {
     <AuthProvider>
       <>
         <Header />
-        <div className="">
           <Routes>
             {/* Public Routes */}
 
@@ -91,7 +90,6 @@ function App() {
               />
             </Route>
           </Routes>
-        </div>
         <Toaster />
       </>
     </AuthProvider>
