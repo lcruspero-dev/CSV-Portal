@@ -20,6 +20,8 @@ import ExportSurveyData from "./pages/exportData/ExportSurveyData";
 import CreateTicket from "./pages/getHelp/CreateTicket";
 import Homepage from "./pages/homePage/Homepage";
 import LeaveCredit from "./pages/LeaveCredit/LeaveCredit";
+import ViewPolociesMemo from "./pages/memo/View";
+import ViewPolicies from "./pages/memo/viewPolicies"
 import ViewIndividualMemo from "./pages/memo/ViewIndividualMemo";
 import ViewMemo from "./pages/memo/ViewMemo";
 import UserNte from "./pages/nte/userNte";
@@ -56,6 +58,8 @@ function App() {
               <Route path="/ticket/:id" element={<ViewIndividualTicket />} />
               <Route path="/all-tickets" element={<ViewAllRaisedTickets />} />
               <Route path="/all-memo" element={<ViewMemo />} />
+              <Route path="/all-policies" element={<ViewPolicies />} />
+              <Route path="/view-polMemo" element={<ViewPolociesMemo />} />
               <Route path="/memo/:id" element={<ViewIndividualMemo />} />
               <Route path="/addcategory" element={<CreateCategory />} />
               <Route path="/addassign" element={<CreateAssign />} />

@@ -1246,6 +1246,7 @@ const PayrollPage = () => {
               Filter payroll records by position and other criteria
             </SheetDescription>
           </SheetHeader>
+          
           <div className="mt-4 space-y-6">
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-gray-700">

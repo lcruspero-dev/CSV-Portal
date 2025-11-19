@@ -167,7 +167,7 @@ const UserHome = () => {
       title: "Company Memos and Policies",
       description: "Access company official memos and policies.",
       icon: FileText,
-      path: "/all-memo",
+      path: "/view-polMemo",
       color: "from-green-500 to-emerald-600",
       bgColor: "bg-gradient-to-br from-green-50 to-emerald-100",
       borderColor: "border-green-300",
