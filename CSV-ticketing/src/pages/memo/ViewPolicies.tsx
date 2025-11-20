@@ -15,10 +15,15 @@ import { useNavigate } from "react-router-dom";
 
 
 
-const viewPolicies = () => {
+
+function viewPolicies () {
+  
   return (
-    <div>viewPolicies</div>
-  )
+  <section>
+    +
+  </section>
+  );
+
 }
 
 export default viewPolicies

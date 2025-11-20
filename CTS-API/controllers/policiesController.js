@@ -1,0 +1,177 @@
+const User = require("../models/userModel");
+const mongoose = require("mongoose");
+
+const asyncHandler = require("express-async-handler");
+const Policies = require("../models/policiesModel");
+
+const getPolicies = asyncHandler(async (_req, res) => {
+  try {
+    const user = await User.findById(_req.user._id);
+
+    let policies;
+    if (user.isAdmin) {
+      policies = await Policies.find().sort({ 
+        createdAt: -1,
+      });
+    } else {
+      policies = await Policies.find({
+        $or: [
+          {
+            isPinned: true,
+          },
+          {
+            $or: [{ isPinned: false }, { isPinned: { $exists: false } }],
+            createdAt: { $gte: user.createdAt },
+          },
+        ],
+      }).sort({ createdAt: -1 });
+    }
+
+    res.status(200).json(policies);
+  } catch (error) {
+    console.log(error);
+    res.status(404);
+    throw new Error("Policies not found"); 
+  }
+});
+
+const createPolicies = asyncHandler(async (req, res) => {
+    const {subject, description} = req.body;
+    if (!subject || !description) {
+        throw new Error("Please add all required fields");
+    }
+
+    const policies = await Policies.create(req.body);
+    res.status(200).json(policies);
+});
+
+const updatePolicies = asyncHandler(async (req, res) => {
+  const policies = await Policies.findById(req.params.id); 
+
+  if (!policies) {
+    res.status(404);
+    throw new Error("Policy not found"); 
+  }
+
+  const { subject, description } = req.body;
+  if (!subject || !description) {
+    res.status(400);
+    throw new Error("Please add all required fields");
+  }
+
+  const updatedPolicies = await Policies.findByIdAndUpdate(req.params.id, req.body, { 
+    new: true,
+  });
+
+  res.status(200).json(updatedPolicies);
+});
+
+const deletePolicies = asyncHandler(async (req, res) => {
+    const policies = await Policies.findById(req.params.id);
+
+    if(!policies) {
+        res.status(404);
+        throw new Error("Policy not found");
+    }
+
+    await policies.remove();
+
+    res.status(200).json({
+        id: req.params.id
+    });
+
+});
+
+const getPoliciesById = asyncHandler(async (req, res) => {
+    const policies = await Policies.findById(req.params.id);
+
+    if (!policies) {
+        res.status(404);
+        throw new Error("Policy not found");
+    }
+    res.status(200).json(policies);
+
+});
+
+const updateAcknowledged = asyncHandler(async (req, res) => {
+    const userId = req.user.id;
+    const name = req.user.name;
+    const {id} = req.params;
+
+    const policies = await Policies.findById(id);
+    if (!policies) {
+        res.status(404);
+        throw new Error("Policy not found")
+    };
+
+    const alreadyAcknowledged = policies.acknowledgedby.some(
+        (acknowledged) => acknowledged.userId === userId
+    );
+
+    if (alreadyAcknowledged) {
+        res.status(400);
+        throw new Error("You already acknowledged this policy");
+    }
+
+    const newAcknowledgment = {
+        name,
+        userId,
+        acknowledgedAt: new Date(),
+    };
+
+    const updatedPolicy = await Policies.findByIdAndUpdate(
+        id,
+        {
+            $push: { acknowledgedby: newAcknowledgment}, 
+        },
+        {new: true}
+    );
+
+    res.status(200).json(updatedPolicy)
+
+});
+
+const getUserUnacknowledged = asyncHandler(async (req, res) => {
+  try {
+    const { policyId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(policyId)) { 
+      return res.status(400).json({ message: "Invalid policy ID" }); 
+    }
+
+    const policies = await Policies.findById(policyId); 
+    if (!policies) {
+      return res.status(404).json({ message: "Policy not found" }); 
+    }
+
+    const acknowledgedUserIds = policies.acknowledgedby.map((ack) => ack.userId);
+    const unacknowledgedUsers = await User.find(
+      {
+        _id: { $nin: acknowledgedUserIds },
+        status: { $ne: "inactive" },
+        createdAt: { $lte: policies.createdAt },
+      },
+      "name _id"
+    );
+
+    return res.status(200).json({
+      policyId, 
+      unacknowledgedUsers: unacknowledgedUsers.map((user) => ({
+        userId: user._id,
+        name: user.name,
+      })),
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+});
+
+module.exports = {
+    getPolicies,
+    getPoliciesById,
+    createPolicies,
+    updatePolicies,
+    getUserUnacknowledged,
+    updateAcknowledged,
+    deletePolicies
+}

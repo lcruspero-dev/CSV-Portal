@@ -57,6 +57,10 @@ export const TicketAPi = {
     apiHelper(`/api/memos/${id}/acknowledged`, "PUT"),
   getUserUnacknowledged: (id: any) =>
     apiHelper(`/api/memos/unacknowledged/${id}`, "GET"),
+
+  // Policies
+  createPolicies: (body: object) => apiHelper("/api/policies/create", "POST", body),
+  getPolicies: () => apiHelper("/api/policies/create", "POST")
 };
 
 export const Category = {
