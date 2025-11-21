@@ -59,8 +59,14 @@ export const TicketAPi = {
     apiHelper(`/api/memos/unacknowledged/${id}`, "GET"),
 
   // Policies
-  createPolicies: (body: object) => apiHelper("/api/policies/create", "POST", body),
-  getPolicies: () => apiHelper("/api/policies/create", "POST")
+  createPolicies: (body: object) =>
+    apiHelper("/api/policies/create", "POST", body),
+  getAllPolicies: () => apiHelper("/api/policies", "GET"), 
+  getIndividualPolicy: (id: any) => apiHelper(`/api/policies/${id}`, "GET"),
+  acknowledgementPolicy: (id: any) =>
+    apiHelper(`/api/policies/${id}/acknowledged`, "PUT"),
+  getUserUnacknowledgedPol: (id: any) =>
+    apiHelper(`/api/policies/unacknowledged/${id}`, "GET"),
 };
 
 export const Category = {
@@ -102,7 +108,7 @@ export const timer = {
     apiHelper("/api/employeeTimes/lunch/update", "PUT", body),
   updateLunchEnd: (body: object) =>
     apiHelper("/api/employeeTimes/lunch/update", "PUT", body),
-  updateEmployeeBioBreak:(body: object) =>
+  updateEmployeeBioBreak: (body: object) =>
     apiHelper("/api/employeeTimes/bio/update", "PUT", body),
   getCurrentTimeIn: () => apiHelper("/api/employeeTimes/null", "GET"),
   getAttendanceEntries: () => apiHelper("/api/employeeTimes/time", "GET"),
@@ -244,34 +250,43 @@ export const payrollAPI = {
   processPayroll: (body: PayrollPayload) =>
     apiHelper("/api/payroll/process", "POST", body),
   getAllPayrolls: () => apiHelper("/api/payroll/", "GET"),
-  getPayrollByUser: (id: string) =>
-    apiHelper(`/api/payroll/${id}`, "GET"),
+  getPayrollByUser: (id: string) => apiHelper(`/api/payroll/${id}`, "GET"),
   updatePayroll: (id: string, body: Partial<PayrollPayload>) =>
     apiHelper(`/api/payroll/update/${id}`, "PUT", body),
-  deletePayroll: (id: string) =>
-    apiHelper(`/api/payroll/${id}`, "DELETE"),
+  deletePayroll: (id: string) => apiHelper(`/api/payroll/${id}`, "DELETE"),
   calculateFromTimeTracker: (body: {
     userId: string;
     startDate: string;
     endDate: string;
     payrollRate?: any;
   }) => apiHelper("/api/payroll/calculate-from-time-tracker", "POST", body),
-  autoCalculatePayroll: (userId: string, body: {
-    startDate: string;
-    endDate: string;
-  }) => apiHelper(`/api/payroll/auto-calculate/${userId}`, "POST", body),
-  sendPayroll: (userId: string, body: {
-    payrollId: string;
-  }) => apiHelper(`/api/payroll/send/${userId}`, "POST", body),
-  getEmployeePayslips: (userId: string) => 
+  autoCalculatePayroll: (
+    userId: string,
+    body: {
+      startDate: string;
+      endDate: string;
+    }
+  ) => apiHelper(`/api/payroll/auto-calculate/${userId}`, "POST", body),
+  sendPayroll: (
+    userId: string,
+    body: {
+      payrollId: string;
+    }
+  ) => apiHelper(`/api/payroll/send/${userId}`, "POST", body),
+  getEmployeePayslips: (userId: string) =>
     apiHelper(`/api/payroll/payslips/${userId}`, "GET"),
-  generatePayslipForRange: (userId: string, body: { startDate: string; endDate: string; }) =>
-    apiHelper(`/api/payroll/payslips/generate/${userId}`, "POST", body),
+  generatePayslipForRange: (
+    userId: string,
+    body: { startDate: string; endDate: string }
+  ) => apiHelper(`/api/payroll/payslips/generate/${userId}`, "POST", body),
   getAllArchivedPayslips: (startDate?: string, endDate?: string) => {
     const params = new URLSearchParams();
-    if (startDate) params.append('startDate', startDate);
-    if (endDate) params.append('endDate', endDate);
+    if (startDate) params.append("startDate", startDate);
+    if (endDate) params.append("endDate", endDate);
     const queryString = params.toString();
-    return apiHelper(`/api/payroll/payslips/archive${queryString ? `?${queryString}` : ''}`, "GET");
+    return apiHelper(
+      `/api/payroll/payslips/archive${queryString ? `?${queryString}` : ""}`,
+      "GET"
+    );
   },
 };

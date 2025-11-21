@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import BackButton from '@/components/kit/BackButton'
 
-type SelectionOption = 'memo' | 'policies'
+type SelectionOption = 'memo' | 'all-policies'
 
 const View: React.FC = () => {
   const navigate = useNavigate()
@@ -9,8 +9,8 @@ const View: React.FC = () => {
   const handleCardClick = (option: SelectionOption) => {
     if (option === 'memo') {
       navigate('/all-memo')
-    } else if (option === 'policies') {
-      navigate('/policies')
+    } else if (option === 'all-policies') {
+      navigate('/all-policies')
     }
   }
 
@@ -52,16 +52,16 @@ const View: React.FC = () => {
           <div className="absolute inset-0 border-4 border-transparent group-hover:border-amber-200 rounded-2xl transition-all duration-300"></div>
         </div>
 
-        {/* Policies Card - Thanksgiving Theme */}
+        {/* all-policies Card - Thanksgiving Theme */}
         <div 
           className="p-12 rounded-2xl cursor-pointer transition-all duration-300 min-w-[320px] min-h-[280px] text-center shadow-2xl bg-gradient-to-br from-orange-100 to-amber-100 border-2 border-amber-200 text-amber-900 hover:bg-gradient-to-br hover:from-orange-500 hover:to-amber-500 hover:text-white hover:transform hover:scale-105 hover:shadow-2xl flex flex-col items-center justify-center group relative overflow-hidden"
-          onClick={() => handleCardClick('policies')}
+          onClick={() => handleCardClick('all-policies')}
         >
           {/* Decorative elements */}
           <div className="absolute top-4 left-4 text-2xl">📋</div>
           <div className="absolute bottom-4 right-4 text-2xl">🦃</div>
           
-          <h3 className="text-3xl font-bold mb-4 group-hover:text-white">Policies</h3>
+          <h3 className="text-3xl font-bold mb-4 group-hover:text-white">all-policies</h3>
           <p className="text-lg opacity-90 leading-relaxed">
             Review grateful guidelines and<br />
             thankful procedures

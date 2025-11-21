@@ -30,7 +30,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { Check, FileText } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 
 interface User {
   _id: string;
@@ -49,7 +49,7 @@ interface UnacknowledgedUser {
   name: string;
 }
 
-interface Memo {
+interface Document {
   subject: string;
   createdAt: string;
   file: string;
@@ -74,7 +74,7 @@ const formatDate = (dateString: string) => {
 
 const ITEMS_PER_PAGE = 10;
 
-const MemoTabs = ({
+const DocumentTabs = ({
   acknowledgedUsers,
   unacknowledgedUsers,
 }: {
@@ -239,7 +239,7 @@ const MemoTabs = ({
                     colSpan={2}
                     className="text-center text-gray-500 py-6"
                   >
-                    All users have acknowledged this memo
+                    All users have acknowledged this document
                   </TableCell>
                 </TableRow>
               )}
@@ -257,13 +257,14 @@ const MemoTabs = ({
   );
 };
 
-const ViewIndividualMemo = () => {
-  const [memos, setMemos] = useState<Memo>();
+const ViewIndividualDocument = () => {
+  const [document, setDocument] = useState<Document>();
   const [unacknowledgedUsers, setUnacknowledgedUsers] = useState<
     UnacknowledgedUser[]
   >([]);
   const [isLoading, setIsLoading] = useState(true);
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
   const userString = localStorage.getItem("user");
   const user: User | null = userString ? JSON.parse(userString) : null;
   const { toast } = useToast();
@@ -271,6 +272,10 @@ const ViewIndividualMemo = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [tempChecked, setTempChecked] = useState(false);
   const [showPdfPreview, setShowPdfPreview] = useState(false);
+
+  // Determine if this is a memo or policy based on the route
+  const isPolicyRoute = location.pathname.includes('/policies/');
+  const documentType = isPolicyRoute ? 'policy' : 'memo';
 
   const handleCheckboxChange = () => {
     setTempChecked(true);
@@ -282,10 +287,15 @@ const ViewIndividualMemo = () => {
     setIsDialogOpen(false);
   };
 
-  const getIndividualMemo = async (id: string) => {
+  const getIndividualDocument = async (id: string) => {
     try {
-      const response = await TicketAPi.getIndividualMemo(id);
-      setMemos(response.data);
+      let response;
+      if (isPolicyRoute) {
+        response = await TicketAPi.getIndividualPolicy(id);
+      } else {
+        response = await TicketAPi.getIndividualMemo(id);
+      }
+      setDocument(response.data);
     } catch (error) {
       console.error(error);
     }
@@ -293,8 +303,13 @@ const ViewIndividualMemo = () => {
 
   const getUnacknowledgedUsers = async (id: string) => {
     try {
-      const response = await TicketAPi.getUserUnacknowledged(id);
-      setUnacknowledgedUsers(response.data.unacknowledgedUsers);
+      let response;
+      if (isPolicyRoute) {
+        response = await TicketAPi.getUserUnacknowledgedPol(id);
+      } else {
+        response = await TicketAPi.getUserUnacknowledged(id);
+      }
+      setUnacknowledgedUsers(response.data.unacknowledgedUsers || response.data);
     } catch (error) {
       console.error(error);
     } finally {
@@ -302,15 +317,20 @@ const ViewIndividualMemo = () => {
     }
   };
 
-  const handleAcknowldged = async (id: string) => {
+  const handleAcknowledged = async (id: string) => {
     try {
-      const response = await TicketAPi.acknowledgement(id);
+      let response;
+      if (isPolicyRoute) {
+        response = await TicketAPi.acknowledgementPolicy(id);
+      } else {
+        response = await TicketAPi.acknowledgement(id);
+      }
       console.log(response.data);
-      getIndividualMemo(id);
+      getIndividualDocument(id);
       getUnacknowledgedUsers(id);
       toast({
         title: "Success",
-        description: "Your acknowledgement of this memo has been recorded",
+        description: `Your acknowledgement of this ${documentType} has been recorded`,
         variant: "default",
       });
       setIsDialogOpen(false);
@@ -320,7 +340,7 @@ const ViewIndividualMemo = () => {
       setTempChecked(false);
       toast({
         title: "Error",
-        description: "Failed to acknowledge memo",
+        description: `Failed to acknowledge ${documentType}`,
         variant: "destructive",
       });
     }
@@ -329,10 +349,14 @@ const ViewIndividualMemo = () => {
   useEffect(() => {
     if (id) {
       setIsLoading(true);
-      getIndividualMemo(id);
+      getIndividualDocument(id);
       getUnacknowledgedUsers(id);
+      
+      if (document?.acknowledgedby.some((ack) => ack.userId === user?._id)) {
+        setIsChecked(true);
+      }
     }
-  }, [id]);
+  }, [id, isPolicyRoute]);
 
   const handleFilePreview = () => {
     setShowPdfPreview(true);
@@ -356,14 +380,17 @@ const ViewIndividualMemo = () => {
             <div className="space-y-3 flex-1">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">
-                  {memos?.subject}
+                  {document?.subject}
                 </h2>
                 <p className="text-sm text-gray-900 mt-1">
-                  Date Posted: {formatDate(memos?.createdAt || "")}
+                  Date Posted: {formatDate(document?.createdAt || "")}
+                </p>
+                <p className="text-xs text-gray-500 mt-1 capitalize">
+                  {documentType}
                 </p>
               </div>
 
-              {memos?.file && (
+              {document?.file && (
                 <div className="mt-4">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
@@ -378,7 +405,7 @@ const ViewIndividualMemo = () => {
                           onClick={handleFilePreview}
                           className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
                         >
-                          <span>{memos.file}</span>
+                          <span>{document.file}</span>
                         </button>
                       </div>
                     </div>
@@ -387,7 +414,7 @@ const ViewIndividualMemo = () => {
               )}
             </div>
 
-            {!memos?.acknowledgedby.some((ack) => ack.userId === user?._id) && (
+            {!document?.acknowledgedby.some((ack) => ack.userId === user?._id) && (
               <div className="flex items-center">
                 <label className="flex items-center space-x-3 cursor-pointer">
                   <div className="relative">
@@ -412,11 +439,11 @@ const ViewIndividualMemo = () => {
             )}
           </div>
 
-          <div className=" pt-1 border-t border-gray-100">
+          <div className="pt-1 border-t border-gray-100">
             <hr className="w-full border-t border-gray-300 my-4"></hr>
             <div className="bg-blue-50 p-4 rounded-md border border-blue-200">
               <pre className="whitespace-pre-wrap font-sans p-3 rounded-sm overflow-x-auto text-sm">
-                {memos?.description}
+                {document?.description}
               </pre>
             </div>
           </div>
@@ -427,8 +454,8 @@ const ViewIndividualMemo = () => {
             <h3 className="text-lg font-semibold text-gray-800 mb-4">
               Acknowledgement Status
             </h3>
-            <MemoTabs
-              acknowledgedUsers={memos?.acknowledgedby || []}
+            <DocumentTabs
+              acknowledgedUsers={document?.acknowledgedby || []}
               unacknowledgedUsers={unacknowledgedUsers}
             />
           </div>
@@ -441,13 +468,13 @@ const ViewIndividualMemo = () => {
           <DialogHeader className="px-6 pt-6 pb-4 border-b">
             <DialogTitle className="flex items-center gap-2">
               <FileText className="text-blue-600" size={20} />
-              <span className="text-gray-800">{memos?.file}</span>
+              <span className="text-gray-800">{document?.file}</span>
             </DialogTitle>
           </DialogHeader>
           <div className="flex-1 overflow-hidden">
             <iframe
               src={`${import.meta.env.VITE_UPLOADFILES_URL}/files/${
-                memos?.file
+                document?.file
               }#toolbar=0`}
               width="100%"
               height="100%"
@@ -468,13 +495,13 @@ const ViewIndividualMemo = () => {
             <DialogDescription className="mt-4 text-gray-600">
               <div className="space-y-4">
                 <p>
-                  By acknowledging this memo, you confirm that you have received
+                  By acknowledging this {documentType}, you confirm that you have received
                   and understood its contents.
                 </p>
                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
                   <p className="font-medium text-blue-800">Declaration:</p>
                   <p className="mt-2 text-blue-700">
-                    "I acknowledge receipt of this memorandum and understand the
+                    "I acknowledge receipt of this {documentType} and understand the
                     information provided. I will comply with any instructions or
                     requirements outlined herein."
                   </p>
@@ -492,7 +519,7 @@ const ViewIndividualMemo = () => {
                 Cancel
               </Button>
               <Button
-                onClick={() => handleAcknowldged(id as string)}
+                onClick={() => handleAcknowledged(id as string)}
                 className="flex-1 bg-blue-600 hover:bg-blue-700 text-sm scale-90"
               >
                 Confirm
@@ -505,4 +532,4 @@ const ViewIndividualMemo = () => {
   );
 };
 
-export default ViewIndividualMemo;
+export default ViewIndividualDocument;

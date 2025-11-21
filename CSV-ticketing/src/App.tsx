@@ -21,7 +21,7 @@ import CreateTicket from "./pages/getHelp/CreateTicket";
 import Homepage from "./pages/homePage/Homepage";
 import LeaveCredit from "./pages/LeaveCredit/LeaveCredit";
 import ViewPolociesMemo from "./pages/memo/View";
-import ViewPolicies from "./pages/memo/viewPolicies"
+import ViewPolicies from "./pages/memo/ViewPolicies"
 import ViewIndividualMemo from "./pages/memo/ViewIndividualMemo";
 import ViewMemo from "./pages/memo/ViewMemo";
 import UserNte from "./pages/nte/userNte";

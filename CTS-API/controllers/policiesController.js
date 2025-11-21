@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const asyncHandler = require("express-async-handler");
 const Policies = require("../models/policiesModel");
 
-const getPolicies = asyncHandler(async (_req, res) => {
+const getAllPolicies = asyncHandler(async (_req, res) => {
   try {
     const user = await User.findById(_req.user._id);
 
@@ -167,7 +167,7 @@ const getUserUnacknowledged = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
-    getPolicies,
+    getAllPolicies,
     getPoliciesById,
     createPolicies,
     updatePolicies,

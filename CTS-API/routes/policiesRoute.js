@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const {
-  getPolicies,
+  getAllPolicies,
   getPoliciesById,
   createPolicies,
   updatePolicies,
@@ -11,7 +11,7 @@ const {
 } = require("../controllers/policiesController");
 const { protect, verifyAdmin } = require("../middleware/authMiddleware");
 
-router.get("/", protect, getPolicies);
+router.get("/", protect, getAllPolicies);
 
 router.get("/:id", protect, getPoliciesById);
 

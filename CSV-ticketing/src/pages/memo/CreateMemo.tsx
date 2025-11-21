@@ -1,8 +1,7 @@
 import { Button } from "@/components/ui/button";
 import axios from "axios";
-
 import { TicketAPi } from "@/API/endpoint";
-import { Checkbox } from "@/components/ui/checkbox"; // Import the checkbox component
+import { Checkbox } from "@/components/ui/checkbox"; 
 import {
   Dialog,
   DialogContent,
@@ -15,7 +14,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import "quill/dist/quill.core.css";
 import { useState } from "react";
 import { Textarea } from "../../components/ui/textarea";
 import { Memo } from "./ViewMemo";
