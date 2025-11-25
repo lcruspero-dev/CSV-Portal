@@ -59,14 +59,27 @@ function ViewPolicies() {
    const user: User | null = userString ? JSON.parse(userString) : null;
    const navigate = useNavigate();
 
+   // Safe function to check if policy is acknowledged by current user
+   const isPolicyAcknowledged = (policy: Policies): boolean => {
+     if (!policy.acknowledgedby || !Array.isArray(policy.acknowledgedby)) {
+       return false;
+     }
+     return policy.acknowledgedby.some((ack) => ack.userId === user?._id);
+   };
+
    {/** Functions for Policies features */}
    const getPolicies = async () => {
     try {
       const response = await TicketAPi.getAllPolicies();
       console.log("API Response:", response);
       
-      // Ensure we're working with an array
-      const policiesData = Array.isArray(response.data) ? response.data : [];
+      // Ensure we're working with an array and each policy has acknowledgedby
+      const policiesData = Array.isArray(response.data) 
+        ? response.data.map((policy: Policies) => ({
+            ...policy,
+            acknowledgedby: policy.acknowledgedby || []
+          }))
+        : [];
       
       console.log("Processed policies data:", policiesData);
       setPolicies(policiesData);
@@ -94,7 +107,7 @@ function ViewPolicies() {
     let filtered = policiesArray;
     if (showPendingOnly) {
       filtered = policiesArray.filter(
-        (policy) => !policy.acknowledgedby.some((ack) => ack.userId === user?._id)
+        (policy) => !isPolicyAcknowledged(policy)
       );
     }
     setFilteredPolicies(filtered);
@@ -121,18 +134,14 @@ function ViewPolicies() {
   };
 
   const getStatusColor = (policy: Policies) => {
-    const isAcknowledged = policy.acknowledgedby.some(
-      (ack) => ack.userId === user?._id
-    );
+    const isAcknowledged = isPolicyAcknowledged(policy);
     return isAcknowledged
       ? "text-green-600 bg-green-50 border border-green-200"
       : "text-amber-600 bg-amber-50 border border-amber-200";
   };
 
   const getStatusText = (policy: Policies) => {
-    const isAcknowledged = policy.acknowledgedby.some(
-      (ack) => ack.userId === user?._id
-    );
+    const isAcknowledged = isPolicyAcknowledged(policy);
     return isAcknowledged
       ? "Acknowledged with Gratitude 🦃"
       : "Awaiting Your Review";
@@ -140,9 +149,7 @@ function ViewPolicies() {
 
   // Safe calculation of pendingCount
   const pendingCount = Array.isArray(policies) 
-    ? policies.filter(
-        (policy) => !policy.acknowledgedby.some((ack) => ack.userId === user?._id)
-      ).length
+    ? policies.filter((policy) => !isPolicyAcknowledged(policy)).length
     : 0;
 
   if (loading) {
@@ -151,9 +158,7 @@ function ViewPolicies() {
 
   // Safe calculation of acknowledged count for stats
   const acknowledgedCount = Array.isArray(policies)
-    ? policies.filter((policy) =>
-        policy.acknowledgedby.some((ack) => ack.userId === user?._id)
-      ).length
+    ? policies.filter((policy) => isPolicyAcknowledged(policy)).length
     : 0;
 
   return (
@@ -170,7 +175,7 @@ function ViewPolicies() {
                 </div>
                 <div>
                   <h1 className="text-2xl sm:text-3xl font-bold text-amber-900">
-                    Thanksgiving Memos
+                    Thanksgiving Policies
                   </h1>
                   <p className="text-amber-700 text-sm mt-1">
                     Share gratitude and important announcements this season
@@ -336,9 +341,7 @@ function ViewPolicies() {
                           policy
                         )}`}
                       >
-                        {policy.acknowledgedby.some(
-                          (ack) => ack.userId === user?._id
-                        ) ? (
+                        {isPolicyAcknowledged(policy) ? (
                           <Heart className="h-3 w-3" />
                         ) : (
                           <div className="h-2 w-2 bg-amber-500 rounded-full animate-pulse" />
@@ -380,9 +383,7 @@ function ViewPolicies() {
                       policy
                     )}`}
                   >
-                    {policy.acknowledgedby.some(
-                      (ack) => ack.userId === user?._id
-                    ) ? (
+                    {isPolicyAcknowledged(policy) ? (
                       <Heart className="h-3 w-3" />
                     ) : (
                       <div className="h-2 w-2 bg-amber-500 rounded-full animate-pulse" />

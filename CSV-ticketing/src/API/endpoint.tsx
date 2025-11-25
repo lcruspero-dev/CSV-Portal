@@ -51,22 +51,17 @@ export const TicketAPi = {
 
   // MEMO
   createMemo: (body: object) => apiHelper("/api/memos/create", "POST", body),
-  getAllMemo: () => apiHelper("/api/memos/", "GET"),
+  getAllMemos: () => apiHelper("/api/memos", "GET"),
   getIndividualMemo: (id: any) => apiHelper(`/api/memos/${id}`, "GET"),
-  acknowledgement: (id: any) =>
-    apiHelper(`/api/memos/${id}/acknowledged`, "PUT"),
-  getUserUnacknowledged: (id: any) =>
-    apiHelper(`/api/memos/unacknowledged/${id}`, "GET"),
+  acknowledgement: (id: any) => apiHelper(`/api/memos/${id}/acknowledged`, "PUT"),
+  getUserUnacknowledged: (id: any) => apiHelper(`/api/memos/unacknowledged/${id}`, "GET"),
 
   // Policies
-  createPolicies: (body: object) =>
-    apiHelper("/api/policies/create", "POST", body),
-  getAllPolicies: () => apiHelper("/api/policies", "GET"), 
+  createPolicies: (body: object) => apiHelper("/api/policies/create", "POST", body),
+  getAllPolicies: () => apiHelper("/api/policies", "GET"),
   getIndividualPolicy: (id: any) => apiHelper(`/api/policies/${id}`, "GET"),
-  acknowledgementPolicy: (id: any) =>
-    apiHelper(`/api/policies/${id}/acknowledged`, "PUT"),
-  getUserUnacknowledgedPol: (id: any) =>
-    apiHelper(`/api/policies/unacknowledged/${id}`, "GET"),
+  acknowledgementPolicy: (id: any) => apiHelper(`/api/policies/${id}/acknowledged`, "PUT"),
+  getUserUnacknowledgedPol: (id: any) => apiHelper(`/api/policies/unacknowledged/${id}`, "GET"),
 };
 
 export const Category = {

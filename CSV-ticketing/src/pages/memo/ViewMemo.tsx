@@ -12,7 +12,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import CreateMemo from "@/pages/memo/CreateMemo";
-import { ChevronLeft, ChevronRight, Eye, FileText, Calendar, Heart, Clover } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  FileText,
+  Calendar,
+  Heart,
+  Clover,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { formattedDate } from "../../API/helper";
@@ -53,7 +61,7 @@ function ViewMemo() {
 
   const getMemos = async () => {
     try {
-      const response = await TicketAPi.getAllMemo();
+      const response = await TicketAPi.getAllMemos();
       console.log(response.data);
       setMemos(response.data);
       setFilteredMemos(response.data);
@@ -73,7 +81,9 @@ function ViewMemo() {
   useEffect(() => {
     let filtered = memos;
     if (showPendingOnly) {
-      filtered = memos.filter(memo => !memo.acknowledgedby.some(ack => ack.userId === user?._id));
+      filtered = memos.filter(
+        (memo) => !memo.acknowledgedby.some((ack) => ack.userId === user?._id)
+      );
     }
     setFilteredMemos(filtered);
     setTotalPages(Math.ceil(filtered.length / itemsPerPage));
@@ -99,16 +109,26 @@ function ViewMemo() {
   };
 
   const getStatusColor = (memo: Memo) => {
-    const isAcknowledged = memo.acknowledgedby.some(ack => ack.userId === user?._id);
-    return isAcknowledged ? "text-green-600 bg-green-50 border border-green-200" : "text-amber-600 bg-amber-50 border border-amber-200";
+    const isAcknowledged = memo.acknowledgedby.some(
+      (ack) => ack.userId === user?._id
+    );
+    return isAcknowledged
+      ? "text-green-600 bg-green-50 border border-green-200"
+      : "text-amber-600 bg-amber-50 border border-amber-200";
   };
 
   const getStatusText = (memo: Memo) => {
-    const isAcknowledged = memo.acknowledgedby.some(ack => ack.userId === user?._id);
-    return isAcknowledged ? "Acknowledged with Gratitude 🦃" : "Awaiting Your Review";
+    const isAcknowledged = memo.acknowledgedby.some(
+      (ack) => ack.userId === user?._id
+    );
+    return isAcknowledged
+      ? "Acknowledged with Gratitude 🦃"
+      : "Awaiting Your Review";
   };
 
-  const pendingCount = memos.filter(memo => !memo.acknowledgedby.some(ack => ack.userId === user?._id)).length;
+  const pendingCount = memos.filter(
+    (memo) => !memo.acknowledgedby.some((ack) => ack.userId === user?._id)
+  ).length;
 
   if (loading) {
     return <LoadingComponent />;
@@ -136,7 +156,7 @@ function ViewMemo() {
                 </div>
               </div>
             </div>
-            
+
             {user?.isAdmin && (
               <div className="sm:absolute sm:right-0 sm:top-0">
                 <CreateMemo setMemos={setMemos} setLoading={setLoading} />
@@ -150,21 +170,33 @@ function ViewMemo() {
           <div className="bg-white rounded-2xl p-6 shadow-lg border border-amber-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-amber-600">Total Blessings</p>
-                <p className="text-2xl font-bold text-amber-900 mt-1">{memos.length}</p>
+                <p className="text-sm font-medium text-amber-600">
+                  Total Blessings
+                </p>
+                <p className="text-2xl font-bold text-amber-900 mt-1">
+                  {memos.length}
+                </p>
               </div>
               <div className="p-3 bg-amber-100 rounded-xl">
                 <FileText className="h-6 w-6 text-amber-600" />
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-2xl p-6 shadow-lg border border-green-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-green-600">Grateful Responses</p>
+                <p className="text-sm font-medium text-green-600">
+                  Grateful Responses
+                </p>
                 <p className="text-2xl font-bold text-green-600 mt-1">
-                  {memos.filter(memo => memo.acknowledgedby.some(ack => ack.userId === user?._id)).length}
+                  {
+                    memos.filter((memo) =>
+                      memo.acknowledgedby.some(
+                        (ack) => ack.userId === user?._id
+                      )
+                    ).length
+                  }
                 </p>
               </div>
               <div className="p-3 bg-green-100 rounded-xl">
@@ -172,16 +204,18 @@ function ViewMemo() {
               </div>
             </div>
           </div>
-          
-          <div 
+
+          <div
             className={`bg-white rounded-2xl p-6 shadow-lg border border-amber-200 cursor-pointer transition-all duration-200 hover:shadow-xl hover:border-amber-400 ${
-              showPendingOnly ? 'ring-2 ring-amber-500 border-amber-500' : ''
+              showPendingOnly ? "ring-2 ring-amber-500 border-amber-500" : ""
             }`}
             onClick={handleShowPendingClick}
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-amber-600">Awaiting Gratitude</p>
+                <p className="text-sm font-medium text-amber-600">
+                  Awaiting Gratitude
+                </p>
                 <p className="text-2xl font-bold text-amber-600 mt-1">
                   {pendingCount}
                 </p>
@@ -206,7 +240,8 @@ function ViewMemo() {
               <div className="flex items-center gap-2">
                 <div className="h-2 w-2 bg-amber-500 rounded-full animate-pulse" />
                 <span className="text-amber-800 font-medium">
-                  🦃 Sharing gratitude for {pendingCount} memo{pendingCount !== 1 ? 's' : ''}
+                  🦃 Sharing gratitude for {pendingCount} memo
+                  {pendingCount !== 1 ? "s" : ""}
                 </span>
               </div>
               <Button
@@ -253,8 +288,8 @@ function ViewMemo() {
               </TableHeader>
               <TableBody>
                 {getCurrentPageMemos().map((memo, index) => (
-                  <TableRow 
-                    key={memo._id} 
+                  <TableRow
+                    key={memo._id}
                     className={`border-b border-amber-100 transition-colors hover:bg-amber-50 ${
                       index % 2 === 0 ? "bg-amber-25" : "bg-white"
                     }`}
@@ -280,8 +315,14 @@ function ViewMemo() {
                       </div>
                     </TableCell>
                     <TableCell className="py-4 text-center">
-                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(memo)}`}>
-                        {memo.acknowledgedby.some(ack => ack.userId === user?._id) ? (
+                      <div
+                        className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                          memo
+                        )}`}
+                      >
+                        {memo.acknowledgedby.some(
+                          (ack) => ack.userId === user?._id
+                        ) ? (
                           <Heart className="h-3 w-3" />
                         ) : (
                           <div className="h-2 w-2 bg-amber-500 rounded-full animate-pulse" />
@@ -307,7 +348,7 @@ function ViewMemo() {
           {/* Mobile Cards */}
           <div className="lg:hidden p-4 space-y-4">
             {getCurrentPageMemos().map((memo) => (
-              <div 
+              <div
                 key={memo._id}
                 className="bg-white border border-amber-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-200"
               >
@@ -318,8 +359,14 @@ function ViewMemo() {
                       {formattedDate(memo.createdAt)}
                     </span>
                   </div>
-                  <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(memo)}`}>
-                    {memo.acknowledgedby.some(ack => ack.userId === user?._id) ? (
+                  <div
+                    className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                      memo
+                    )}`}
+                  >
+                    {memo.acknowledgedby.some(
+                      (ack) => ack.userId === user?._id
+                    ) ? (
                       <Heart className="h-3 w-3" />
                     ) : (
                       <div className="h-2 w-2 bg-amber-500 rounded-full animate-pulse" />
@@ -327,14 +374,16 @@ function ViewMemo() {
                     {getStatusText(memo)}
                   </div>
                 </div>
-                
+
                 <div className="mb-4">
-                  <h3 className="font-semibold text-amber-900 text-sm mb-2">Message:</h3>
+                  <h3 className="font-semibold text-amber-900 text-sm mb-2">
+                    Message:
+                  </h3>
                   <p className="text-amber-800 line-clamp-3 text-sm">
                     {memo.subject}
                   </p>
                 </div>
-                
+
                 <Button
                   onClick={() => navigate(`/memo/${memo._id}`)}
                   className="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-medium py-2 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-lg"
@@ -353,12 +402,16 @@ function ViewMemo() {
                 <TableCell colSpan={4} className="px-6 py-4">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="text-sm text-amber-700 text-center sm:text-left">
-                      Showing {((currentPage - 1) * itemsPerPage) + 1} to{" "}
-                      {Math.min(currentPage * itemsPerPage, filteredMemos.length)} of{" "}
-                      {filteredMemos.length} blessing{filteredMemos.length !== 1 ? 's' : ''}
+                      Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
+                      {Math.min(
+                        currentPage * itemsPerPage,
+                        filteredMemos.length
+                      )}{" "}
+                      of {filteredMemos.length} blessing
+                      {filteredMemos.length !== 1 ? "s" : ""}
                       {showPendingOnly && " (Awaiting your gratitude)"}
                     </div>
-                    
+
                     <div className="flex items-center justify-center gap-2">
                       <Button
                         variant="outline"
@@ -370,38 +423,45 @@ function ViewMemo() {
                         <ChevronLeft className="h-4 w-4" />
                         <span className="hidden sm:block">Previous</span>
                       </Button>
-                      
+
                       <div className="flex items-center gap-1">
-                        {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                          let pageNum;
-                          if (totalPages <= 5) {
-                            pageNum = i + 1;
-                          } else if (currentPage <= 3) {
-                            pageNum = i + 1;
-                          } else if (currentPage >= totalPages - 2) {
-                            pageNum = totalPages - 4 + i;
-                          } else {
-                            pageNum = currentPage - 2 + i;
+                        {Array.from(
+                          { length: Math.min(totalPages, 5) },
+                          (_, i) => {
+                            let pageNum;
+                            if (totalPages <= 5) {
+                              pageNum = i + 1;
+                            } else if (currentPage <= 3) {
+                              pageNum = i + 1;
+                            } else if (currentPage >= totalPages - 2) {
+                              pageNum = totalPages - 4 + i;
+                            } else {
+                              pageNum = currentPage - 2 + i;
+                            }
+
+                            return (
+                              <Button
+                                key={pageNum}
+                                variant={
+                                  pageNum === currentPage
+                                    ? "default"
+                                    : "outline"
+                                }
+                                size="sm"
+                                onClick={() => handlePageChange(pageNum)}
+                                className={`w-8 h-8 p-0 text-xs ${
+                                  pageNum === currentPage
+                                    ? "bg-amber-600 hover:bg-amber-700"
+                                    : "border-amber-300 text-amber-700 hover:bg-amber-100"
+                                }`}
+                              >
+                                {pageNum}
+                              </Button>
+                            );
                           }
-                          
-                          return (
-                            <Button
-                              key={pageNum}
-                              variant={pageNum === currentPage ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => handlePageChange(pageNum)}
-                              className={`w-8 h-8 p-0 text-xs ${
-                                pageNum === currentPage 
-                                  ? 'bg-amber-600 hover:bg-amber-700' 
-                                  : 'border-amber-300 text-amber-700 hover:bg-amber-100'
-                              }`}
-                            >
-                              {pageNum}
-                            </Button>
-                          );
-                        })}
+                        )}
                       </div>
-                      
+
                       <Button
                         variant="outline"
                         size="sm"
@@ -425,13 +485,14 @@ function ViewMemo() {
               <div className="text-4xl mb-4">🦃</div>
               <FileText className="h-16 w-16 text-amber-300 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-amber-900 mb-2">
-                {showPendingOnly ? "All caught up with gratitude!" : "No messages of gratitude yet"}
+                {showPendingOnly
+                  ? "All caught up with gratitude!"
+                  : "No messages of gratitude yet"}
               </h3>
               <p className="text-amber-700 max-w-sm mx-auto">
-                {showPendingOnly 
+                {showPendingOnly
                   ? "You've acknowledged all memos with gratitude. What a thankful heart!"
-                  : "There are no Thanksgiving memos available at the moment. Check back later for messages of gratitude."
-                }
+                  : "There are no Thanksgiving memos available at the moment. Check back later for messages of gratitude."}
               </p>
               {showPendingOnly && (
                 <Button
@@ -449,7 +510,9 @@ function ViewMemo() {
         <div className="mt-8 text-center">
           <div className="text-amber-600 text-sm flex items-center justify-center gap-2">
             <span>🦃</span>
-            <span>Wishing you a season filled with gratitude and blessings</span>
+            <span>
+              Wishing you a season filled with gratitude and blessings
+            </span>
             <span>🍂</span>
           </div>
         </div>

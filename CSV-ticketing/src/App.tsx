@@ -23,6 +23,7 @@ import LeaveCredit from "./pages/LeaveCredit/LeaveCredit";
 import ViewPolociesMemo from "./pages/memo/View";
 import ViewPolicies from "./pages/memo/ViewPolicies"
 import ViewIndividualMemo from "./pages/memo/ViewIndividualMemo";
+import ViewIndividualPolicy from "./pages/memo/ViewIndividualPolicy";
 import ViewMemo from "./pages/memo/ViewMemo";
 import UserNte from "./pages/nte/userNte";
 import { ProtectedRoute } from "./pages/ProtectedRoute";
@@ -61,6 +62,7 @@ function App() {
               <Route path="/all-policies" element={<ViewPolicies />} />
               <Route path="/view-polMemo" element={<ViewPolociesMemo />} />
               <Route path="/memo/:id" element={<ViewIndividualMemo />} />
+              <Route path="/policies/:id" element={<ViewIndividualPolicy />} />
               <Route path="/addcategory" element={<CreateCategory />} />
               <Route path="/addassign" element={<CreateAssign />} />
               <Route path="/exportdata" element={<ExportData />} />

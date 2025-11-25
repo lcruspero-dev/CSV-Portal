@@ -27,14 +27,14 @@ const CreateMemo: React.FC<CreateMemoProps> = ({ setMemos, setLoading }) => {
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
   const [filename, setFilename] = useState("");
-  const [isPinned, setIsPinned] = useState(false); // New state for pinned status
+  const [isPinned, setIsPinned] = useState(false); 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
   const getMemos = async () => {
     try {
-      const response = await TicketAPi.getAllMemo();
+      const response = await TicketAPi.getAllMemos();
       console.log(response.data);
       setMemos(response.data);
     } catch (error) {

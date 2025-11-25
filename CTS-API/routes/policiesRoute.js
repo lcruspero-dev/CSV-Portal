@@ -23,6 +23,6 @@ router.delete("/:id", protect, verifyAdmin, deletePolicies);
 
 router.put("/:id/acknowledged", protect, updateAcknowledged);
 
-router.get("unacknowledged/:memoId", protect, verifyAdmin, getUserUnacknowledged)
+router.get("/unacknowledged/:memoId", protect, verifyAdmin, getUserUnacknowledged);
 
 module.exports = router;
