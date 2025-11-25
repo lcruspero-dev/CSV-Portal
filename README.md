@@ -111,7 +111,7 @@ Replace <SERVER_IP_OR_DOMAIN> with your actual server IP address or domain name.
 Ensure the backend port (4000 in this example) matches your server configuration.
 
 ## 2. Prepare the Server
-### 2.1 Install Node.js and pm2
+### 2.1 Install Node.js and pm2 visit the this site for pm2 - https://pm2.keymetrics.io/
 If not already installed, install Node.js on your server. Then, install pm2 globally:
 ```
 npm install -g pm2
@@ -156,6 +156,21 @@ pm2 list
 pm2 logs csv-backend
 ```
 
+## 7. The consice example of using PM2 for a Node.js app:
+```
+Is puted on this files in the repo
+
+API START.bat
+pm2-Monitoring start.bat
+pm2-start-API.bat
+PM2.txt
+```
+
+## For the ecosystem of out portal
+
+```
+ecossytem.config.js
+```
 
 
 
