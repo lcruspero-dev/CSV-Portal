@@ -67,7 +67,7 @@ Need to update the origin http
 ```
 
 
-## CSV-Tickeing 
+## CSV-Ticketing 
 #### Local Development (your machine)
 When you are running the app locally
 ```bash
@@ -169,7 +169,7 @@ PM2.txt
 ## For the ecosystem of out portal
 
 ```
-ecossytem.config.js
+ecosystem.config.js
 ```
 
 
