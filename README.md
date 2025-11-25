@@ -156,12 +156,6 @@ pm2 list
 pm2 logs csv-backend
 ```
 
-## 7. Example configuration for auto start when the server will restart or turn off on its own 
-```
-@echo off
-start "" "C:\Program Files\Git\bin\bash.exe" -c "pm2 monit"
-pause
-```
 
 
 
