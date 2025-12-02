@@ -70,7 +70,7 @@ const ExportMemoData = () => {
   useEffect(() => {
     const fetchMemoTitles = async () => {
       try {
-        const response = await TicketAPi.getAllMemo();
+        const response = await TicketAPi.getAllMemos();
         const memoTitleResponse: MemoTitleResponse = response;
 
         if (Array.isArray(memoTitleResponse.data)) {
