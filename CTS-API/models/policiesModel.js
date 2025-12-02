@@ -12,7 +12,7 @@ const policiesSchema = mongoose.Schema({
     type: String,
     required: [true, "Please add a subject"],
   },
-  acknowledgeby: [
+  acknowledgedby: [
     {
       name: {
         type: String,

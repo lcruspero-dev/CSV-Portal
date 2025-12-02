@@ -133,9 +133,13 @@ const updateAcknowledged = asyncHandler(async (req, res) => {
 
 const getUserUnacknowledged = asyncHandler(async (req, res) => {
   try {
-    const { policyId } = req.params;
-
+    // The parameter name might be different. Try using req.params.id instead
+   const policyId = req.params.policyId;
+    
+    console.log('Received policy ID:', policyId, 'from params:', req.params);
+    
     if (!mongoose.Types.ObjectId.isValid(policyId)) { 
+      console.log('Invalid ObjectId:', policyId);
       return res.status(400).json({ message: "Invalid policy ID" }); 
     }
 
@@ -162,6 +166,7 @@ const getUserUnacknowledged = asyncHandler(async (req, res) => {
       })),
     });
   } catch (error) {
+    console.error('Error in getUserUnacknowledged:', error);
     return res.status(500).json({ message: error.message });
   }
 });
