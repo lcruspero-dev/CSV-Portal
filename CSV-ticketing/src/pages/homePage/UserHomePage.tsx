@@ -91,7 +91,7 @@ const UserHome = () => {
   useEffect(() => {
     const getUnacknowledgedCount = async () => {
       try {
-        const response = await TicketAPi.getAllMemo();
+        const response = await TicketAPi.getAllMemos();
         const unacknowledgedMemos = response.data.filter(
           (memo: { acknowledgedby: { userId: any }[] }) =>
             !memo.acknowledgedby?.some(

@@ -3,8 +3,8 @@ import BackButton from "@/components/kit/BackButton";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
+  DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -314,33 +314,41 @@ const ViewIndividualDocument = ({ documentType = 'policy' }: ViewIndividualDocum
     }
   };
 
-  const getUnacknowledgedUsers = async (id: string) => {
-    try {
-      let response;
-      if (isPolicyRoute) {
-        response = await TicketAPi.getUserUnacknowledgedPol(id);
-      } else {
-        response = await TicketAPi.getUserUnacknowledged(id);
+const getUnacknowledgedUsers = async (id: string) => {
+  try {
+    let response;
+    if (isPolicyRoute) {
+      response = await TicketAPi.getUserUnacknowledgedPol(id);
+    } else {
+      response = await TicketAPi.getUserUnacknowledged(id);
+    }
+    
+    console.log('Unacknowledged API Response:', response);
+    
+    if (response?.data) {
+      // For policies, the response should have unacknowledgedUsers array
+      if (response.data.unacknowledgedUsers && Array.isArray(response.data.unacknowledgedUsers)) {
+        setUnacknowledgedUsers(response.data.unacknowledgedUsers);
       }
-      
-      // Handle different response structures
-      if (response.data) {
-        if (Array.isArray(response.data)) {
-          setUnacknowledgedUsers(response.data);
-        } else if (response.data.unacknowledgedUsers) {
-          setUnacknowledgedUsers(response.data.unacknowledgedUsers);
-        } else {
-          setUnacknowledgedUsers([]);
-        }
-      } else {
+      // For memos or other response structures
+      else if (Array.isArray(response.data)) {
+        setUnacknowledgedUsers(response.data);
+      }
+      else if (response.data.data && Array.isArray(response.data.data)) {
+        setUnacknowledgedUsers(response.data.data);
+      }
+      else {
+        console.warn('Unexpected response structure:', response.data);
         setUnacknowledgedUsers([]);
       }
-    } catch (error: any) {
-      console.error('Error fetching unacknowledged users:', error);
-      // Don't show toast for this error to avoid duplicate messages
+    } else {
       setUnacknowledgedUsers([]);
     }
-  };
+  } catch (error: any) {
+    console.error('Error fetching unacknowledged users:', error);
+    setUnacknowledgedUsers([]);
+  }
+};
 
   const handleAcknowledged = async (id: string) => {
     try {
@@ -382,13 +390,13 @@ const ViewIndividualDocument = ({ documentType = 'policy' }: ViewIndividualDocum
       setError(null);
       const fetchData = async () => {
         try {
-          await Promise.all([
-            getIndividualDocument(id),
-            getUnacknowledgedUsers(id)
-          ]);
+          await getIndividualDocument(id);
+          // Don't wait for unacknowledged users - handle it separately
+          getUnacknowledgedUsers(id).finally(() => {
+            setIsLoading(false);
+          });
         } catch (error) {
           console.error('Error in fetchData:', error);
-        } finally {
           setIsLoading(false);
         }
       };
@@ -498,7 +506,7 @@ const ViewIndividualDocument = ({ documentType = 'policy' }: ViewIndividualDocum
               )}
             </div>
 
-            {/* FIXED: Safe check for acknowledgedby */}
+            {/* FIXED: Added optional chaining for acknowledgedby */}
             {!document.acknowledgedby?.some((ack) => ack.userId === user?._id) && (
               <div className="flex items-center">
                 <label className="flex items-center space-x-3 cursor-pointer">
@@ -570,49 +578,48 @@ const ViewIndividualDocument = ({ documentType = 'policy' }: ViewIndividualDocum
         </DialogContent>
       </Dialog>
 
-      {/* Acknowledgment Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={handleCancelAcknowledgment}>
-        <DialogContent className="bg-white rounded-lg max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-xl text-gray-800">
-              Confirm Acknowledgement
-            </DialogTitle>
-            <DialogDescription className="mt-4 text-gray-600">
-              <div className="space-y-4">
-                <p>
-                  By acknowledging this {documentType}, you confirm that you have received
-                  and understood its contents.
-                </p>
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                  <p className="font-medium text-blue-800">Declaration:</p>
-                  <p className="mt-2 text-blue-700">
-                    "I acknowledge receipt of this {documentType} and understand the
-                    information provided. I will comply with any instructions or
-                    requirements outlined herein."
-                  </p>
-                </div>
-              </div>
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="mt-6">
-            <div className="flex gap-1">
-              <Button
-                variant="outline"
-                onClick={handleCancelAcknowledgment}
-                className="flex-1 text-sm scale-90"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={() => handleAcknowledged(id as string)}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-sm scale-90"
-              >
-                Confirm
-              </Button>
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Acknowledgment Dialog - FIXED DOM NESTING */}
+      {/* Acknowledgment Dialog - FIXED with proper DialogDescription */}
+<Dialog open={isDialogOpen} onOpenChange={handleCancelAcknowledgment}>
+  <DialogContent className="bg-white rounded-lg max-w-md">
+    <DialogHeader>
+      <DialogTitle className="text-xl text-gray-800">
+        Confirm Acknowledgement
+      </DialogTitle>
+      <DialogDescription className="mt-4 text-gray-600">
+        By acknowledging this {documentType}, you confirm that you have received
+        and understood its contents.
+      </DialogDescription>
+    </DialogHeader>
+    
+    <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 mt-4">
+      <p className="font-medium text-blue-800">Declaration:</p>
+      <p className="mt-2 text-blue-700">
+        "I acknowledge receipt of this {documentType} and understand the
+        information provided. I will comply with any instructions or
+        requirements outlined herein."
+      </p>
+    </div>
+    
+    <DialogFooter className="mt-6">
+      <div className="flex gap-1">
+        <Button
+          variant="outline"
+          onClick={handleCancelAcknowledgment}
+          className="flex-1 text-sm scale-90"
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={() => handleAcknowledged(id as string)}
+          className="flex-1 bg-blue-600 hover:bg-blue-700 text-sm scale-90"
+        >
+          Confirm
+        </Button>
+      </div>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
     </div>
   );
 };
