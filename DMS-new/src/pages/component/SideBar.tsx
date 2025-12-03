@@ -57,6 +57,10 @@ const items: MenuItem[] = [
         url: "/nte",
       },
       {
+        title: "Coaching Form",
+        url: "/coaching",
+      },
+      {
         title: "Report Incident",
         url: "/ri",
       },

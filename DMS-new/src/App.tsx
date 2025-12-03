@@ -22,6 +22,7 @@ import Nte from "./pages/nte/Nte";
 import Policy from "./pages/policy/Policy";
 import Ri from "./pages/ri/Ri";
 import UserNta from "./pages/usernta/UserNta";
+import Coaching from "./pages/coach/Coaching"
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -52,6 +53,7 @@ const AppRoutes = () => {
               <Route path="/nte" element={<Nte />} />
               <Route path="/ri" element={<Ri />} />
               <Route path="/usernta" element={<UserNta />} />
+              <Route path="/coaching" element={<Coaching />} />
               <Route path="/alldraft" element={<AllDraft />} />
               <Route path="/allper" element={<AllPendingResponse />} />
               <Route path="/allfthr" element={<AllHrForwarded />} />
