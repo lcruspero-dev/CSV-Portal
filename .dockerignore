@@ -1,0 +1,54 @@
+# Dependencies
+node_modules
+*/node_modules
+
+# Git
+.git
+.gitignore
+
+# Environment files (use .env.docker for Docker)
+.env
+.env.*
+!.env.docker.example
+
+# Build outputs
+dist
+*/dist
+build
+*/build
+
+# IDE and OS
+.DS_Store
+.idea
+.vscode
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Documentation
+*.md
+!README.md
+
+# Test files
+coverage
+*.test.js
+*.spec.js
+__tests__
+
+# Temporary files
+tmp
+temp
+*.tmp
+
+# Upload directories (will be mounted as volumes)
+import-files-API/uploads
+import-files-API/Signature_uploads
+import-files-API/avatar
+
+# Legacy/unused directories
+Frontend Version

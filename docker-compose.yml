@@ -1,0 +1,122 @@
+# CSV-Portal Docker Compose Configuration
+# Production deployment with all services
+
+services:
+  # ============================================
+  # MongoDB Database
+  # ============================================
+  mongodb:
+    image: mongo:7
+    container_name: csvportal-mongodb
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_DATABASE=csvportal
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - csvportal-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # ============================================
+  # CTS-API Backend
+  # ============================================
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    container_name: csvportal-api
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=3000
+      - MONGODB_URL=mongodb://mongodb:27017/csvportal
+      - JWT_SECRET=${JWT_SECRET}
+      - RESET_SECRET_KEY=${RESET_SECRET_KEY}
+      - UPDATE_SECRET_KEY=${UPDATE_SECRET_KEY}
+    ports:
+      - "5001:3000"
+    networks:
+      - csvportal-network
+
+  # ============================================
+  # File Upload API
+  # ============================================
+  files-api:
+    build:
+      context: .
+      dockerfile: docker/files.Dockerfile
+    container_name: csvportal-files-api
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=4000
+    volumes:
+      - uploads_data:/app/uploads
+      - signatures_data:/app/Signature_uploads
+      - avatars_data:/app/avatar
+    ports:
+      - "4000:4000"
+    networks:
+      - csvportal-network
+
+  # ============================================
+  # CSV-Ticketing Frontend
+  # ============================================
+  ticketing:
+    build:
+      context: .
+      dockerfile: docker/ticketing.Dockerfile
+      args:
+        - VITE_BASE_URL=${VITE_BASE_URL:-http://localhost:5001}
+        - VITE_UPLOADFILES_URL=${VITE_UPLOADFILES_URL:-http://localhost:4000}
+    container_name: csvportal-ticketing
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    networks:
+      - csvportal-network
+
+  # ============================================
+  # DMS-new Frontend
+  # ============================================
+  dms:
+    build:
+      context: .
+      dockerfile: docker/dms.Dockerfile
+      args:
+        - VITE_BASE_URL=${VITE_BASE_URL:-http://localhost:5001}
+        - VITE_UPLOADFILES_URL=${VITE_UPLOADFILES_URL:-http://localhost:4000}
+    container_name: csvportal-dms
+    restart: unless-stopped
+    ports:
+      - "3001:80"
+    networks:
+      - csvportal-network
+
+# ============================================
+# Networks
+# ============================================
+networks:
+  csvportal-network:
+    driver: bridge
+
+# ============================================
+# Volumes
+# ============================================
+volumes:
+  mongodb_data:
+    name: csvportal-mongodb-data
+  uploads_data:
+    name: csvportal-uploads
+  signatures_data:
+    name: csvportal-signatures
+  avatars_data:
+    name: csvportal-avatars
