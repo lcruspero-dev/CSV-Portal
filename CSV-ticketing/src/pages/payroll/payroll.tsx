@@ -88,7 +88,7 @@ const Checkbox = ({
 };
 
 // Enhanced helper for nested paths with better error handling
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 const getByPath = (obj: any, path: string): any => {
   if (!obj || typeof obj !== 'object') return undefined;
   
@@ -454,9 +454,9 @@ const payrollColumns: ColumnDef<Payroll>[] = [
   },
 ];
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 const getStickyStyle = (index: number, items: any[]) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const getDef = (item: any) =>
     item?.column?.columnDef ?? item?.columnDef ?? {};
   let leftOffset = 0;
@@ -512,7 +512,7 @@ const PayrollTable = ({
     const totals: Array<number | null> = [];
     const isNumeric: boolean[] = [];
     leafColumns.forEach((col) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const accessorKey = (col.columnDef as any).accessorKey as
         | string
         | undefined;
@@ -521,7 +521,7 @@ const PayrollTable = ({
         isNumeric.push(false);
         return;
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const numeric = data.some(
         (row) => typeof getByPath(row as any, accessorKey) === "number"
       );
@@ -531,7 +531,7 @@ const PayrollTable = ({
         return;
       }
       const sum = data.reduce((acc, row) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         const value = getByPath(row as any, accessorKey);
         return acc + (typeof value === "number" ? value : 0);
       }, 0);
@@ -733,7 +733,7 @@ const PayrollTable = ({
               {/* Totals footer per column */}
               <TableRow className="bg-gray-50 font-semibold">
                 {leafColumns.map((col, i) => {
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                   
                   const stickyProps = getStickyStyle(i, leafColumns as any);
                   const total = columnTotals[i];
                   const isNum = columnIsNumeric[i];
@@ -950,7 +950,7 @@ const PayrollPage = () => {
         if (!isMounted.current) return;
         
         setData(prev => prev.map(p => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+           
           const same = ((p as any)._id === payrollId);
           if (!same) return p;
           
@@ -1121,7 +1121,7 @@ const PayrollPage = () => {
     const recomputed = computePayroll(updated);
     setData((prev) =>
       prev.map((p) =>
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         (p as any)._id === (recomputed as any)._id ? recomputed : p
       )
     );
@@ -1204,13 +1204,13 @@ const PayrollPage = () => {
           <PayrollModal
             onAdd={(p) =>
               setData((prev) => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                 
                 const id = (p as any)._id;
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                 
                 const exists = prev.some((x) => (x as any)._id === id);
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                 
                 return exists
-                  ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  ?  
                   prev.map((x) => ((x as any)._id === id ? p : x))
                   : [...prev, p];
               })

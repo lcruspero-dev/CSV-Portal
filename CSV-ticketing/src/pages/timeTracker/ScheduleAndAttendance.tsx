@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // components/ScheduleAndAttendance.tsx
 import {
   addDays,

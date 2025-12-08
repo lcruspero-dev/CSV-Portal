@@ -61,7 +61,7 @@ const View: React.FC = () => {
           <div className="absolute top-4 left-4 text-2xl">📋</div>
           <div className="absolute bottom-4 right-4 text-2xl">🦃</div>
           
-          <h3 className="text-3xl font-bold mb-4 group-hover:text-white">all-policies</h3>
+          <h3 className="text-3xl font-bold mb-4 group-hover:text-white">Policies</h3>
           <p className="text-lg opacity-90 leading-relaxed">
             Review grateful guidelines and<br />
             thankful procedures
