@@ -1,9 +1,6 @@
 const express = require("express");
-const colors = require("colors");
-const dotenv = require("dotenv").config();
 const { errorHandler } = require("./middleware/errorMiddleware");
 const connectDB = require("./config/db");
-const path = require("path");
 const PORT = process.env.PORT || 3000;
 const cors = require("cors");
 
@@ -52,6 +49,7 @@ app.use(
 );
 app.use("/api/surveys", require("./routes/surveyRoutes"));
 app.use("/api/ntes", require("./routes/nteRoutes"));
+app.use("/api/coaching", require("./routes/coachingRoutes"));
 app.use("/api/userprofiles", require("./routes/userProfileRoutes"));
 app.use("/api/leave", require("./routes/leaveRoutes"));
 app.use("/api/payroll", require("./routes/payrollRoute.js"));

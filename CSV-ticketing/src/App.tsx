@@ -37,13 +37,17 @@ import TimeTracker from "./pages/timeTracker/TimeTracker";
 import ProtectedRoute2 from "./utils/protectedRoutes";
 import Payroll from "./pages/payroll/payroll";
 import PayslipPage from "./pages/payslip/PayslipPage";
+import ApiDocumentation from "./pages/apiDocumentation";
 function App() {
   return (
     <AuthProvider>
       <>
+      
         <Header />
+
           <Routes>
             {/* Public Routes */}
+              <Route path="/api-documentaion" element={<ApiDocumentation />} />
 
             <Route element={<Layout />}>
               <Route path="/sign-in" element={<Login />} />

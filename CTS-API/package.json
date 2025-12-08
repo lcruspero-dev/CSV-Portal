@@ -13,6 +13,7 @@
   },
   "author": "Mohammad Arif",
   "license": "MIT",
+  "type": "commonjs",
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "colors": "^1.4.0",

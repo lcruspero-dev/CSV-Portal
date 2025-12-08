@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const coachingSchema = new Schema({
+  
   coaching: {
     employeeId: {
       type: String,
@@ -23,11 +24,11 @@ const coachingSchema = new Schema({
       type: String,
       required: true,
     },
-    offenseType: {
+    coachingObjectives: {
       type: String,
       required: true,
     },
-    offenseDescription: {
+    employeeResponse: {
       type: String,
       required: true,
     },
@@ -43,58 +44,6 @@ const coachingSchema = new Schema({
       default: null,
     },
   },
-
-   employeeFeedback: {
-    name: {
-      type: String,
-    },
-    position: {
-      type: String,
-    },
-    responseDate: {
-      type: String,
-    },
-    responseDetail: {
-      type: String,
-    },
-    employeeSignatureDate: {
-      type: String,
-    },
-  },
-
-  noticeOfDecision: {
-    name: {
-      type: String,
-    },
-    position: {
-      type: String,
-    },
-    nteIssuanceDate: {
-      type: String,
-    },
-    writtenExplanationReceiptDate: {
-      type: String,
-    },
-    offenseType: {
-      type: String,
-    },
-    offenseDescription: {
-      type: String,
-    },
-    findings: {
-      type: String,
-    },
-    decision: {
-      type: String,
-    },
-    employeeSignatureDate: {
-      type: String,
-    },
-    authorizedSignatureDate: {
-      type: String,
-    },
-  },
-
    status: {
     type: String,
     enum: ["DRAFT", "PER", "PNOD", "PNODA", "FTHR"],
@@ -113,7 +62,7 @@ const coachingSchema = new Schema({
 
 });
 
-coachingSchema("save", function (next) {
+coachingSchema.pre("save", function (next) {
   this.updatedAt = new Date();
   next();
 });
