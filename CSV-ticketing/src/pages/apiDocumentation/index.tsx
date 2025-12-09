@@ -1,38 +1,60 @@
 import { useState } from "react";
+import { 
+  loginResponse, 
+  registerResponse, 
+  allEmailsResponse,
+  fetchOwnEmailResponse,
+
+} from "./apiResponse.ts"; 
 
 interface Endpoint {
+  url: string;
+  method: string;
   name: string;
   description?: string;
-  sampleResponse: object; // Example JSON stored in the code
+  sampleResponse: object;
 }
 
-// Define endpoints with example responses
 const login: Endpoint = {
+  url: "http://localhost:5000/api/users/login",
+  method: "POST",
   name: "Login",
-  description: "Authenticate a user",
-  sampleResponse: {
-    "_id": "693722663e37577b33f4e144",
-    "name": "CSVtest",
-    "email": "csvnow@gmail.com",
-    "isAdmin": false,
-    "role": "user",
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5MzcyMjY2M2UzNzU3N2IzM2Y0ZTE0NCIsImlzQWRtaW4iOmZhbHNlLCJuYW1lIjoiQ1NWdGVzdCIsImlhdCI6MTc2NTIyMDk2NiwiZXhwIjoxNzY3ODEyOTY2fQ.6nd1yH-Er43M00DhNukCZU39i8sulEt0D5MJOwqX7a0",
-    "loginLimit": 1
-  }
+  description: "Logged in a user",
+  sampleResponse: loginResponse
 };
 
 const register: Endpoint = {
+  url: "http://localhost:5000/api/users/",
+  method: "POST",
   name: "Register",
-  description: "Create a new user",
-  sampleResponse: {
-    "id": "123456",
-    "username": "newuser",
-    "email": "newuser@example.com",
-    "role": "user"
-  }
+  description: "Register a new user",
+  sampleResponse: registerResponse
 };
 
-const endpoints: Endpoint[] = [login, register];
+const emails: Endpoint = {
+  url: "http://localhost:5000/api/users/emails",
+  method: "GET",
+  name: "Emails",
+  description: "Retrieve all user emails",
+  sampleResponse: allEmailsResponse
+}
+
+const ownData: Endpoint = {
+  url: "http://localhost:5000/api/users/me",
+  method: "GET",
+  name: "Fetch Own Data",
+  description: "Fetch the authenticated user's data",
+  sampleResponse: fetchOwnEmailResponse
+}
+
+
+
+const endpoints: Endpoint[] = [
+  login, 
+  register,
+  emails,
+  ownData
+];
 
 const ApiDocumentation = () => {
   const [selectedEndpoint, setSelectedEndpoint] = useState<Endpoint>(endpoints[0]);
@@ -60,6 +82,7 @@ const ApiDocumentation = () => {
       {/* Main Content */}
       <main className="flex-1 p-6 overflow-auto">
         <h2 className="text-2xl font-bold mb-4">{selectedEndpoint.name}</h2>
+        <h6 className="text-xl font-light mb-2">{selectedEndpoint.url}</h6>
         {selectedEndpoint.description && (
           <p className="mb-4 text-gray-700">{selectedEndpoint.description}</p>
         )}
