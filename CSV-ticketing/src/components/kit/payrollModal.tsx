@@ -294,20 +294,21 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
       <Button onClick={() => setOpen(true)}>Create Payroll</Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-           <DialogHeader>
-    <DialogTitle className="flex items-center gap-2">
-      Create Payroll
-      {selectedUser && (
-        <Badge variant="secondary">
-          {selectedUser.firstName} {selectedUser.lastName}
-        </Badge>
-      )}
-    </DialogTitle>
-    {/* ADD THIS DialogDescription */}
-    <DialogDescription>
-      Create a new payroll record. Select an employee and fill in the payroll details.
-    </DialogDescription>
-  </DialogHeader>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              Create Payroll
+              {selectedUser && (
+                <Badge variant="secondary">
+                  {selectedUser.firstName} {selectedUser.lastName}
+                </Badge>
+              )}
+            </DialogTitle>
+            {/* ADD THIS DialogDescription */}
+            <DialogDescription>
+              Create a new payroll record. Select an employee and fill in the
+              payroll details.
+            </DialogDescription>
+          </DialogHeader>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left: Employee Selection and Form */}

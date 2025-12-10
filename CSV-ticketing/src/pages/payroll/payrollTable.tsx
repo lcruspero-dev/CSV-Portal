@@ -21,7 +21,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Edit, Trash2, Check, History } from "lucide-react";
+import {
+  MoreHorizontal,
+  Eye,
+  Edit,
+  Trash2,
+  Check,
+  History,
+} from "lucide-react";
 import { Payroll } from "@/components/kit/payrollModal";
 
 // Re-export the Checkbox component if needed elsewhere
@@ -56,11 +63,12 @@ export const Checkbox = ({
       className={`
         flex h-4 w-4 items-center justify-center rounded border 
         transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-        ${disabled
-          ? 'bg-gray-100 border-gray-300 cursor-not-allowed'
-          : checked || indeterminate
-            ? 'bg-blue-600 border-blue-600 hover:bg-blue-700 hover:border-blue-700'
-            : 'bg-white border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+        ${
+          disabled
+            ? "bg-gray-100 border-gray-300 cursor-not-allowed"
+            : checked || indeterminate
+            ? "bg-blue-600 border-blue-600 hover:bg-blue-700 hover:border-blue-700"
+            : "bg-white border-gray-300 hover:bg-gray-50 hover:border-gray-400"
         }
       `}
     >
@@ -76,15 +84,13 @@ export const Checkbox = ({
 // Helper function for nested paths
 // eslint-disable-next-line react-refresh/only-export-components
 export const getByPath = (obj: any, path: string): any => {
-  if (!obj || typeof obj !== 'object') return undefined;
-  
+  if (!obj || typeof obj !== "object") return undefined;
+
   try {
-    return path
-      .split(".")
-      .reduce((acc, key) => {
-        if (acc === null || acc === undefined) return undefined;
-        return acc[key];
-      }, obj);
+    return path.split(".").reduce((acc, key) => {
+      if (acc === null || acc === undefined) return undefined;
+      return acc[key];
+    }, obj);
   } catch (error) {
     console.warn(`Error accessing path "${path}":`, error);
     return undefined;
@@ -176,30 +182,44 @@ const PayrollTableComponent = ({
     return { columnTotals: totals, columnIsNumeric: isNumeric };
   }, [data, leafColumns]);
 
-  const selectedRows = table.getSelectedRowModel().rows.map(row => row.original);
+  const selectedRows = table
+    .getSelectedRowModel()
+    .rows.map((row) => row.original);
   const hasSelectedRows = selectedRows.length > 0;
 
-  const handleAction = (payroll: Payroll, action: 'view' | 'update' | 'delete' | 'send' | 'history', e: React.MouseEvent) => {
+  const handleAction = (
+    payroll: Payroll,
+    action: "view" | "update" | "delete" | "send" | "history",
+    e: React.MouseEvent
+  ) => {
     e.stopPropagation();
 
     switch (action) {
-      case 'view':
+      case "view":
         onViewPayroll(payroll);
         break;
-      case 'update':
+      case "update":
         onRowClick(payroll);
         break;
-      case 'delete':
+      case "delete":
         onDeletePayroll(payroll);
         break;
-      case 'send':
-        { const customEvent = new CustomEvent('send-payroll', { detail: payroll, bubbles: true });
+      case "send": {
+        const customEvent = new CustomEvent("send-payroll", {
+          detail: payroll,
+          bubbles: true,
+        });
         (e.target as HTMLElement).dispatchEvent(customEvent);
-        break; }
-      case 'history':
-        {const historyEvent = new CustomEvent('view-payslip-history', { detail: payroll, bubbles: true });
+        break;
+      }
+      case "history": {
+        const historyEvent = new CustomEvent("view-payslip-history", {
+          detail: payroll,
+          bubbles: true,
+        });
         (e.target as HTMLElement).dispatchEvent(historyEvent);
-        break;}
+        break;
+      }
     }
   };
 
@@ -212,7 +232,7 @@ const PayrollTableComponent = ({
 
   const handleRowClick = (payroll: Payroll, e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    if (!target.closest('button') && !target.closest('[role="checkbox"]')) {
+    if (!target.closest("button") && !target.closest('[role="checkbox"]')) {
       onRowClick(payroll);
     }
   };
@@ -280,8 +300,9 @@ const PayrollTableComponent = ({
               {table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  className={`cursor-pointer hover:bg-gray-50 transition-colors ${row.getIsSelected() ? 'bg-blue-50 border-blue-200' : ''
-                    }`}
+                  className={`cursor-pointer hover:bg-gray-50 transition-colors ${
+                    row.getIsSelected() ? "bg-blue-50 border-blue-200" : ""
+                  }`}
                   onClick={(e) => handleRowClick(row.original, e)}
                 >
                   {row.getVisibleCells().map((cell, i) => {
@@ -319,40 +340,47 @@ const PayrollTableComponent = ({
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-    <DropdownMenuContent 
-      align="end"
-      className="z-[100]"
-    >
+                        <DropdownMenuContent align="end" className="z-[100]">
                           <DropdownMenuItem
-                            onClick={(e) => handleAction(row.original, 'view', e)}
+                            onClick={(e) =>
+                              handleAction(row.original, "view", e)
+                            }
                             className="flex items-center gap-2"
                           >
                             <Eye className="h-4 w-4" />
                             View
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={(e) => handleAction(row.original, 'update', e)}
+                            onClick={(e) =>
+                              handleAction(row.original, "update", e)
+                            }
                             className="flex items-center gap-2"
                           >
                             <Edit className="h-4 w-4" />
                             Update
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={(e) => handleAction(row.original, 'history', e)}
+                            onClick={(e) =>
+                              handleAction(row.original, "history", e)
+                            }
                             className="flex items-center gap-2"
                           >
                             <History className="h-4 w-4" />
                             View History
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={(e) => handleAction(row.original, 'send', e)}
+                            onClick={(e) =>
+                              handleAction(row.original, "send", e)
+                            }
                             className="flex items-center gap-2"
                           >
                             <Check className="h-4 w-4" />
                             Send Payroll
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={(e) => handleAction(row.original, 'delete', e)}
+                            onClick={(e) =>
+                              handleAction(row.original, "delete", e)
+                            }
                             className="flex items-center gap-2 text-red-600"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -380,8 +408,8 @@ const PayrollTableComponent = ({
                         {i === 0
                           ? "Grand Total"
                           : isNum && typeof total === "number"
-                            ? total.toFixed(2)
-                            : ""}
+                          ? total.toFixed(2)
+                          : ""}
                       </TableCell>
                     );
                   })}
@@ -395,7 +423,10 @@ const PayrollTableComponent = ({
             </>
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length + (hideActions ? 0 : 1)} className="h-24 text-center">
+              <TableCell
+                colSpan={columns.length + (hideActions ? 0 : 1)}
+                className="h-24 text-center"
+              >
                 No payroll records found.
               </TableCell>
             </TableRow>

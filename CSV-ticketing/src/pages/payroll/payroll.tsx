@@ -18,11 +18,9 @@ import PayrollModal, { Payroll } from "@/components/kit/payrollModal";
 import UpdatePayrollModal from "@/components/kit/payrollUpdateModal";
 import { Archive } from "lucide-react";
 
-// Import the extracted components
 import PayrollTableComponent from "./payrollTable";
 import { payrollColumns } from "./payrollColumn";
 
-// Helper function for computing payroll (extract to utils if you prefer)
 const computePayroll = (p: Payroll): Payroll => {
   const monthlyRate = p.payrollRate?.monthlyRate ?? 0;
   const dailyRate = p.payrollRate?.dailyRate ?? (monthlyRate / 26);
@@ -303,7 +301,6 @@ const PayrollPage = () => {
     }
   };
 
-  // Force close history if component unmounts
   useEffect(() => {
     return () => {
       if (isMounted.current) {

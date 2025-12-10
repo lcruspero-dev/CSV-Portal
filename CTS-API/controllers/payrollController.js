@@ -11,6 +11,23 @@ function timeToMinutes(timeString) {
     return hours * 60 + minutes;
 }
 
+// Helper to calculate total work days in a month
+function getTotalWorkDaysInMonth(year, month) {
+    const date = new Date(year, month, 1);
+    let totalWorkDays = 0;
+    
+    while (date.getMonth() === month) {
+        const dayOfWeek = date.getDay();
+        // Count Monday to Friday as work days
+        if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+            totalWorkDays++;
+        }
+        date.setDate(date.getDate() + 1);
+    }
+    
+    return totalWorkDays;
+}
+
 // Auto-calculation function for payroll data with dynamic periods
 async function calculatePayrollData(userId, startDate, endDate) {
     try {
@@ -57,9 +74,16 @@ async function calculatePayrollData(userId, startDate, endDate) {
         let regularDays = 0;
         let absentDays = 0;
 
+        // Track unique dates where employee actually worked (has timeIn and timeOut)
+        const workedDates = new Set();
+        const completeRecords = [];
+
         // Process each time record
         for (const record of timeRecords) {
             if (!record.timeIn || !record.timeOut) continue;
+
+            completeRecords.push(record);
+            workedDates.add(record.date);
 
             // Find schedule for this date
             const schedule = scheduleEntry?.schedule?.find(s => s.date === record.date);
@@ -98,9 +122,8 @@ async function calculatePayrollData(userId, startDate, endDate) {
             }
         }
 
-        // Count unique work days from time records
-        const uniqueWorkDays = new Set(timeRecords.map(record => record.date)).size;
-        regularDays = uniqueWorkDays;
+        // Count unique work days
+        regularDays = workedDates.size;
 
         // Calculate working days in the actual period (not monthly)
         const startDateObj = new Date(firstWorkDay);
@@ -116,10 +139,11 @@ async function calculatePayrollData(userId, startDate, endDate) {
         }
 
         // Calculate absent days based on actual working period
+        // Only consider dates between start and end date
         absentDays = Math.max(0, workingDaysInPeriod - regularDays);
 
         // Calculate rates based on actual working days, not monthly
-        const dailyRate = workingDaysInPeriod > 0 ? monthlySalary / 26 : 0; // Keep standard daily rate
+        const dailyRate = monthlySalary / 26; // Standard daily rate
         const hourlyRate = dailyRate / 8; // Assuming 8 hours per day
 
         return {
@@ -133,7 +157,8 @@ async function calculatePayrollData(userId, startDate, endDate) {
             absentDays,
             actualStartDate: firstWorkDay,
             actualEndDate: lastWorkDay,
-            workingDaysInPeriod
+            workingDaysInPeriod,
+            workedDates: Array.from(workedDates)
         };
 
     } catch (error) {
@@ -162,7 +187,6 @@ function computePayroll(payroll) {
     const dailyRate = payroll.payrollRate?.dailyRate || monthlyRate / 26;
     const hourlyRate = payroll.payrollRate?.hourlyRate || dailyRate / 8;
 
-    const regularDays = payroll.workDays?.regularDays || 0;
     const absentDays = payroll.workDays?.absentDays || 0;
     const minsLate = payroll.workDays?.minsLate || 0;
     const totalHoursWorked = payroll.workDays?.totalHoursWorked || 0;
@@ -462,7 +486,6 @@ exports.processPayroll = async (req, res) => {
     }
 };
 
-
 // GET Payroll by User
 exports.getPayrollByUser = async (req, res) => {
     try {
@@ -490,7 +513,9 @@ exports.getPayrollByUser = async (req, res) => {
 exports.deletePayroll = async (req, res) => {
     try {
         const { userId } = req.params;
-        const payroll = await Payroll.findOneAndDelete({ "payrollRate.userId": userId });
+        const payroll = await Payroll.findOneAndDelete(
+            { "payrollRate.userId": userId }
+        );
 
         if (!payroll) {
             return res.status(404).json({
@@ -536,12 +561,15 @@ exports.updatePayroll = async (req, res) => {
 
         // Check if monthly salary is being updated
         if (req.body.payrollRate?.monthlyRate) {
-            // Recalculate daily and hourly rates
-            const monthlyRate = req.body.payrollRate.monthlyRate;
+            // Calculate total work days for current month
             const now = new Date();
             const year = now.getFullYear();
             const month = now.getMonth();
-
+            const totalWorkDays = getTotalWorkDaysInMonth(year, month);
+            
+            // Recalculate daily and hourly rates
+            const monthlyRate = req.body.payrollRate.monthlyRate;
+            
             req.body.payrollRate.dailyRate = monthlyRate / totalWorkDays;
             req.body.payrollRate.hourlyRate = req.body.payrollRate.dailyRate / 8;
         }
@@ -715,7 +743,9 @@ exports.sendPayroll = async (req, res) => {
             absentDays: 0,
             minLateUT: 0,
             amountAbsent: 0,
-            amountMinLateUT: 0
+            amountMinLateUT: 0,
+            undertimeMinutes: 0,
+            undertimeAmount: 0
         };
 
         // Reset pay calculations
@@ -724,19 +754,38 @@ exports.sendPayroll = async (req, res) => {
         };
 
         // Reset overtime and supplementary income
-        payroll.totalOvertime = {};
-        payroll.totalSupplementary = {};
+        payroll.totalOvertime = {
+            regularOT: 0,
+            regularOTpay: 0,
+            restDayOtHours: 0,
+            restDayOtPay: 0,
+            totalOvertime: 0
+        };
+
+        payroll.totalSupplementary = {
+            nightDiffHours: 0,
+            nightDiffPay: 0,
+            totalSupplementaryIncome: 0
+        };
 
         // Reset gross salary but keep structure
         payroll.grossSalary = {
-            nonTaxableAllowance: 0,
-            performanceBonus: 0,
+            nonTaxableAllowance: payroll.grossSalary?.nonTaxableAllowance || 0, // Preserve allowances
+            performanceBonus: payroll.grossSalary?.performanceBonus || 0, // Preserve bonus
             grossSalary: 0
         };
 
         // Reset grand total
         payroll.grandtotal = {
             grandtotal: 0
+        };
+
+        // Reset holidays
+        payroll.holidays = {
+            regHoliday: 0,
+            regHolidayPay: 0,
+            speHoliday: 0,
+            speHolidayPay: 0
         };
 
         // PRESERVE the payroll rates - they should NEVER change after send
@@ -870,18 +919,47 @@ exports.generatePayslipForRange = async (req, res) => {
             },
             workDays: {
                 regularDays: calculatedData.regularDays,
-                // For custom range, avoid month-wide absence penalty. Recompute within range below.
-                absentDays: 0,
+                absentDays: calculatedData.absentDays, // Use calculated absent days
                 minsLate: calculatedData.totalLateMinutes,
                 totalHoursWorked: calculatedData.totalHoursWorked,
                 undertimeMinutes: calculatedData.totalUndertimeMinutes,
             },
-            holidays: {},
-            latesAndAbsent: {},
-            salaryAdjustments: {},
-            totalOvertime: {},
-            totalSupplementary: {},
-            grossSalary: {},
+            holidays: {
+                regHoliday: 0,
+                regHolidayPay: 0,
+                speHoliday: 0,
+                speHolidayPay: 0
+            },
+            latesAndAbsent: {
+                absentDays: 0,
+                minLateUT: 0,
+                amountAbsent: 0,
+                amountMinLateUT: 0,
+                undertimeMinutes: 0,
+                undertimeAmount: 0
+            },
+            salaryAdjustments: {
+                unpaid: 0,
+                unpaidAmount: 0,
+                increase: 0
+            },
+            totalOvertime: {
+                regularOT: 0,
+                regularOTpay: 0,
+                restDayOtHours: 0,
+                restDayOtPay: 0,
+                totalOvertime: 0
+            },
+            totalSupplementary: {
+                nightDiffHours: 0,
+                nightDiffPay: 0,
+                totalSupplementaryIncome: 0
+            },
+            grossSalary: {
+                nonTaxableAllowance: 0,
+                performanceBonus: 0,
+                grossSalary: 0
+            },
             totalDeductions: {},
             pay: {},
             grandtotal: {},
@@ -899,22 +977,6 @@ exports.generatePayslipForRange = async (req, res) => {
             date: t.date,
             hoursWorked: Number(t.totalHours || 0),
         }));
-
-        // Compute workdays and absences strictly within range (Mon-Fri only)
-        const countWeekdaysInclusive = (a, b) => {
-            const startD = parseMdY(a);
-            const endD = parseMdY(b);
-            let count = 0;
-            for (let d = new Date(startD); d <= endD; d.setDate(d.getDate() + 1)) {
-                const wd = d.getDay();
-                if (wd >= 1 && wd <= 5) count++;
-            }
-            return count;
-        };
-        const uniqueWorkedDays = new Set((timeEntries || []).filter(te => te.hoursWorked > 0).map(te => te.date));
-        const workdaysInRange = countWeekdaysInclusive(startDate, endDate);
-        const absentInRange = Math.max(0, workdaysInRange - uniqueWorkedDays.size);
-        transientPayroll.workDays.absentDays = absentInRange;
 
         const payload = {
             userId,
@@ -943,4 +1005,3 @@ exports.generatePayslipForRange = async (req, res) => {
         return res.status(500).json({ status: "Error", message: "Failed to generate payslip", error: error.message });
     }
 };
-
