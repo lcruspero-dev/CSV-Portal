@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -754,31 +755,31 @@ const UpdatePayrollModal = ({
 
       <Dialog open={isOpen} onOpenChange={setOpen}>
         <DialogContent className="max-w-[95vw] w-full h-[70vh] rounded-lg p-0 overflow-hidden">
-          <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <User className="h-6 w-6 text-blue-600" />
-                </div>
-                <div>
-                  <DialogTitle className="text-xl font-bold text-gray-900">
-                    {formData.employee?.fullName}
-                  </DialogTitle>
-                  <p className="text-sm text-gray-600 flex items-center gap-2">
-                    <Building className="h-3 w-3" />
-                    {formData.employee?.position} • {formData.employee?.email}
-                  </p>
-                </div>
-              </div>
-              <Badge variant="outline" className="px-3 py-1 bg-white">
-                <Calendar className="h-3 w-3 mr-1" />
-                {new Date().toLocaleDateString("en-US", {
-                  month: "long",
-                  year: "numeric",
-                })}
-              </Badge>
-            </div>
-          </DialogHeader>
+           <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className="p-2 bg-blue-100 rounded-lg">
+          <User className="h-6 w-6 text-blue-600" />
+        </div>
+        <div>
+          <DialogTitle className="text-xl font-bold text-gray-900">
+            {formData.employee?.fullName}
+          </DialogTitle>
+          <DialogDescription className="text-sm text-gray-600 flex items-center gap-2">
+            <Building className="h-3 w-3" />
+            {formData.employee?.position} • {formData.employee?.email}
+          </DialogDescription>
+        </div>
+      </div>
+      <Badge variant="outline" className="px-3 py-1 bg-white">
+        <Calendar className="h-3 w-3 mr-1" />
+        {new Date().toLocaleDateString("en-US", {
+          month: "long",
+          year: "numeric",
+        })}
+      </Badge>
+    </div>
+  </DialogHeader>
 
           <div className="flex h-full">
             {/* Left Panel - Form Fields */}

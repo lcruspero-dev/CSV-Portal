@@ -527,7 +527,7 @@ exports.getAllPayrolls = async (req, res) => {
 
 exports.updatePayroll = async (req, res) => {
     try {
-        const { id } = req.params;   // ✅ get payrollId from URL
+        const { id } = req.params;   
         const payroll = await Payroll.findById(id);
 
         if (!payroll) {

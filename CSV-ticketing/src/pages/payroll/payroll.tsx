@@ -10,767 +10,19 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  type ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
 import { useEffect, useMemo, useState, useRef } from "react";
 
 import { payrollAPI } from "@/API/endpoint";
 import BackButton from "@/components/kit/BackButton";
 import PayrollModal, { Payroll } from "@/components/kit/payrollModal";
 import UpdatePayrollModal from "@/components/kit/payrollUpdateModal";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Edit, Trash2, Check, Square, History, Archive } from "lucide-react";
+import { Archive } from "lucide-react";
 
-// Improved Checkbox component with better accessibility and styling
-const Checkbox = ({
-  checked,
-  indeterminate,
-  onCheckedChange,
-  disabled,
-  "aria-label": ariaLabel,
-}: {
-  checked: boolean;
-  indeterminate?: boolean;
-  onCheckedChange: (checked: boolean) => void;
-  disabled?: boolean;
-  "aria-label": string;
-}) => {
-  const handleClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent row click when clicking checkbox
-    if (!disabled) {
-      onCheckedChange(!checked);
-    }
-  };
+// Import the extracted components
+import PayrollTableComponent from "./payrollTable";
+import { payrollColumns } from "./payrollColumn";
 
-  return (
-    <button
-      type="button"
-      role="checkbox"
-      aria-checked={checked}
-      aria-label={ariaLabel}
-      disabled={disabled}
-      onClick={handleClick}
-      className={`
-        flex h-4 w-4 items-center justify-center rounded border 
-        transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-        ${disabled
-          ? 'bg-gray-100 border-gray-300 cursor-not-allowed'
-          : checked || indeterminate
-            ? 'bg-blue-600 border-blue-600 hover:bg-blue-700 hover:border-blue-700'
-            : 'bg-white border-gray-300 hover:bg-gray-50 hover:border-gray-400'
-        }
-      `}
-    >
-      {indeterminate ? (
-        <Square className="h-2 w-2 text-white fill-current" />
-      ) : checked ? (
-        <Check className="h-3 w-3 text-white" />
-      ) : null}
-    </button>
-  );
-};
-
-// Enhanced helper for nested paths with better error handling
- 
-const getByPath = (obj: any, path: string): any => {
-  if (!obj || typeof obj !== 'object') return undefined;
-  
-  try {
-    return path
-      .split(".")
-      .reduce((acc, key) => {
-        if (acc === null || acc === undefined) return undefined;
-        return acc[key];
-      }, obj);
-  } catch (error) {
-    console.warn(`Error accessing path "${path}":`, error);
-    return undefined;
-  }
-};
-
-{/** Payroll Inputs */ }
-const payrollColumns: ColumnDef<Payroll>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <div className="flex items-center justify-center">
-        <Checkbox
-          checked={table.getIsAllPageRowsSelected()}
-          indeterminate={table.getIsSomePageRowsSelected()}
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      </div>
-    ),
-    cell: ({ row }) => (
-      <div className="flex items-center justify-center">
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-        />
-      </div>
-    ),
-    meta: { sticky: true, width: 60 },
-  },
-  {
-    accessorKey: "employee.email",
-    header: "Email",
-    cell: ({ row }) => getByPath(row.original, "employee.email") || "-",
-    meta: { sticky: true, width: 200 },
-  },
-  {
-    accessorKey: "employee.fullName",
-    header: "Full Name",
-    cell: ({ row }) => getByPath(row.original, "employee.fullName") || "-",
-    meta: { sticky: true, width: 200 },
-  },
-  {
-    accessorKey: "employee.position",
-    header: "Position",
-    cell: ({ row }) => getByPath(row.original, "employee.position") || "-",
-    meta: { sticky: true, width: 150 },
-  },
-  { 
-    accessorKey: "payrollRate.monthlyRate", 
-    header: "Monthly Rate",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "payrollRate.monthlyRate");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  { 
-    accessorKey: "payrollRate.dailyRate", 
-    header: "Daily Rate",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "payrollRate.dailyRate");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  { 
-    accessorKey: "payrollRate.hourlyRate", 
-    header: "Hourly Rate",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "payrollRate.hourlyRate");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  { 
-    accessorKey: "pay.basicPay", 
-    header: "Basic Pay",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "pay.basicPay");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  { 
-    accessorKey: "workDays.regularDays", 
-    header: "Regular Days",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "workDays.regularDays");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  { 
-    accessorKey: "workDays.absentDays", 
-    header: "Absent Days",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "workDays.absentDays");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  { 
-    accessorKey: "workDays.minsLate", 
-    header: "Minutes Late",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "workDays.minsLate");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  { 
-    accessorKey: "workDays.totalHoursWorked", 
-    header: "Hours Worked",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "workDays.totalHoursWorked");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  { 
-    accessorKey: "holidays.regHolidayPay", 
-    header: "Reg Holiday Pay",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "holidays.regHolidayPay");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  { 
-    accessorKey: "holidays.speHolidayPay", 
-    header: "Special Holiday Pay",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "holidays.speHolidayPay");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  { 
-    accessorKey: "totalOvertime.regularOTpay", 
-    header: "Regular OT Pay",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "totalOvertime.regularOTpay");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  { 
-    accessorKey: "totalOvertime.restDayOtPay", 
-    header: "Rest Day OT Pay",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "totalOvertime.restDayOtPay");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  {
-    accessorKey: "totalOvertime.restDayOtHoursExcessPay",
-    header: "Rest Day OT Excess Pay",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "totalOvertime.restDayOtHoursExcessPay");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  {
-    accessorKey: "totalOvertime.regularHolidayWorkedPay",
-    header: "Regular Holiday Worked Pay",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "totalOvertime.regularHolidayWorkedPay");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  {
-    accessorKey: "totalOvertime.regularHolidayWorkedExcessPay",
-    header: "Regular Holiday Worked Excess Pay",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "totalOvertime.regularHolidayWorkedExcessPay");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  {
-    accessorKey: "totalOvertime.specialHolidayWorkedPay",
-    header: "Special Holiday Worked Pay",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "totalOvertime.specialHolidayWorkedPay");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  {
-    accessorKey: "totalOvertime.specialHolidayWorkedOTpay",
-    header: "Special Holiday Worked OT Pay",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "totalOvertime.specialHolidayWorkedOTpay");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  {
-    accessorKey: "totalOvertime.specialHolidayRDworkedPay",
-    header: "Special Holiday RD Worked Pay",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "totalOvertime.specialHolidayRDworkedPay");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  {
-    accessorKey: "totalOvertime.specialHolidayRDworkedOTpay",
-    header: "Special Holiday RD Worked OT Pay",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "totalOvertime.specialHolidayRDworkedOTpay");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  { 
-    accessorKey: "totalOvertime.totalOvertime", 
-    header: "Total Overtime",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "totalOvertime.totalOvertime");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  { 
-    accessorKey: "salaryAdjustments.unpaidAmount", 
-    header: "Unpaid Amount",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "salaryAdjustments.unpaidAmount");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  { 
-    accessorKey: "salaryAdjustments.increase", 
-    header: "Salary Increase",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "salaryAdjustments.increase");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  { 
-    accessorKey: "totalSupplementary.nightDiffPay", 
-    header: "Night Diff Pay",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "totalSupplementary.nightDiffPay");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  {
-    accessorKey: "totalSupplementary.regOTnightDiffPay",
-    header: "Reg OT Night Diff Pay",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "totalSupplementary.regOTnightDiffPay");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  {
-    accessorKey: "totalSupplementary.restDayNDPay",
-    header: "Rest Day Night Diff Pay",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "totalSupplementary.restDayNDPay");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  {
-    accessorKey: "totalSupplementary.regHolNDpay",
-    header: "Reg Holiday Night Diff Pay",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "totalSupplementary.regHolNDpay");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  {
-    accessorKey: "totalSupplementary.specialHolidayNDpay",
-    header: "Special Holiday Night Diff Pay",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "totalSupplementary.specialHolidayNDpay");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  {
-    accessorKey: "totalSupplementary.totalSupplementaryIncome",
-    header: "Total Supplementary",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "totalSupplementary.totalSupplementaryIncome");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  { 
-    accessorKey: "grossSalary.grossSalary", 
-    header: "Gross Salary",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "grossSalary.grossSalary");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  {
-    accessorKey: "grossSalary.nonTaxableAllowance",
-    header: "Non-Taxable Allowance",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "grossSalary.nonTaxableAllowance");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  { 
-    accessorKey: "grossSalary.performanceBonus", 
-    header: "Performance Bonus",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "grossSalary.performanceBonus");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  { 
-    accessorKey: "totalDeductions.sssEmployeeShare", 
-    header: "SSS",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "totalDeductions.sssEmployeeShare");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  { 
-    accessorKey: "totalDeductions.phicEmployeeShare", 
-    header: "PhilHealth",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "totalDeductions.phicEmployeeShare");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  { 
-    accessorKey: "totalDeductions.hdmfEmployeeShare", 
-    header: "Pag-IBIG",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "totalDeductions.hdmfEmployeeShare");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  { 
-    accessorKey: "totalDeductions.wisp", 
-    header: "WISP",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "totalDeductions.wisp");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  {
-    accessorKey: "totalDeductions.totalSSSContribution",
-    header: "Total SSS Contribution",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "totalDeductions.totalSSSContribution");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  {
-    accessorKey: "totalDeductions.totalDeductions",
-    header: "Total Deductions",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "totalDeductions.totalDeductions");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-  { 
-    accessorKey: "grandtotal.grandtotal", 
-    header: "Net Pay",
-    cell: ({ row }) => {
-      const value = getByPath(row.original, "grandtotal.grandtotal");
-      return value !== undefined && value !== null ? value : "0.00";
-    }
-  },
-];
-
- 
-const getStickyStyle = (index: number, items: any[]) => {
-   
-  const getDef = (item: any) =>
-    item?.column?.columnDef ?? item?.columnDef ?? {};
-  let leftOffset = 0;
-  for (let i = 0; i < index; i++) {
-    const prevDef = getDef(items[i]);
-    if (prevDef?.meta?.sticky) leftOffset += prevDef.meta.width || 150;
-  }
-  const currentDef = getDef(items[index]);
-  if (currentDef?.meta?.sticky) {
-    return {
-      className: "sticky bg-white z-10 border-r",
-      style: { left: leftOffset, minWidth: currentDef.meta.width || 150 },
-    };
-  }
-  return {};
-};
-
-{
-  /** Payroll Table */
-}
-const PayrollTable = ({
-  columns,
-  data,
-  onRowClick,
-  onDeletePayroll,
-  onViewPayroll,
-  onBulkDelete,
-  hideActions,
-}: {
-  columns: ColumnDef<Payroll>[];
-  data: Payroll[];
-  onRowClick: (payroll: Payroll) => void;
-  onDeletePayroll: (payroll: Payroll) => void;
-  onViewPayroll: (payroll: Payroll) => void;
-  onBulkDelete: (payrolls: Payroll[]) => void;
-  hideActions?: boolean;
-}) => {
-  const [rowSelection, setRowSelection] = useState({});
-
-  const table = useReactTable({
-    data,
-    columns,
-    state: {
-      rowSelection,
-    },
-    enableRowSelection: true,
-    onRowSelectionChange: setRowSelection,
-    getCoreRowModel: getCoreRowModel(),
-  });
-
-  const leafColumns = table.getAllLeafColumns();
-  const { columnTotals, columnIsNumeric } = useMemo(() => {
-    const totals: Array<number | null> = [];
-    const isNumeric: boolean[] = [];
-    leafColumns.forEach((col) => {
-       
-      const accessorKey = (col.columnDef as any).accessorKey as
-        | string
-        | undefined;
-      if (!accessorKey) {
-        totals.push(null);
-        isNumeric.push(false);
-        return;
-      }
-       
-      const numeric = data.some(
-        (row) => typeof getByPath(row as any, accessorKey) === "number"
-      );
-      isNumeric.push(numeric);
-      if (!numeric) {
-        totals.push(null);
-        return;
-      }
-      const sum = data.reduce((acc, row) => {
-         
-        const value = getByPath(row as any, accessorKey);
-        return acc + (typeof value === "number" ? value : 0);
-      }, 0);
-      totals.push(sum);
-    });
-    return { columnTotals: totals, columnIsNumeric: isNumeric };
-  }, [data, leafColumns]);
-
-  const selectedRows = table.getSelectedRowModel().rows.map(row => row.original);
-  const hasSelectedRows = selectedRows.length > 0;
-
-  const handleAction = (payroll: Payroll, action: 'view' | 'update' | 'delete' | 'send' | 'history', e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent row click event
-
-    switch (action) {
-      case 'view':
-        onViewPayroll(payroll);
-        break;
-      case 'update':
-        onRowClick(payroll);
-        break;
-      case 'delete':
-        onDeletePayroll(payroll);
-        break;
-      case 'send':
-        const customEvent = new CustomEvent('send-payroll', { detail: payroll, bubbles: true });
-        (e.target as HTMLElement).dispatchEvent(customEvent);
-        break;
-      case 'history':
-        const historyEvent = new CustomEvent('view-payslip-history', { detail: payroll, bubbles: true });
-        (e.target as HTMLElement).dispatchEvent(historyEvent);
-        break;
-    }
-  };
-
-  const handleBulkDelete = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent any parent event propagation
-    if (hasSelectedRows) {
-      onBulkDelete(selectedRows);
-    }
-  };
-
-  const handleRowClick = (payroll: Payroll, e: React.MouseEvent) => {
-    // Only trigger row click if the click wasn't on a checkbox or action button
-    const target = e.target as HTMLElement;
-    if (!target.closest('button') && !target.closest('[role="checkbox"]')) {
-      onRowClick(payroll);
-    }
-  };
-
-  return (
-    <section className="w-full overflow-x-auto">
-      {/* Bulk Actions Bar */}
-      {hasSelectedRows && (
-        <div className="bg-blue-50 border border-blue-200 rounded-t-lg p-3 flex items-center justify-between mb-0">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-blue-800">
-              {selectedRows.length} payroll record(s) selected
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setRowSelection({})}
-              className="text-blue-700 border-blue-300 hover:bg-blue-100"
-            >
-              Clear Selection
-            </Button>
-          </div>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleBulkDelete}
-            className="flex items-center gap-2"
-          >
-            <Trash2 className="h-4 w-4" />
-            Delete Selected ({selectedRows.length})
-          </Button>
-        </div>
-      )}
-
-      <Table>
-        <TableHeader>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header, i) => {
-                const stickyProps = getStickyStyle(i, headerGroup.headers);
-                return (
-                  <TableHead
-                    key={header.id}
-                    className="border"
-                    {...stickyProps}
-                  >
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
-                  </TableHead>
-                );
-              })}
-              {!hideActions && (
-                <TableHead className="border sticky right-0 bg-white z-10">
-                  Actions
-                </TableHead>
-              )}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {table.getRowModel().rows.length ? (
-            <>
-              {table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  className={`cursor-pointer hover:bg-gray-50 transition-colors ${row.getIsSelected() ? 'bg-blue-50 border-blue-200' : ''
-                    }`}
-                  onClick={(e) => handleRowClick(row.original, e)}
-                >
-                  {row.getVisibleCells().map((cell, i) => {
-                    const stickyProps = getStickyStyle(
-                      i,
-                      row.getVisibleCells()
-                    );
-                    return (
-                      <TableCell
-                        key={cell.id}
-                        className="border"
-                        {...stickyProps}
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    );
-                  })}
-                  {!hideActions && (
-                    <TableCell className="border sticky right-0 bg-white z-10">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              e.preventDefault();
-                            }}
-                            className="h-8 w-8 p-0 focus:z-50 focus:relative"
-                          >
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent 
-                          align="end" 
-                          onCloseAutoFocus={(e) => e.preventDefault()}
-                          className="z-[100]"
-                        >
-                          <DropdownMenuItem
-                            onClick={(e) => handleAction(row.original, 'view', e)}
-                            className="flex items-center gap-2"
-                          >
-                            <Eye className="h-4 w-4" />
-                            View
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={(e) => handleAction(row.original, 'update', e)}
-                            className="flex items-center gap-2"
-                          >
-                            <Edit className="h-4 w-4" />
-                            Update
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={(e) => handleAction(row.original, 'history', e)}
-                            className="flex items-center gap-2"
-                          >
-                            <History className="h-4 w-4" />
-                            View History
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={(e) => handleAction(row.original, 'send', e)}
-                            className="flex items-center gap-2"
-                          >
-                            <Check className="h-4 w-4" />
-                            Send Payroll
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={(e) => handleAction(row.original, 'delete', e)}
-                            className="flex items-center gap-2 text-red-600"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
-              {/* Totals footer per column */}
-              <TableRow className="bg-gray-50 font-semibold">
-                {leafColumns.map((col, i) => {
-                   
-                  const stickyProps = getStickyStyle(i, leafColumns as any);
-                  const total = columnTotals[i];
-                  const isNum = columnIsNumeric[i];
-                  return (
-                    <TableCell
-                      key={col.id}
-                      className="border"
-                      {...stickyProps}
-                    >
-                      {i === 0
-                        ? "Grand Total"
-                        : isNum && typeof total === "number"
-                          ? total.toFixed(2)
-                          : ""}
-                    </TableCell>
-                  );
-                })}
-                {!hideActions && (
-                  <TableCell className="border">
-                    {/* Empty action cell for totals row */}
-                  </TableCell>
-                )}
-              </TableRow>
-            </>
-          ) : (
-            <TableRow>
-              <TableCell colSpan={columns.length + (hideActions ? 0 : 1)} className="h-24 text-center">
-                No payroll records found.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </section>
-  );
-};
-
+// Helper function for computing payroll (extract to utils if you prefer)
 const computePayroll = (p: Payroll): Payroll => {
   const monthlyRate = p.payrollRate?.monthlyRate ?? 0;
   const dailyRate = p.payrollRate?.dailyRate ?? (monthlyRate / 26);
@@ -950,7 +202,6 @@ const PayrollPage = () => {
         if (!isMounted.current) return;
         
         setData(prev => prev.map(p => {
-           
           const same = ((p as any)._id === payrollId);
           if (!same) return p;
           
@@ -997,7 +248,6 @@ const PayrollPage = () => {
   // Listen for view history events and fetch payslips
   useEffect(() => {
     const handler = async (evt: Event) => {
-      // Prevent multiple simultaneous history operations
       if (isProcessingHistory.current) return;
       
       isProcessingHistory.current = true;
@@ -1043,14 +293,13 @@ const PayrollPage = () => {
     setHistoryOpen(open);
     
     if (!open) {
-      // Use setTimeout to ensure the close animation completes before resetting state
       setTimeout(() => {
         if (isMounted.current) {
           setHistoryEmployee(null);
           setPayslips([]);
           setHistoryLoading(false);
         }
-      }, 150); // Reduced delay for better responsiveness
+      }, 150);
     }
   };
 
@@ -1079,7 +328,7 @@ const PayrollPage = () => {
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
         
         const formatDate = (date: Date) => {
-          return date.toISOString().split('T')[0]; // YYYY-MM-DD format
+          return date.toISOString().split('T')[0];
         };
         
         setArchiveStartDate(formatDate(startOfMonth));
@@ -1121,7 +370,6 @@ const PayrollPage = () => {
     const recomputed = computePayroll(updated);
     setData((prev) =>
       prev.map((p) =>
-         
         (p as any)._id === (recomputed as any)._id ? recomputed : p
       )
     );
@@ -1204,14 +452,10 @@ const PayrollPage = () => {
           <PayrollModal
             onAdd={(p) =>
               setData((prev) => {
-                 
                 const id = (p as any)._id;
-                 
                 const exists = prev.some((x) => (x as any)._id === id);
-                 
                 return exists
-                  ?  
-                  prev.map((x) => ((x as any)._id === id ? p : x))
+                  ? prev.map((x) => ((x as any)._id === id ? p : x))
                   : [...prev, p];
               })
             }
@@ -1227,7 +471,7 @@ const PayrollPage = () => {
       </div>
 
       <div className="bg-white rounded-sm border border-gray-200 p-4">
-        <PayrollTable
+        <PayrollTableComponent
           columns={payrollColumns}
           data={filteredData}
           onRowClick={setSelectedPayroll}
@@ -1337,14 +581,8 @@ const PayrollPage = () => {
         <SheetContent 
           side="right" 
           className="w-[100vw] sm:max-w-[100vw]"
-          onInteractOutside={(e) => {
-            // Allow outside clicks to close the sheet
-            e.preventDefault();
-          }}
-          onEscapeKeyDown={(e) => {
-            // Allow escape key to close the sheet
-            e.preventDefault();
-          }}
+          onInteractOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
         >
           <SheetHeader>
             <div className="flex items-center justify-between gap-3">
@@ -1368,7 +606,7 @@ const PayrollPage = () => {
               <div className="text-sm text-gray-600">No payslips found for this employee.</div>
             ) : (
               <div className="bg-white rounded-sm border border-gray-200 p-4 min-w-[1200px]">
-                <PayrollTable
+                <PayrollTableComponent
                   columns={payrollColumns}
                   data={payslips as unknown as Payroll[]}
                   onRowClick={() => {}}
@@ -1376,6 +614,7 @@ const PayrollPage = () => {
                   onViewPayroll={() => {}}
                   onBulkDelete={() => {}}
                   hideActions
+                  totalsRow={false}
                 />
               </div>
             )}
@@ -1446,7 +685,7 @@ const PayrollPage = () => {
               <div className="text-sm text-gray-600">No archived payslips found.</div>
             ) : (
               <div className="bg-white rounded-sm border border-gray-200 p-4 min-w-[1200px]">
-                <PayrollTable
+                <PayrollTableComponent
                   columns={payrollColumns}
                   data={archivePayslips as unknown as Payroll[]}
                   onRowClick={() => {}}
@@ -1454,6 +693,7 @@ const PayrollPage = () => {
                   onViewPayroll={() => {}}
                   onBulkDelete={() => {}}
                   hideActions
+                  totalsRow={false}
                 />
               </div>
             )}
