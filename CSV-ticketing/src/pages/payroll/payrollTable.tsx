@@ -241,32 +241,35 @@ const PayrollTableComponent = ({
     <section className="w-full overflow-x-auto">
       {/* Bulk Actions Bar */}
       {hasSelectedRows && (
-        <div className="bg-blue-50 border border-blue-200 rounded-t-lg p-3 flex items-center justify-between mb-0">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-blue-800">
-              {selectedRows.length} payroll record(s) selected
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setRowSelection({})}
-              className="text-blue-700 border-blue-300 hover:bg-blue-100"
-            >
-              Clear Selection
-            </Button>
-          </div>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleBulkDelete}
-            className="flex items-center gap-2"
-          >
-            <Trash2 className="h-4 w-4" />
-            Delete Selected ({selectedRows.length})
-          </Button>
-        </div>
-      )}
-
+  <div className="bg-blue-50 border border-blue-200 rounded-t-lg p-3 mb-0">
+    {/* Changed to a column layout on mobile, row on larger screens */}
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex items-center gap-3">
+        <span className="text-sm font-medium text-blue-800">
+          {selectedRows.length} payroll record(s) selected
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setRowSelection({})}
+          className="text-blue-700 border-blue-300 hover:bg-blue-100"
+        >
+          Clear Selection
+        </Button>
+      </div>
+      <Button
+        variant="destructive"
+        size="sm"
+        onClick={handleBulkDelete}
+        className="flex items-center gap-2 w-full sm:w-auto justify-center" // Full width on mobile
+      >
+        <Trash2 className="h-4 w-4" />
+        Delete Selected ({selectedRows.length})
+      </Button>
+    </div>
+  </div>
+)}
+<div className="relative overflow-x-auto border rounded-lg">
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
@@ -433,6 +436,7 @@ const PayrollTableComponent = ({
           )}
         </TableBody>
       </Table>
+      </div>
     </section>
   );
 };

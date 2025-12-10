@@ -313,7 +313,7 @@ const UpdatePayrollModal = ({
 }: Props) => {
   const [internalOpen, setInternalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("basic");
-  const [loadingAuto, setLoadingAuto] = useState(false);
+  const [loadingAuto] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isSending, setIsSending] = useState(false);
   
@@ -469,107 +469,73 @@ const UpdatePayrollModal = ({
   }, [payroll, formData._id]);
 
   // Handle deep updates
-  const handleChange = (path: string, value: any) => {
-    setFormData((prev) => {
-      const newData: any = { ...prev };
-      const keys = path.split(".");
-      let obj = newData;
+const handleChange = (path: string, value: any) => {
+  setFormData((prev) => {
+    const newData: any = { ...prev };
+    const keys = path.split(".");
+    let obj = newData;
 
-      // Ensure nested objects exist
-      keys.slice(0, -1).forEach((key) => {
-        if (!obj[key] || typeof obj[key] !== 'object') {
-          obj[key] = {};
-        }
-        obj = obj[key];
-      });
-
-      // Update value
-      obj[keys[keys.length - 1]] = value;
-      
-      // Auto-calculate derived rates if monthly rate changes
-      if (path === "payrollRate.monthlyRate") {
-        const monthly = Number(value) || 0;
-        const daily = monthly / 26;
-        const hourly = daily / 8;
-        
-        if (newData.payrollRate) {
-          newData.payrollRate = {
-            ...newData.payrollRate,
-            dailyRate: Math.round((daily || 0) * 100) / 100,
-            hourlyRate: Math.round((hourly || 0) * 100) / 100,
-          };
-        }
+    // Ensure nested objects exist
+    keys.slice(0, -1).forEach((key) => {
+      if (!obj[key] || typeof obj[key] !== 'object') {
+        obj[key] = {};
       }
-
-      return newData;
+      obj = obj[key];
     });
-  };
 
-  const getValue = (obj: any, path: string) => {
-    try {
-      // Auto-derive daily/hourly from monthly rate for display
-      if (path === "payrollRate.dailyRate") {
-        const monthly = Number(obj?.payrollRate?.monthlyRate ?? 0);
-        return Math.round((monthly / 26 || 0) * 100) / 100;
+    // Update value
+    const numValue = typeof value === 'number' ? value : parseFloat(value) || 0;
+    obj[keys[keys.length - 1]] = numValue;
+    
+    // Auto-calculate derived rates if monthly rate changes
+    if (path === "payrollRate.monthlyRate") {
+      const monthly = numValue;
+      const daily = monthly / 26;
+      const hourly = daily / 8;
+      
+      if (newData.payrollRate) {
+        newData.payrollRate = {
+          ...newData.payrollRate,
+          dailyRate: Math.round(daily * 100) / 100, // Round to 2 decimals
+          hourlyRate: Math.round(hourly * 100) / 100, // Round to 2 decimals
+        };
       }
-      if (path === "payrollRate.hourlyRate") {
-        const monthly = Number(obj?.payrollRate?.monthlyRate ?? 0);
-        const daily = monthly / 26;
-        return Math.round((daily / 8 || 0) * 100) / 100;
-      }
-      return path.split(".").reduce((acc, key) => {
-        if (acc === null || acc === undefined) return 0;
-        return acc[key];
-      }, obj) ?? 0;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
-      return 0;
     }
-  };
 
-  // Auto-calc hours from time tracker
-  useEffect(() => {
-    const run = async () => {
-      try {
-        setLoadingAuto(true);
-        const userId = formData.payrollRate?.userId || (payroll as any)?.payrollRate?.userId;
-        if (!userId) return;
-        
-        // Use the existing endpoint structure
-        const existingPayroll = await payrollAPI.getPayrollByUser(userId);
-        
-        if (existingPayroll.data?.payroll) {
-          setFormData((prev) => ({
-            ...prev,
-            payrollRate: {
-              userId: prev.payrollRate?.userId || '',
-              ...prev.payrollRate,
-              monthlyRate: existingPayroll.data.payroll.payrollRate?.monthlyRate || 0,
-              dailyRate: existingPayroll.data.payroll.payrollRate?.dailyRate || 0,
-              hourlyRate: existingPayroll.data.payroll.payrollRate?.hourlyRate || 0,
-            },
-            workDays: {
-              ...prev.workDays,
-              totalHoursWorked: existingPayroll.data.payroll.workDays?.totalHoursWorked || 0,
-              minsLate: existingPayroll.data.payroll.workDays?.minsLate || 0,
-              undertimeMinutes: existingPayroll.data.payroll.workDays?.undertimeMinutes || 0,
-              regularDays: existingPayroll.data.payroll.workDays?.regularDays || 0,
-              absentDays: existingPayroll.data.payroll.workDays?.absentDays || 0,
-            },
-          }));
-        }
-      } catch (e) {
-        console.error("Auto-calc from time tracker failed:", e);
-      } finally {
-        setLoadingAuto(false);
-      }
-    };
+    return newData;
+  });
+};
 
-    // Only run auto-calculation when modal opens
-    if (isOpen) {
-      run();
+const getValue = (obj: any, path: string) => {
+  try {
+    if (path === "payrollRate.dailyRate") {
+      const monthly = Number(obj?.payrollRate?.monthlyRate ?? 0);
+      const daily = monthly / 26;
+      return Math.round(daily * 100) / 100; // Round to 2 decimals
     }
-  }, [isOpen, formData.payrollRate?.userId, payroll]);
+    if (path === "payrollRate.hourlyRate") {
+      const monthly = Number(obj?.payrollRate?.monthlyRate ?? 0);
+      const daily = monthly / 26;
+      const hourly = daily / 8;
+      return Math.round(hourly * 100) / 100; // Round to 2 decimals
+    }
+    
+    const value = path.split(".").reduce((acc, key) => {
+      if (acc === null || acc === undefined) return 0;
+      return acc[key];
+    }, obj) ?? 0;
+    
+    // Round numeric values to 2 decimals if they look like currency
+    if (typeof value === 'number' && (path.includes('Rate') || path.includes('Salary') || path.includes('Pay') || path.includes('Allowance') || path.includes('Bonus') || path.includes('Deduction'))) {
+      return Math.round(value * 100) / 100;
+    }
+    
+    return value;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (error) {
+    return 0;
+  }
+};
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("en-PH", {
@@ -580,9 +546,6 @@ const UpdatePayrollModal = ({
     }).format(value || 0);
   };
 
-  /**
-   * Handles update of payroll data
-   */
   const handleUpdate = async () => {
     try {
       setIsUpdating(true);
