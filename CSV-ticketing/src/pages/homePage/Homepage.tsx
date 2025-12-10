@@ -4,7 +4,7 @@ import AdminHome from "@/pages/homePage/AdminHomePage";
 import UserHome from "@/pages/homePage/UserHomePage";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import React from "react";
-import Background from "../../assets/bg.jpg"
+import Background from "../../assets/holidayBG.png"
 
 interface User {
   _id: string;

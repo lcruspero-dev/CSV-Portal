@@ -16,10 +16,12 @@ import {
   HeadphonesIcon, 
   Ticket, 
   ArrowRight,
-  Heart,
-  Leaf,
-  PieChart,
-  Cannabis 
+  Gift,
+  Star,
+  Snowflake,
+  TreePine ,
+  CandyCane,
+  Bell
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -156,20 +158,20 @@ const UserHome = () => {
       description: "Track your work hours and attendance",
       icon: Clock,
       path: "/timetracker",
-      color: "from-amber-500 to-orange-600",
-      bgColor: "bg-gradient-to-br from-amber-50 to-orange-100",
-      borderColor: "border-amber-300",
-      textColor: "text-amber-900",
+      color: "from-red-500 to-rose-600",
+      bgColor: "bg-gradient-to-br from-red-50/80 to-rose-100/80 backdrop-blur-sm",
+      borderColor: "border-red-300",
+      textColor: "text-red-900",
       notification: 0
     },
     {
       id: 2,
-      title: "Company Memos and Policies",
-      description: "Access company official memos and policies.",
+      title: "Company Memos",
+      description: "Access company official memos and policies",
       icon: FileText,
       path: "/view-polMemo",
       color: "from-green-500 to-emerald-600",
-      bgColor: "bg-gradient-to-br from-green-50 to-emerald-100",
+      bgColor: "bg-gradient-to-br from-green-50/80 to-emerald-100/80 backdrop-blur-sm",
       borderColor: "border-green-300",
       textColor: "text-green-900",
       notification: unacknowledgedCount
@@ -180,10 +182,10 @@ const UserHome = () => {
       description: "Request HR assistance and services",
       icon: Users,
       path: "/request-something",
-      color: "from-purple-500 to-indigo-600",
-      bgColor: "bg-gradient-to-br from-purple-50 to-indigo-100",
-      borderColor: "border-purple-300",
-      textColor: "text-purple-900",
+      color: "from-blue-500 to-indigo-600",
+      bgColor: "bg-gradient-to-br from-blue-50/80 to-indigo-100/80 backdrop-blur-sm",
+      borderColor: "border-blue-300",
+      textColor: "text-blue-900",
       notification: 0
     },
     {
@@ -192,10 +194,10 @@ const UserHome = () => {
       description: "Get technical help and assistance",
       icon: HeadphonesIcon,
       path: "/create-ticket",
-      color: "from-red-500 to-rose-600",
-      bgColor: "bg-gradient-to-br from-red-50 to-rose-100",
-      borderColor: "border-red-300",
-      textColor: "text-red-900",
+      color: "from-purple-500 to-violet-600",
+      bgColor: "bg-gradient-to-br from-purple-50/80 to-violet-100/80 backdrop-blur-sm",
+      borderColor: "border-purple-300",
+      textColor: "text-purple-900",
       notification: 0
     },
     {
@@ -205,7 +207,7 @@ const UserHome = () => {
       icon: Ticket,
       path: "/view-ticket",
       color: "from-yellow-500 to-amber-600",
-      bgColor: "bg-gradient-to-br from-yellow-50 to-amber-100",
+      bgColor: "bg-gradient-to-br from-yellow-50/80 to-amber-100/80 backdrop-blur-sm",
       borderColor: "border-yellow-300",
       textColor: "text-yellow-900",
       notification: 0
@@ -214,19 +216,19 @@ const UserHome = () => {
       id: 6,
       title: "Employee Notice",
       description: "View disciplinary notices and updates",
-      icon: PieChart,
+      icon: Bell,
       path: "/nte",
-      color: "from-brown-500 to-amber-900",
-      bgColor: "bg-gradient-to-br from-brown-50 to-amber-100",
-      borderColor: "border-brown-300",
-      textColor: "text-brown-900",
+      color: "from-orange-500 to-red-600",
+      bgColor: "bg-gradient-to-br from-orange-50/80 to-red-100/80 backdrop-blur-sm",
+      borderColor: "border-orange-300",
+      textColor: "text-orange-900",
       notification: nteNotificationCount,
       exclamation: showExclamation,
       tooltip: nteTooltip
     }
   ];
 
-  // Floating elements animation
+  // Christmas floating elements
   const floatingElement = {
     animate: {
       y: [0, -15, 0],
@@ -243,42 +245,72 @@ const UserHome = () => {
       <SurveyModal />
       
       {/* Main Container */}
-      <div className="min-h-screen py-4 sm:py-6 lg:py-8 px-3 sm:px-4 lg:px-6 xl:px-8 relative overflow-hidden bg-gradient-to-br from-amber-50 via-orange-50 to-brown-50">
-        {/* Thanksgiving Decorations */}
+      <div className="min-h-screen py-4 sm:py-6 lg:py-8 px-3 sm:px-4 lg:px-6 xl:px-8 relative overflow-hidden bg-gradient-to-br from-red-50 via-white to-green-50">
+        {/* Christmas Decorations with Glow */}
         <motion.div
-          className="absolute top-10 left-10 opacity-20"
+          className="absolute top-8 left-8 opacity-60"
           variants={floatingElement}
           animate="animate"
         >
-          <Leaf className="h-8 w-8 text-amber-600" />
+          <div className="relative">
+            <Snowflake className="h-10 w-10 text-blue-300 drop-shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
+            <div className="absolute inset-0 bg-blue-400 rounded-full blur-sm opacity-40" />
+          </div>
         </motion.div>
         
         <motion.div
-          className="absolute top-20 right-16 opacity-30"
+          className="absolute top-24 right-12 opacity-50"
           variants={floatingElement}
           animate="animate"
           style={{ animationDelay: '1s' }}
         >
-          <Heart className="h-6 w-6 text-rose-500" />
+          <div className="relative">
+            <Star className="h-8 w-8 text-yellow-300 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]" />
+            <div className="absolute inset-0 bg-yellow-400 rounded-full blur-sm opacity-30" />
+          </div>
         </motion.div>
         
         <motion.div
-          className="absolute bottom-20 left-20 opacity-25"
+          className="absolute bottom-32 left-20 opacity-40"
           variants={floatingElement}
           animate="animate"
           style={{ animationDelay: '2s' }}
         >
-          <PieChart className="h-10 w-10 text-amber-700" />
+          <div className="relative">
+            <CandyCane className="h-9 w-9 text-red-400 drop-shadow-[0_0_8px_rgba(239,68,68,0.4)]" />
+            <div className="absolute inset-0 bg-red-500 rounded-full blur-sm opacity-20" />
+          </div>
         </motion.div>
 
         <motion.div
-          className="absolute bottom-10 right-10 opacity-20"
+          className="absolute bottom-16 right-16 opacity-30"
           variants={floatingElement}
           animate="animate"
           style={{ animationDelay: '1.5s' }}
         >
-          <Cannabis  className="h-12 w-12 text-brown-600" />
+          <div className="relative">
+            <Gift className="h-12 w-12 text-green-400 drop-shadow-[0_0_12px_rgba(34,197,94,0.4)]" />
+            <div className="absolute inset-0 bg-green-500 rounded-full blur-sm opacity-25" />
+          </div>
         </motion.div>
+
+        {/* Christmas Light Background Effects */}
+        <div className="absolute inset-0 pointer-events-none z-0">
+          {[...Array(20)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-2 h-2 rounded-full animate-pulse"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                backgroundColor: i % 3 === 0 ? '#ef4444' : i % 3 === 1 ? '#22c55e' : '#3b82f6',
+                boxShadow: `0 0 15px ${i % 3 === 0 ? '#ef4444' : i % 3 === 1 ? '#22c55e' : '#3b82f6'}`,
+                animationDelay: `${i * 0.3}s`,
+                opacity: 0.3,
+              }}
+            />
+          ))}
+        </div>
 
         <div className="max-w-7xl mx-auto mt-8 relative z-10">
           {/* Header Section */}
@@ -290,29 +322,32 @@ const UserHome = () => {
           >
             <motion.div
               className="flex justify-center mb-4"
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
               transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
             >
-              <Cannabis  className="h-8 w-8 sm:h-10 sm:w-10 text-amber-600 mr-3" />
+              <div className="relative">
+                <TreePine  className="h-10 w-10 sm:h-12 sm:w-12 text-green-500 mr-3 drop-shadow-[0_0_15px_rgba(34,197,94,0.6)]" />
+                <div className="absolute inset-0 bg-green-400 rounded-full blur-md opacity-30" />
+              </div>
             </motion.div>
             
             <motion.h1
-              className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold mb-5 sm:mb-4 bg-clip-text text-transparent bg-gradient-to-r from-amber-600 via-orange-600 to-brown-600 leading-tight sm:leading-snug font-serif"
+              className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold mb-5 sm:mb-4 bg-clip-text text-transparent bg-gradient-to-r from-red-600 via-green-600 to-blue-600 leading-tight sm:leading-snug font-serif drop-shadow-lg"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.6 }}
             >
-              Thankful for Your Hard Work!
+              🎄 Merry Christmas & Happy Holidays! 🎅
             </motion.h1>
             
             <motion.p
-              className="text-amber-700 text-sm sm:text-base max-w-2xl mx-auto"
+              className="text-blue-700 text-sm sm:text-base max-w-2xl mx-auto bg-gradient-to-r from-red-100 via-white to-green-100 rounded-lg py-2 px-4 border border-red-200/30 shadow-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
             >
-              Grateful for dedicated team members like you. Everything you need in one place.
+              Wishing you a joyful holiday season! Everything you need in one place.
             </motion.p>
           </motion.section>
 
@@ -340,17 +375,23 @@ const UserHome = () => {
                           className="relative group cursor-pointer h-full"
                           onClick={() => navigate(feature.path)}
                         >
-                          <Card className={`relative overflow-hidden border-2 ${feature.borderColor} shadow-lg hover:shadow-2xl transition-all duration-300 h-full ${feature.bgColor} group-hover:shadow-amber-500/20 rounded-xl sm:rounded-2xl backdrop-blur-sm`}>
+                          <Card className={`relative overflow-hidden border-2 ${feature.borderColor} shadow-xl hover:shadow-2xl transition-all duration-300 h-full ${feature.bgColor} group-hover:shadow-red-500/10 rounded-xl sm:rounded-2xl`}>
+                            {/* Christmas Lights Border */}
+                            <div className="absolute inset-0 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                              <div className="absolute -top-1 left-0 right-0 h-1 bg-gradient-to-r from-red-500 via-green-500 to-blue-500 animate-pulse rounded-t-xl sm:rounded-t-2xl" />
+                              <div className="absolute -bottom-1 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-red-500 to-green-500 animate-pulse rounded-b-xl sm:rounded-b-2xl" />
+                            </div>
+                            
                             {/* Animated Background */}
                             <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
                             
                             {/* Glow Effect */}
-                            <div className={`absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r ${feature.color} opacity-0 group-hover:opacity-20 blur-xl transition-all duration-500`} />
+                            <div className={`absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r ${feature.color} opacity-0 group-hover:opacity-15 blur-xl transition-all duration-500`} />
 
                             {/* Notification Badge */}
                             {(feature.notification > 0 || feature.exclamation) && (
                               <motion.div
-                                className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-rose-500 text-white rounded-full w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 flex items-center justify-center text-xs sm:text-sm font-bold shadow-lg z-10 border border-rose-400"
+                                className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-red-500 text-white rounded-full w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 flex items-center justify-center text-xs sm:text-sm font-bold shadow-lg z-10 border border-red-400"
                                 variants={notificationBadge}
                                 initial="initial"
                                 animate={["animate", "pulse"]}
@@ -362,13 +403,14 @@ const UserHome = () => {
                             {/* Content */}
                             <div className="relative p-4 sm:p-5 lg:p-6 flex flex-col items-center text-center h-full">
                               {/* Icon Container */}
-                              <div className={`mb-3 sm:mb-4 p-2 sm:p-3 lg:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-br ${feature.color} shadow-lg transform group-hover:scale-105 sm:group-hover:scale-110 transition-transform duration-300 border ${feature.borderColor}`}>
-                                <feature.icon className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 xl:h-8 xl:w-8 text-white" />
+                              <div className={`mb-3 sm:mb-4 p-2 sm:p-3 lg:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-br ${feature.color} shadow-lg transform group-hover:scale-105 sm:group-hover:scale-110 transition-transform duration-300 border ${feature.borderColor} relative`}>
+                                <feature.icon className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 xl:h-8 xl:w-8 text-white relative z-10" />
+                                <div className="absolute inset-0 bg-white/20 blur-sm rounded-xl sm:rounded-2xl" />
                               </div>
 
                               {/* Text Content */}
                               <div className="flex-1 flex flex-col justify-center w-full">
-                                <h3 className={`text-lg sm:text-xl font-bold ${feature.textColor} mb-1 sm:mb-2 group-hover:text-amber-700 transition-colors leading-tight line-clamp-2 font-serif`}>
+                                <h3 className={`text-lg sm:text-xl font-bold ${feature.textColor} mb-1 sm:mb-2 group-hover:text-red-700 transition-colors leading-tight line-clamp-2 font-serif`}>
                                   {feature.title}
                                 </h3>
                                 <p className={`text-gray-600 text-xs sm:text-sm leading-relaxed sm:leading-normal mb-3 sm:mb-4 line-clamp-2 sm:line-clamp-3`}>
@@ -377,20 +419,20 @@ const UserHome = () => {
                               </div>
 
                               {/* Action Indicator */}
-                              <div className="flex items-center justify-center text-amber-600 group-hover:text-amber-700 transition-colors mt-1 sm:mt-2">
-                                <span className="text-xs sm:text-sm font-medium mr-1 sm:mr-2">Explore with gratitude</span>
+                              <div className="flex items-center justify-center text-red-600 group-hover:text-red-700 transition-colors mt-1 sm:mt-2">
+                                <span className="text-xs sm:text-sm font-medium mr-1 sm:mr-2">Explore now</span>
                                 <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 transform group-hover:translate-x-1 transition-transform" />
                               </div>
                             </div>
 
                             {/* Hover Border Effect */}
-                            <div className={`absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r ${feature.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10`}>
-                              <div className="absolute inset-[2px] sm:inset-[3px] rounded-xl sm:rounded-2xl bg-amber-50" />
+                            <div className={`absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r ${feature.color} opacity-0 group-hover:opacity-20 transition-opacity duration-300 -z-10`}>
+                              <div className="absolute inset-[2px] sm:inset-[3px] rounded-xl sm:rounded-2xl bg-white" />
                             </div>
                           </Card>
                         </motion.div>
                       </TooltipTrigger>
-                      <TooltipContent className="p-3 sm:p-4 max-w-xs sm:max-w-sm bg-amber-50 text-brown-800 border border-amber-300 shadow-xl text-xs sm:text-sm">
+                      <TooltipContent className="p-3 sm:p-4 max-w-xs sm:max-w-sm bg-white text-gray-800 border border-red-200 shadow-xl text-xs sm:text-sm">
                         <p className="leading-relaxed whitespace-pre-line">{feature.tooltip}</p>
                       </TooltipContent>
                     </Tooltip>
@@ -400,17 +442,23 @@ const UserHome = () => {
                       className="relative group cursor-pointer h-full"
                       onClick={() => navigate(feature.path)}
                     >
-                      <Card className={`relative overflow-hidden border-2 ${feature.borderColor} shadow-lg hover:shadow-2xl transition-all duration-300 h-full ${feature.bgColor} group-hover:shadow-amber-500/20 rounded-xl sm:rounded-2xl backdrop-blur-sm`}>
+                      <Card className={`relative overflow-hidden border-2 ${feature.borderColor} shadow-xl hover:shadow-2xl transition-all duration-300 h-full ${feature.bgColor} group-hover:shadow-red-500/10 rounded-xl sm:rounded-2xl`}>
+                        {/* Christmas Lights Border */}
+                        <div className="absolute inset-0 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                          <div className="absolute -top-1 left-0 right-0 h-1 bg-gradient-to-r from-red-500 via-green-500 to-blue-500 animate-pulse rounded-t-xl sm:rounded-t-2xl" />
+                          <div className="absolute -bottom-1 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-red-500 to-green-500 animate-pulse rounded-b-xl sm:rounded-b-2xl" />
+                        </div>
+                        
                         {/* Animated Background */}
                         <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
                         
                         {/* Glow Effect */}
-                        <div className={`absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r ${feature.color} opacity-0 group-hover:opacity-20 blur-xl transition-all duration-500`} />
+                        <div className={`absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r ${feature.color} opacity-0 group-hover:opacity-15 blur-xl transition-all duration-500`} />
 
                         {/* Notification Badge */}
                         {feature.notification > 0 && (
                           <motion.div
-                            className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-rose-500 text-white rounded-full w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 flex items-center justify-center text-xs sm:text-sm font-bold shadow-lg z-10 border border-rose-400"
+                            className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-red-500 text-white rounded-full w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 flex items-center justify-center text-xs sm:text-sm font-bold shadow-lg z-10 border border-red-400"
                             variants={notificationBadge}
                             initial="initial"
                             animate={["animate", "pulse"]}
@@ -422,13 +470,14 @@ const UserHome = () => {
                         {/* Content */}
                         <div className="relative p-4 sm:p-5 lg:p-6 flex flex-col items-center text-center h-full">
                           {/* Icon Container */}
-                          <div className={`mb-3 sm:mb-4 p-2 sm:p-3 lg:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-br ${feature.color} shadow-lg transform group-hover:scale-105 sm:group-hover:scale-110 transition-transform duration-300 border ${feature.borderColor}`}>
-                            <feature.icon className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 xl:h-8 xl:w-8 text-white" />
+                          <div className={`mb-3 sm:mb-4 p-2 sm:p-3 lg:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-br ${feature.color} shadow-lg transform group-hover:scale-105 sm:group-hover:scale-110 transition-transform duration-300 border ${feature.borderColor} relative`}>
+                            <feature.icon className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 xl:h-8 xl:w-8 text-white relative z-10" />
+                            <div className="absolute inset-0 bg-white/20 blur-sm rounded-xl sm:rounded-2xl" />
                           </div>
 
                           {/* Text Content */}
                           <div className="flex-1 flex flex-col justify-center w-full">
-                            <h3 className={`text-lg sm:text-xl font-bold ${feature.textColor} mb-1 sm:mb-2 group-hover:text-amber-700 transition-colors leading-tight line-clamp-2 font-serif`}>
+                            <h3 className={`text-lg sm:text-xl font-bold ${feature.textColor} mb-1 sm:mb-2 group-hover:text-red-700 transition-colors leading-tight line-clamp-2 font-serif`}>
                               {feature.title}
                             </h3>
                             <p className={`text-gray-600 text-xs sm:text-sm leading-relaxed sm:leading-normal mb-3 sm:mb-4 line-clamp-2 sm:line-clamp-3`}>
@@ -437,15 +486,15 @@ const UserHome = () => {
                           </div>
 
                           {/* Action Indicator */}
-                          <div className="flex items-center justify-center text-amber-600 group-hover:text-amber-700 transition-colors mt-1 sm:mt-2">
-                            <span className="text-xs sm:text-sm font-medium mr-1 sm:mr-2">Explore with gratitude</span>
+                          <div className="flex items-center justify-center text-red-600 group-hover:text-red-700 transition-colors mt-1 sm:mt-2">
+                            <span className="text-xs sm:text-sm font-medium mr-1 sm:mr-2">Explore now</span>
                             <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 transform group-hover:translate-x-1 transition-transform" />
                           </div>
                         </div>
 
                         {/* Hover Border Effect */}
-                        <div className={`absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r ${feature.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10`}>
-                          <div className="absolute inset-[2px] sm:inset-[3px] rounded-xl sm:rounded-2xl bg-amber-50" />
+                        <div className={`absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r ${feature.color} opacity-0 group-hover:opacity-20 transition-opacity duration-300 -z-10`}>
+                          <div className="absolute inset-[2px] sm:inset-[3px] rounded-xl sm:rounded-2xl bg-white" />
                         </div>
                       </Card>
                     </motion.div>
@@ -457,22 +506,53 @@ const UserHome = () => {
 
           {/* Footer */}
           <motion.div
-            className="text-center mt-8 sm:mt-10 lg:mt-12 pt-6 sm:pt-8 border-t border-amber-300 px-4"
+            className="text-center mt-8 sm:mt-10 lg:mt-12 pt-6 sm:pt-8 border-t border-red-200 px-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1, duration: 0.6 }}
           >
-            <p className="text-amber-700 text-xs sm:text-sm lg:text-base">
-              Wishing you a blessed Thanksgiving season. Need help? Reach us through the {" "}
+            <p className="text-red-700 text-xs sm:text-sm lg:text-base bg-gradient-to-r from-red-50 via-white to-green-50 rounded-lg py-2 px-4 border border-red-200/30 shadow-sm">
+              🎅 Wishing you a wonderful holiday season! Need help? Reach us through the {" "}
               <a 
                 href="mailto:support@company.com" 
-                className="text-amber-600 hover:text-amber-700 underline font-medium"
+                className="text-red-600 hover:text-red-700 underline font-medium"
               >
                 company's support channels.
               </a>
             </p>
           </motion.div>
         </div>
+
+        {/* Falling Snow Effect */}
+        <div className="absolute inset-0 pointer-events-none z-0">
+          {[...Array(60)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-1 h-1 sm:w-2 sm:h-2 bg-white rounded-full"
+              style={{
+                top: `${Math.random() * -20}vh`,
+                left: `${Math.random() * 100}vw`,
+                animation: `snowfall ${10 + Math.random() * 15}s linear infinite`,
+                animationDelay: `${Math.random() * 5}s`,
+                opacity: 0.5 + Math.random() * 0.5,
+                filter: 'blur(1px)',
+              }}
+            />
+          ))}
+        </div>
+
+        <style>{`
+          @keyframes snowfall {
+            0% {
+              transform: translateY(-10px) translateX(0);
+              opacity: 0.7;
+            }
+            100% {
+              transform: translateY(100vh) translateX(20px);
+              opacity: 0;
+            }
+          }
+        `}</style>
       </div>
     </>
   );
