@@ -60,44 +60,7 @@ const ChristmasGlow = () => {
   );
 };
 
-/* 🎄 Christmas Light Strings */
-const ChristmasLights = () => {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-      {/* Top Light String */}
-      <div className="absolute top-0 left-0 right-0 flex justify-center space-x-8 py-2">
-        {[...Array(8)].map((_, i) => (
-          <div
-            key={i}
-            className="w-3 h-3 rounded-full animate-pulse"
-            style={{
-              backgroundColor: i % 3 === 0 ? '#ff0000' : i % 3 === 1 ? '#00ff00' : '#ffffff',
-              boxShadow: `0 0 15px ${i % 3 === 0 ? '#ff0000' : i % 3 === 1 ? '#00ff00' : '#ffffff'}`,
-              animationDelay: `${i * 0.3}s`,
-            }}
-          />
-        ))}
-      </div>
-      
-      {/* Side Light Strings */}
-      <div className="absolute left-4 top-1/4 bottom-1/4 flex flex-col justify-between space-y-8">
-        {[...Array(4)].map((_, i) => (
-          <div
-            key={i}
-            className="w-3 h-3 rounded-full animate-pulse"
-            style={{
-              backgroundColor: i % 3 === 0 ? '#ff0000' : i % 3 === 1 ? '#00ff00' : '#ffffff',
-              boxShadow: `0 0 15px ${i % 3 === 0 ? '#ff0000' : i % 3 === 1 ? '#00ff00' : '#ffffff'}`,
-              animationDelay: `${i * 0.5}s`,
-            }}
-          />
-        ))}
-      </div>
-    </div>
-  );
-};
-
-/* ❄️ Falling Snow */
+/* Falling Snow */
 const FallingSnow = () => {
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
@@ -123,7 +86,7 @@ const FallingSnow = () => {
   );
 };
 
-/* 🎄 Real-time Clock */
+/* Real-time Clock */
 const RealTimeClock = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -168,7 +131,7 @@ const RealTimeClock = () => {
   );
 };
 
-/* 🎄 Main Christmas Header */
+/* Main Christmas Header */
 const Header: React.FC = () => {
   const navigate = useNavigate();
   const { logout, isAuthenticated, isLoading, user } = useAuth();
@@ -221,10 +184,6 @@ const Header: React.FC = () => {
         />
         <ChristmasGlow />
         <FallingSnow />
-        <div className="container px-4 py-3 relative z-10 flex justify-between items-center">
-          <div className="w-20 h-16 bg-gradient-to-r from-red-500/20 to-green-500/20 rounded-lg animate-pulse backdrop-blur-sm"></div>
-          <div className="w-32 h-6 bg-gradient-to-r from-white/20 to-white/30 rounded animate-pulse backdrop-blur-sm"></div>
-        </div>
       </div>
     );
   }
@@ -248,7 +207,6 @@ const Header: React.FC = () => {
 
       {/* Christmas effects */}
       <ChristmasGlow />
-      <ChristmasLights />
       <FallingSnow />
 
       {/* Subtle Christmas pattern overlay */}
@@ -262,6 +220,7 @@ const Header: React.FC = () => {
       </div>
 
       <div className="container px-4 py-4 relative z-10">
+
         <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
           {/* 🎄 Logo with Christmas glow */}
           <div className="flex-shrink-0 flex items-center gap-3 group">
@@ -275,15 +234,10 @@ const Header: React.FC = () => {
               onClick={() => navigate("/")}
             />
             
-            {/* Christmas decoration dots */}
-            <div className="hidden sm:flex items-center gap-2">
-              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" style={{ animationDelay: '0.3s' }} />
-              <div className="w-2 h-2 bg-white rounded-full animate-pulse" style={{ animationDelay: '0.6s' }} />
-            </div>
+
           </div>
 
-          {/* 🎄 User Section */}
+          {/* User Section */}
           <div className="flex items-center justify-end w-full sm:w-auto">
             {isAuthenticated && user ? (
               <div className="flex items-center gap-3 sm:gap-4 lg:gap-6">
@@ -294,15 +248,15 @@ const Header: React.FC = () => {
 
                 {/* User info with Christmas glow */}
                 <div className="flex flex-col items-end text-right relative group">
-                  {/* Glow effect */}
-                  <div className="absolute -inset-2 bg-gradient-to-r from-red-500/0 via-green-500/5 to-red-500/0 rounded-lg blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300" />
                   
                   <span className="text-xs sm:text-sm text-white/80 font-medium relative z-10">
                     🎄 Merry Christmas
                   </span>
+
                   <span className="text-sm sm:text-base lg:text-lg font-bold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] relative z-10">
                     {user.name}
                   </span>
+
                 </div>
 
                 {/* Mobile Clock */}
@@ -419,6 +373,7 @@ const Header: React.FC = () => {
               </div>
             ) : (
               <div className="flex items-center gap-3">
+
                 {/* Clock for non-authenticated users */}
                 <RealTimeClock />
                 
@@ -434,7 +389,7 @@ const Header: React.FC = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      🎄 Visit Christmas Home
+                      Landing Page
                     </a>
                   </Button>
                 </div>
