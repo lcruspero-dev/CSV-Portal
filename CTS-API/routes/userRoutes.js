@@ -11,6 +11,7 @@ const {
   setUserToActive,
   changePassword,
   updateLoginLimit,
+  addUser
 } = require("../controllers/userController");
 
 const { protect, verifyAdmin } = require("../middleware/authMiddleware");
@@ -18,6 +19,8 @@ const { protect, verifyAdmin } = require("../middleware/authMiddleware");
 router.post("/", registerUser);
 
 router.post("/login", loginUser);
+
+router.post("/add-user", protect, addUser);
 
 router.post("/admin-reset-password", protect, verifyAdmin, adminResetPassword);
 
