@@ -1,7 +1,7 @@
-import {Button} from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import axios from "axios";
 import { TicketAPi } from "@/API/endpoint";
-import { Checkbox} from "@/components/ui/checkbox"; 
+import { Checkbox } from "@/components/ui/checkbox"; 
 import {
   Dialog,
   DialogContent,
@@ -17,23 +17,23 @@ import { useToast } from "@/components/ui/use-toast";
 import { useState } from "react";
 import { Textarea } from "../../components/ui/textarea";
 import { Policies } from './ViewPolicies';
+import { Gift, Snowflake, Star, TreePine } from "lucide-react";
 
 interface CreatePoliciesProps {
   setPolicies: React.Dispatch<React.SetStateAction<Policies[]>>;
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-
-const CreatePolicies: React.FC<CreatePoliciesProps> = ({setPolicies, setLoading}) => {
+const CreatePolicies: React.FC<CreatePoliciesProps> = ({ setPolicies, setLoading }) => {
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
   const [filename, setFilename] = useState("");
-  const [isPinned, setIsPinned] = useState(false); // New state for pinned status
+  const [isPinned, setIsPinned] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
- const getPolicies = async () => {
+  const getPolicies = async () => {
     try {
       const response = await TicketAPi.getAllPolicies();
       console.log(response.data);
@@ -46,112 +46,122 @@ const CreatePolicies: React.FC<CreatePoliciesProps> = ({setPolicies, setLoading}
   };
 
   const handleDescriptionChange = (
-      e: React.ChangeEvent<HTMLTextAreaElement>
-    ) => {
-      setDescription(e.target.value);
-    };
-  
-    const handleSubjectChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      setSubject(e.target.value);
-    };
-  
-    const handleSave = async () => {
-      if (isSaving) return;
-  
-      setIsSaving(true);
-      try {
-        const body = {
-          subject: subject,
-          description: description,
-          file: filename,
-          isPinned: isPinned, 
-        };
-        console.log(body);
-        const response = await TicketAPi.createPolicies(body);
-        console.log(response.data);
-        getPolicies();
-        toast({
-          title: "Success",
-          description: "Policy created successfully",
-          variant: "default",
-        });
-        setSubject("");
-        setDescription("");
-        setFilename("");
-        setIsPinned(false); 
-        setIsDialogOpen(false);
-      } catch (error) {
-        toast({
-          title: "Error creating policy",
-          description: "Please add all required fields",
-          variant: "destructive",
-        });
-        console.error(error);
-      } finally {
-        setIsSaving(false);
-      }
-    };
-  
-    const handleFileUpload = async (
-      event: React.ChangeEvent<HTMLInputElement>
-    ) => {
-      const fileInput = event.target;
-      const file = fileInput.files && fileInput.files[0];
-  
-      if (!file) return;
-  
-      const formData = new FormData();
-      formData.append("file", file);
-  
-      try {
-        const response = await axios.post(
-          `${import.meta.env.VITE_UPLOADFILES_URL}/upload`,
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
-        console.log("Upload response:", response.data);
-        setFilename(response.data.filename);
-      } catch (error) {
-        console.error("Error uploading file:", error);
-      }
-    };
+    e: React.ChangeEvent<HTMLTextAreaElement>
+  ) => {
+    setDescription(e.target.value);
+  };
 
+  const handleSubjectChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSubject(e.target.value);
+  };
 
-  return(
-       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+  const handleSave = async () => {
+    if (isSaving) return;
+
+    setIsSaving(true);
+    try {
+      const body = {
+        subject: subject,
+        description: description,
+        file: filename,
+        isPinned: isPinned,
+      };
+      console.log(body);
+      const response = await TicketAPi.createPolicies(body);
+      console.log(response.data);
+      getPolicies();
+      toast({
+        title: "🎄 Success",
+        description: "Holiday policy created successfully",
+        variant: "default",
+        className: "bg-gradient-to-r from-green-600 to-red-600 border border-green-400 text-white"
+      });
+      setSubject("");
+      setDescription("");
+      setFilename("");
+      setIsPinned(false);
+      setIsDialogOpen(false);
+    } catch (error) {
+      toast({
+        title: "❄️ Error",
+        description: "Please add all required fields",
+        variant: "destructive",
+      });
+      console.error(error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const fileInput = event.target;
+    const file = fileInput.files && fileInput.files[0];
+
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_UPLOADFILES_URL}/upload`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      console.log("Upload response:", response.data);
+      setFilename(response.data.filename);
+    } catch (error) {
+      console.error("Error uploading file:", error);
+    }
+  };
+
+  return (
+    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger asChild>
-        <Button>Compose</Button>
+        <Button className="bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700 text-white font-medium border border-green-400">
+          <TreePine className="mr-2 h-4 w-4" />
+          Compose Holiday Policy
+        </Button>
       </DialogTrigger>
-      <DialogContent className="w-[900px] h-[600px] max-w-none bg-[#eef4ff]">
+      <DialogContent className="w-[900px] h-[800px] max-w-none bg-gradient-to-br from-green-50 to-red-50">
         <DialogHeader>
-          <DialogTitle className="text-2xl drop-shadow-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#1638df] to-[#192fb4]">
-            Compose Policy
+          <DialogTitle className="text-2xl drop-shadow-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-red-600 flex items-center gap-2">
+            <Star className="h-5 w-5 text-yellow-500" />
+            Compose Holiday Policy
+            <Snowflake className="h-5 w-5 text-blue-400 animate-pulse" />
           </DialogTitle>
-          <DialogDescription>
-            Input details here. Click save when you're done.
+          <DialogDescription className="text-green-700">
+            Input holiday policy details here. Click save when you're ready to spread the festive guidelines.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 h-full pl-4">
-          <Label htmlFor="subject" className="text-base font-bold">
-            <p>Subject</p>
+          <Label htmlFor="subject" className="text-base font-bold text-green-800 flex items-center gap-2">
+            <span className="text-red-500">🎄</span>
+            Policy Subject
           </Label>
           <Input
             name="subject"
-            placeholder="subject"
+            placeholder="Enter holiday policy subject..."
             type="text"
             required
-            className="!mb-2"
+            className="!mb-2 border-green-300 focus:border-green-500 focus:ring-green-500 bg-white"
             value={subject}
             onChange={handleSubjectChange}
           />
+          <Label htmlFor="description" className="text-base font-bold text-green-800 flex items-center gap-2">
+            <span className="text-red-500">❄️</span>
+            Holiday Policy Details
+          </Label>
           <Textarea
-            className="h-60"
+            className="h-60 border-green-300 focus:border-green-500 focus:ring-green-500 bg-white"
             name="description"
-            placeholder="Details"
+            placeholder="Share festive policy guidelines and holiday procedures..."
             required
             value={description}
             onChange={handleDescriptionChange}
@@ -159,43 +169,56 @@ const CreatePolicies: React.FC<CreatePoliciesProps> = ({setPolicies, setLoading}
           <div className="flex flex-col gap-2">
             <Label
               htmlFor="picture"
-              className="text-sm font-medium text-gray-700 w-1/2"
+              className="text-sm font-medium text-green-700 w-1/2 flex items-center gap-2"
             >
-              Upload file
+              <span className="text-red-500">🎁</span>
+              Upload holiday policy file
             </Label>
             <Input
               id="picture"
               type="file"
-              className="block w-1/2 text-sm text-gray-900 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              className="block w-1/2 text-sm text-green-900 border border-green-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 bg-white"
               onChange={handleFileUpload}
             />
           </div>
         </div>
         <DialogFooter>
           <div className="flex justify-between items-center w-full mb-4">
-            {/* Pin This Memo checkbox on the left */}
+            {/* Star This Policy checkbox */}
             <div className="flex items-center space-x-2 pl-4">
               <Checkbox
-                id="pin-memo"
+                id="pin-policy"
                 checked={isPinned}
                 onCheckedChange={(checked) => setIsPinned(checked as boolean)}
+                className="border-green-400 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
               />
               <Label
-                htmlFor="pin-memo"
-                className="text-sm font-medium leading-none"
+                htmlFor="pin-policy"
+                className="text-sm font-medium leading-none text-green-700 flex items-center gap-1"
               >
-                Pin This Memo
+                <Star className="h-3 w-3 text-yellow-500" />
+                Star This Holiday Policy
               </Label>
             </div>
 
-            {/* Save button on the right */}
+            {/* Save button */}
             <Button
               type="submit"
-              className="px-8 text-xs"
+              className="px-8 text-xs bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700 text-white font-medium border border-green-400"
               onClick={handleSave}
               disabled={isSaving}
             >
-              {isSaving ? "Saving..." : "Save"}
+              {isSaving ? (
+                <>
+                  <Snowflake className="h-3 w-3 mr-2 animate-spin" />
+                  Spreading Festive Cheer...
+                </>
+              ) : (
+                <>
+                  <Gift className="h-3 w-3 mr-2" />
+                  Save Holiday Policy
+                </>
+              )}
             </Button>
           </div>
         </DialogFooter>
@@ -205,4 +228,3 @@ const CreatePolicies: React.FC<CreatePoliciesProps> = ({setPolicies, setLoading}
 }
 
 export default CreatePolicies;
-

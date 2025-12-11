@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { TicketAPi } from "@/API/endpoint";
 import BackButton from "@/components/kit/BackButton";
 import { Button } from "@/components/ui/button";
@@ -29,7 +30,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { Check, FileText } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 
 interface User {
@@ -84,7 +85,6 @@ const DocumentTabs = ({
   const [currentAckPage, setCurrentAckPage] = useState(1);
   const [currentUnackPage, setCurrentUnackPage] = useState(1);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const paginateData = (data: any[], page: number) => {
     const startIndex = (page - 1) * ITEMS_PER_PAGE;
     return data.slice(startIndex, startIndex + ITEMS_PER_PAGE);
@@ -287,7 +287,7 @@ const ViewIndividualDocument = ({ documentType = 'policy' }: ViewIndividualDocum
     setIsDialogOpen(false);
   };
 
-  const getIndividualDocument = async (id: string) => {
+  const getIndividualDocument = useCallback(async (id: string) => {
     try {
       let response;
       if (isPolicyRoute) {
@@ -312,9 +312,9 @@ const ViewIndividualDocument = ({ documentType = 'policy' }: ViewIndividualDocum
         variant: "destructive",
       });
     }
-  };
+  }, [isPolicyRoute, toast, documentType]);
 
-const getUnacknowledgedUsers = async (id: string) => {
+const getUnacknowledgedUsers = useCallback(async (id: string) => {
   try {
     let response;
     if (isPolicyRoute) {
@@ -348,7 +348,7 @@ const getUnacknowledgedUsers = async (id: string) => {
     console.error('Error fetching unacknowledged users:', error);
     setUnacknowledgedUsers([]);
   }
-};
+}, [isPolicyRoute]);
 
   const handleAcknowledged = async (id: string) => {
     try {
@@ -402,7 +402,7 @@ const getUnacknowledgedUsers = async (id: string) => {
       };
       fetchData();
     }
-  }, [id, documentType]);
+  }, [id, documentType, getIndividualDocument, getUnacknowledgedUsers]);
 
   // Reset checked status when document loads
   useEffect(() => {

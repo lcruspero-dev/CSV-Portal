@@ -19,7 +19,7 @@ import {
   FileText,
   Calendar,
   Heart,
-  Clover,
+  TreePine,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -114,7 +114,7 @@ function ViewMemo() {
     );
     return isAcknowledged
       ? "text-green-600 bg-green-50 border border-green-200"
-      : "text-amber-600 bg-amber-50 border border-amber-200";
+      : "text-red-600 bg-red-50 border border-red-200";
   };
 
   const getStatusText = (memo: Memo) => {
@@ -122,7 +122,7 @@ function ViewMemo() {
       (ack) => ack.userId === user?._id
     );
     return isAcknowledged
-      ? "Acknowledged with Gratitude 🦃"
+      ? "Acknowledged with Holiday Cheer 🎄"
       : "Awaiting Your Review";
   };
 
@@ -135,7 +135,7 @@ function ViewMemo() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 py-6 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-red-100 py-6 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="relative mb-8">
@@ -143,15 +143,15 @@ function ViewMemo() {
             <div className="flex items-center gap-4">
               <BackButton />
               <div className="flex items-center gap-3">
-                <div className="p-3 bg-gradient-to-r from-amber-600 to-orange-600 rounded-2xl shadow-lg">
+                <div className="p-3 bg-gradient-to-r from-green-600 to-red-600 rounded-2xl shadow-lg">
                   <FileText className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-2xl sm:text-3xl font-bold text-amber-900">
-                    Thanksgiving Memos
+                  <h1 className="text-2xl sm:text-3xl font-bold text-green-900">
+                    Christmas Memos
                   </h1>
-                  <p className="text-amber-700 text-sm mt-1">
-                    Share gratitude and important announcements this season
+                  <p className="text-green-700 text-sm mt-1">
+                    Spread holiday cheer and important announcements this season
                   </p>
                 </div>
               </div>
@@ -167,18 +167,18 @@ function ViewMemo() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-amber-200">
+          <div className="bg-white rounded-2xl p-6 shadow-lg border border-green-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-amber-600">
-                  Total Blessings
+                <p className="text-sm font-medium text-green-600">
+                  Total Messages
                 </p>
-                <p className="text-2xl font-bold text-amber-900 mt-1">
+                <p className="text-2xl font-bold text-green-900 mt-1">
                   {memos.length}
                 </p>
               </div>
-              <div className="p-3 bg-amber-100 rounded-xl">
-                <FileText className="h-6 w-6 text-amber-600" />
+              <div className="p-3 bg-green-100 rounded-xl">
+                <FileText className="h-6 w-6 text-green-600" />
               </div>
             </div>
           </div>
@@ -187,7 +187,7 @@ function ViewMemo() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-green-600">
-                  Grateful Responses
+                  Holiday Responses
                 </p>
                 <p className="text-2xl font-bold text-green-600 mt-1">
                   {
@@ -206,28 +206,28 @@ function ViewMemo() {
           </div>
 
           <div
-            className={`bg-white rounded-2xl p-6 shadow-lg border border-amber-200 cursor-pointer transition-all duration-200 hover:shadow-xl hover:border-amber-400 ${
-              showPendingOnly ? "ring-2 ring-amber-500 border-amber-500" : ""
+            className={`bg-white rounded-2xl p-6 shadow-lg border border-red-200 cursor-pointer transition-all duration-200 hover:shadow-xl hover:border-red-400 ${
+              showPendingOnly ? "ring-2 ring-red-500 border-red-500" : ""
             }`}
             onClick={handleShowPendingClick}
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-amber-600">
-                  Awaiting Gratitude
+                <p className="text-sm font-medium text-red-600">
+                  Awaiting Response
                 </p>
-                <p className="text-2xl font-bold text-amber-600 mt-1">
+                <p className="text-2xl font-bold text-red-600 mt-1">
                   {pendingCount}
                 </p>
                 {pendingCount > 0 && (
-                  <p className="text-xs text-amber-600 mt-2 font-medium flex items-center gap-1">
-                    Click to share your gratitude
+                  <p className="text-xs text-red-600 mt-2 font-medium flex items-center gap-1">
+                    Click to share holiday cheer
                     <ChevronRight className="h-3 w-3" />
                   </p>
                 )}
               </div>
-              <div className="p-3 bg-amber-100 rounded-xl">
-                <Clover className="h-6 w-6 text-amber-600" />
+              <div className="p-3 bg-red-100 rounded-xl">
+                <TreePine className="h-6 w-6 text-red-600" />
               </div>
             </div>
           </div>
@@ -235,12 +235,12 @@ function ViewMemo() {
 
         {/* Filter Status */}
         {showPendingOnly && (
-          <div className="mb-6 p-4 bg-amber-50 border border-amber-300 rounded-xl">
+          <div className="mb-6 p-4 bg-red-50 border border-red-300 rounded-xl">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="h-2 w-2 bg-amber-500 rounded-full animate-pulse" />
-                <span className="text-amber-800 font-medium">
-                  🦃 Sharing gratitude for {pendingCount} memo
+                <div className="h-2 w-2 bg-red-500 rounded-full animate-pulse" />
+                <span className="text-red-800 font-medium">
+                  🎄 Spreading cheer for {pendingCount} memo
                   {pendingCount !== 1 ? "s" : ""}
                 </span>
               </div>
@@ -248,31 +248,31 @@ function ViewMemo() {
                 variant="outline"
                 size="sm"
                 onClick={handleShowAllClick}
-                className="text-amber-700 border-amber-400 hover:bg-amber-100"
+                className="text-red-700 border-red-400 hover:bg-red-100"
               >
-                Show All Blessings
+                Show All Messages
               </Button>
             </div>
           </div>
         )}
 
         {/* Memos Table */}
-        <div className="bg-white rounded-2xl shadow-lg border border-amber-200 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-lg border border-green-200 overflow-hidden">
           {/* Desktop Table */}
           <div className="hidden lg:block">
             <Table>
-              <TableHeader className="bg-gradient-to-r from-amber-600 to-orange-600">
+              <TableHeader className="bg-gradient-to-r from-green-600 to-red-600">
                 <TableRow className="border-0 hover:bg-transparent">
                   <TableHead className="text-white font-bold text-center py-4">
                     <div className="flex items-center justify-center gap-2">
                       <Calendar className="h-4 w-4" />
-                      Clover Date
+                      Holiday Date
                     </div>
                   </TableHead>
                   <TableHead className="text-white font-bold text-center py-4">
                     <div className="flex items-center justify-center gap-2">
                       <FileText className="h-4 w-4" />
-                      Message of Gratitude
+                      Holiday Message
                     </div>
                   </TableHead>
                   <TableHead className="text-white font-bold text-center py-4">
@@ -290,26 +290,26 @@ function ViewMemo() {
                 {getCurrentPageMemos().map((memo, index) => (
                   <TableRow
                     key={memo._id}
-                    className={`border-b border-amber-100 transition-colors hover:bg-amber-50 ${
-                      index % 2 === 0 ? "bg-amber-25" : "bg-white"
+                    className={`border-b border-green-100 transition-colors hover:bg-green-50 ${
+                      index % 2 === 0 ? "bg-green-25" : "bg-white"
                     }`}
                   >
                     <TableCell className="py-4 text-center">
                       <div className="flex flex-col items-center">
-                        <Calendar className="h-4 w-4 text-amber-500 mb-1" />
-                        <span className="text-sm font-medium text-amber-900">
+                        <Calendar className="h-4 w-4 text-green-500 mb-1" />
+                        <span className="text-sm font-medium text-green-900">
                           {formattedDate(memo.createdAt)}
                         </span>
                       </div>
                     </TableCell>
                     <TableCell className="py-4">
                       <div className="text-center max-w-md mx-auto">
-                        <p className="font-medium text-amber-900 line-clamp-2">
+                        <p className="font-medium text-green-900 line-clamp-2">
                           {memo.subject}
                         </p>
                         {memo.subject.length > 100 && (
-                          <p className="text-xs text-amber-600 mt-1">
-                            🍂 Click view to read full message of gratitude
+                          <p className="text-xs text-green-600 mt-1">
+                            ❄️ Click view to read full holiday message
                           </p>
                         )}
                       </div>
@@ -325,7 +325,7 @@ function ViewMemo() {
                         ) ? (
                           <Heart className="h-3 w-3" />
                         ) : (
-                          <div className="h-2 w-2 bg-amber-500 rounded-full animate-pulse" />
+                          <div className="h-2 w-2 bg-red-500 rounded-full animate-pulse" />
                         )}
                         {getStatusText(memo)}
                       </div>
@@ -333,10 +333,10 @@ function ViewMemo() {
                     <TableCell className="py-4 text-center">
                       <Button
                         onClick={() => navigate(`/memo/${memo._id}`)}
-                        className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 flex items-center gap-2 mx-auto shadow-lg hover:shadow-xl"
+                        className="bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 flex items-center gap-2 mx-auto shadow-lg hover:shadow-xl"
                       >
                         <Eye className="h-4 w-4" />
-                        Read with Gratitude
+                        Read with Holiday Spirit
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -350,12 +350,12 @@ function ViewMemo() {
             {getCurrentPageMemos().map((memo) => (
               <div
                 key={memo._id}
-                className="bg-white border border-amber-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-200"
+                className="bg-white border border-green-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-200"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-amber-500" />
-                    <span className="text-sm font-medium text-amber-900">
+                    <Calendar className="h-4 w-4 text-green-500" />
+                    <span className="text-sm font-medium text-green-900">
                       {formattedDate(memo.createdAt)}
                     </span>
                   </div>
@@ -369,27 +369,27 @@ function ViewMemo() {
                     ) ? (
                       <Heart className="h-3 w-3" />
                     ) : (
-                      <div className="h-2 w-2 bg-amber-500 rounded-full animate-pulse" />
+                      <div className="h-2 w-2 bg-red-500 rounded-full animate-pulse" />
                     )}
                     {getStatusText(memo)}
                   </div>
                 </div>
 
                 <div className="mb-4">
-                  <h3 className="font-semibold text-amber-900 text-sm mb-2">
+                  <h3 className="font-semibold text-green-900 text-sm mb-2">
                     Message:
                   </h3>
-                  <p className="text-amber-800 line-clamp-3 text-sm">
+                  <p className="text-green-800 line-clamp-3 text-sm">
                     {memo.subject}
                   </p>
                 </div>
 
                 <Button
                   onClick={() => navigate(`/memo/${memo._id}`)}
-                  className="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-medium py-2 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-lg"
+                  className="w-full bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700 text-white font-medium py-2 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-lg"
                 >
                   <Eye className="h-4 w-4" />
-                  Read with Gratitude
+                  Read with Holiday Spirit
                 </Button>
               </div>
             ))}
@@ -397,19 +397,19 @@ function ViewMemo() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <TableFooter className="bg-amber-50">
+            <TableFooter className="bg-green-50">
               <TableRow>
                 <TableCell colSpan={4} className="px-6 py-4">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div className="text-sm text-amber-700 text-center sm:text-left">
+                    <div className="text-sm text-green-700 text-center sm:text-left">
                       Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
                       {Math.min(
                         currentPage * itemsPerPage,
                         filteredMemos.length
                       )}{" "}
-                      of {filteredMemos.length} blessing
+                      of {filteredMemos.length} holiday message
                       {filteredMemos.length !== 1 ? "s" : ""}
-                      {showPendingOnly && " (Awaiting your gratitude)"}
+                      {showPendingOnly && " (Awaiting your response)"}
                     </div>
 
                     <div className="flex items-center justify-center gap-2">
@@ -418,7 +418,7 @@ function ViewMemo() {
                         size="sm"
                         onClick={() => handlePageChange(currentPage - 1)}
                         disabled={currentPage === 1}
-                        className="flex items-center gap-1 border-amber-300 text-amber-700 hover:bg-amber-100"
+                        className="flex items-center gap-1 border-green-300 text-green-700 hover:bg-green-100"
                       >
                         <ChevronLeft className="h-4 w-4" />
                         <span className="hidden sm:block">Previous</span>
@@ -451,8 +451,8 @@ function ViewMemo() {
                                 onClick={() => handlePageChange(pageNum)}
                                 className={`w-8 h-8 p-0 text-xs ${
                                   pageNum === currentPage
-                                    ? "bg-amber-600 hover:bg-amber-700"
-                                    : "border-amber-300 text-amber-700 hover:bg-amber-100"
+                                    ? "bg-green-600 hover:bg-green-700"
+                                    : "border-green-300 text-green-700 hover:bg-green-100"
                                 }`}
                               >
                                 {pageNum}
@@ -467,7 +467,7 @@ function ViewMemo() {
                         size="sm"
                         onClick={() => handlePageChange(currentPage + 1)}
                         disabled={currentPage === totalPages}
-                        className="flex items-center gap-1 border-amber-300 text-amber-700 hover:bg-amber-100"
+                        className="flex items-center gap-1 border-green-300 text-green-700 hover:bg-green-100"
                       >
                         <span className="hidden sm:block">Next</span>
                         <ChevronRight className="h-4 w-4" />
@@ -482,38 +482,38 @@ function ViewMemo() {
           {/* Empty State */}
           {filteredMemos.length === 0 && (
             <div className="text-center py-12">
-              <div className="text-4xl mb-4">🦃</div>
-              <FileText className="h-16 w-16 text-amber-300 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-amber-900 mb-2">
+              <div className="text-4xl mb-4">🎄</div>
+              <FileText className="h-16 w-16 text-green-300 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-green-900 mb-2">
                 {showPendingOnly
-                  ? "All caught up with gratitude!"
-                  : "No messages of gratitude yet"}
+                  ? "All caught up with holiday cheer!"
+                  : "No holiday messages yet"}
               </h3>
-              <p className="text-amber-700 max-w-sm mx-auto">
+              <p className="text-green-700 max-w-sm mx-auto">
                 {showPendingOnly
-                  ? "You've acknowledged all memos with gratitude. What a thankful heart!"
-                  : "There are no Thanksgiving memos available at the moment. Check back later for messages of gratitude."}
+                  ? "You've acknowledged all memos with holiday spirit. What a festive heart!"
+                  : "There are no Christmas memos available at the moment. Check back later for holiday messages."}
               </p>
               {showPendingOnly && (
                 <Button
                   onClick={handleShowAllClick}
-                  className="mt-4 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700"
+                  className="mt-4 bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700"
                 >
-                  View All Blessings
+                  View All Messages
                 </Button>
               )}
             </div>
           )}
         </div>
 
-        {/* Thanksgiving Footer */}
+        {/* Christmas Footer */}
         <div className="mt-8 text-center">
-          <div className="text-amber-600 text-sm flex items-center justify-center gap-2">
-            <span>🦃</span>
+          <div className="text-green-600 text-sm flex items-center justify-center gap-2">
+            <span>🎅</span>
             <span>
-              Wishing you a season filled with gratitude and blessings
+              Wishing you a season filled with joy and holiday cheer
             </span>
-            <span>🍂</span>
+            <span>❄️</span>
           </div>
         </div>
       </div>

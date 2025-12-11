@@ -29,7 +29,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { Check, FileText } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useLocation } from "react-router-dom";
 
 interface User {
@@ -84,26 +84,20 @@ const DocumentTabs = ({
   const [currentAckPage, setCurrentAckPage] = useState(1);
   const [currentUnackPage, setCurrentUnackPage] = useState(1);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const paginateData = (data: any[], page: number) => {
+  const paginateData = <T,>(data: T[], page: number): T[] => {
     const startIndex = (page - 1) * ITEMS_PER_PAGE;
     return data.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   };
 
-  const totalAckPages = Math.ceil(
-    (acknowledgedUsers?.length || 0) / ITEMS_PER_PAGE
-  );
-  const totalUnackPages = Math.ceil(
-    unacknowledgedUsers.length / ITEMS_PER_PAGE
-  );
+  const totalAckPages = Math.ceil((acknowledgedUsers?.length || 0) / ITEMS_PER_PAGE);
+  const totalUnackPages = Math.ceil((unacknowledgedUsers.length || 0) / ITEMS_PER_PAGE);
 
-  const paginatedAckUsers = acknowledgedUsers
+  const paginatedAckUsers = acknowledgedUsers 
     ? paginateData(acknowledgedUsers, currentAckPage)
     : [];
-  const paginatedUnackUsers = paginateData(
-    unacknowledgedUsers,
-    currentUnackPage
-  );
+  const paginatedUnackUsers = unacknowledgedUsers
+    ? paginateData(unacknowledgedUsers, currentUnackPage)
+    : [];
 
   const renderPagination = (
     currentPage: number,
@@ -162,7 +156,7 @@ const DocumentTabs = ({
           value="pending"
           className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
         >
-          Pending ({unacknowledgedUsers.length})
+          Pending ({unacknowledgedUsers?.length || 0})
         </TabsTrigger>
       </TabsList>
 
@@ -203,7 +197,7 @@ const DocumentTabs = ({
               )}
             </TableBody>
           </Table>
-          {acknowledgedUsers?.length > ITEMS_PER_PAGE &&
+          {acknowledgedUsers && acknowledgedUsers.length > ITEMS_PER_PAGE &&
             renderPagination(currentAckPage, totalAckPages, setCurrentAckPage)}
         </div>
       </TabsContent>
@@ -245,7 +239,7 @@ const DocumentTabs = ({
               )}
             </TableBody>
           </Table>
-          {unacknowledgedUsers.length > ITEMS_PER_PAGE &&
+          {unacknowledgedUsers && unacknowledgedUsers.length > ITEMS_PER_PAGE &&
             renderPagination(
               currentUnackPage,
               totalUnackPages,
@@ -258,10 +252,8 @@ const DocumentTabs = ({
 };
 
 const ViewIndividualDocument = () => {
-  const [document, setDocument] = useState<Document>();
-  const [unacknowledgedUsers, setUnacknowledgedUsers] = useState<
-    UnacknowledgedUser[]
-  >([]);
+  const [document, setDocument] = useState<Document | null>(null);
+  const [unacknowledgedUsers, setUnacknowledgedUsers] = useState<UnacknowledgedUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
@@ -278,6 +270,14 @@ const ViewIndividualDocument = () => {
   const documentType = isPolicyRoute ? 'policy' : 'memo';
 
   const handleCheckboxChange = () => {
+    if (!id || !user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to acknowledge documents",
+        variant: "destructive",
+      });
+      return;
+    }
     setTempChecked(true);
     setIsDialogOpen(true);
   };
@@ -287,54 +287,77 @@ const ViewIndividualDocument = () => {
     setIsDialogOpen(false);
   };
 
-  const getIndividualDocument = async (id: string) => {
+  const getIndividualDocument = useCallback(async (docId: string) => {
+    if (!docId) return;
+    
     try {
       let response;
       if (isPolicyRoute) {
-        response = await TicketAPi.getIndividualPolicy(id);
+        response = await TicketAPi.getIndividualPolicy(docId);
       } else {
-        response = await TicketAPi.getIndividualMemo(id);
+        response = await TicketAPi.getIndividualMemo(docId);
       }
       setDocument(response.data);
     } catch (error) {
       console.error(error);
+      toast({
+        title: "Error",
+        description: `Failed to load ${documentType}`,
+        variant: "destructive",
+      });
     }
-  };
+  }, [isPolicyRoute, documentType, toast]);
 
-  const getUnacknowledgedUsers = async (id: string) => {
+  const getUnacknowledgedUsers = useCallback(async (docId: string) => {
+    if (!docId) return;
+    
     try {
       let response;
       if (isPolicyRoute) {
-        response = await TicketAPi.getUserUnacknowledgedPol(id);
+        response = await TicketAPi.getUserUnacknowledgedPol(docId);
       } else {
-        response = await TicketAPi.getUserUnacknowledged(id);
+        response = await TicketAPi.getUserUnacknowledged(docId);
       }
-      setUnacknowledgedUsers(response.data.unacknowledgedUsers || response.data);
+      setUnacknowledgedUsers(response.data?.unacknowledgedUsers || response.data || []);
     } catch (error) {
       console.error(error);
+      setUnacknowledgedUsers([]);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isPolicyRoute]);
 
-  const handleAcknowledged = async (id: string) => {
+  const handleAcknowledged = async (docId: string) => {
+    if (!docId || !user) {
+      toast({
+        title: "Error",
+        description: "Unable to acknowledge document",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       let response;
       if (isPolicyRoute) {
-        response = await TicketAPi.acknowledgementPolicy(id);
+        response = await TicketAPi.acknowledgementPolicy(docId);
       } else {
-        response = await TicketAPi.acknowledgement(id);
+        response = await TicketAPi.acknowledgement(docId);
       }
-      console.log(response.data);
-      getIndividualDocument(id);
-      getUnacknowledgedUsers(id);
-      toast({
-        title: "Success",
-        description: `Your acknowledgement of this ${documentType} has been recorded`,
-        variant: "default",
-      });
-      setIsDialogOpen(false);
-      setIsChecked(true);
+      
+      if (response.data) {
+        // Refresh data
+        await getIndividualDocument(docId);
+        await getUnacknowledgedUsers(docId);
+        
+        toast({
+          title: "Success",
+          description: `Your acknowledgement of this ${documentType} has been recorded`,
+          variant: "default",
+        });
+        setIsDialogOpen(false);
+        setIsChecked(true);
+      }
     } catch (error) {
       console.error(error);
       setTempChecked(false);
@@ -351,20 +374,54 @@ const ViewIndividualDocument = () => {
       setIsLoading(true);
       getIndividualDocument(id);
       getUnacknowledgedUsers(id);
-      
-      if (document?.acknowledgedby.some((ack) => ack.userId === user?._id)) {
-        setIsChecked(true);
-      }
     }
-  }, [id, isPolicyRoute]);
+  }, [id, getIndividualDocument, getUnacknowledgedUsers]);
+
+  useEffect(() => {
+    // Check if user has already acknowledged this document
+    if (document?.acknowledgedby && user) {
+      const hasAcknowledged = document.acknowledgedby.some(
+        (ack) => ack.userId === user._id
+      );
+      setIsChecked(hasAcknowledged);
+    }
+  }, [document, user]);
 
   const handleFilePreview = () => {
-    setShowPdfPreview(true);
+    if (document?.file) {
+      setShowPdfPreview(true);
+    } else {
+      toast({
+        title: "No Attachment",
+        description: "This document has no file attachment",
+        variant: "destructive",
+      });
+    }
   };
 
   if (isLoading) {
     return <Loading />;
   }
+
+  if (!document) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <BackButton />
+        <div className="text-center py-12">
+          <h2 className="text-2xl font-bold text-gray-700 mb-4">
+            Document Not Found
+          </h2>
+          <p className="text-gray-500">
+            The {documentType} you are looking for does not exist or has been removed.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const isAcknowledged = document.acknowledgedby?.some(
+    (ack) => ack.userId === user?._id
+  );
 
   return (
     <div className="container mx-auto px-4 py-1 max-w-6xl">
@@ -380,17 +437,17 @@ const ViewIndividualDocument = () => {
             <div className="space-y-3 flex-1">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">
-                  {document?.subject}
+                  {document.subject}
                 </h2>
                 <p className="text-sm text-gray-900 mt-1">
-                  Date Posted: {formatDate(document?.createdAt || "")}
+                  Date Posted: {formatDate(document.createdAt || "")}
                 </p>
                 <p className="text-xs text-gray-500 mt-1 capitalize">
                   {documentType}
                 </p>
               </div>
 
-              {document?.file && (
+              {document.file && (
                 <div className="mt-4">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
@@ -403,9 +460,10 @@ const ViewIndividualDocument = () => {
                       <div className="flex items-center gap-2 mt-1">
                         <button
                           onClick={handleFilePreview}
-                          className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
+                          className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1 hover:underline"
                         >
-                          <span>{document.file}</span>
+                          <FileText size={16} />
+                          <span className="truncate max-w-xs">{document.file}</span>
                         </button>
                       </div>
                     </div>
@@ -414,22 +472,23 @@ const ViewIndividualDocument = () => {
               )}
             </div>
 
-            {!document?.acknowledgedby.some((ack) => ack.userId === user?._id) && (
+            {!isAcknowledged && user && (
               <div className="flex items-center">
                 <label className="flex items-center space-x-3 cursor-pointer">
                   <div className="relative">
                     <input
                       type="checkbox"
-                      className="w-5 h-5 appearance-none border border-gray-400 rounded-md checked:bg-blue-600 checked:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-colors duration-200"
+                      className="w-5 h-5 appearance-none border border-gray-400 rounded-md checked:bg-blue-600 checked:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-colors duration-200 cursor-pointer"
                       onChange={handleCheckboxChange}
                       checked={isChecked || tempChecked}
+                      disabled={isChecked}
                     />
                     {(isChecked || tempChecked) && (
                       <Check className="w-4 h-4 absolute left-0.5 top-0.5 text-white pointer-events-none" />
                     )}
                   </div>
                   <span
-                    className="text-sm font-medium text-gray-700 pb-1"
+                    className="text-sm font-medium text-gray-700 pb-1 cursor-pointer"
                     onClick={handleCheckboxChange}
                   >
                     Acknowledge Receipt
@@ -437,14 +496,22 @@ const ViewIndividualDocument = () => {
                 </label>
               </div>
             )}
+
+            {isAcknowledged && (
+              <div className="flex items-center">
+                <div className="flex items-center space-x-2 px-3 py-1 bg-green-100 text-green-800 rounded-full">
+                  <Check size={16} />
+                  <span className="text-sm font-medium">Acknowledged</span>
+                </div>
+              </div>
+            )}
           </div>
 
-          <div className="pt-1 border-t border-gray-100">
-            <hr className="w-full border-t border-gray-300 my-4"></hr>
-            <div className="bg-blue-50 p-4 rounded-md border border-blue-200">
-              <pre className="whitespace-pre-wrap font-sans p-3 rounded-sm overflow-x-auto text-sm">
-                {document?.description}
-              </pre>
+          <div className="pt-1 border-t border-gray-100 mt-6">
+            <div className="bg-blue-50 p-4 rounded-md border border-blue-200 mt-4">
+              <div className="whitespace-pre-wrap font-sans p-3 overflow-x-auto text-sm text-gray-800 bg-white rounded border">
+                {document.description}
+              </div>
             </div>
           </div>
         </div>
@@ -455,7 +522,7 @@ const ViewIndividualDocument = () => {
               Acknowledgement Status
             </h3>
             <DocumentTabs
-              acknowledgedUsers={document?.acknowledgedby || []}
+              acknowledgedUsers={document.acknowledgedby || []}
               unacknowledgedUsers={unacknowledgedUsers}
             />
           </div>
@@ -464,22 +531,36 @@ const ViewIndividualDocument = () => {
 
       {/* PDF Preview Dialog */}
       <Dialog open={showPdfPreview} onOpenChange={setShowPdfPreview}>
-        <DialogContent className="max-w-[65vw] h-[90vh] bg-white flex flex-col p-0 overflow-hidden">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b">
-            <DialogTitle className="flex items-center gap-2">
+        <DialogContent className="max-w-[90vw] h-[90vh] bg-white flex flex-col p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b bg-gray-50">
+            <DialogTitle className="flex items-center gap-2 text-gray-800">
               <FileText className="text-blue-600" size={20} />
-              <span className="text-gray-800">{document?.file}</span>
+              <span className="truncate">{document.file}</span>
             </DialogTitle>
+            <DialogDescription>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() => {
+                  window.open(
+                    `${import.meta.env.VITE_UPLOADFILES_URL}/files/${document.file}`,
+                    '_blank'
+                  );
+                }}
+              >
+                Open in New Tab
+              </Button>
+            </DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-hidden">
             <iframe
-              src={`${import.meta.env.VITE_UPLOADFILES_URL}/files/${
-                document?.file
-              }#toolbar=0`}
+              src={`${import.meta.env.VITE_UPLOADFILES_URL}/files/${document.file}#toolbar=0`}
               width="100%"
               height="100%"
               style={{ border: "none" }}
               title="PDF Preview"
+              className="w-full h-full"
             />
           </div>
         </DialogContent>
@@ -500,7 +581,7 @@ const ViewIndividualDocument = () => {
                 </p>
                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
                   <p className="font-medium text-blue-800">Declaration:</p>
-                  <p className="mt-2 text-blue-700">
+                  <p className="mt-2 text-blue-700 text-sm">
                     "I acknowledge receipt of this {documentType} and understand the
                     information provided. I will comply with any instructions or
                     requirements outlined herein."
@@ -510,17 +591,17 @@ const ViewIndividualDocument = () => {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-6">
-            <div className="flex gap-1">
+            <div className="flex gap-3 w-full">
               <Button
                 variant="outline"
                 onClick={handleCancelAcknowledgment}
-                className="flex-1 text-sm scale-90"
+                className="flex-1"
               >
                 Cancel
               </Button>
               <Button
-                onClick={() => handleAcknowledged(id as string)}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-sm scale-90"
+                onClick={() => id && handleAcknowledged(id)}
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
               >
                 Confirm
               </Button>
