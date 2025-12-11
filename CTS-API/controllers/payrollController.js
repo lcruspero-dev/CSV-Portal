@@ -143,8 +143,8 @@ async function calculatePayrollData(userId, startDate, endDate) {
         absentDays = Math.max(0, workingDaysInPeriod - regularDays);
 
         // Calculate rates based on actual working days, not monthly
-        const dailyRate = monthlySalary / 26; // Standard daily rate
-        const hourlyRate = dailyRate / 8; // Assuming 8 hours per day
+        const dailyRate = monthlySalary / 26; 
+        const hourlyRate = dailyRate / 8; 
 
         return {
             monthlySalary,

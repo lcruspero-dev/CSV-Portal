@@ -101,7 +101,6 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
     const fetchUsers = async () => {
       try {
         const res = await UserProfileAPI.getAllUsers();
-        // Ensure we have an array and handle potential nested data structure
         const usersData = Array.isArray(res.data)
           ? res.data
           : Array.isArray(res.data?.users)
