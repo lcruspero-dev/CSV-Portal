@@ -4,7 +4,6 @@ import BackButton from "@/components/kit/BackButton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import LoadingComponent from "@/components/ui/loading";
 import {
   Table,
   TableBody,
@@ -23,9 +22,12 @@ import {
   User,
   FileText,
   Ticket as TicketIcon,
-  Heart,
-  Clover,
-  PieChart
+  Gift,
+  Snowflake,
+  TreePine,
+  Star,
+  Bell,
+  Home
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom"; 
@@ -137,7 +139,7 @@ const ViewAllTicket: React.FC = () => {
       case "2-high":
         return "bg-orange-500";
       case "3-moderate":
-        return "bg-amber-500";
+        return "bg-yellow-500";
       case "4-low":
         return "bg-green-500";
       default:
@@ -153,53 +155,70 @@ const ViewAllTicket: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 to-orange-100">
-        <LoadingComponent />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-red-50">
+        <div className="text-center">
+          <div className="animate-bounce">
+            <TreePine className="h-12 w-12 text-green-600 mx-auto mb-4" />
+          </div>
+          <p className="text-green-600 font-medium">Loading Santa's List...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 py-6">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-red-50 py-6 relative overflow-hidden">
+      {/* Animated Snowflakes Background */}
+      <div className="absolute top-4 left-4 opacity-5 animate-pulse">
+        <Snowflake className="h-16 w-16 text-blue-400" />
+      </div>
+      <div className="absolute top-20 right-10 opacity-5 animate-pulse delay-300">
+        <Snowflake className="h-12 w-12 text-blue-300" />
+      </div>
+      <div className="absolute bottom-20 left-20 opacity-5 animate-pulse delay-700">
+        <Snowflake className="h-14 w-14 text-blue-400" />
+      </div>
+      
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl relative z-10">
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
           <div className="flex items-center gap-4">
             <BackButton />
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-amber-900 flex items-center gap-2">
-                <div className="p-2 bg-gradient-to-r from-amber-600 to-orange-600 rounded-xl">
+              <h1 className="text-2xl sm:text-3xl font-bold text-green-900 flex items-center gap-2">
+                <div className="p-2 bg-gradient-to-r from-green-600 to-red-600 rounded-xl">
                   <TicketIcon className="h-6 w-6 text-white" />
                 </div>
-                Thanksgiving Support Requests
+                🎄 Santa's Support Workshop
               </h1>
-              <p className="text-amber-700 text-sm mt-1">
-                We're grateful to assist you with your needs this season
+              <p className="text-green-700 text-sm mt-1 flex items-center">
+                <Star className="h-3 w-3 mr-1" />
+                Tracking all holiday requests and wishes
               </p>
             </div>
           </div>
           
-          <div className="bg-white px-4 py-3 rounded-lg border border-amber-200 shadow-sm">
-            <div className="text-sm text-amber-600">Total Blessings Shared</div>
-            <div className="text-2xl font-bold text-amber-900">
+          <div className="bg-white px-4 py-3 rounded-lg border border-green-200 shadow-sm">
+            <div className="text-sm text-green-600">🎁 Total Requests</div>
+            <div className="text-2xl font-bold text-green-900">
               {filteredTickets.length}
             </div>
           </div>
         </div>
 
         {/* Search and Filters */}
-        <Card className="mb-6 shadow-sm border border-amber-200">
+        <Card className="mb-6 shadow-sm border border-green-200 bg-white/80 backdrop-blur-sm">
           <CardContent className="p-6">
             <div className="flex flex-col sm:flex-row gap-4">
               {/* Search Bar */}
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-amber-500" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-green-500" />
                 <input
                   type="text"
-                  placeholder="Search with gratitude by ticket number, description, or category..."
+                  placeholder="🔍 Search by ticket number, description, or category..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-amber-50 placeholder-amber-400"
+                  className="w-full pl-10 pr-4 py-2 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-green-50 placeholder-green-400"
                 />
               </div>
               
@@ -207,13 +226,13 @@ const ViewAllTicket: React.FC = () => {
               <Button
                 variant="outline"
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2 border-amber-300 text-amber-700 hover:bg-amber-100"
+                className="flex items-center gap-2 border-green-300 text-green-700 hover:bg-green-100"
               >
                 <Filter className="h-4 w-4" />
                 Filters
                 {(statusFilter !== "all") && (
-                  <Badge variant="secondary" className="ml-1 bg-amber-500">
-                    1
+                  <Badge variant="secondary" className="ml-1 bg-red-500">
+                    ⭐
                   </Badge>
                 )}
               </Button>
@@ -223,32 +242,33 @@ const ViewAllTicket: React.FC = () => {
                 <Button
                   variant="ghost"
                   onClick={clearFilters}
-                  className="text-amber-600 hover:text-amber-800 hover:bg-amber-100"
+                  className="text-red-600 hover:text-red-800 hover:bg-red-100 flex items-center"
                 >
-                  Clear Blessings
+                  <Snowflake className="h-4 w-4 mr-1" />
+                  Clear All
                 </Button>
               )}
             </div>
 
             {/* Expanded Filters */}
             {showFilters && (
-              <div className="mt-4 pt-4 border-t border-amber-200 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="mt-4 pt-4 border-t border-green-200 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-amber-700 mb-2">
-                    <Heart className="h-4 w-4 inline mr-1" />
+                  <label className="text-sm font-medium text-green-700 mb-2 flex items-center">
+                    <Gift className="h-4 w-4 inline mr-1" />
                     Status
                   </label>
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="w-full border border-amber-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-amber-50"
+                    className="w-full border border-green-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-green-50"
                   >
-                    <option value="all">All Blessings</option>
-                    <option value="open">Open with Gratitude</option>
-                    <option value="In Progress">In Progress 🍂</option>
-                    <option value="Approved">Approved with Thanks</option>
-                    <option value="closed">Closed with Blessings</option>
-                    <option value="Rejected">Needs More Gratitude</option>
+                    <option value="all">🎄 All Requests</option>
+                    <option value="open">🎁 Open Wishes</option>
+                    <option value="In Progress">⭐ In Santa's Workshop</option>
+                    <option value="Approved">✅ Approved with Cheer</option>
+                    <option value="closed">🎅 Delivered</option>
+                    <option value="Rejected">❌ Needs More Details</option>
                   </select>
                 </div>
               </div>
@@ -258,49 +278,49 @@ const ViewAllTicket: React.FC = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <Card className="border border-amber-200 bg-white">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-amber-600">Open Requests</p>
-                  <p className="text-xl font-bold text-amber-900">
-                    {allTicket.filter(t => t.status.toLowerCase() === 'open').length}
-                  </p>
-                </div>
-                <div className="p-2 bg-amber-100 rounded-lg">
-                  <Heart className="h-5 w-5 text-amber-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
           <Card className="border border-green-200 bg-white">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-green-600">Blessings Completed</p>
+                  <p className="text-sm font-medium text-green-600">🎄 Open Wishes</p>
                   <p className="text-xl font-bold text-green-900">
-                    {allTicket.filter(t => t.status.toLowerCase() === 'closed').length}
+                    {allTicket.filter(t => t.status.toLowerCase() === 'open').length}
                   </p>
                 </div>
                 <div className="p-2 bg-green-100 rounded-lg">
-                  <Clover className="h-5 w-5 text-green-600" />
+                  <Gift className="h-5 w-5 text-green-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border border-orange-200 bg-white">
+          <Card className="border border-red-200 bg-white">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-orange-600">In Progress</p>
-                  <p className="text-xl font-bold text-orange-900">
+                  <p className="text-sm font-medium text-red-600">🎅 Delivered</p>
+                  <p className="text-xl font-bold text-red-900">
+                    {allTicket.filter(t => t.status.toLowerCase() === 'closed').length}
+                  </p>
+                </div>
+                <div className="p-2 bg-red-100 rounded-lg">
+                  <Home className="h-5 w-5 text-red-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-yellow-200 bg-white">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-yellow-600">⭐ In Workshop</p>
+                  <p className="text-xl font-bold text-yellow-900">
                     {allTicket.filter(t => t.status.toLowerCase() === 'in progress').length}
                   </p>
                 </div>
-                <div className="p-2 bg-orange-100 rounded-lg">
-                  <PieChart className="h-5 w-5 text-orange-600" />
+                <div className="p-2 bg-yellow-100 rounded-lg">
+                  <TreePine className="h-5 w-5 text-yellow-600" />
                 </div>
               </div>
             </CardContent>
@@ -310,13 +330,13 @@ const ViewAllTicket: React.FC = () => {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-blue-600">Total Gratitude</p>
+                  <p className="text-sm font-medium text-blue-600">📜 Total Wishes</p>
                   <p className="text-xl font-bold text-blue-900">
                     {allTicket.length}
                   </p>
                 </div>
                 <div className="p-2 bg-blue-100 rounded-lg">
-                  <TicketIcon className="h-5 w-5 text-blue-600" />
+                  <Bell className="h-5 w-5 text-blue-600" />
                 </div>
               </div>
             </CardContent>
@@ -326,28 +346,28 @@ const ViewAllTicket: React.FC = () => {
         {/* Mobile Cards View */}
         <div className="block lg:hidden space-y-4 mb-6">
           {getCurrentPageTickets().length === 0 ? (
-            <Card className="border border-amber-200">
+            <Card className="border border-green-200 bg-white">
               <CardContent className="text-center py-12">
-                <div className="text-4xl mb-4">🦃</div>
-                <TicketIcon className="h-12 w-12 text-amber-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-amber-900 mb-2">No blessings found</h3>
-                <p className="text-amber-600">
+                <div className="text-4xl mb-4">🎄</div>
+                <TreePine className="h-12 w-12 text-green-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-green-900 mb-2">No wishes found</h3>
+                <p className="text-green-600">
                   {searchTerm || statusFilter !== "all" 
-                    ? "Try adjusting your Clover filters" 
-                    : "You haven't shared any requests yet"}
+                    ? "Try adjusting your filters" 
+                    : "No holiday requests yet"}
                 </p>
               </CardContent>
             </Card>
           ) : (
             getCurrentPageTickets().map((ticket) => (
-              <Card key={ticket._id} className="hover:shadow-md transition-shadow border border-amber-200">
+              <Card key={ticket._id} className="hover:shadow-md transition-shadow border border-green-200 bg-white">
                 <CardContent className="p-4">
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center gap-2">
-                      <div className="p-1 bg-amber-100 rounded">
-                        <TicketIcon className="h-3 w-3 text-amber-600" />
+                      <div className="p-1 bg-green-100 rounded">
+                        <TicketIcon className="h-3 w-3 text-green-600" />
                       </div>
-                      <span className="font-mono font-semibold text-amber-900">
+                      <span className="font-mono font-semibold text-green-900">
                         {ticket.ticketNumber}
                       </span>
                     </div>
@@ -358,23 +378,23 @@ const ViewAllTicket: React.FC = () => {
 
                   <div className="space-y-2 mb-3">
                     <div className="flex items-center gap-2 text-sm">
-                      <Calendar className="h-4 w-4 text-amber-500" />
-                      <span className="text-amber-700">{formattedDate(ticket.createdAt)}</span>
+                      <Calendar className="h-4 w-4 text-red-500" />
+                      <span className="text-green-700">{formattedDate(ticket.createdAt)}</span>
                     </div>
                     
                     <div className="flex items-center gap-2 text-sm">
-                      <FileText className="h-4 w-4 text-amber-500" />
-                      <span className="text-amber-900 font-medium">{ticket.category}</span>
+                      <FileText className="h-4 w-4 text-green-500" />
+                      <span className="text-green-900 font-medium">{ticket.category}</span>
                     </div>
 
                     <div className="flex items-center gap-2 text-sm">
-                      <User className="h-4 w-4 text-amber-500" />
-                      <span className="text-amber-700">{ticket.assignedTo || "Awaiting Helper"}</span>
+                      <User className="h-4 w-4 text-red-500" />
+                      <span className="text-green-700">{ticket.assignedTo || "Awaiting Santa's Helper"}</span>
                     </div>
                   </div>
 
                   <div className="mb-3">
-                    <p className="text-sm text-amber-800 line-clamp-2">
+                    <p className="text-sm text-green-800 line-clamp-2">
                       {ticket.description}
                     </p>
                   </div>
@@ -382,15 +402,15 @@ const ViewAllTicket: React.FC = () => {
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
                       <div className={`w-2 h-2 rounded-full ${getPriorityColor(ticket.priority)}`} />
-                      <span className="text-xs text-amber-600">{ticket.priority}</span>
+                      <span className="text-xs text-green-600">{ticket.priority}</span>
                     </div>
                     <Button
                       onClick={() => navigate(`/ticket/${ticket._id}`)}
                       size="sm"
-                      className="flex items-center gap-1 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700"
+                      className="flex items-center gap-1 bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700"
                     >
                       <Eye className="h-3 w-3" />
-                      View Blessing
+                      View Wish
                     </Button>
                   </div>
                 </CardContent>
@@ -400,20 +420,20 @@ const ViewAllTicket: React.FC = () => {
         </div>
 
         {/* Desktop Table View */}
-        <Card className="hidden lg:block shadow-sm border border-amber-200">
+        <Card className="hidden lg:block shadow-sm border border-green-200 bg-white">
           <Table>
-            <TableHeader className="bg-gradient-to-r from-amber-600 to-orange-600">
+            <TableHeader className="bg-gradient-to-r from-green-600 to-red-600">
               <TableRow className="border-0 hover:bg-transparent">
                 <TableHead className="font-semibold text-white w-32">
                   <div className="flex items-center gap-2">
                     <TicketIcon className="h-4 w-4" />
-                    Blessing #
+                    Wish #
                   </div>
                 </TableHead>
                 <TableHead className="font-semibold text-white w-36">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
-                    Clover Date
+                    Date
                   </div>
                 </TableHead>
                 <TableHead className="font-semibold text-white w-40">
@@ -424,7 +444,7 @@ const ViewAllTicket: React.FC = () => {
                 </TableHead>
                 <TableHead className="font-semibold text-white">
                   <div className="flex items-center gap-2">
-                    <Heart className="h-4 w-4" />
+                    <Gift className="h-4 w-4" />
                     Request Details
                   </div>
                 </TableHead>
@@ -433,14 +453,14 @@ const ViewAllTicket: React.FC = () => {
                 </TableHead>
                 <TableHead className="font-semibold text-white w-32">
                   <div className="flex items-center gap-2">
-                    <Clover className="h-4 w-4" />
+                    <TreePine className="h-4 w-4" />
                     Status
                   </div>
                 </TableHead>
                 <TableHead className="font-semibold text-white w-40">
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4" />
-                    Helper
+                    Santa's Helper
                   </div>
                 </TableHead>
                 <TableHead className="font-semibold text-white w-20">
@@ -452,13 +472,13 @@ const ViewAllTicket: React.FC = () => {
               {getCurrentPageTickets().length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-12">
-                    <div className="text-4xl mb-4">🍂</div>
-                    <TicketIcon className="h-12 w-12 text-amber-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-amber-900 mb-2">No blessings found</h3>
-                    <p className="text-amber-600">
+                    <div className="text-4xl mb-4">🎁</div>
+                    <TreePine className="h-12 w-12 text-green-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-green-900 mb-2">No holiday wishes found</h3>
+                    <p className="text-green-600">
                       {searchTerm || statusFilter !== "all" 
-                        ? "Try adjusting your Clover filters" 
-                        : "You haven't shared any requests yet"}
+                        ? "Try adjusting your filters" 
+                        : "No requests in Santa's list yet"}
                     </p>
                   </TableCell>
                 </TableRow>
@@ -466,25 +486,25 @@ const ViewAllTicket: React.FC = () => {
                 getCurrentPageTickets().map((ticket, index) => (
                   <TableRow 
                     key={ticket._id} 
-                    className={`hover:bg-amber-50 transition-colors ${
-                      index % 2 === 0 ? "bg-white" : "bg-amber-25"
+                    className={`hover:bg-green-50 transition-colors ${
+                      index % 2 === 0 ? "bg-white" : "bg-green-25"
                     }`}
                   >
-                    <TableCell className="font-mono font-semibold text-amber-700">
+                    <TableCell className="font-mono font-semibold text-green-700">
                       {ticket.ticketNumber}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-amber-500" />
+                        <Calendar className="h-4 w-4 text-red-500" />
                         {formattedDate(ticket.createdAt)}
                       </div>
                     </TableCell>
-                    <TableCell className="font-medium text-amber-900">
+                    <TableCell className="font-medium text-green-900">
                       {ticket.category}
                     </TableCell>
                     <TableCell>
                       <div className="max-w-xs">
-                        <p className="truncate text-amber-800" title={ticket.description}>
+                        <p className="truncate text-green-800" title={ticket.description}>
                           {ticket.description}
                         </p>
                       </div>
@@ -492,7 +512,7 @@ const ViewAllTicket: React.FC = () => {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <div className={`w-2 h-2 rounded-full ${getPriorityColor(ticket.priority)}`} />
-                        <span className="text-xs text-amber-600">{ticket.priority}</span>
+                        <span className="text-xs text-green-600">{ticket.priority}</span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -502,8 +522,8 @@ const ViewAllTicket: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-amber-500" />
-                        <span className="text-amber-700">{ticket.assignedTo || "Awaiting Helper"}</span>
+                        <User className="h-4 w-4 text-red-500" />
+                        <span className="text-green-700">{ticket.assignedTo || "Awaiting Helper"}</span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -511,7 +531,7 @@ const ViewAllTicket: React.FC = () => {
                         onClick={() => navigate(`/ticket/${ticket._id}`)}
                         variant="outline"
                         size="sm"
-                        className="flex items-center gap-1 border-amber-300 text-amber-700 hover:bg-amber-100"
+                        className="flex items-center gap-1 border-green-300 text-green-700 hover:bg-green-100"
                       >
                         <Eye className="h-3 w-3" />
                         View
@@ -527,10 +547,10 @@ const ViewAllTicket: React.FC = () => {
         {/* Pagination */}
         {filteredTickets.length > 0 && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
-            <div className="text-sm text-amber-700">
-              Showing {((currentPage - 1) * itemsPerPage) + 1} to{" "}
+            <div className="text-sm text-green-700">
+              🎄 Showing {((currentPage - 1) * itemsPerPage) + 1} to{" "}
               {Math.min(currentPage * itemsPerPage, filteredTickets.length)} of{" "}
-              {filteredTickets.length} blessing{filteredTickets.length !== 1 ? 's' : ''}
+              {filteredTickets.length} wish{filteredTickets.length !== 1 ? 'es' : ''}
             </div>
             
             <div className="flex items-center gap-2">
@@ -539,7 +559,7 @@ const ViewAllTicket: React.FC = () => {
                 size="sm"
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="flex items-center gap-1 border-amber-300 text-amber-700 hover:bg-amber-100"
+                className="flex items-center gap-1 border-green-300 text-green-700 hover:bg-green-100"
               >
                 <ChevronLeft className="h-4 w-4" />
                 Previous
@@ -566,8 +586,8 @@ const ViewAllTicket: React.FC = () => {
                       onClick={() => handlePageChange(pageNum)}
                       className={`w-8 h-8 p-0 ${
                         pageNum === currentPage 
-                          ? 'bg-amber-600 hover:bg-amber-700' 
-                          : 'border-amber-300 text-amber-700 hover:bg-amber-100'
+                          ? 'bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700' 
+                          : 'border-green-300 text-green-700 hover:bg-green-100'
                       }`}
                     >
                       {pageNum}
@@ -577,12 +597,12 @@ const ViewAllTicket: React.FC = () => {
                 
                 {totalPages > 5 && currentPage < totalPages - 2 && (
                   <>
-                    <span className="px-2 text-amber-500">...</span>
+                    <span className="px-2 text-green-500">...</span>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handlePageChange(totalPages)}
-                      className="w-8 h-8 p-0 border-amber-300 text-amber-700 hover:bg-amber-100"
+                      className="w-8 h-8 p-0 border-green-300 text-green-700 hover:bg-green-100"
                     >
                       {totalPages}
                     </Button>
@@ -595,7 +615,7 @@ const ViewAllTicket: React.FC = () => {
                 size="sm"
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="flex items-center gap-1 border-amber-300 text-amber-700 hover:bg-amber-100"
+                className="flex items-center gap-1 border-green-300 text-green-700 hover:bg-green-100"
               >
                 Next
                 <ChevronRight className="h-4 w-4" />
@@ -604,12 +624,15 @@ const ViewAllTicket: React.FC = () => {
           </div>
         )}
 
-        {/* Thanksgiving Footer */}
-        <div className="mt-8 text-center">
-          <div className="text-amber-600 text-sm flex items-center justify-center gap-2">
-            <span>🦃</span>
-            <span>Thankful for the opportunity to serve you this season</span>
-            <span>🍂</span>
+        {/* Christmas Footer */}
+        <div className="mt-8 text-center bg-white/80 backdrop-blur-sm p-4 rounded-xl border border-green-200">
+          <div className="text-green-600 text-sm flex items-center justify-center gap-2">
+            <span>🎄</span>
+            <span>May your holiday season be filled with joy and cheer!</span>
+            <span>🎅</span>
+          </div>
+          <div className="text-xs text-green-500 mt-1">
+            From Santa's Workshop Helpers with ❤️
           </div>
         </div>
       </div>
