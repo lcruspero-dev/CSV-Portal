@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { LeaveCreditAPI, TicketAPi, UserProfileAPI } from "@/API/endpoint"; // Added LeaveCreditAPI import
+import { LeaveCreditAPI, TicketAPi, UserProfileAPI } from "@/API/endpoint";
 import { formattedDate } from "@/API/helper";
 import BackButton from "@/components/kit/BackButton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -11,24 +11,28 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
-import Loading from "@/components/ui/loading";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  AlertCircle,
+  Gift,
+  Snowflake,
+  TreePine,
+  Star,
   Calendar,
   Download,
   FileText,
   Send,
   Tag,
   User,
-  Wallet,
-} from "lucide-react"; // Added Wallet icon
+  Home,
+  Bell,
+  CandyCane,
+  MessageSquare
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Ticket } from "./ViewAllTicket";
 
-// Added interface for leave credit
 interface LeaveCredit {
   _id: string;
   userId: string;
@@ -44,10 +48,8 @@ const UserViewIndividualTicket: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [avatarMap, setAvatarMap] = useState<Record<string, string>>({});
-  // Added state for leave credit
   const [leaveCredit, setLeaveCredit] = useState<LeaveCredit | null>(null);
 
-  // Fetch all avatars when component mounts
   useEffect(() => {
     const fetchAvatars = async () => {
       try {
@@ -79,15 +81,12 @@ const UserViewIndividualTicket: React.FC = () => {
     try {
       const response = await TicketAPi.getIndividualTicket(ticketId);
       setDetails(response.data);
-
-      // Once we have the ticket details, get the leave credit
       getLeaveCreditForUser();
     } catch (error) {
       console.error(error);
     }
   };
 
-  // Added function to get leave credit
   const getLeaveCreditForUser = async () => {
     try {
       const response = await LeaveCreditAPI.getLeaveCreditById();
@@ -146,7 +145,16 @@ const UserViewIndividualTicket: React.FC = () => {
   };
 
   if (isLoading) {
-    return <Loading />;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-red-50">
+        <div className="text-center">
+          <div className="animate-bounce">
+            <TreePine className="h-12 w-12 text-green-600 mx-auto mb-4" />
+          </div>
+          <p className="text-green-600 font-medium">Loading Santa's Note...</p>
+        </div>
+      </div>
+    );
   }
 
   const handleFileDownload = (file: string) => {
@@ -155,41 +163,39 @@ const UserViewIndividualTicket: React.FC = () => {
       "_blank"
     );
   };
-  // Helper function to get status badge color
+
   const getStatusBadgeClass = (status: string | undefined): string => {
     if (!status) return "bg-gray-500";
 
-    switch (status) {
+    switch (status.toLowerCase()) {
       case "new":
       case "open":
-      case "Approved":
-        return "bg-green-500";
+      case "approved":
+        return "bg-gradient-to-r from-green-500 to-green-600";
       case "closed":
-      case "Rejected":
-        return "bg-red-500";
-      case "In progress":
-        return "bg-yellow-500";
+      case "rejected":
+        return "bg-gradient-to-r from-red-500 to-red-600";
+      case "in progress":
+        return "bg-gradient-to-r from-yellow-500 to-yellow-600";
       default:
-        return "bg-blue-500";
+        return "bg-gradient-to-r from-blue-500 to-blue-600";
     }
   };
 
-  // Helper function to get priority badge color
   const getPriorityBadgeClass = (priority: string | undefined) => {
-    if (!priority) return "bg-gray-500";
-    switch (priority) {
-      case "1-Critical":
-        return "bg-red-500";
-      case "2-High":
-        return "bg-yellow-500";
-      case "3-Moderate":
-        return "bg-green-500";
+    if (!priority) return "bg-gradient-to-r from-gray-500 to-gray-600";
+    switch (priority.toLowerCase()) {
+      case "1-critical":
+        return "bg-gradient-to-r from-red-500 to-red-700";
+      case "2-high":
+        return "bg-gradient-to-r from-yellow-500 to-yellow-700";
+      case "3-moderate":
+        return "bg-gradient-to-r from-green-500 to-green-700";
       default:
-        return "bg-blue-500";
+        return "bg-gradient-to-r from-blue-500 to-blue-700";
     }
   };
 
-  // Calculate balance after leave approval
   const calculateBalanceAfterApproval = () => {
     if (!leaveCredit || !details?.leaveDays) return null;
 
@@ -200,7 +206,6 @@ const UserViewIndividualTicket: React.FC = () => {
     return balanceAfterApproval < 0 ? 0 : balanceAfterApproval;
   };
 
-  // Only show leave balance for leave request tickets
   const showLeaveBalance = details?.category === "Leave Request";
   const balanceAfterApproval = calculateBalanceAfterApproval();
   const isPaidLeave = () => {
@@ -209,31 +214,42 @@ const UserViewIndividualTicket: React.FC = () => {
   };
 
   return (
-    <div className="container py-6 mx-auto max-w-4xl">
+    <div className="container py-6 mx-auto max-w-4xl min-h-screen bg-gradient-to-br from-green-50 via-white to-red-50 relative overflow-hidden">
+      {/* Animated Snowflakes Background */}
+      <div className="absolute top-4 right-10 opacity-5">
+        <Snowflake className="h-16 w-16 text-blue-400 animate-pulse" />
+      </div>
+      <div className="absolute bottom-10 left-10 opacity-5">
+        <Snowflake className="h-12 w-12 text-blue-300 animate-pulse delay-300" />
+      </div>
+      
       <div className="text-sm scale-90 origin-top-left">
         <BackButton />
       </div>
 
-      <Card className="mb-6 shadow-md">
+      <Card className="mb-6 shadow-lg border border-green-200 bg-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 opacity-10">
+          <TreePine className="h-24 w-24 text-green-400" />
+        </div>
+        
         <CardHeader className="pb-2">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
             <div className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-blue-600" />
-              <h1 className="text-xl font-bold">
-                Ticket #{details?.ticketNumber}
+              <div className="p-2 bg-gradient-to-r from-green-600 to-red-600 rounded-lg">
+                <Gift className="h-5 w-5 text-white" />
+              </div>
+              <h1 className="text-xl font-bold text-green-900">
+                🎄 Ticket #{details?.ticketNumber}
               </h1>
-              <Badge className={getStatusBadgeClass(details?.status)}>
+              <Badge className={`${getStatusBadgeClass(details?.status)} text-white`}>
                 {details?.status || "Unknown"}
               </Badge>
             </div>
             <div className="mt-2 md:mt-0">
               <Badge
-                variant="outline"
-                className={`${getPriorityBadgeClass(
-                  details?.priority
-                )} text-white`}
+                className={`${getPriorityBadgeClass(details?.priority)} text-white`}
               >
-                Priority: {details?.priority || "Unset"}
+                ⭐ Priority: {details?.priority || "Unset"}
               </Badge>
             </div>
           </div>
@@ -243,49 +259,48 @@ const UserViewIndividualTicket: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-gray-900" />
-                <span className="text-sm text-gray-900">
-                  Created: {formattedDate(details?.createdAt || "")}
+                <Calendar className="h-4 w-4 text-green-600" />
+                <span className="text-sm text-green-800">
+                  🗓️ Created: {formattedDate(details?.createdAt || "")}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-gray-900" />
-                <span className="text-sm text-gray-900">
-                  Submitted by: {details?.name || "Unknown"}
+                <User className="h-4 w-4 text-red-500" />
+                <span className="text-sm text-green-800">
+                  👤 Submitted by: {details?.name || "Unknown"}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <Tag className="h-4 w-4 text-gray-900" />
-                <span className="text-sm text-gray-900">
-                  Category: {details?.category || "Uncategorized"}
+                <Tag className="h-4 w-4 text-green-600" />
+                <span className="text-sm text-green-800">
+                  🏷️ Category: {details?.category || "Uncategorized"}
                 </span>
               </div>
-              {/* Added leave days if available */}
               {details?.leaveDays && (
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-gray-900" />
-                  <span className="text-sm text-gray-900">
-                    Leave Days: {details?.leaveDays}
+                  <Calendar className="h-4 w-4 text-red-500" />
+                  <span className="text-sm text-green-800">
+                    📅 Leave Days: {details?.leaveDays}
                   </span>
                 </div>
               )}
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-gray-900" />
-                <span className="text-sm text-gray-900">
-                  Assigned to: {details?.assignedTo || "Unassigned"}
+                <User className="h-4 w-4 text-green-600" />
+                <span className="text-sm text-green-800">
+                  🎅 Assigned to: {details?.assignedTo || "Santa's Helper"}
                 </span>
               </div>
               {details?.file && details.file.trim() !== "" && (
                 <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-gray-900" />
+                  <FileText className="h-4 w-4 text-red-500" />
                   <button
                     onClick={() => handleFileDownload(details.file as string)}
-                    className="text-sm text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
+                    className="text-sm text-green-600 hover:text-green-800 hover:underline flex items-center gap-1"
                     title={details.file}
                   >
-                    <span>Attachment</span>
+                    <span>🎁 Attachment</span>
                     <Download className="h-3 w-3" />
                   </button>
                 </div>
@@ -293,20 +308,23 @@ const UserViewIndividualTicket: React.FC = () => {
             </div>
           </div>
 
-          {/* Added Leave Balance Section */}
+          {/* Leave Balance Section */}
           {showLeaveBalance && isPaidLeave() && (
             <>
-              <div className="bg-blue-50 p-4 rounded-md border border-blue-200 my-4">
-                <h3 className="text-sm  font-medium text-blue-800 mb-2 flex items-center">
-                  <Wallet className="h-4 w-4 mr-2" />
-                  Leave Balance Information
+              <div className="bg-gradient-to-r from-green-50 to-red-50 p-4 rounded-lg border border-green-200 my-4 relative overflow-hidden">
+                <div className="absolute -right-2 -top-2 opacity-10">
+                  <Star className="h-16 w-16 text-yellow-400" />
+                </div>
+                <h3 className="text-sm font-medium text-green-800 mb-2 flex items-center">
+                  <Home className="h-4 w-4 mr-2" />
+                  🎅 Leave Balance Information
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-700">
-                      <span className="text-sm ">Current Balance:</span>{" "}
+                  <div className="bg-white p-3 rounded-lg border border-green-100">
+                    <p className="text-sm text-green-700">
+                      <span className="font-medium">Current Balance:</span>{" "}
                       {leaveCredit ? (
-                        <span className="font-bold">
+                        <span className="font-bold text-green-800">
                           {leaveCredit.currentBalance} days
                         </span>
                       ) : (
@@ -314,13 +332,13 @@ const UserViewIndividualTicket: React.FC = () => {
                       )}
                     </p>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-700">
-                      <span className="text-sm ">Balance After Approval:</span>{" "}
+                  <div className="bg-white p-3 rounded-lg border border-red-100">
+                    <p className="text-sm text-red-700">
+                      <span className="font-medium">Balance After Approval:</span>{" "}
                       {balanceAfterApproval !== null ? (
                         <span
                           className={`font-bold ${
-                            balanceAfterApproval < 5 ? "text-orange-600" : ""
+                            balanceAfterApproval < 5 ? "text-red-600" : "text-green-800"
                           }`}
                         >
                           {balanceAfterApproval} days
@@ -335,12 +353,15 @@ const UserViewIndividualTicket: React.FC = () => {
             </>
           )}
 
-          <Separator className="my-4" />
+          <Separator className="my-4 bg-gradient-to-r from-green-200 to-red-200" />
 
           <div>
-            <h2 className="font-medium text-sm">Description</h2>
-            <div className="bg-blue-50 p-4 rounded-md border border-blue-200 my-4">
-              <pre className="whitespace-pre-wrap font-sans text-sm text-gray-900">
+            <h2 className="font-medium text-sm text-green-800 flex items-center mb-2">
+              <Bell className="h-4 w-4 mr-2" />
+              Description
+            </h2>
+            <div className="bg-gradient-to-r from-green-50 to-red-50 p-4 rounded-lg border border-green-200">
+              <pre className="whitespace-pre-wrap font-sans text-sm text-green-900">
                 {details?.description || "No description provided."}
               </pre>
             </div>
@@ -350,18 +371,21 @@ const UserViewIndividualTicket: React.FC = () => {
 
       {/* Notes Section */}
       <div className="mb-6">
-        <h2 className="text-sm font-semibold mb-4">Notes & Responses</h2>
+        <h2 className="text-sm font-semibold mb-4 text-green-800 flex items-center">
+          <MessageSquare className="h-4 w-4 mr-2" />
+          🎄 Notes & Responses
+        </h2>
 
         {details?.status !== "closed" && (
-          <Card className="mb-6 shadow-sm">
+          <Card className="mb-6 shadow-sm border border-green-200 bg-white">
             <CardContent className="pt-6">
               <form onSubmit={submitNote}>
                 <Textarea
-                  placeholder="Add your response here..."
+                  placeholder="🎅 Add your holiday message here..."
                   value={message}
                   onChange={handleChange}
                   disabled={isSubmitting}
-                  className="min-h-24 resize-none"
+                  className="min-h-24 resize-none border-green-300 focus:border-green-500 bg-green-50"
                 />
               </form>
             </CardContent>
@@ -370,10 +394,10 @@ const UserViewIndividualTicket: React.FC = () => {
                 type="submit"
                 disabled={isSubmitting || !message.trim()}
                 onClick={submitNote}
-                className="flex items-center gap-2 text-sm"
+                className="flex items-center gap-2 text-sm bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700 text-white"
               >
                 <Send className="h-4 w-4" />
-                {isSubmitting ? "Sending..." : "Send Response"}
+                {isSubmitting ? "Sending to Santa..." : "Send Response"}
               </Button>
             </CardFooter>
           </Card>
@@ -381,55 +405,66 @@ const UserViewIndividualTicket: React.FC = () => {
 
         <div className="space-y-4">
           {notes?.length === 0 ? (
-            <p className="text-center text-gray-900 py-8 text-sm">
-              No notes or responses yet.
-            </p>
+            <div className="text-center text-green-600 py-8 text-sm bg-gradient-to-r from-green-50 to-red-50 rounded-lg border border-green-200">
+              <CandyCane className="h-12 w-12 text-green-300 mx-auto mb-4" />
+              <p>🎁 No notes or responses yet. Be the first to share!</p>
+            </div>
           ) : (
             notes
               ?.slice()
               .reverse()
               .map((note: any) => {
-                // Get avatar URL from avatarMap or use default
                 const avatarFilename = avatarMap[note.user];
                 const avatarUrl = avatarFilename
                   ? `${
                       import.meta.env.VITE_UPLOADFILES_URL
                     }/avatars/${avatarFilename}`
-                  : `https://ui-avatars.com/api/?background=2563EB&color=fff&name=${
+                  : `https://ui-avatars.com/api/?background=16A34A&color=fff&name=${
                       note.name || "?"
                     }`;
 
                 return (
                   <Card
                     key={note._id}
-                    className={`shadow-sm ${
-                      note.isStaff ? "border-l-4 border-l-blue-500" : ""
+                    className={`shadow-sm border ${
+                      note.isStaff 
+                        ? "border-l-4 border-l-green-500 bg-gradient-to-r from-green-50 to-white" 
+                        : "border-l-4 border-l-red-500 bg-gradient-to-r from-red-50 to-white"
                     }`}
                   >
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
-                        <Avatar className="h-8 w-8 rounded-full overflow-hidden border-2 border-blue-200">
+                        <Avatar className="h-10 w-10 rounded-full overflow-hidden border-2 border-green-200">
                           <AvatarImage
                             src={avatarUrl}
                             alt={note.name}
                             className="object-cover"
                           />
-                          <AvatarFallback>
+                          <AvatarFallback className="bg-gradient-to-r from-green-500 to-red-500 text-white">
                             {note.name?.substring(0, 2).toUpperCase() || "?"}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
                           <div className="flex justify-between items-center mb-2">
-                            <p className="font-medium text-sm">
-                              {note.name || "Unknown User"}
-                            </p>
-                            <p className="text-xs text-gray-900">
-                              {formattedDate(note.createdAt)}
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-sm text-green-800">
+                                {note.name || "Unknown User"}
+                              </p>
+                              {note.isStaff && (
+                                <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white text-xs">
+                                  🎅 Santa's Helper
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-green-600">
+                              ⏰ {formattedDate(note.createdAt)}
                             </p>
                           </div>
-                          <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                            {note.text}
-                          </p>
+                          <div className="bg-white p-3 rounded-lg border border-green-100">
+                            <p className="text-sm text-green-700 whitespace-pre-wrap">
+                              {note.text}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </CardContent>
@@ -437,6 +472,19 @@ const UserViewIndividualTicket: React.FC = () => {
                 );
               })
           )}
+        </div>
+      </div>
+
+      {/* Christmas Footer */}
+      <div className="mt-8 text-center bg-gradient-to-r from-green-50 to-red-50 p-4 rounded-xl border border-green-200">
+        <div className="text-green-600 text-sm flex items-center justify-center gap-2">
+          <span>🎄</span>
+          <span>May your holiday wishes come true!</span>
+          <span>🎅</span>
+        </div>
+        <div className="text-xs text-green-500 mt-1 flex items-center justify-center">
+          <Snowflake className="h-3 w-3 mr-1" />
+          From Santa's Workshop with Cheer
         </div>
       </div>
     </div>
