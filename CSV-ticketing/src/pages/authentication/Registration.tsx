@@ -6,7 +6,13 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/context/useAuth";
 import { ChangeEvent, useState } from "react";
 import { Navigate, useNavigate, Link } from "react-router-dom";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  Loader2,
+  Star,
+  CandyCane,
+} from "lucide-react";
 
 interface Form {
   firstName: string;
@@ -52,18 +58,18 @@ const Registration = () => {
     // Password validation - must be at least 12 characters with alphanumeric + special characters
     if (form.password.length < 12) {
       toast({
-        title: "Password too short",
+        title: "🎅 Password too short",
         description:
           "Password must be at least 12 characters long and include alphanumeric and special characters.",
         variant: "destructive",
       });
-      setIsLoading(false)
+      setIsLoading(false);
       return;
     }
 
     if (form.password !== form.confirm_password) {
       toast({
-        title: "Passwords do not match",
+        title: "❌ Passwords do not match",
         variant: "destructive",
       });
       return;
@@ -72,7 +78,7 @@ const Registration = () => {
     // Email validation
     if (!form.email.endsWith("@csvnow.com")) {
       toast({
-        title: "Invalid email domain",
+        title: " Invalid email domain",
         description: "Please use your company email address",
         variant: "destructive",
       });
@@ -90,8 +96,8 @@ const Registration = () => {
       const response = await AuthAPI.register(payload);
       console.log(response.data);
       toast({
-        title: "Account created successfully",
-        description: "We've created your account for you.",
+        title: "✅ Account created successfully!",
+        description: "Welcome to Santa's Workshop!",
       });
 
       // Create user object that matches the User interface
@@ -123,7 +129,7 @@ const Registration = () => {
       } catch (leaveError) {
         console.error("Error creating leave credit:", leaveError);
         toast({
-          title: "Account created but leave credit setup failed",
+          title: "🎅 Account created but leave credit setup failed",
           description: "Please contact HR to set up your leave credits",
           variant: "destructive",
         });
@@ -132,13 +138,13 @@ const Registration = () => {
       navigate("/");
     } catch (error) {
       toast({
-        title: "Error creating account",
+        title: "❌ Error creating account",
         description: "User Already Exists",
         variant: "destructive",
       });
       console.error(error);
-    } finally{
-      setIsLoading(false)
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -158,53 +164,66 @@ const Registration = () => {
   };
 
   return (
-    <div className="max-w-xl w-full space-y-2 bg-gradient-to-b from-amber-50 via-orange-100 to-yellow-50 p-10 rounded-2xl shadow-xl border border-amber-200">
-      <form className="w-full max-w-xl space-y-6" onSubmit={handleSubmit}>
-        <div className="text-center mb-2">
-          <h1 className="text-xl font-bold bg-gradient-to-r from-amber-700 via-orange-600 to-yellow-600 text-transparent bg-clip-text md:text-3xl">
-            Create Account
+    <div className="max-w-4xl w-full space-y-2 bg-gradient-to-br from-green-50 via-white to-red-50 p-10 rounded-2xl shadow-2xl border-2 border-green-300 relative overflow-hidden">
+      <form
+        className="w-full max-w-4xl space-y-6 relative z-10"
+        onSubmit={handleSubmit}
+      >
+        <div className="text-center mb-4">
+          <div className="flex justify-center mb-4">
+            <div className="p-3 bg-gradient-to-r from-green-600 to-red-600 rounded-full">
+              <Star className="h-8 w-8 text-white" />
+            </div>
+          </div>
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-green-700 via-red-600 to-yellow-600 text-transparent bg-clip-text md:text-3xl">
+            🎅 Join CSV now 
           </h1>
-          <p className="text-amber-700 font-medium mt-2">
-            Join our employee portal
-          </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 gap-4">
           <div className="space-y-4">
-            <Input
-              placeholder="First Name"
-              name="firstName"
-              type="text"
-              className="w-full border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-              onChange={handleChange}
-              required
-            />
-            <Input
-              placeholder="Last Name"
-              name="lastName"
-              type="text"
-              className="w-full border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-              onChange={handleChange}
-              required
-            />
+            <div className="relative">
+              <Input
+                placeholder="First Name"
+                name="firstName"
+                type="text"
+                className="w-full border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-gradient-to-r from-green-50 to-green-100"
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="relative">
+              <Input
+                placeholder="Last Name"
+                name="lastName"
+                type="text"
+                className="w-full border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-gradient-to-r from-green-50 to-green-100"
+                onChange={handleChange}
+                required
+              />
+            </div>
           </div>
 
           <div className="space-y-4">
-            <Input
-              placeholder="Middle Name"
-              name="middleName"
-              type="text"
-              className="w-full border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-              onChange={handleChange}
-            />
-            <Input
-              placeholder="Company Email"
-              name="email"
-              type="email"
-              className="w-full border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-              onChange={handleChange}
-              required
-            />
+            <div className="relative">
+              <Input
+                placeholder="Middle Name"
+                name="middleName"
+                type="text"
+                className="w-full border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 bg-gradient-to-r from-yellow-50 to-yellow-100"
+                onChange={handleChange}
+              />
+            </div>
+            <div className="relative">
+              <Input
+                placeholder="Company Email"
+                name="email"
+                type="email"
+                className="w-full border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200 bg-gradient-to-r from-red-50 to-red-100"
+                onChange={handleChange}
+                required
+              />
+            </div>
           </div>
         </div>
 
@@ -212,17 +231,17 @@ const Registration = () => {
           {/* Password Input with Toggle */}
           <div className="relative">
             <Input
-              placeholder="Password"
+              placeholder="Password (min 12 characters)"
               name="password"
               type={showPassword ? "text" : "password"}
-              className="w-full border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+              className="w-full border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 pr-10 bg-gradient-to-r from-green-50 to-green-100"
               onChange={handleChange}
               required
             />
             <button
               type="button"
               onClick={togglePasswordVisibility}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500 hover:text-green-700 transition-colors duration-200"
             >
               {showPassword ? (
                 <EyeOff className="h-5 w-5" />
@@ -238,14 +257,14 @@ const Registration = () => {
               placeholder="Confirm Password"
               name="confirm_password"
               type={showConfirmPassword ? "text" : "password"}
-              className="w-full border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+              className="w-full border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200 pr-10 bg-gradient-to-r from-red-50 to-red-100"
               onChange={handleChange}
               required
             />
             <button
               type="button"
               onClick={toggleConfirmPasswordVisibility}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 transition-colors duration-200"
             >
               {showConfirmPassword ? (
                 <EyeOff className="h-5 w-5" />
@@ -254,37 +273,46 @@ const Registration = () => {
               )}
             </button>
           </div>
+
+          {/* Password Requirements */}
+          <div className="text-xs text-green-600 bg-gradient-to-r from-green-50 to-green-100 p-2 rounded-lg border border-green-200">
+            <p className="flex items-center mb-1">
+              <CandyCane className="h-3 w-3 mr-1" />
+              Password must be at least 12 characters long
+            </p>
+          </div>
+
         </div>
 
         <div className="pt-2">
           <Button
-            typeof="submit"
-            className="w-full py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-amber-700 hover:to-orange-700 text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-amber-500/40"
+            type="submit"
+            className="w-full py-3 bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700 text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-green-500/40"
             disabled={isLoading}
           >
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
+                Joining Workshop...
               </>
             ) : (
-              "Create Account 🍂"
+              <>Sign up</>
             )}
           </Button>
         </div>
 
-        <div className="text-center text-sm text-amber-700">
-          <p>
-            Already have an account?{" "}
+        <div className="text-center text-sm text-green-700 pt-2">
+          <p className="flex items-center justify-center">
+            Already part of the team?{" "}
             <Link
               to={"/sign-in"}
-              className="text-orange-700 hover:underline font-semibold"
+              className="text-red-600 hover:underline font-semibold ml-1"
             >
-              Sign-in <span className="animate-pulse">🧡</span>
+              Sign In
             </Link>
+            <span className="ml-1">🎅</span>
           </p>
         </div>
-
       </form>
     </div>
   );

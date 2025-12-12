@@ -3,7 +3,6 @@ import { formattedDate } from "@/API/helper";
 import BackButton from "@/components/kit/BackButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import LoadingComponent from "@/components/ui/loading";
 import {
   Table,
   TableBody,
@@ -25,7 +24,13 @@ import {
   AlertCircleIcon,
   ClockIcon,
   CheckCircleIcon,
-  XCircleIcon
+  XCircleIcon,
+  Gift,
+  Snowflake,
+  TreePine,
+  Star,
+  Bell,
+  Home
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -241,9 +246,8 @@ const ViewAllRaisedTickets: React.FC = () => {
         navigate(`/ticket/${foundTicket._id}`);
       } else {
         toast({
-          title: "Error",
-          description:
-            "Ticket not found. Please check the ticket number and try again.",
+          title: "❌ Ticket Not Found",
+          description: "Please check the ticket number and try again.",
           variant: "destructive",
         });
       }
@@ -277,16 +281,16 @@ const ViewAllRaisedTickets: React.FC = () => {
     switch (status.toLowerCase()) {
       case "open":
       case "new":
-        return "bg-green-100 text-green-800 border-green-200";
+        return "bg-gradient-to-r from-green-100 to-green-200 text-green-900 border border-green-300";
       case "in progress":
-        return "bg-blue-100 text-blue-800 border-blue-200";
+        return "bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-900 border border-yellow-300";
       case "closed":
       case "approved":
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return "bg-gradient-to-r from-blue-100 to-blue-200 text-blue-900 border border-blue-300";
       case "rejected":
-        return "bg-red-100 text-red-800 border-red-200";
+        return "bg-gradient-to-r from-red-100 to-red-200 text-red-900 border border-red-300";
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-900 border border-gray-300";
     }
   };
 
@@ -295,7 +299,7 @@ const ViewAllRaisedTickets: React.FC = () => {
       case "high":
         return "text-red-600 font-semibold";
       case "medium":
-        return "text-orange-600 font-semibold";
+        return "text-yellow-600 font-semibold";
       case "low":
         return "text-green-600 font-semibold";
       default:
@@ -306,7 +310,16 @@ const ViewAllRaisedTickets: React.FC = () => {
   const filteredAssign = getFilteredAssign(assign, loginUserRole);
 
   if (loading) {
-    return <LoadingComponent />;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-red-50">
+        <div className="text-center">
+          <div className="animate-bounce">
+            <TreePine className="h-12 w-12 text-green-600 mx-auto mb-4" />
+          </div>
+          <p className="text-green-600 font-medium">Loading Santa's List...</p>
+        </div>
+      </div>
+    );
   }
 
   // Pagination logic
@@ -324,55 +337,66 @@ const ViewAllRaisedTickets: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-6">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-red-50 py-6 relative overflow-hidden">
+      {/* Animated Snowflakes Background */}
+      <div className="absolute top-4 left-10 opacity-5">
+        <Snowflake className="h-12 w-12 text-blue-400 animate-pulse" />
+      </div>
+      <div className="absolute bottom-10 right-10 opacity-5">
+        <Snowflake className="h-16 w-16 text-blue-300 animate-pulse delay-300" />
+      </div>
+      
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl relative z-10">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div className="flex items-center gap-4">
             <BackButton />
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2">
-                <TicketIcon className="h-7 w-7 text-blue-600" />
-                All Tickets
+              <h1 className="text-2xl sm:text-3xl font-bold text-green-900 flex items-center gap-2">
+                <div className="p-2 bg-gradient-to-r from-green-600 to-red-600 rounded-xl">
+                  <TicketIcon className="h-7 w-7 text-white" />
+                </div>
+                🎅 Santa's Workshop Tickets
               </h1>
-              <p className="text-gray-600 text-sm mt-1">
-                Manage and track all support tickets in one place
+              <p className="text-green-600 text-sm mt-1 flex items-center">
+                <Star className="h-3 w-3 mr-1" />
+                Manage and track all holiday wishes and requests
               </p>
             </div>
           </div>
-          <div className="bg-white px-4 py-3 rounded-lg border shadow-sm">
-            <div className="text-sm text-gray-600">Total Tickets</div>
-            <div className="text-2xl font-bold text-gray-900">
+          <div className="bg-gradient-to-r from-green-50 to-red-50 px-4 py-3 rounded-lg border border-green-200 shadow-sm">
+            <div className="text-sm text-green-600">🎁 Total Wishes</div>
+            <div className="text-2xl font-bold text-green-900">
               {filteredTickets.length}
             </div>
           </div>
         </div>
 
         {/* Search and Filters */}
-        <div className="bg-white rounded-xl border shadow-sm p-6 mb-6">
+        <div className="bg-gradient-to-r from-green-50 to-red-50 rounded-xl border border-green-200 shadow-sm p-6 mb-6">
           {/* Search Bar */}
           <div className="flex flex-col sm:flex-row gap-4 mb-4">
             <div className="flex-1 relative">
-              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-green-400" />
               <Input
                 type="text"
                 value={searchTicketNumber}
                 onChange={(e) => setSearchTicketNumber(e.target.value)}
                 onKeyPress={handleSearchKeyPress}
-                placeholder="Search by ticket number (e.g., INC-0001)..."
-                className="pl-10 w-full"
+                placeholder="🔍 Search by wish number (e.g., INC-0001)..."
+                className="pl-10 w-full border-green-300 focus:border-green-500"
               />
             </div>
             <Button 
               onClick={handleSearchSubmit}
-              className="bg-blue-600 hover:bg-blue-700 px-6"
+              className="bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700 px-6"
             >
-              Search
+              🎄 Search
             </Button>
             <Button
               variant="outline"
               onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 border-green-300 text-green-700 hover:bg-gradient-to-r hover:from-green-100 hover:to-green-200"
             >
               <FilterIcon className="h-4 w-4" />
               Filters
@@ -381,47 +405,49 @@ const ViewAllRaisedTickets: React.FC = () => {
 
           {/* Expandable Filters */}
           {showFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t border-green-300">
               <div>
-                <label htmlFor="statusFilter" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="statusFilter" className="text-sm font-medium text-green-700 mb-2 flex items-center">
+                  <Bell className="h-4 w-4 mr-1" />
                   Status
                 </label>
                 <select
                   id="statusFilter"
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-green-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-gradient-to-r from-green-50 to-green-100"
                 >
-                  <option value="open">Open Tickets</option>
-                  <option value="In Progress">In Progress</option>
-                  <option value="closed">Closed Tickets</option>
-                  <option value="all">All Statuses</option>
+                  <option value="open">🎁 Open Wishes</option>
+                  <option value="In Progress">⭐ In Progress</option>
+                  <option value="closed">✅ Completed</option>
+                  <option value="all">🎄 All Statuses</option>
                 </select>
               </div>
 
               <div>
-                <label htmlFor="assignedToFilter" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="assignedToFilter" className="text-sm font-medium text-green-700 mb-2 flex items-center">
+                  <Home className="h-4 w-4 mr-1" />
                   Assigned To
                 </label>
                 <select
                   id="assignedToFilter"
                   value={assignedToFilter}
                   onChange={(e) => setAssignedToFilter(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-green-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-gradient-to-r from-green-50 to-green-100"
                 >
-                  <option value="all">All Tickets</option>
+                  <option value="all">🎅 All Wishes</option>
                   {userRole === "SUPERADMIN" && (
                     <>
-                      <option value="ALL IT">All IT Tickets</option>
-                      <option value="ALL HR">All HR Tickets</option>
+                      <option value="ALL IT">🎄 All IT Wishes</option>
+                      <option value="ALL HR">⭐ All HR Wishes</option>
                     </>
                   )}
                   {filteredAssign.map((assign) => (
                     <option key={assign._id} value={assign.name}>
-                      {assign.name}
+                      🎅 {assign.name}
                     </option>
                   ))}
-                  <option value="Not Assigned">Not Assigned</option>
+                  <option value="Not Assigned">⏳ Not Assigned</option>
                 </select>
               </div>
 
@@ -433,9 +459,9 @@ const ViewAllRaisedTickets: React.FC = () => {
                     setAssignedToFilter("all");
                     setSearchTicketNumber("");
                   }}
-                  className="w-full"
+                  className="w-full border-green-300 text-green-700 hover:bg-gradient-to-r hover:from-green-100 hover:to-green-200"
                 >
-                  Clear Filters
+                  🎄 Clear Filters
                 </Button>
               </div>
             </div>
@@ -443,23 +469,23 @@ const ViewAllRaisedTickets: React.FC = () => {
         </div>
 
         {/* Tickets Table */}
-        <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+        <div className="bg-gradient-to-r from-green-50 to-red-50 rounded-xl border border-green-200 shadow-sm overflow-hidden">
           {/* Mobile Cards */}
           <div className="block lg:hidden">
             {currentTickets.length === 0 ? (
               <div className="text-center py-12">
-                <TicketIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900">No tickets found</h3>
-                <p className="text-gray-600 mt-2">Try adjusting your filters or search terms.</p>
+                <TreePine className="h-12 w-12 text-green-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-green-900">No holiday wishes found</h3>
+                <p className="text-green-600 mt-2">Try adjusting your filters or search terms.</p>
               </div>
             ) : (
-              <div className="divide-y">
+              <div className="divide-y divide-green-200">
                 {currentTickets.map((ticket) => (
-                  <div key={ticket._id} className="p-4 hover:bg-gray-50">
+                  <div key={ticket._id} className="p-4 hover:bg-gradient-to-r hover:from-green-100/50 hover:to-red-100/50">
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex items-center gap-2">
-                        <TicketIcon className="h-4 w-4 text-blue-600" />
-                        <span className="font-mono font-semibold text-gray-900">
+                        <TicketIcon className="h-4 w-4 text-green-600" />
+                        <span className="font-mono font-semibold text-green-900">
                           {ticket.ticketNumber}
                         </span>
                       </div>
@@ -471,29 +497,29 @@ const ViewAllRaisedTickets: React.FC = () => {
 
                     <div className="space-y-2 text-sm">
                       <div className="flex items-center gap-2">
-                        <UserIcon className="h-4 w-4 text-gray-400" />
-                        <span className="font-medium">{ticket.name}</span>
+                        <UserIcon className="h-4 w-4 text-green-400" />
+                        <span className="font-medium text-green-800">{ticket.name}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <FileTextIcon className="h-4 w-4 text-gray-400" />
-                        <span className="text-gray-600">{ticket.category}</span>
+                        <FileTextIcon className="h-4 w-4 text-green-400" />
+                        <span className="text-green-600">{ticket.category}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <CalendarIcon className="h-4 w-4 text-gray-400" />
-                        <span className="text-gray-600">{formattedDate(ticket.createdAt)}</span>
+                        <CalendarIcon className="h-4 w-4 text-green-400" />
+                        <span className="text-green-600">{formattedDate(ticket.createdAt)}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className={`text-sm ${getPriorityColor(ticket.priority)}`}>
                           {ticket.priority} Priority
                         </span>
-                        <span className="text-sm text-gray-600">
-                          {ticket.assignedTo || "Unassigned"}
+                        <span className="text-sm text-green-600">
+                          {ticket.assignedTo || "🎅 Awaiting Santa"}
                         </span>
                       </div>
                     </div>
 
-                    <div className="mt-3 pt-3 border-t">
-                      <p className="text-gray-700 text-sm line-clamp-2">
+                    <div className="mt-3 pt-3 border-t border-green-200">
+                      <p className="text-green-700 text-sm line-clamp-2">
                         {ticket.description}
                       </p>
                     </div>
@@ -501,10 +527,10 @@ const ViewAllRaisedTickets: React.FC = () => {
                     <div className="mt-4">
                       <Button 
                         onClick={() => navigate(`/ticket/${ticket._id}`)}
-                        className="w-full"
+                        className="w-full bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700"
                         size="sm"
                       >
-                        View Details
+                        🎄 View Wish Details
                       </Button>
                     </div>
                   </div>
@@ -516,56 +542,56 @@ const ViewAllRaisedTickets: React.FC = () => {
           {/* Desktop Table */}
           <div className="hidden lg:block overflow-x-auto">
             <Table>
-              <TableHeader className="bg-gray-50">
+              <TableHeader className="bg-gradient-to-r from-green-100 to-red-100">
                 <TableRow>
-                  <TableHead className="font-semibold text-gray-700">Ticket #</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Date</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Category</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Requester</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Description</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Priority</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Status</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Assigned To</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Action</TableHead>
+                  <TableHead className="font-semibold text-green-800">🎁 Wish #</TableHead>
+                  <TableHead className="font-semibold text-green-800">📅 Date</TableHead>
+                  <TableHead className="font-semibold text-green-800">🏷️ Category</TableHead>
+                  <TableHead className="font-semibold text-green-800">👤 Wisher</TableHead>
+                  <TableHead className="font-semibold text-green-800">📝 Description</TableHead>
+                  <TableHead className="font-semibold text-green-800">⭐ Priority</TableHead>
+                  <TableHead className="font-semibold text-green-800">🎯 Status</TableHead>
+                  <TableHead className="font-semibold text-green-800">🎅 Santa's Helper</TableHead>
+                  <TableHead className="font-semibold text-green-800">🎄 Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {currentTickets.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={9} className="text-center py-12">
-                      <TicketIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900">No tickets found</h3>
-                      <p className="text-gray-600 mt-2">Try adjusting your filters or search terms.</p>
+                      <TreePine className="h-12 w-12 text-green-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-green-900">No holiday wishes found</h3>
+                      <p className="text-green-600 mt-2">Try adjusting your filters or search terms.</p>
                     </TableCell>
                   </TableRow>
                 ) : (
                   currentTickets.map((ticket, index) => (
                     <TableRow 
                       key={ticket._id} 
-                      className={`hover:bg-gray-50 transition-colors ${
-                        index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                      className={`hover:bg-gradient-to-r hover:from-green-50/50 hover:to-red-50/50 transition-colors ${
+                        index % 2 === 0 ? "bg-white" : "bg-gradient-to-r from-green-50/20 to-red-50/20"
                       }`}
                     >
-                      <TableCell className="font-mono font-semibold text-blue-600">
+                      <TableCell className="font-mono font-semibold text-green-600">
                         {ticket.ticketNumber}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <CalendarIcon className="h-4 w-4 text-gray-400" />
+                          <CalendarIcon className="h-4 w-4 text-green-400" />
                           {formattedDate(ticket.createdAt)}
                         </div>
                       </TableCell>
-                      <TableCell>{ticket.category}</TableCell>
+                      <TableCell className="text-green-700">{ticket.category}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <UserIcon className="h-4 w-4 text-gray-400" />
+                          <UserIcon className="h-4 w-4 text-green-400" />
                           {ticket.name}
                         </div>
                       </TableCell>
                       <TableCell className="max-w-xs">
                         <div className="flex items-center gap-2">
-                          <FileTextIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                          <span className="truncate">
+                          <FileTextIcon className="h-4 w-4 text-green-400 flex-shrink-0" />
+                          <span className="truncate text-green-700">
                             {ticket.description.length > 60
                               ? `${ticket.description.substring(0, 60)}...`
                               : ticket.description}
@@ -584,8 +610,15 @@ const ViewAllRaisedTickets: React.FC = () => {
                         </span>
                       </TableCell>
                       <TableCell>
-                        {ticket.assignedTo || (
-                          <span className="text-gray-400 italic">Unassigned</span>
+                        {ticket.assignedTo ? (
+                          <div className="flex items-center gap-2">
+                            <Home className="h-3 w-3 text-green-500" />
+                            <span className="text-green-700">{ticket.assignedTo}</span>
+                          </div>
+                        ) : (
+                          <span className="text-green-400 italic flex items-center">
+                            ⏳ Awaiting Santa
+                          </span>
                         )}
                       </TableCell>
                       <TableCell>
@@ -593,8 +626,9 @@ const ViewAllRaisedTickets: React.FC = () => {
                           onClick={() => navigate(`/ticket/${ticket._id}`)}
                           variant="outline"
                           size="sm"
+                          className="border-green-300 text-green-700 hover:bg-gradient-to-r hover:from-green-100 hover:to-green-200"
                         >
-                          View
+                          🎄 View
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -606,31 +640,32 @@ const ViewAllRaisedTickets: React.FC = () => {
 
           {/* Pagination */}
           {currentTickets.length > 0 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 border-t bg-gray-50">
-              <div className="text-sm text-gray-600">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 border-t border-green-300 bg-gradient-to-r from-green-50 to-red-50">
+              <div className="text-sm text-green-600 flex items-center">
+                <Gift className="h-4 w-4 mr-1" />
                 Showing {startIndex + 1} to {Math.min(endIndex, filteredTickets.length)} of{" "}
-                {filteredTickets.length} tickets
+                {filteredTickets.length} wishes
               </div>
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
                   onClick={goToPreviousPage}
                   disabled={currentPage === 1}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 border-green-300 text-green-700 hover:bg-gradient-to-r hover:from-green-100 hover:to-green-200"
                 >
                   <ChevronsLeftIcon className="h-4 w-4" />
                   Previous
                 </Button>
                 <div className="flex items-center gap-1 mx-4">
-                  <span className="text-sm font-medium">
-                    Page {currentPage} of {totalPages}
+                  <span className="text-sm font-medium text-green-700">
+                    🎄 Page {currentPage} of {totalPages}
                   </span>
                 </div>
                 <Button
                   variant="outline"
                   onClick={goToNextPage}
                   disabled={currentPage === totalPages}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 border-green-300 text-green-700 hover:bg-gradient-to-r hover:from-green-100 hover:to-green-200"
                 >
                   Next
                   <ChevronsRightIcon className="h-4 w-4" />
@@ -638,6 +673,19 @@ const ViewAllRaisedTickets: React.FC = () => {
               </div>
             </div>
           )}
+        </div>
+      </div>
+      
+      {/* Christmas Footer */}
+      <div className="mt-8 text-center bg-gradient-to-r from-green-50 to-red-50 p-4 rounded-xl border border-green-200 mx-auto max-w-4xl">
+        <div className="text-green-600 text-sm flex items-center justify-center gap-2">
+          <span>🎄</span>
+          <span>May your workshop be filled with joy and completed wishes!</span>
+          <span>🎅</span>
+        </div>
+        <div className="text-xs text-green-500 mt-1 flex items-center justify-center">
+          <Snowflake className="h-3 w-3 mr-1" />
+          From Santa's Workshop Helpers
         </div>
       </div>
     </div>
