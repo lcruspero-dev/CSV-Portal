@@ -49,11 +49,17 @@ const Registration = () => {
     setIsLoading(true);
 
     // Combine names into a single string
+    // const middleInitial = form.middleName
+    //   ? `${form.middleName.charAt(0).toUpperCase()}.`
+    //   : "";
+    // const fullName =
+    //   `${form.firstName} ${middleInitial} ${form.lastName}`.trim();
+
     const middleInitial = form.middleName
-      ? `${form.middleName.charAt(0).toUpperCase()}.`
-      : "";
-    const fullName =
-      `${form.firstName} ${middleInitial} ${form.lastName}`.trim();
+    ? `${form.middleName.charAt(0).toUpperCase()}.`
+    : "";
+    const fullName = 
+    `${form.firstName} ${middleInitial} ${form.lastName}`.trim();
 
     // Password validation - must be at least 12 characters with alphanumeric + special characters
     if (form.password.length < 12) {
