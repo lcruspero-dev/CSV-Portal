@@ -25,4 +25,5 @@ const apiHelper = async (endpoint: string, method: string, body?: object) => {
 export const AuthAPI = {
   login: (body: object) => apiHelper("/api/users/login", "POST", body),
   register: (body: object) => apiHelper("/api/users/", "POST", body),
+  addUser: (body: object) => apiHelper("/api/users/add-user", "POST", body),
 };

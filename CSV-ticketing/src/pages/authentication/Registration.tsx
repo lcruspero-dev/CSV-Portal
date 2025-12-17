@@ -48,13 +48,6 @@ const Registration = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Combine names into a single string
-    // const middleInitial = form.middleName
-    //   ? `${form.middleName.charAt(0).toUpperCase()}.`
-    //   : "";
-    // const fullName =
-    //   `${form.firstName} ${middleInitial} ${form.lastName}`.trim();
-
     const middleInitial = form.middleName
     ? `${form.middleName.charAt(0).toUpperCase()}.`
     : "";
@@ -64,7 +57,7 @@ const Registration = () => {
     // Password validation - must be at least 12 characters with alphanumeric + special characters
     if (form.password.length < 12) {
       toast({
-        title: "🎅 Password too short",
+        title: "Password too short",
         description:
           "Password must be at least 12 characters long and include alphanumeric and special characters.",
         variant: "destructive",
@@ -102,8 +95,8 @@ const Registration = () => {
       const response = await AuthAPI.register(payload);
       console.log(response.data);
       toast({
-        title: "✅ Account created successfully!",
-        description: "Welcome to Santa's Workshop!",
+        title: "✅Account created successfully!",
+        description: "Welcome to CSV NOW",
       });
 
       // Create user object that matches the User interface
