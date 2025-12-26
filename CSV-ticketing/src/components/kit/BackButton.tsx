@@ -16,7 +16,7 @@ const BackButton: React.FC = () => {
       className="bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-all duration-300 transform hover:scale-105 shadow-lg"
     >
       <IonArrowBackCircleSharp  className="w-5 h-5" />
-      🎅 Back to Workshop
+      Back 
     </Button>
   );
 };

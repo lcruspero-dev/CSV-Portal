@@ -64,11 +64,6 @@ interface AttendanceEntry {
   totalLunchTime?: number;
   dateLunchStart?: string;
   dateLunchEnd?: string;
-  bioBreakStart?: string;
-  bioBreakEnd?: string;
-  totalBioBreakTime?: number;
-  dateBioBreakStart?: string;
-  dateBioBreakEnd?: string;
   loginLimit?: number;
   overbreak?: number;
   overlunch?: number;
@@ -84,7 +79,7 @@ interface CurrentTimeResponse {
 
 interface AlertState {
   show: boolean;
-  type: "break1" | "break2" | "lunch" | "bioBreak" | null;
+  type: "break1" | "break2" | "lunch" | null;
   message: string;
 }
 
@@ -135,7 +130,6 @@ export const AttendanceTracker: React.FC = () => {
     break1: false,
     break2: false,
     lunch: false,
-    bioBreak: false,
   });
 
   // Loading states
@@ -146,8 +140,6 @@ export const AttendanceTracker: React.FC = () => {
   const [isLoadingBreakEnd, setIsLoadingBreakEnd] = useState(false);
   const [isLoadingLunchStart, setIsLoadingLunchStart] = useState(false);
   const [isLoadingLunchEnd, setIsLoadingLunchEnd] = useState(false);
-  const [isLoadingBioBreakStart, setIsLoadingBioBreakStart] = useState(false);
-  const [isLoadingBioBreakEnd, setIsLoadingBioBreakEnd] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
   const { toast } = useToast();
@@ -253,13 +245,11 @@ export const AttendanceTracker: React.FC = () => {
   // Alert timeout reference
   const alertTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
-  const showAlert = (type: "break1" | "break2" | "lunch" | "bioBreak") => {
+  const showAlert = (type: "break1" | "break2" | "lunch") => {
     const messages = {
       break1: "🎄 Break 1 will end in 1 minute! Time to return to work!",
-      break2: "❄️ Break 2 will end in 1 minute! Santa's coming to work!",
-      lunch: "🎅 Lunch break will end in 1 minute! Finish your holiday feast!",
-      bioBreak:
-        "🦌 Bio Break will end in 1 minute! Don't get lost in the snow!",
+      break2: "❄️ Break 2 will end in 1 minute! Time to return to work!",
+      lunch: "🎅 Lunch break will end in 1 minute! Time to return to work!",
     };
 
     setAlert({
@@ -300,14 +290,10 @@ export const AttendanceTracker: React.FC = () => {
     if (currentEntry.lunchEnd) {
       setAlertShown((prev) => ({ ...prev, lunch: false }));
     }
-    if (currentEntry.bioBreakEnd) {
-      setAlertShown((prev) => ({ ...prev, bioBreak: false }));
-    }
   }, [
     currentEntry.breakEnd,
     currentEntry.secondBreakEnd,
     currentEntry.lunchEnd,
-    currentEntry.bioBreakEnd,
   ]);
 
   // Format current date for display
@@ -412,14 +398,6 @@ export const AttendanceTracker: React.FC = () => {
         !alertShown.lunch
       ) {
         showAlert("lunch");
-      } else if (
-        currentEntry.bioBreakStart &&
-        !currentEntry.bioBreakEnd &&
-        elapsedTime >= 240 &&
-        elapsedTime < 300 &&
-        !alertShown.bioBreak
-      ) {
-        showAlert("bioBreak");
       }
     };
 
@@ -530,8 +508,6 @@ export const AttendanceTracker: React.FC = () => {
     const isOnSecondBreak =
       currentEntry.secondBreakStart && !currentEntry.secondBreakEnd;
     const isOnLunch = currentEntry.lunchStart && !currentEntry.lunchEnd;
-    const isOnBioBreak =
-      currentEntry.bioBreakStart && !currentEntry.bioBreakEnd;
 
     intervalId = setInterval(() => {
       const currentTime = Date.now() + timeOffset;
@@ -558,13 +534,6 @@ export const AttendanceTracker: React.FC = () => {
           }`
         ).getTime();
         diffMs = currentTime - lunchStartTime;
-      } else if (isOnBioBreak) {
-        const bioBreakStartTime = new Date(
-          `${currentEntry.dateBioBreakStart || currentEntry.date} ${
-            currentEntry.bioBreakStart
-          }`
-        ).getTime();
-        diffMs = currentTime - bioBreakStartTime;
       } else {
         const timeInDate = new Date(
           `${currentEntry.date} ${currentEntry.timeIn}`
@@ -658,13 +627,10 @@ export const AttendanceTracker: React.FC = () => {
       getAttendance();
       setIsTimeIn(true);
       setElapsedTime(0);
-      showChristmasToast(
-        "🎄 Welcome to Work!",
-        "You've joined the workshop! Let's spread holiday cheer!"
-      );
+      showChristmasToast("🎄 Welcome to Work!", "You've joined the work!");
     } catch (error: any) {
       console.error("Error logging time:", error);
-      let errorMessage = "A holiday error occurred while logging time";
+      let errorMessage = "A error occurred while logging time";
 
       if (error.response?.status === 409 && error.response?.data?.message) {
         errorMessage = error.response.data.message;
@@ -730,18 +696,17 @@ export const AttendanceTracker: React.FC = () => {
         break1: false,
         break2: false,
         lunch: false,
-        bioBreak: false,
       });
 
       showChristmasToast(
         "🎁 Work Complete!",
-        "You've finished spreading holiday cheer! Time to enjoy the season!"
+        "You've finished working! Time to enjoy rest!"
       );
     } catch (error) {
       console.error("Error logging timeout:", error);
       showChristmasToast(
         "❄️ Error",
-        "Failed to complete work! Please try again. If the issue persists, contact Santa's workshop support.",
+        "Failed to complete work! Please try again. If the issue persists, contact IT Support..",
         "destructive"
       );
     } finally {
@@ -767,13 +732,13 @@ export const AttendanceTracker: React.FC = () => {
       setAlertShown((prev) => ({ ...prev, break1: false }));
       showChristmasToast(
         "🎄 Break Started!",
-        "Time for a festive break! 15 minutes of holiday relaxation."
+        "Time for a break! 15 minutes of relaxation."
       );
     } catch (error) {
       console.error("Error starting break:", error);
       showChristmasToast(
         "❄️ Error",
-        "Failed to start break. Please try again. If the issue persists, contact Santa's workshop.",
+        "Failed to start break. Please try again. If the issue persists, contact IT Support.",
         "destructive"
       );
     } finally {
@@ -813,7 +778,7 @@ export const AttendanceTracker: React.FC = () => {
       setCurrentEntry(response.data);
       hideAlert();
       setAlertShown((prev) => ({ ...prev, break1: false }));
-      showChristmasToast("🎅 Break Ended!", "Back to wrapping gifts!");
+      showChristmasToast("🎅 Break Ended!", "Back to work!");
     } catch (error) {
       console.error("Error ending break:", error);
       showChristmasToast(
@@ -844,13 +809,13 @@ export const AttendanceTracker: React.FC = () => {
       setAlertShown((prev) => ({ ...prev, lunch: false }));
       showChristmasToast(
         "🎅 Lunch Started!",
-        "Time for a holiday feast! 60 minutes of festive dining."
+        "Time for lunch! 60 minutes of lunch."
       );
     } catch (error) {
       console.error("Error starting lunch:", error);
       showChristmasToast(
         "❄️ Error",
-        "Failed to start lunch. Please try again. If the issue persists, contact Santa's workshop.",
+        "Failed to start lunch. Please try again. If the issue persists, contact IT Support.",
         "destructive"
       );
     } finally {
@@ -890,7 +855,7 @@ export const AttendanceTracker: React.FC = () => {
       setCurrentEntry(response.data);
       hideAlert();
       setAlertShown((prev) => ({ ...prev, lunch: false }));
-      showChristmasToast("🎁 Lunch Ended!", "Back to the workshop!");
+      showChristmasToast("🎁 Lunch Ended!", "Back to the work!");
     } catch (error) {
       console.error("Error ending lunch:", error);
       showChristmasToast(
@@ -900,151 +865,6 @@ export const AttendanceTracker: React.FC = () => {
       );
     } finally {
       setIsLoadingLunchEnd(false);
-    }
-  };
-
-  const handleBioBreakStart = async () => {
-    setIsLoadingBioBreakStart(true);
-    try {
-      const currentTimeData = await getCurrentTimeFromAPI();
-
-      const updatedEntry = {
-        ...currentEntry,
-        bioBreakStart: currentTimeData.time,
-        dateBioBreakStart: currentTimeData.date,
-      };
-
-      const response = await timer.updateBreakStart({
-        ...updatedEntry,
-        isBioBreak: true,
-      });
-
-      setCurrentEntry({
-        ...response.data,
-        bioBreakStart: currentTimeData.time,
-        dateBioBreakStart: currentTimeData.date,
-      });
-
-      setElapsedTime(0);
-      hideAlert();
-      setAlertShown((prev) => ({ ...prev, bioBreak: false }));
-      showChristmasToast(
-        "🦌 Bio Break Started!",
-        "Quick bio break! 5 minutes maximum before the reindeer leave!"
-      );
-    } catch (error) {
-      console.error("Error starting bio break:", error);
-      showChristmasToast(
-        "❄️ Error",
-        "Failed to start bio break. Please try again.",
-        "destructive"
-      );
-    } finally {
-      setIsLoadingBioBreakStart(false);
-    }
-  };
-
-  const handleBioBreakEnd = async () => {
-    setIsLoadingBioBreakEnd(true);
-    try {
-      const currentTimeData = await getCurrentTimeFromAPI();
-
-      const bioBreakStart = new Date(
-        `${currentEntry.dateBioBreakStart} ${currentEntry.bioBreakStart}`
-      );
-      const bioBreakEnd = new Date(
-        `${currentTimeData.date} ${currentTimeData.time}`
-      );
-
-      if (bioBreakEnd < bioBreakStart) {
-        bioBreakEnd.setDate(bioBreakEnd.getDate() + 1);
-      }
-
-      const bioBreakDurationMs =
-        bioBreakEnd.getTime() - bioBreakStart.getTime();
-      const bioBreakTimeHours = bioBreakDurationMs / (1000 * 60 * 60);
-      const bioBreakTimeMinutes = Math.round(bioBreakTimeHours * 60);
-
-      let updatedEntry = { ...currentEntry };
-      let deductionMessage = "";
-
-      if (
-        !currentEntry.breakStart ||
-        (currentEntry.breakStart && !currentEntry.breakEnd)
-      ) {
-        const currentBreakTime = currentEntry.totalBreakTime || 0;
-        const newBreakTime = Math.max(0, currentBreakTime - bioBreakTimeHours);
-
-        updatedEntry = {
-          ...currentEntry,
-          bioBreakEnd: currentTimeData.time,
-          dateBioBreakEnd: currentTimeData.date,
-          totalBioBreakTime: Number(bioBreakTimeHours.toFixed(2)),
-          totalBreakTime: Number(newBreakTime.toFixed(2)),
-        };
-
-        deductionMessage = `Bio break time (${bioBreakTimeMinutes} minutes) deducted from Break 1. Remaining Break 1 time: ${formatMinutesToHoursMinutes(
-          Math.round(newBreakTime * 60)
-        )}`;
-      } else if (
-        !currentEntry.secondBreakStart ||
-        (currentEntry.secondBreakStart && !currentEntry.secondBreakEnd)
-      ) {
-        const currentSecondBreakTime = currentEntry.totalSecondBreakTime || 0;
-        const newSecondBreakTime = Math.max(
-          0,
-          currentSecondBreakTime - bioBreakTimeHours
-        );
-
-        updatedEntry = {
-          ...currentEntry,
-          bioBreakEnd: currentTimeData.time,
-          dateBioBreakEnd: currentTimeData.date,
-          totalBioBreakTime: Number(bioBreakTimeHours.toFixed(2)),
-          totalSecondBreakTime: Number(newSecondBreakTime.toFixed(2)),
-        };
-
-        deductionMessage = `Bio break time (${bioBreakTimeMinutes} minutes) deducted from Break 2. Remaining Break 2 time: ${formatMinutesToHoursMinutes(
-          Math.round(newSecondBreakTime * 60)
-        )}`;
-      } else {
-        updatedEntry = {
-          ...currentEntry,
-          bioBreakEnd: currentTimeData.time,
-          dateBioBreakEnd: currentTimeData.date,
-          totalBioBreakTime: Number(bioBreakTimeHours.toFixed(2)),
-        };
-
-        deductionMessage = `Bio break recorded (${bioBreakTimeMinutes} minutes). Both regular breaks already used.`;
-      }
-
-      const response = await timer.updateBreakEnd({
-        ...updatedEntry,
-        isBioBreak: true,
-        bioBreakDuration: bioBreakTimeMinutes,
-      });
-
-      setCurrentEntry({
-        ...response.data,
-        bioBreakEnd: currentTimeData.time,
-        dateBioBreakEnd: currentTimeData.date,
-        totalBioBreakTime: updatedEntry.totalBioBreakTime,
-        totalBreakTime: updatedEntry.totalBreakTime,
-        totalSecondBreakTime: updatedEntry.totalSecondBreakTime,
-      });
-
-      hideAlert();
-      setAlertShown((prev) => ({ ...prev, bioBreak: false }));
-      showChristmasToast("🦌 Bio Break Ended!", deductionMessage);
-    } catch (error) {
-      console.error("Error ending bio break:", error);
-      showChristmasToast(
-        "❄️ Error",
-        "Failed to log end bio break. Please try again.",
-        "destructive"
-      );
-    } finally {
-      setIsLoadingBioBreakEnd(false);
     }
   };
 
@@ -1080,7 +900,7 @@ export const AttendanceTracker: React.FC = () => {
       case "startBreak":
         setIsLoadingBreakStart(true);
         await handleBreakStart();
-        setSelectedAction("endBreak");
+        setSelectedAction(null);
         setIsLoadingBreakStart(false);
         break;
       case "endBreak":
@@ -1092,7 +912,7 @@ export const AttendanceTracker: React.FC = () => {
       case "startSecondBreak":
         setIsLoadingSecondBreakStart(true);
         await handleSecondBreakStart();
-        setSelectedAction("endSecondBreak");
+        setSelectedAction(null);
         setIsLoadingSecondBreakStart(false);
         break;
       case "endSecondBreak":
@@ -1104,7 +924,7 @@ export const AttendanceTracker: React.FC = () => {
       case "startLunch":
         setIsLoadingLunchStart(true);
         await handleLunchStart();
-        setSelectedAction("endLunch");
+        setSelectedAction(null);
         setIsLoadingLunchStart(false);
         break;
       case "endLunch":
@@ -1112,18 +932,6 @@ export const AttendanceTracker: React.FC = () => {
         await handleLunchEnd();
         setSelectedAction(null);
         setIsLoadingLunchEnd(false);
-        break;
-      case "startBioBreak":
-        setIsLoadingBioBreakStart(true);
-        await handleBioBreakStart();
-        setSelectedAction("endBioBreak");
-        setIsLoadingBioBreakStart(false);
-        break;
-      case "endBioBreak":
-        setIsLoadingBioBreakEnd(true);
-        await handleBioBreakEnd();
-        setSelectedAction(null);
-        setIsLoadingBioBreakEnd(false);
         break;
       case "timeOut":
         setDialogOpen(true);
@@ -1200,7 +1008,6 @@ export const AttendanceTracker: React.FC = () => {
 
       const response = await timer.updateSecondBreakEnd(updatedEntry);
       setCurrentEntry(response.data);
-      setSelectedAction(null);
       hideAlert();
       setAlertShown((prev) => ({ ...prev, break2: false }));
       showChristmasToast("🎄 Break 2 Ended!", "Back to toy making!");
@@ -1225,29 +1032,24 @@ export const AttendanceTracker: React.FC = () => {
       actions.push({ value: "endSecondBreak", label: "❄️ End Break 2" });
     } else if (currentEntry.lunchStart && !currentEntry.lunchEnd) {
       actions.push({ value: "endLunch", label: "🎅 End Lunch" });
-    } else if (currentEntry.bioBreakStart && !currentEntry.bioBreakEnd) {
-      actions.push({ value: "endBioBreak", label: "🦌 End Bio Break" });
     } else {
-      if (!currentEntry.breakStart || !currentEntry.breakEnd) {
-        actions.push({ value: "startBreak", label: "🎄 Break 1" });
+      if (!currentEntry.breakStart) {
+        actions.push({ value: "startBreak", label: "🎄 Start Break 1" });
       }
 
       if (
+        currentEntry.breakStart &&
         currentEntry.breakEnd &&
-        (!currentEntry.secondBreakStart || !currentEntry.secondBreakEnd)
+        !currentEntry.secondBreakStart
       ) {
         actions.push({
           value: "startSecondBreak",
-          label: "❄️ Break 2",
+          label: "❄️ Start Break 2",
         });
       }
 
-      if (!currentEntry.lunchStart || !currentEntry.lunchEnd) {
-        actions.push({ value: "startLunch", label: "🎅 Lunch" });
-      }
-
-      if (isTimeIn) {
-        actions.push({ value: "startBioBreak", label: "🦌 Bio Break" });
+      if (!currentEntry.lunchStart) {
+        actions.push({ value: "startLunch", label: "🎅 Start Lunch" });
       }
 
       if (isTimeIn) {
@@ -1264,7 +1066,7 @@ export const AttendanceTracker: React.FC = () => {
         <div className="bg-gradient-to-br from-green-50 to-red-50 rounded-lg p-8 border border-green-300">
           <ChristmasSpinner />
           <p className="text-green-700 mt-4 text-center">
-            Loading time tracker with holiday cheer...
+            Loading time tracker...
           </p>
         </div>
       </div>
@@ -1315,7 +1117,7 @@ export const AttendanceTracker: React.FC = () => {
             </div>
             <CardTitle className="flex items-center justify-center text-lg sm:text-xl lg:text-2xl flex-col sm:flex-row gap-2 text-green-800 font-serif">
               <Gift className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />
-              Santa's Workshop Time Tracker
+              Time Tracker
             </CardTitle>
           </CardHeader>
 
@@ -1335,7 +1137,7 @@ export const AttendanceTracker: React.FC = () => {
                 {currentEntry.breakStart && !currentEntry.breakEnd ? (
                   <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-green-600 text-center font-mono bg-white bg-opacity-80 p-4 rounded-lg border border-green-500">
                     <p className="text-sm sm:text-base text-green-700 tracking-wide mb-2">
-                      🎄 BREAK 1 - 15 Minutes of Holiday Cheer
+                      🎄 BREAK 1 - 15 Minutes
                     </p>
                     {formatElapsedTime(elapsedTime)}
                   </div>
@@ -1343,21 +1145,14 @@ export const AttendanceTracker: React.FC = () => {
                   !currentEntry.secondBreakEnd ? (
                   <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-blue-600 text-center font-mono bg-white bg-opacity-80 p-4 rounded-lg border border-blue-500">
                     <p className="text-sm sm:text-base text-blue-700 tracking-wide mb-2">
-                      ❄️ BREAK 2 - 15 Festive Minutes
+                      ❄️ BREAK 2 - 15 Minutes
                     </p>
                     {formatElapsedTime(elapsedTime)}
                   </div>
                 ) : currentEntry.lunchStart && !currentEntry.lunchEnd ? (
                   <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-red-600 text-center font-mono bg-white bg-opacity-80 p-4 rounded-lg border border-red-500">
                     <p className="text-sm sm:text-base text-red-700 tracking-wide mb-2">
-                      🎅 LUNCH - 60 Minutes of Holiday Feasting
-                    </p>
-                    {formatElapsedTime(elapsedTime)}
-                  </div>
-                ) : currentEntry.bioBreakStart && !currentEntry.bioBreakEnd ? (
-                  <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-blue-600 text-center font-mono bg-white bg-opacity-80 p-4 rounded-lg border border-blue-500">
-                    <p className="text-sm sm:text-base text-blue-700 tracking-wide mb-2">
-                      🦌 BIO BREAK - 5 Minutes Maximum
+                      🎅 LUNCH - 60 Minutes
                     </p>
                     {formatElapsedTime(elapsedTime)}
                   </div>
@@ -1368,7 +1163,7 @@ export const AttendanceTracker: React.FC = () => {
                     }`}
                   >
                     <p className="text-sm sm:text-base text-green-700 tracking-wide mb-2">
-                      🎁 WORK TIME AT SANTA'S WORKSHOP
+                      🎁 WORK TIME
                     </p>
                     {formatElapsedTime(elapsedTime)}
                   </div>
@@ -1387,7 +1182,7 @@ export const AttendanceTracker: React.FC = () => {
                       ) : (
                         <Home className="mr-2 h-4 w-4" />
                       )}
-                      Join Santa's Workshop
+                      Time In
                     </Button>
                   ) : (
                     <>
@@ -1396,7 +1191,7 @@ export const AttendanceTracker: React.FC = () => {
                         onValueChange={handleActionChange}
                       >
                         <SelectTrigger className="w-full sm:w-48 text-sm bg-white border-green-400 text-green-800">
-                          <SelectValue placeholder="Select Holiday Action" />
+                          <SelectValue placeholder="Select Action" />
                         </SelectTrigger>
                         <SelectContent className="bg-green-50 border-green-400 text-green-800">
                           {getAvailableActions().map((action) => (
@@ -1422,13 +1217,11 @@ export const AttendanceTracker: React.FC = () => {
                             isLoadingSecondBreakEnd ||
                             isLoadingLunchStart ||
                             isLoadingLunchEnd ||
-                            isLoadingBioBreakStart ||
-                            isLoadingBioBreakEnd ||
                             isLoadingTimeOut
                           }
                           size="sm"
                         >
-                          Ho Ho Ho!
+                          Confirm
                         </Button>
                       )}
 
@@ -1436,7 +1229,7 @@ export const AttendanceTracker: React.FC = () => {
                         <DialogContent className="sm:max-w-md bg-gradient-to-br from-green-50 to-red-100 border-2 border-green-400">
                           <DialogHeader>
                             <DialogTitle className="text-lg text-green-700 font-serif">
-                              🎁 Complete Your Workshop Day
+                              🎁 Complete Your Day
                             </DialogTitle>
                           </DialogHeader>
                           <div className="grid gap-4 py-4">
@@ -1445,12 +1238,12 @@ export const AttendanceTracker: React.FC = () => {
                                 htmlFor="notes"
                                 className="sm:text-right text-green-700"
                               >
-                                Holiday Notes (Optional)
+                                Notes (Optional)
                               </Label>
                               <Input
                                 id="notes"
                                 className="col-span-1 sm:col-span-3 bg-white border-green-400 text-green-800"
-                                placeholder="Add any holiday notes about your work day..."
+                                placeholder="Add any notes about your work day..."
                               />
                             </div>
                             <div className="flex justify-end">
@@ -1468,7 +1261,7 @@ export const AttendanceTracker: React.FC = () => {
                                 className="bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700 text-white border border-green-400"
                               >
                                 {isLoadingTimeOut ? <ChristmasSpinner /> : null}
-                                🎁 Complete Day
+                                Complete Day
                               </Button>
                             </div>
                           </div>
@@ -1481,7 +1274,7 @@ export const AttendanceTracker: React.FC = () => {
                 {isTimeIn && (
                   <div className="w-full max-w-2xl mx-auto">
                     <p className="font-semibold text-sm sm:text-base mb-3 text-center text-green-700 font-serif">
-                      ❄️ Current Workshop Session
+                      ❄️ Current Session
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                       {currentEntry.timeIn && (
@@ -1503,7 +1296,7 @@ export const AttendanceTracker: React.FC = () => {
                           <div className="flex items-center gap-2">
                             <Star className="h-4 w-4 text-yellow-600" />
                             <span className="text-xs font-medium text-yellow-700">
-                              ❄️ Workshop Shift
+                              ❄️ Shift
                             </span>
                           </div>
                           <p className="text-sm font-semibold mt-1 text-yellow-900">
@@ -1605,7 +1398,7 @@ export const AttendanceTracker: React.FC = () => {
                           <div className="flex items-center gap-2">
                             <Gift className="h-4 w-4 text-red-600" />
                             <span className="text-xs font-medium text-red-700">
-                              🎅 Holiday Feast
+                              🎅 Lunch
                             </span>
                           </div>
                           <div className="space-y-1 mt-1">
@@ -1643,40 +1436,6 @@ export const AttendanceTracker: React.FC = () => {
                         </div>
                       )}
 
-                      {currentEntry.bioBreakStart && (
-                        <div className="bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg p-3 border border-blue-400 shadow-lg">
-                          <div className="flex items-center gap-2">
-                            <Bell className="h-4 w-4 text-blue-600" />
-                            <span className="text-xs font-medium text-blue-700">
-                              🦌 Reindeer Break
-                            </span>
-                          </div>
-                          <div className="space-y-1 mt-1">
-                            <p className="text-xs text-blue-700">
-                              <span className="font-medium">Start:</span>{" "}
-                              {formatTime(currentEntry.bioBreakStart)}
-                            </p>
-                            {currentEntry.bioBreakEnd && (
-                              <p className="text-xs text-blue-700">
-                                <span className="font-medium">End:</span>{" "}
-                                {formatTime(currentEntry.bioBreakEnd)}
-                              </p>
-                            )}
-                            {currentEntry.totalBioBreakTime !== undefined &&
-                              currentEntry.totalBioBreakTime !== null && (
-                                <p className="text-xs font-semibold text-blue-900">
-                                  Total:{" "}
-                                  {formatMinutesToHoursMinutes(
-                                    Math.round(
-                                      currentEntry.totalBioBreakTime * 60
-                                    )
-                                  )}
-                                </p>
-                              )}
-                          </div>
-                        </div>
-                      )}
-
                       {currentEntry.overbreak && currentEntry.overbreak > 0 && (
                         <div className="bg-gradient-to-br from-red-100 to-red-200 rounded-lg p-3 border border-red-400 shadow-lg">
                           <div className="flex items-center gap-2">
@@ -1701,7 +1460,7 @@ export const AttendanceTracker: React.FC = () => {
                           <div className="flex items-center gap-2">
                             <TreePine className="h-4 w-4 text-red-600" />
                             <span className="text-xs font-medium text-red-700">
-                              ❄️ Feast Overbreak
+                              ❄️ Overbreak
                             </span>
                           </div>
                           <div className="space-y-1 mt-1">
@@ -1709,7 +1468,7 @@ export const AttendanceTracker: React.FC = () => {
                               {currentEntry.overlunch} minutes
                             </p>
                             <p className="text-xs text-red-700">
-                              Holiday feast time exceeded 60 minutes
+                              Lunch time exceeded 60 minutes
                             </p>
                           </div>
                         </div>
@@ -1723,7 +1482,7 @@ export const AttendanceTracker: React.FC = () => {
                 <CardHeader className="p-4 sm:p-6">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <CardTitle className="text-lg sm:text-xl text-green-700 font-serif">
-                      ❄️ Workshop Time Records
+                      ❄️ Time Records
                     </CardTitle>
 
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
@@ -1822,9 +1581,6 @@ export const AttendanceTracker: React.FC = () => {
                                 Break 2
                               </TableHead>
                               <TableHead className="min-w-[90px] text-green-700">
-                                Bio Break
-                              </TableHead>
-                              <TableHead className="min-w-[90px] text-green-700">
                                 Overbreak 1
                               </TableHead>
                               <TableHead className="min-w-[90px] text-green-700">
@@ -1876,11 +1632,6 @@ export const AttendanceTracker: React.FC = () => {
                                       String(entry.totalSecondBreakTime || "")
                                     )}
                                   </TableCell>
-                                  <TableCell className="py-2 text-blue-700">
-                                    {formatHoursToHoursMinutes(
-                                      String(entry.totalBioBreakTime || "")
-                                    )}
-                                  </TableCell>
                                   <TableCell className="py-2 text-red-700">
                                     {entry.overbreak1 && entry.overbreak1 > 0
                                       ? `${entry.overbreak1} minutes`
@@ -1909,7 +1660,7 @@ export const AttendanceTracker: React.FC = () => {
                             ) : (
                               <TableRow>
                                 <TableCell
-                                  colSpan={13}
+                                  colSpan={12}
                                   className="text-center py-4 text-green-600"
                                 >
                                   ❄️ No records found for{" "}
