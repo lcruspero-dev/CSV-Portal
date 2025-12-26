@@ -4,7 +4,6 @@ import AdminHome from "@/pages/homePage/AdminHomePage";
 import UserHome from "@/pages/homePage/UserHomePage";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import React from "react";
-import Background from "../../assets/holidayBG.png"
 
 interface User {
   _id: string;
@@ -15,7 +14,6 @@ interface User {
 }
 
 const Homepage: React.FC = () => {
-
   const { viewAsUser, toggleView } = useViewMode();
 
   const getUserFromLocalStorage = (): User | null => {
@@ -40,11 +38,7 @@ const Homepage: React.FC = () => {
   }
 
   return (
-    <div className="relative min-h-screen w-full justify-center bg-cover bg-center bg-no-repeat" 
-    style={{
-      backgroundImage: `url(${Background})`
-    }}
-    >
+    <div className="relative min-h-screen w-full justify-center bg-cover bg-center bg-no-repeat">
       {user.isAdmin && (
         <div className="absolute top-4 right-4 z-10">
           <Button
