@@ -233,7 +233,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                 <Shield className="h-6 w-6 text-white" />
               </div>
               <div>
-                <DialogTitle className="text-red-700 font-bold">Protected Christmas Section</DialogTitle>
+                <DialogTitle className="text-red-700 font-bold">Protected Section</DialogTitle>
                 <div className="text-green-700 text-sm mt-1">
                   This section requires Santa's secret password.
                 </div>
@@ -316,9 +316,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                 </div>
                 <div>
                   <h2 className="text-xl font-bold bg-gradient-to-r from-red-600 via-green-600 to-blue-600 bg-clip-text text-transparent font-serif">
-                    🎄 Christmas Portal
+                    Portal
                   </h2>
-                  <div className="text-sm text-red-700">Festive Management System</div>
+                  <div className="text-sm text-red-700">Management System</div>
                 </div>
               </div>
             </div>
@@ -387,8 +387,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                   <span className="text-white text-sm font-semibold">🎅</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-red-700 truncate">Santa's Helper</div>
-                  <div className="text-xs text-green-600 truncate">Christmas Coordinator</div>
+                  <div className="text-sm font-medium text-red-700 truncate"> Helper </div>
+                  <div className="text-xs text-green-600 truncate"> Coordinator </div>
                 </div>
                 <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-100 rounded-lg">
                   <LogOut className="h-4 w-4 text-red-600" />

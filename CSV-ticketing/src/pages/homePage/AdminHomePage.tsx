@@ -209,7 +209,7 @@ const AdminHome = () => {
               animate={{ opacity: 1, y: 0 }}
               className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-red-600 via-green-600 to-blue-600 bg-clip-text text-transparent font-serif drop-shadow-lg px-2"
             >
-              {isMobile ? '🎄 Dashboard' : '🎄 Christmas Dashboard'}
+              Dashboard
             </motion.h1>
             <motion.p
               initial={{ opacity: 0 }}
@@ -217,7 +217,7 @@ const AdminHome = () => {
               transition={{ delay: 0.2 }}
               className="text-blue-700 mt-1 sm:mt-2 text-xs sm:text-sm bg-gradient-to-r from-red-100 via-white to-green-100 rounded-lg py-1 sm:py-2 px-2 sm:px-4 border border-red-200/30 inline-block shadow-sm max-w-[90%] sm:max-w-none"
             >
-              {isMobile ? 'Holiday activities & tasks' : 'Monitoring holiday activities and festive tasks'}
+              {isMobile ? 'Activities & tasks' : 'Monitoring Activities and tasks'}
             </motion.p>
           </div>
 
@@ -232,7 +232,7 @@ const AdminHome = () => {
               {
                 title: "🎁 Total Tasks",
                 value: stats.total,
-                description: "All festive activities",
+                description: "All activities",
                 icon: <Package className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />,
                 color: "border-red-400",
                 bgColor: "from-red-50/90 to-rose-100/90",
@@ -310,7 +310,7 @@ const AdminHome = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <CardTitle className="flex items-center gap-2 text-base sm:text-lg text-red-700 font-serif">
                     <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
-                    {isMobile ? '📊 Analytics' : '🎄 Festive Analytics'}
+                    Analytics
                   </CardTitle>
                   <Badge className="bg-red-100 text-red-700 border-red-400 text-xs w-fit">
                     {isMobile ? 'Live Data' : 'Real-time holiday data'}
@@ -338,7 +338,7 @@ const AdminHome = () => {
                 <CardHeader className="px-3 sm:px-6 py-3">
                   <CardTitle className="flex items-center gap-2 text-base sm:text-lg text-green-700 font-serif">
                     <Star className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
-                    {isMobile ? '📈 Status' : '🎅 Task Status'}
+                    {isMobile ? '📈 Status' : 'Task Status'}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2 sm:space-y-4 px-3 sm:px-6">
@@ -441,13 +441,7 @@ const AdminHome = () => {
                       </Badge>
                     </div>
                   ))}
-                  <Button 
-                    variant="outline" 
-                    className="w-full bg-transparent border-blue-400 text-blue-700 hover:bg-blue-200 text-xs sm:text-sm"
-                    size={isMobile ? "sm" : "default"}
-                  >
-                    {isMobile ? '❄️ All' : 'View All Activities'}
-                  </Button>
+                
                 </div>
               ) : (
                 <div className="text-center py-4 sm:py-8">
@@ -460,19 +454,6 @@ const AdminHome = () => {
               )}
             </CardContent>
           </Card>
-
-          {/* Christmas Footer - Responsive */}
-          <div className="text-center pt-4 sm:pt-6 border-t border-red-200/50">
-            <p className="text-red-700 text-xs sm:text-sm bg-gradient-to-r from-red-50 via-white to-green-50 rounded-lg py-2 px-3 sm:px-4 border border-red-200/30 shadow-sm mx-auto max-w-2xl">
-              {isMobile ? (
-                '🎅 Merry Christmas! 🎄'
-              ) : isTablet ? (
-                '🎅 Merry Christmas & Happy Holidays! 🎄'
-              ) : (
-                '🎅 Merry Christmas & Happy Holidays! May your dashboard be filled with joy and your tasks wrapped with success! 🎄'
-              )}
-            </p>
-          </div>
         </main>
       </div>
 
