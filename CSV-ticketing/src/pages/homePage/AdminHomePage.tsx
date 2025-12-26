@@ -410,7 +410,7 @@ const AdminHome = () => {
             <CardHeader className="px-3 sm:px-6 py-3">
               <CardTitle className="flex items-center gap-2 text-base sm:text-lg text-blue-700 font-serif">
                 <CandyCane className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
-                {isMobile ? '📋 Recent' : '❄️ Recent Activities'}
+                {isMobile ? 'Recent' : 'Recent Activities'}
               </CardTitle>
             </CardHeader>
             <CardContent className="px-3 sm:px-6">
@@ -446,7 +446,7 @@ const AdminHome = () => {
                     className="w-full bg-transparent border-blue-400 text-blue-700 hover:bg-blue-200 text-xs sm:text-sm"
                     size={isMobile ? "sm" : "default"}
                   >
-                    {isMobile ? '❄️ All' : '❄️ View All Activities'}
+                    {isMobile ? '❄️ All' : 'View All Activities'}
                   </Button>
                 </div>
               ) : (

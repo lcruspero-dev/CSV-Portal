@@ -140,7 +140,10 @@ export const SurveyAPI = {
   updateSurvey: (id: any, body: object) =>
     apiHelper(`/api/surveys/${id}`, "PUT", body),
   deleteSurvey: (id: any) => apiHelper(`/api/surveys/${id}`, "DELETE"),
-  getAllActiveSurveys: () => apiHelper(`/api/surveys/active`, "GET"),
+  
+  // FIXED: Changed from /active to just get all surveys
+  getAllActiveSurveys: () => apiHelper(`/api/surveys`, "GET"),
+  
   submitResponse: (id: any, body: object) =>
     apiHelper(`/api/surveys/${id}/respond`, "POST", body),
   getAllSurveyTitle: () => apiHelper(`/api/surveys/titles`, "GET"),

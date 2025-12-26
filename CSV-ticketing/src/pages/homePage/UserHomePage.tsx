@@ -112,17 +112,27 @@ const UserHome = () => {
         if (!user) return;
         const response = await NteAPI.getNtesByUser();
         const nteData = response.data;
+
+        if (!nteData || nteData.length === 0) {
+          setNteNotificationCount(0);
+          setShowExclamation(false);
+          setNteTooltip("");
+          return;
+        }
+
         let count = 0;
         let tooltip = "";
         let exclamation = false;
 
-        if (nteData[0].status === "PER") {
-          if (!nteData[0].nte?.employeeSignatureDate) {
+        const currentNte = nteData[0];
+
+        if (currentNte.status === "PER") {
+          if (!currentNte.nte?.employeeSignatureDate) {
             count = 1;
             tooltip +=
               "Please confirm receipt of this notice by signing the NTE.\n";
           }
-          if (!nteData[0].employeeFeedback?.responseDetail?.trim()) {
+          if (!currentNte.employeeFeedback?.responseDetail?.trim()) {
             count = 1;
             tooltip +=
               "Kindly submit your explanation within five (5) days from the date on which you received this notice";
@@ -130,8 +140,8 @@ const UserHome = () => {
         }
 
         if (
-          nteData[0].status === "PNODA" &&
-          !nteData[0].noticeOfDecision?.employeeSignatureDate
+          currentNte.status === "PNODA" &&
+          !currentNte.noticeOfDecision?.employeeSignatureDate
         ) {
           exclamation = true;
           tooltip +=
@@ -370,14 +380,14 @@ const UserHome = () => {
               🎄 Merry Christmas & Happy Holidays! 🎅
             </motion.h1>
             
-            <motion.p
+            <motion.div
               className="text-blue-700 text-sm sm:text-base max-w-2xl mx-auto bg-gradient-to-r from-red-100 via-white to-green-100 rounded-lg py-2 px-4 border border-red-200/30 shadow-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
             >
               Wishing you a joyful holiday season! Everything you need in one place.
-            </motion.p>
+            </motion.div>
           </motion.section>
 
           {/* Features Grid */}
@@ -497,9 +507,9 @@ const UserHome = () => {
                                     <Sparkles className="absolute -right-4 -top-1 h-3 w-3 text-yellow-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                                   </span>
                                 </h3>
-                                <p className={`text-gray-600 text-xs sm:text-sm leading-relaxed sm:leading-normal mb-3 sm:mb-4 line-clamp-2 sm:line-clamp-3`}>
+                                <div className={`text-gray-600 text-xs sm:text-sm leading-relaxed sm:leading-normal mb-3 sm:mb-4 line-clamp-2 sm:line-clamp-3`}>
                                   {feature.description}
-                                </p>
+                                </div>
                               </div>
 
                               {/* Action Indicator with Christmas Theme */}
@@ -540,7 +550,7 @@ const UserHome = () => {
                           <div className="p-1 bg-gradient-to-r from-red-500 to-green-500 rounded border border-red-400">
                             <Bell className="h-3 w-3 text-white" />
                           </div>
-                          <p className="leading-relaxed whitespace-pre-line">{feature.tooltip}</p>
+                          <div className="leading-relaxed whitespace-pre-line">{feature.tooltip}</div>
                         </div>
                       </TooltipContent>
                     </Tooltip>
@@ -643,9 +653,9 @@ const UserHome = () => {
                                 <Sparkles className="absolute -right-4 -top-1 h-3 w-3 text-yellow-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                               </span>
                             </h3>
-                            <p className={`text-gray-600 text-xs sm:text-sm leading-relaxed sm:leading-normal mb-3 sm:mb-4 line-clamp-2 sm:line-clamp-3`}>
+                            <div className={`text-gray-600 text-xs sm:text-sm leading-relaxed sm:leading-normal mb-3 sm:mb-4 line-clamp-2 sm:line-clamp-3`}>
                               {feature.description}
-                            </p>
+                            </div>
                           </div>
 
                           {/* Action Indicator with Christmas Theme */}
@@ -686,7 +696,7 @@ const UserHome = () => {
             ))}
           </motion.div>
 
-          {/* Footer */}
+          {/* Footer - FIXED: Changed from <p> to <div> */}
           <motion.div
             className="text-center mt-8 sm:mt-10 lg:mt-12 pt-6 sm:pt-8 border-t border-red-200 px-4"
             initial={{ opacity: 0 }}
@@ -694,7 +704,7 @@ const UserHome = () => {
             transition={{ delay: 1, duration: 0.6 }}
           >
             <div className="bg-gradient-to-r from-red-50 via-white to-green-50 rounded-xl border-2 border-red-300 p-4 shadow-sm">
-              <p className="text-red-700 text-xs sm:text-sm lg:text-base">
+              <div className="text-red-700 text-xs sm:text-sm lg:text-base">
                 🎅 Wishing you a wonderful holiday season! Need help? Reach us through the {" "}
                 <a 
                   href="mailto:support@company.com" 
@@ -702,8 +712,7 @@ const UserHome = () => {
                 >
                   company's support channels
                 </a>
-              </p>
-        
+              </div>
             </div>
           </motion.div>
         </div>
