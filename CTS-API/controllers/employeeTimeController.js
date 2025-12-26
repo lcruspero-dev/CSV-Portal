@@ -1,4 +1,3 @@
-const express = require("express");
 const EmployeeTime = require("../models/employeeTimeModel");
 const mongoose = require("mongoose");
 const { autoUpdatePayrollFromTimeTracker } = require("./payrollController");
@@ -348,8 +347,8 @@ const searchByNameAndDate = async (req, res) => {
         break;
       default:
         // Create a case-insensitive regex for partial name matching
-        const nameRegex = new RegExp(name, "i");
-        query.employeeName = { $regex: nameRegex };
+        { const nameRegex = new RegExp(name, "i");
+        query.employeeName = { $regex: nameRegex }; }
     }
 
     const employeeTimes = await EmployeeTime.find(query);

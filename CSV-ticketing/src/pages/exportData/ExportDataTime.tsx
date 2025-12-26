@@ -30,6 +30,9 @@ interface EmployeeTimes {
   breakEnd: string;
   breakStart: string;
   totalBreakTime: number;
+  lunchStart: string;
+  lunchEnd: string;
+  totalLunchTime: number;
 }
 
 interface EmployeeSummary {
@@ -197,6 +200,11 @@ const ExportDataTime: React.FC = () => {
           : " ",
         BreakStart: entry.breakStart,
         BreakEnd: entry.breakEnd,
+        LunchStart: entry.lunchStart || " ",
+        LunchEnd: entry.lunchEnd || " ",
+        TotalLunchTime: entry.totalLunchTime
+          ? `${Math.round(entry.totalLunchTime * 60)} minutes`
+          : " ",
         Notes: entry.notes,
       }));
 
@@ -225,17 +233,21 @@ const ExportDataTime: React.FC = () => {
       const summaryWorksheet = XLSX.utils.json_to_sheet(summaryData);
       XLSX.utils.book_append_sheet(workbook, summaryWorksheet, "Summary");
 
+      // Adjust column widths to accommodate new columns
       detailedWorksheet["!cols"] = [
-        { wch: 15 },
-        { wch: 20 },
-        { wch: 10 },
-        { wch: 15 },
-        { wch: 15 },
-        { wch: 10 },
-        { wch: 10 },
-        { wch: 15 },
-        { wch: 15 },
-        { wch: 30 },
+        { wch: 15 },  // Date
+        { wch: 20 },  // EmployeeName
+        { wch: 10 },  // Shift
+        { wch: 15 },  // TimeIn
+        { wch: 15 },  // TimeOut
+        { wch: 10 },  // TotalHours
+        { wch: 15 },  // TotalBreakTime
+        { wch: 15 },  // BreakStart
+        { wch: 15 },  // BreakEnd
+        { wch: 15 },  // LunchStart
+        { wch: 15 },  // LunchEnd
+        { wch: 15 },  // TotalLunchTime
+        { wch: 30 },  // Notes
       ];
 
       summaryWorksheet["!cols"] = [
