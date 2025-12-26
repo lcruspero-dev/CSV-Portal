@@ -51,8 +51,8 @@ const AdminHome = () => {
   useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth;
-      setIsMobile(width < 640); // Mobile: < 640px
-      setIsTablet(width >= 640 && width < 1024); // Tablet: 640px - 1024px
+      setIsMobile(width < 640); 
+      setIsTablet(width >= 640 && width < 1024); 
 
       if (width < 640) {
         setSidebarOpen(false);

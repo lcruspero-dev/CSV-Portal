@@ -33,6 +33,9 @@ interface EmployeeTimes {
   lunchStart: string;
   lunchEnd: string;
   totalLunchTime: number;
+  secondBreakStart: string;
+  secondBreakEnd: string;
+  totalSecondBreakTime: number;
 }
 
 interface EmployeeSummary {
@@ -46,6 +49,8 @@ interface EmployeeSummary {
   };
   lateMinutes: number;
   earlyOutMinutes: number;
+  totalBreakTime: number; // Total of all break times (break1 + break2 + lunch)
+  totalOverbreak: number; // Minutes over allowed break times
 }
 
 const ExportDataTime: React.FC = () => {
@@ -81,8 +86,17 @@ const ExportDataTime: React.FC = () => {
   };
 
   const convertTo24Hour = (timeStr: string): string => {
-    const [time, period] = timeStr.split(" ");
-    let [hours, minutes] = time.split(":").map(Number);
+    if (!timeStr || timeStr.trim() === "") return "";
+    
+    const time = timeStr.trim();
+    // Check if already in 24-hour format (contains : and no AM/PM)
+    if (time.includes(":") && !time.includes("AM") && !time.includes("PM")) {
+      return time;
+    }
+    
+    // Handle 12-hour format with AM/PM
+    const [timePart, period] = time.split(" ");
+    let [hours, minutes] = timePart.split(":").map(Number);
 
     if (period === "PM" && hours !== 12) {
       hours += 12;
@@ -94,6 +108,24 @@ const ExportDataTime: React.FC = () => {
       2,
       "0"
     )}`;
+  };
+
+  const formatMinutesToHours = (minutes: number): string => {
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    if (hours === 0) {
+      return `${remainingMinutes} minutes`;
+    } else if (remainingMinutes === 0) {
+      return `${hours} hours`;
+    } else {
+      return `${hours} hours, ${remainingMinutes} minutes`;
+    }
+  };
+
+  // Calculate overbreak time (break time exceeding allowed limits)
+  const calculateOverbreak = (breakTime: number, allowedTime: number): number => {
+    if (!breakTime || breakTime <= allowedTime) return 0;
+    return Math.round((breakTime - allowedTime) * 60); // Convert to minutes
   };
 
   const generateSummary = (
@@ -114,6 +146,8 @@ const ExportDataTime: React.FC = () => {
           },
           lateMinutes: 0,
           earlyOutMinutes: 0,
+          totalBreakTime: 0,
+          totalOverbreak: 0,
         });
       }
 
@@ -132,22 +166,39 @@ const ExportDataTime: React.FC = () => {
         const actualTimeIn = convertTo24Hour(entry.timeIn);
         const actualTimeOut = convertTo24Hour(entry.timeOut);
 
-        const lateMinutes = calculateTimeDifference(
-          shiftTimes.start,
-          actualTimeIn
-        );
-        if (lateMinutes > 0) {
-          summary.lateMinutes += lateMinutes;
+        if (actualTimeIn && shiftTimes.start) {
+          const lateMinutes = calculateTimeDifference(
+            shiftTimes.start,
+            actualTimeIn
+          );
+          if (lateMinutes > 0) {
+            summary.lateMinutes += lateMinutes;
+          }
         }
 
-        const earlyOutMinutes = calculateTimeDifference(
-          actualTimeOut,
-          shiftTimes.end
-        );
-        if (earlyOutMinutes > 0) {
-          summary.earlyOutMinutes += earlyOutMinutes;
+        if (actualTimeOut && shiftTimes.end) {
+          const earlyOutMinutes = calculateTimeDifference(
+            actualTimeOut,
+            shiftTimes.end
+          );
+          if (earlyOutMinutes > 0) {
+            summary.earlyOutMinutes += earlyOutMinutes;
+          }
         }
       }
+
+      // Calculate total break time for this entry
+      const break1Time = entry.totalBreakTime || 0;
+      const break2Time = entry.totalSecondBreakTime || 0;
+      const lunchTime = entry.totalLunchTime || 0;
+      const totalEntryBreakTime = break1Time + break2Time + lunchTime;
+      summary.totalBreakTime += totalEntryBreakTime;
+
+      // Calculate overbreak for this entry
+      const break1Overbreak = calculateOverbreak(break1Time, 0.25); // 15 minutes allowed
+      const break2Overbreak = calculateOverbreak(break2Time, 0.25); // 15 minutes allowed
+      const lunchOverbreak = calculateOverbreak(lunchTime, 1); // 60 minutes allowed
+      summary.totalOverbreak += break1Overbreak + break2Overbreak + lunchOverbreak;
     });
 
     return Array.from(summaryMap.values());
@@ -188,25 +239,46 @@ const ExportDataTime: React.FC = () => {
         return;
       }
 
-      const detailedData = filteredEmployeeTimes.map((entry) => ({
-        Date: entry.date,
-        EmployeeName: entry.employeeName,
-        Shift: entry.shift,
-        TimeIn: entry.timeIn,
-        TimeOut: entry.timeOut,
-        TotalHours: entry.totalHours,
-        TotalBreakTime: entry.totalBreakTime
-          ? `${Math.round(entry.totalBreakTime * 60)} minutes`
-          : " ",
-        BreakStart: entry.breakStart,
-        BreakEnd: entry.breakEnd,
-        LunchStart: entry.lunchStart || " ",
-        LunchEnd: entry.lunchEnd || " ",
-        TotalLunchTime: entry.totalLunchTime
-          ? `${Math.round(entry.totalLunchTime * 60)} minutes`
-          : " ",
-        Notes: entry.notes,
-      }));
+      const detailedData = filteredEmployeeTimes.map((entry) => {
+        const break1Minutes = entry.totalBreakTime ? Math.round(entry.totalBreakTime * 60) : 0;
+        const break2Minutes = entry.totalSecondBreakTime ? Math.round(entry.totalSecondBreakTime * 60) : 0;
+        const lunchMinutes = entry.totalLunchTime ? Math.round(entry.totalLunchTime * 60) : 0;
+        
+        // Calculate overbreak times
+        const break1Overbreak = calculateOverbreak(entry.totalBreakTime || 0, 0.25);
+        const break2Overbreak = calculateOverbreak(entry.totalSecondBreakTime || 0, 0.25);
+        const lunchOverbreak = calculateOverbreak(entry.totalLunchTime || 0, 1);
+        
+        return {
+          Date: entry.date,
+          EmployeeName: entry.employeeName,
+          Shift: entry.shift,
+          TimeIn: entry.timeIn || " ",
+          TimeOut: entry.timeOut || " ",
+          TotalHours: entry.totalHours || " ",
+          // Break 1 Details
+          Break1Start: entry.breakStart || " ",
+          Break1End: entry.breakEnd || " ",
+          Break1Duration: entry.totalBreakTime ? formatMinutesToHours(break1Minutes) : " ",
+          Break1Overbreak: break1Overbreak > 0 ? `${break1Overbreak} minutes` : " ",
+          // Break 2 Details
+          Break2Start: entry.secondBreakStart || " ",
+          Break2End: entry.secondBreakEnd || " ",
+          Break2Duration: entry.totalSecondBreakTime ? formatMinutesToHours(break2Minutes) : " ",
+          Break2Overbreak: break2Overbreak > 0 ? `${break2Overbreak} minutes` : " ",
+          // Lunch Details
+          LunchStart: entry.lunchStart || " ",
+          LunchEnd: entry.lunchEnd || " ",
+          LunchDuration: entry.totalLunchTime ? formatMinutesToHours(lunchMinutes) : " ",
+          LunchOverbreak: lunchOverbreak > 0 ? `${lunchOverbreak} minutes` : " ",
+          // Total Break Summary
+          TotalBreakTime: formatMinutesToHours(break1Minutes + break2Minutes + lunchMinutes),
+          TotalOverbreak: break1Overbreak + break2Overbreak + lunchOverbreak > 0 
+            ? `${break1Overbreak + break2Overbreak + lunchOverbreak} minutes` 
+            : " ",
+          Notes: entry.notes || " ",
+        };
+      });
 
       const summaryData = generateSummary(filteredEmployeeTimes).map(
         (summary) => ({
@@ -218,6 +290,8 @@ const ExportDataTime: React.FC = () => {
           "Staff Shift Days": summary.shiftsBreakdown["Staff"],
           "Total Late (Minutes)": summary.lateMinutes,
           "Total Early Out (Minutes)": summary.earlyOutMinutes,
+          "Total Break Time": formatMinutesToHours(Math.round(summary.totalBreakTime * 60)),
+          "Total Overbreak (Minutes)": summary.totalOverbreak,
         })
       );
 
@@ -233,32 +307,46 @@ const ExportDataTime: React.FC = () => {
       const summaryWorksheet = XLSX.utils.json_to_sheet(summaryData);
       XLSX.utils.book_append_sheet(workbook, summaryWorksheet, "Summary");
 
-      // Adjust column widths to accommodate new columns
+      // Adjust column widths to accommodate all columns
       detailedWorksheet["!cols"] = [
-        { wch: 15 },  // Date
+        { wch: 12 },  // Date
         { wch: 20 },  // EmployeeName
         { wch: 10 },  // Shift
-        { wch: 15 },  // TimeIn
-        { wch: 15 },  // TimeOut
+        { wch: 12 },  // TimeIn
+        { wch: 12 },  // TimeOut
         { wch: 10 },  // TotalHours
+        // Break 1 columns
+        { wch: 12 },  // Break1Start
+        { wch: 12 },  // Break1End
+        { wch: 15 },  // Break1Duration
+        { wch: 15 },  // Break1Overbreak
+        // Break 2 columns
+        { wch: 12 },  // Break2Start
+        { wch: 12 },  // Break2End
+        { wch: 15 },  // Break2Duration
+        { wch: 15 },  // Break2Overbreak
+        // Lunch columns
+        { wch: 12 },  // LunchStart
+        { wch: 12 },  // LunchEnd
+        { wch: 15 },  // LunchDuration
+        { wch: 15 },  // LunchOverbreak
+        // Summary columns
         { wch: 15 },  // TotalBreakTime
-        { wch: 15 },  // BreakStart
-        { wch: 15 },  // BreakEnd
-        { wch: 15 },  // LunchStart
-        { wch: 15 },  // LunchEnd
-        { wch: 15 },  // TotalLunchTime
+        { wch: 15 },  // TotalOverbreak
         { wch: 30 },  // Notes
       ];
 
       summaryWorksheet["!cols"] = [
-        { wch: 20 },
-        { wch: 12 },
-        { wch: 12 },
-        { wch: 12 },
-        { wch: 12 },
-        { wch: 15 },
-        { wch: 15 },
-        { wch: 15 },
+        { wch: 20 },  // Employee Name
+        { wch: 12 },  // Days Present
+        { wch: 12 },  // Shift 1 Days
+        { wch: 12 },  // Shift 2 Days
+        { wch: 12 },  // Shift 3 Days
+        { wch: 15 },  // Staff Shift Days
+        { wch: 18 },  // Total Late (Minutes)
+        { wch: 20 },  // Total Early Out (Minutes)
+        { wch: 18 },  // Total Break Time
+        { wch: 20 },  // Total Overbreak (Minutes)
       ];
 
       const fileName = `Employee_Time_${
@@ -280,13 +368,13 @@ const ExportDataTime: React.FC = () => {
         <div className="text-center">
           {/* Thanksgiving-themed header */}
           <h1 className="text-xl sm:text-xl md:text-2xl lg:text-3xl font-bold py-1 sm:py-1 md:py-2 bg-clip-text text-transparent bg-gradient-to-r from-[#8B4513] to-[#D2691E]">
-            🦃 Give Thanks for Your Team's Time 🍂
+             Your Team's Time 
           </h1>
           <p className="text-lg sm:text-xl md:text-xl lg:text-2xl font-bold text-amber-800">
             Select dates to harvest your time tracking data
           </p>
           <p className="text-sm text-amber-600 mt-2">
-            We're grateful for your team's hard work!
+            We're grateful for your team's hard work! Now includes all break details.
           </p>
         </div>
 
@@ -313,7 +401,7 @@ const ExportDataTime: React.FC = () => {
           )}
 
           <Label htmlFor="endDate" className="text-base font-bold text-amber-800 mt-4">
-            <p>🍂 End Date</p>
+            <p>End Date</p>
           </Label>
           <Controller
             name="endDate"
@@ -340,20 +428,13 @@ const ExportDataTime: React.FC = () => {
           disabled={isLoading}
         >
           {isLoading ? (
-            "🦃 Gathering Your Harvest..."
+            "🦃 Gather"
           ) : (
-            "🍁 Export with Gratitude 🍂"
+            "🍁 Export"
           )}
         </Button>
 
-        {/* Thanksgiving message */}
-        <div className="text-center mt-4 p-3 bg-amber-100 rounded-lg border border-amber-300">
-          <p className="text-amber-700 text-sm">
-            <strong>Thankful for your team's dedication!</strong>
-            <br />
-            Export their time data and celebrate their contributions.
-          </p>
-        </div>
+       
       </form>
     </div>
   );

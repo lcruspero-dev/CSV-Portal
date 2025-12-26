@@ -117,7 +117,17 @@ export const AttendanceTracker: React.FC = () => {
     type: null,
     message: "",
   });
-  const [selectedCutoff, setSelectedCutoff] = useState<CutoffPeriod>("1-15");
+
+  // Updated state initialization for automatic date/cutoff selection
+  const getCurrentCutoff = (): CutoffPeriod => {
+    const today = new Date();
+    const day = today.getDate();
+    return day <= 15 ? "1-15" : "16-31";
+  };
+
+  const [selectedCutoff, setSelectedCutoff] = useState<CutoffPeriod>(
+    getCurrentCutoff()
+  );
   const [selectedMonth, setSelectedMonth] = useState<number>(
     new Date().getMonth()
   );
@@ -159,6 +169,20 @@ export const AttendanceTracker: React.FC = () => {
           ? "bg-gradient-to-r from-green-600 to-red-600 border border-green-400 text-white"
           : "bg-red-600 border border-red-400 text-white",
     });
+  };
+
+  // Function to set current date filters based on server time
+  const setCurrentDateFilters = (serverDate?: string) => {
+    const dateToUse = serverDate ? new Date(serverDate) : new Date();
+    const day = dateToUse.getDate();
+    const month = dateToUse.getMonth();
+    const year = dateToUse.getFullYear();
+
+    // Set cutoff based on current day
+    const cutoff: CutoffPeriod = day <= 15 ? "1-15" : "16-31";
+    setSelectedCutoff(cutoff);
+    setSelectedMonth(month);
+    setSelectedYear(year);
   };
 
   // Time formatting functions
@@ -247,9 +271,9 @@ export const AttendanceTracker: React.FC = () => {
 
   const showAlert = (type: "break1" | "break2" | "lunch") => {
     const messages = {
-      break1: "🎄 Break 1 will end in 1 minute! Time to return to work!",
-      break2: "❄️ Break 2 will end in 1 minute! Time to return to work!",
-      lunch: "🎅 Lunch break will end in 1 minute! Time to return to work!",
+      break1: " Break 1 will end in 1 minute! Time to return to work!",
+      break2: " Break 2 will end in 1 minute! Time to return to work!",
+      lunch: " Lunch break will end in 1 minute! Time to return to work!",
     };
 
     setAlert({
@@ -470,6 +494,10 @@ export const AttendanceTracker: React.FC = () => {
       setIsLoadingInitial(true);
       try {
         const currentTimeData = await getCurrentTimeFromAPI();
+
+        // Set current date filters based on server time
+        setCurrentDateFilters(currentTimeData.date);
+
         const employeeId = JSON.parse(localStorage.getItem("user")!)._id;
         const shift = await fetchShiftSchedule(
           currentTimeData.date,
@@ -627,7 +655,7 @@ export const AttendanceTracker: React.FC = () => {
       getAttendance();
       setIsTimeIn(true);
       setElapsedTime(0);
-      showChristmasToast("🎄 Welcome to Work!", "You've joined the work!");
+      showChristmasToast("Welcome to Work!", "You've joined the work!");
     } catch (error: any) {
       console.error("Error logging time:", error);
       let errorMessage = "A error occurred while logging time";
@@ -640,7 +668,7 @@ export const AttendanceTracker: React.FC = () => {
         errorMessage = error.message;
       }
 
-      showChristmasToast("❄️ Error", errorMessage, "destructive");
+      showChristmasToast(" Error", errorMessage, "destructive");
     } finally {
       setIsLoadingTimeIn(false);
     }
@@ -699,13 +727,13 @@ export const AttendanceTracker: React.FC = () => {
       });
 
       showChristmasToast(
-        "🎁 Work Complete!",
-        "You've finished working! Time to enjoy rest!"
+        "Work Complete!",
+        "You've finished working! Time to rest!"
       );
     } catch (error) {
       console.error("Error logging timeout:", error);
       showChristmasToast(
-        "❄️ Error",
+        "Error",
         "Failed to complete work! Please try again. If the issue persists, contact IT Support..",
         "destructive"
       );
@@ -731,13 +759,13 @@ export const AttendanceTracker: React.FC = () => {
       hideAlert();
       setAlertShown((prev) => ({ ...prev, break1: false }));
       showChristmasToast(
-        "🎄 Break Started!",
+        "Break Started!",
         "Time for a break! 15 minutes of relaxation."
       );
     } catch (error) {
       console.error("Error starting break:", error);
       showChristmasToast(
-        "❄️ Error",
+        "Error",
         "Failed to start break. Please try again. If the issue persists, contact IT Support.",
         "destructive"
       );
@@ -778,11 +806,11 @@ export const AttendanceTracker: React.FC = () => {
       setCurrentEntry(response.data);
       hideAlert();
       setAlertShown((prev) => ({ ...prev, break1: false }));
-      showChristmasToast("🎅 Break Ended!", "Back to work!");
+      showChristmasToast("Break Ended!", "Back to work!");
     } catch (error) {
       console.error("Error ending break:", error);
       showChristmasToast(
-        "❄️ Error",
+        "Error",
         "Failed to log end break. Please try again.",
         "destructive"
       );
@@ -808,13 +836,13 @@ export const AttendanceTracker: React.FC = () => {
       hideAlert();
       setAlertShown((prev) => ({ ...prev, lunch: false }));
       showChristmasToast(
-        "🎅 Lunch Started!",
+        "Lunch Started!",
         "Time for lunch! 60 minutes of lunch."
       );
     } catch (error) {
       console.error("Error starting lunch:", error);
       showChristmasToast(
-        "❄️ Error",
+        "Error",
         "Failed to start lunch. Please try again. If the issue persists, contact IT Support.",
         "destructive"
       );
@@ -855,11 +883,11 @@ export const AttendanceTracker: React.FC = () => {
       setCurrentEntry(response.data);
       hideAlert();
       setAlertShown((prev) => ({ ...prev, lunch: false }));
-      showChristmasToast("🎁 Lunch Ended!", "Back to the work!");
+      showChristmasToast("Lunch Ended!", "Back to the work!");
     } catch (error) {
       console.error("Error ending lunch:", error);
       showChristmasToast(
-        "❄️ Error",
+        "Error",
         "Failed to log end lunch. Please try again.",
         "destructive"
       );
@@ -958,13 +986,13 @@ export const AttendanceTracker: React.FC = () => {
       hideAlert();
       setAlertShown((prev) => ({ ...prev, break2: false }));
       showChristmasToast(
-        "❄️ Break 2 Started!",
-        "Second holiday break! 15 more minutes of festive relaxation."
+        "Break 2 Started!",
+        "Second break! 15 more minutes of relaxation."
       );
     } catch (error) {
       console.error("Error starting break 2:", error);
       showChristmasToast(
-        "❄️ Error",
+        "Error",
         "Failed to start second break. Please try again.",
         "destructive"
       );
@@ -1010,11 +1038,11 @@ export const AttendanceTracker: React.FC = () => {
       setCurrentEntry(response.data);
       hideAlert();
       setAlertShown((prev) => ({ ...prev, break2: false }));
-      showChristmasToast("🎄 Break 2 Ended!", "Back to toy making!");
+      showChristmasToast("Break 2 Ended!", "Back to work!");
     } catch (error) {
       console.error("Error ending break 2:", error);
       showChristmasToast(
-        "❄️ Error",
+        "Error",
         "Failed to end second break. Please try again.",
         "destructive"
       );
@@ -1027,14 +1055,14 @@ export const AttendanceTracker: React.FC = () => {
     const actions = [];
 
     if (currentEntry.breakStart && !currentEntry.breakEnd) {
-      actions.push({ value: "endBreak", label: "🎄 End Break 1" });
+      actions.push({ value: "endBreak", label: " End Break 1" });
     } else if (currentEntry.secondBreakStart && !currentEntry.secondBreakEnd) {
-      actions.push({ value: "endSecondBreak", label: "❄️ End Break 2" });
+      actions.push({ value: "endSecondBreak", label: " End Break 2" });
     } else if (currentEntry.lunchStart && !currentEntry.lunchEnd) {
-      actions.push({ value: "endLunch", label: "🎅 End Lunch" });
+      actions.push({ value: "endLunch", label: " End Lunch" });
     } else {
       if (!currentEntry.breakStart) {
-        actions.push({ value: "startBreak", label: "🎄 Start Break 1" });
+        actions.push({ value: "startBreak", label: " Start Break 1" });
       }
 
       if (
@@ -1044,16 +1072,16 @@ export const AttendanceTracker: React.FC = () => {
       ) {
         actions.push({
           value: "startSecondBreak",
-          label: "❄️ Start Break 2",
+          label: " Start Break 2",
         });
       }
 
       if (!currentEntry.lunchStart) {
-        actions.push({ value: "startLunch", label: "🎅 Start Lunch" });
+        actions.push({ value: "startLunch", label: " Start Lunch" });
       }
 
       if (isTimeIn) {
-        actions.push({ value: "timeOut", label: "🎁 Log Out" });
+        actions.push({ value: "timeOut", label: " Log Out" });
       }
     }
 
@@ -1085,7 +1113,7 @@ export const AttendanceTracker: React.FC = () => {
                   <Bell className="h-8 w-8 text-green-600 animate-pulse" />
                 </div>
                 <h3 className="text-xl font-semibold text-green-800 font-serif">
-                  🎄 Alert!
+                  Alert!
                 </h3>
               </div>
               <p className="text-lg text-green-700 mb-6 text-center font-medium">
@@ -1097,7 +1125,7 @@ export const AttendanceTracker: React.FC = () => {
                   className="bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700 text-white px-6 py-2 border border-green-400 font-bold"
                   size="lg"
                 >
-                  Got it! ❄️
+                  Got it!
                 </Button>
               </div>
             </div>
@@ -1137,7 +1165,7 @@ export const AttendanceTracker: React.FC = () => {
                 {currentEntry.breakStart && !currentEntry.breakEnd ? (
                   <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-green-600 text-center font-mono bg-white bg-opacity-80 p-4 rounded-lg border border-green-500">
                     <p className="text-sm sm:text-base text-green-700 tracking-wide mb-2">
-                      🎄 BREAK 1 - 15 Minutes
+                      BREAK 1 - 15 Minutes
                     </p>
                     {formatElapsedTime(elapsedTime)}
                   </div>
@@ -1145,14 +1173,14 @@ export const AttendanceTracker: React.FC = () => {
                   !currentEntry.secondBreakEnd ? (
                   <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-blue-600 text-center font-mono bg-white bg-opacity-80 p-4 rounded-lg border border-blue-500">
                     <p className="text-sm sm:text-base text-blue-700 tracking-wide mb-2">
-                      ❄️ BREAK 2 - 15 Minutes
+                      BREAK 2 - 15 Minutes
                     </p>
                     {formatElapsedTime(elapsedTime)}
                   </div>
                 ) : currentEntry.lunchStart && !currentEntry.lunchEnd ? (
                   <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-red-600 text-center font-mono bg-white bg-opacity-80 p-4 rounded-lg border border-red-500">
                     <p className="text-sm sm:text-base text-red-700 tracking-wide mb-2">
-                      🎅 LUNCH - 60 Minutes
+                      LUNCH - 60 Minutes
                     </p>
                     {formatElapsedTime(elapsedTime)}
                   </div>
@@ -1163,7 +1191,7 @@ export const AttendanceTracker: React.FC = () => {
                     }`}
                   >
                     <p className="text-sm sm:text-base text-green-700 tracking-wide mb-2">
-                      🎁 WORK TIME
+                      WORK TIME
                     </p>
                     {formatElapsedTime(elapsedTime)}
                   </div>
@@ -1229,7 +1257,7 @@ export const AttendanceTracker: React.FC = () => {
                         <DialogContent className="sm:max-w-md bg-gradient-to-br from-green-50 to-red-100 border-2 border-green-400">
                           <DialogHeader>
                             <DialogTitle className="text-lg text-green-700 font-serif">
-                              🎁 Complete Your Day
+                              Complete Your Day
                             </DialogTitle>
                           </DialogHeader>
                           <div className="grid gap-4 py-4">
@@ -1274,7 +1302,7 @@ export const AttendanceTracker: React.FC = () => {
                 {isTimeIn && (
                   <div className="w-full max-w-2xl mx-auto">
                     <p className="font-semibold text-sm sm:text-base mb-3 text-center text-green-700 font-serif">
-                      ❄️ Current Session
+                      Current Session
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                       {currentEntry.timeIn && (
@@ -1282,7 +1310,7 @@ export const AttendanceTracker: React.FC = () => {
                           <div className="flex items-center gap-2">
                             <Home className="h-4 w-4 text-green-600" />
                             <span className="text-xs font-medium text-green-700">
-                              🎄 Entry Time
+                              Entry Time
                             </span>
                           </div>
                           <p className="text-sm font-semibold mt-1 text-green-900">
@@ -1296,7 +1324,7 @@ export const AttendanceTracker: React.FC = () => {
                           <div className="flex items-center gap-2">
                             <Star className="h-4 w-4 text-yellow-600" />
                             <span className="text-xs font-medium text-yellow-700">
-                              ❄️ Shift
+                              Shift
                             </span>
                           </div>
                           <p className="text-sm font-semibold mt-1 text-yellow-900">
@@ -1310,7 +1338,7 @@ export const AttendanceTracker: React.FC = () => {
                           <div className="flex items-center gap-2">
                             <TreePine className="h-4 w-4 text-green-600" />
                             <span className="text-xs font-medium text-green-700">
-                              🎄 Break 1
+                              Break 1
                             </span>
                           </div>
                           <div className="space-y-1 mt-1">
@@ -1336,7 +1364,7 @@ export const AttendanceTracker: React.FC = () => {
                             {currentEntry.totalBreakTime &&
                               currentEntry.totalBreakTime > 0.25 && (
                                 <p className="text-xs font-semibold text-red-600">
-                                  ❄️ Overbreak:{" "}
+                                  Overbreak:{" "}
                                   {calculateOverbreak(
                                     currentEntry.totalBreakTime,
                                     0.25
@@ -1353,7 +1381,7 @@ export const AttendanceTracker: React.FC = () => {
                           <div className="flex items-center gap-2">
                             <Snowflake className="h-4 w-4 text-blue-600" />
                             <span className="text-xs font-medium text-blue-700">
-                              ❄️ Break 2
+                              Break 2
                             </span>
                           </div>
                           <div className="space-y-1 mt-1">
@@ -1381,7 +1409,7 @@ export const AttendanceTracker: React.FC = () => {
                             {currentEntry.totalSecondBreakTime &&
                               currentEntry.totalSecondBreakTime > 0.25 && (
                                 <p className="text-xs font-semibold text-red-600">
-                                  ❄️ Overbreak:{" "}
+                                  Overbreak:{" "}
                                   {calculateOverbreak(
                                     currentEntry.totalSecondBreakTime,
                                     0.25
@@ -1398,7 +1426,7 @@ export const AttendanceTracker: React.FC = () => {
                           <div className="flex items-center gap-2">
                             <Gift className="h-4 w-4 text-red-600" />
                             <span className="text-xs font-medium text-red-700">
-                              🎅 Lunch
+                              Lunch
                             </span>
                           </div>
                           <div className="space-y-1 mt-1">
@@ -1424,7 +1452,7 @@ export const AttendanceTracker: React.FC = () => {
                             {currentEntry.totalLunchTime &&
                               currentEntry.totalLunchTime > 1 && (
                                 <p className="text-xs font-semibold text-red-600">
-                                  ❄️ Overlunch:{" "}
+                                  Overlunch:{" "}
                                   {calculateOverbreak(
                                     currentEntry.totalLunchTime,
                                     1
@@ -1441,7 +1469,7 @@ export const AttendanceTracker: React.FC = () => {
                           <div className="flex items-center gap-2">
                             <TreePine className="h-4 w-4 text-red-600" />
                             <span className="text-xs font-medium text-red-700">
-                              ❄️ Total Overbreak
+                              Total Overbreak
                             </span>
                           </div>
                           <div className="space-y-1 mt-1">
@@ -1460,7 +1488,7 @@ export const AttendanceTracker: React.FC = () => {
                           <div className="flex items-center gap-2">
                             <TreePine className="h-4 w-4 text-red-600" />
                             <span className="text-xs font-medium text-red-700">
-                              ❄️ Overbreak
+                              Overbreak
                             </span>
                           </div>
                           <div className="space-y-1 mt-1">
@@ -1482,7 +1510,7 @@ export const AttendanceTracker: React.FC = () => {
                 <CardHeader className="p-4 sm:p-6">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <CardTitle className="text-lg sm:text-xl text-green-700 font-serif">
-                      ❄️ Time Records
+                      Time Records
                     </CardTitle>
 
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
@@ -1563,10 +1591,10 @@ export const AttendanceTracker: React.FC = () => {
                                 Date
                               </TableHead>
                               <TableHead className="min-w-[90px] text-green-700">
-                                Log In
+                                Time In
                               </TableHead>
                               <TableHead className="min-w-[90px] text-green-700">
-                                Log Out
+                                Time Out
                               </TableHead>
                               <TableHead className="min-w-[90px] text-green-700">
                                 Total Hours
@@ -1610,7 +1638,7 @@ export const AttendanceTracker: React.FC = () => {
                                   <TableCell className="py-2 text-red-700">
                                     {entry.timeOut
                                       ? formatTime(entry.timeOut)
-                                      : "❄️ In Progress"}
+                                      : "In Progress"}
                                   </TableCell>
                                   <TableCell className="py-2 text-green-800">
                                     {formatHoursToHoursMinutes(
@@ -1652,7 +1680,7 @@ export const AttendanceTracker: React.FC = () => {
                                       className="truncate max-w-[80px] sm:max-w-[100px] lg:max-w-[150px] text-ellipsis overflow-hidden"
                                       title={entry.notes || ""}
                                     >
-                                      {entry.notes || "🎄"}
+                                      {entry.notes || ""}
                                     </div>
                                   </TableCell>
                                 </TableRow>
@@ -1663,7 +1691,7 @@ export const AttendanceTracker: React.FC = () => {
                                   colSpan={12}
                                   className="text-center py-4 text-green-600"
                                 >
-                                  ❄️ No records found for{" "}
+                                  No records found for{" "}
                                   {
                                     months.find(
                                       (m) => m.value === selectedMonth
@@ -1678,7 +1706,7 @@ export const AttendanceTracker: React.FC = () => {
                       </div>
 
                       <div className="mt-4 text-sm text-green-600">
-                        🎄 Showing {filteredEntries.length} record(s) for{" "}
+                        Showing {filteredEntries.length} record(s) for{" "}
                         {months.find((m) => m.value === selectedMonth)?.label}{" "}
                         {selectedYear} ({selectedCutoff} cut-off)
                       </div>
