@@ -212,7 +212,7 @@ const displayShiftInfo = (
       displayName = "🌙 Night";
       break;
     case "restday":
-      displayName = "🎄 Rest Day";
+      displayName = " Rest Day";
       break;
     case "paidTimeOff":
       displayName = "🎁 PTO";
@@ -249,7 +249,7 @@ const displayShiftInfo = (
     if (shiftType.break2)
       detailsParts.push(`🍪 Break2: ${formatTimeToAMPM(shiftType.break2)}`);
     if (shiftType.lunch)
-      detailsParts.push(`🎄 Lunch: ${formatTimeToAMPM(shiftType.lunch)}`);
+      detailsParts.push(` Lunch: ${formatTimeToAMPM(shiftType.lunch)}`);
 
     details = detailsParts.join("\n");
   }
@@ -302,7 +302,7 @@ const ScheduleAndAttendance: React.FC = () => {
         </SelectTrigger>
         <SelectContent className="bg-gradient-to-r from-green-50 to-red-50 border-green-200">
           <SelectItem value="all" className="text-green-900 hover:bg-gradient-to-r hover:from-green-100 hover:to-red-100">
-            🎄 All Elves
+             All Elves
           </SelectItem>
           {Array.from(new Set(employees.map((emp) => emp.teamLeader)))
             .filter((leader) => leader && leader.trim() !== "")
@@ -561,14 +561,14 @@ const ScheduleAndAttendance: React.FC = () => {
 
   const getHeaderText = () => {
     if (viewMode === "weekly") {
-      return `🎄 Week of ${format(startOfWeek(currentDate), "MMM d, yyyy")}`;
+      return ` Week of ${format(startOfWeek(currentDate), "MMM d, yyyy")}`;
     } else if (viewMode === "monthly") {
       return format(currentDate, "🎅 MMMM yyyy");
     } else if (fromDate && toDate) {
       if (isSameDay(fromDate, toDate)) {
         return format(fromDate, "⭐ MMM d, yyyy");
       }
-      return `${format(fromDate, "MMM d")} - ${format(toDate, "MMM d, yyyy")} 🎄`;
+      return `${format(fromDate, "MMM d")} - ${format(toDate, "MMM d, yyyy")} `;
     }
     return "🎅 Select Date Range";
   };
@@ -873,7 +873,7 @@ const ScheduleAndAttendance: React.FC = () => {
               <div className="flex items-center gap-2 mb-2">
                 <TreePine className="h-6 w-6" />
                 <CardTitle className="text-white">
-                  🎄 Santa's Workshop Schedule & Attendance
+                   Santa's Workshop Schedule & Attendance
                 </CardTitle>
               </div>
               <CardDescription className="text-green-100">
@@ -992,7 +992,7 @@ const ScheduleAndAttendance: React.FC = () => {
                         className="w-[120px] justify-start text-left font-normal border-red-300 bg-gradient-to-r from-red-50 to-red-100 text-red-900 hover:from-red-100 hover:to-red-200"
                       >
                         <CalendarIcon className="mr-2 h-4 w-4 text-red-600" />
-                        {toDate ? format(toDate, "MMM d") : "🎄 To"}
+                        {toDate ? format(toDate, "MMM d") : " To"}
                       </Button>
                       {showToCalendar && (
                         <div
@@ -1052,7 +1052,7 @@ const ScheduleAndAttendance: React.FC = () => {
                   onClick={goToToday}
                   className="border-gradient-to-r to-red-300 bg-gradient-to-r from-green-50 text-green-900 hover:from-green-100"
                 >
-                  🎄 Today
+                   Today
                 </Button>
                 <Button
                   variant="outline"
@@ -1238,7 +1238,7 @@ const ScheduleAndAttendance: React.FC = () => {
           <CardFooter className="flex justify-between bg-gradient-to-r from-green-100 to-red-100 border-t border-green-200">
             <div className="text-sm text-green-700 flex items-center">
               <Star className="h-3 w-3 mr-1" />
-              Showing {filteredEmployees.length} elves 🎄
+              Showing {filteredEmployees.length} elves 
             </div>
             <div className="flex gap-2 text-xs">
               <IncompleteBreaksDialog />
@@ -1290,7 +1290,7 @@ const ScheduleAndAttendance: React.FC = () => {
                 <TreePine className="h-5 w-5" />
                 {selectedEmployee && selectedDate ? (
                   <>
-                    🎄 Update {format(selectedDate, "MMM d, yyyy")} for{" "}
+                     Update {format(selectedDate, "MMM d, yyyy")} for{" "}
                     {selectedEmployee.name}
                   </>
                 ) : (
@@ -1321,7 +1321,7 @@ const ScheduleAndAttendance: React.FC = () => {
               <TabsContent value="shift">
                 <div className="space-y-4 mt-4">
                   <Label htmlFor="shift-type" className="text-green-900">
-                    🎄 Shift Type
+                     Shift Type
                   </Label>
                   <RadioGroup
                     id="shift-type"
@@ -1344,7 +1344,7 @@ const ScheduleAndAttendance: React.FC = () => {
                         { value: "Morning", label: "🌅 Morning" },
                         { value: "Mid", label: "☀️ Mid" },
                         { value: "Night", label: "🌙 Night" },
-                        { value: "restday", label: "🎄 Rest Day" },
+                        { value: "restday", label: " Rest Day" },
                         { value: "paidTimeOff", label: "🎁 PTO" },
                         { value: "plannedLeave", label: "⭐ Leave" },
                         { value: "holiday", label: "🎅 Holiday" },
@@ -1418,7 +1418,7 @@ const ScheduleAndAttendance: React.FC = () => {
                         </div>
                         <div>
                           <Label htmlFor="lunch" className="text-green-900">
-                            🎄 Lunch
+                             Lunch
                           </Label>
                           <input
                             id="lunch"
@@ -1536,7 +1536,7 @@ const ScheduleAndAttendance: React.FC = () => {
                           className="text-green-500 border-green-300"
                         />
                         <Label htmlFor="has-ot" className="text-green-900">
-                          🎄 With Overtime?
+                           With Overtime?
                         </Label>
                       </div>
 
@@ -1617,7 +1617,7 @@ const ScheduleAndAttendance: React.FC = () => {
                 }
                 className="bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700 text-white"
               >
-                🎄 Save Changes
+                 Save Changes
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1627,7 +1627,7 @@ const ScheduleAndAttendance: React.FC = () => {
       {/* Christmas Footer */}
       <div className="mt-8 text-center bg-gradient-to-r from-green-50 to-red-50 p-4 rounded-xl border border-green-200 mx-auto max-w-4xl">
         <div className="text-green-600 text-sm flex items-center justify-center gap-2">
-          <span>🎄</span>
+          <span></span>
           <span>May your workshop run smoothly this holiday season!</span>
           <span>🎅</span>
         </div>

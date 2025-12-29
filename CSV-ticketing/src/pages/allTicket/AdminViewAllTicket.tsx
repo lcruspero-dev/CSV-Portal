@@ -25,10 +25,7 @@ import {
   ClockIcon,
   CheckCircleIcon,
   XCircleIcon,
-  Gift,
   Snowflake,
-  TreePine,
-  Star,
   Bell,
   Home
 } from "lucide-react";
@@ -178,7 +175,7 @@ const ViewAllRaisedTickets: React.FC = () => {
     }
 
     setFilteredTickets(filtered);
-    setCurrentPage(1); // Reset to first page when filters change
+    setCurrentPage(1);
   };
 
   useEffect(() => {
@@ -246,7 +243,7 @@ const ViewAllRaisedTickets: React.FC = () => {
         navigate(`/ticket/${foundTicket._id}`);
       } else {
         toast({
-          title: "❌ Ticket Not Found",
+          title: " Ticket Not Found",
           description: "Please check the ticket number and try again.",
           variant: "destructive",
         });
@@ -312,12 +309,7 @@ const ViewAllRaisedTickets: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-red-50">
-        <div className="text-center">
-          <div className="animate-bounce">
-            <TreePine className="h-12 w-12 text-green-600 mx-auto mb-4" />
-          </div>
-          <p className="text-green-600 font-medium">Loading Santa's List...</p>
-        </div>
+          <p className="text-green-600 font-medium">Loading List...</p>
       </div>
     );
   }
@@ -356,16 +348,15 @@ const ViewAllRaisedTickets: React.FC = () => {
                 <div className="p-2 bg-gradient-to-r from-green-600 to-red-600 rounded-xl">
                   <TicketIcon className="h-7 w-7 text-white" />
                 </div>
-                🎅 Santa's Workshop Tickets
+                Manage Tickets
               </h1>
               <p className="text-green-600 text-sm mt-1 flex items-center">
-                <Star className="h-3 w-3 mr-1" />
-                Manage and track all holiday wishes and requests
+                Manage and track all your tickets
               </p>
             </div>
           </div>
           <div className="bg-gradient-to-r from-green-50 to-red-50 px-4 py-3 rounded-lg border border-green-200 shadow-sm">
-            <div className="text-sm text-green-600">🎁 Total Wishes</div>
+            <div className="text-sm text-green-600">Total Tickets</div>
             <div className="text-2xl font-bold text-green-900">
               {filteredTickets.length}
             </div>
@@ -383,7 +374,7 @@ const ViewAllRaisedTickets: React.FC = () => {
                 value={searchTicketNumber}
                 onChange={(e) => setSearchTicketNumber(e.target.value)}
                 onKeyPress={handleSearchKeyPress}
-                placeholder="🔍 Search by wish number (e.g., INC-0001)..."
+                placeholder="Search by ticket number (e.g., INC-0001)..."
                 className="pl-10 w-full border-green-300 focus:border-green-500"
               />
             </div>
@@ -391,7 +382,7 @@ const ViewAllRaisedTickets: React.FC = () => {
               onClick={handleSearchSubmit}
               className="bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700 px-6"
             >
-              🎄 Search
+               Search
             </Button>
             <Button
               variant="outline"
@@ -417,10 +408,10 @@ const ViewAllRaisedTickets: React.FC = () => {
                   onChange={(e) => setStatusFilter(e.target.value)}
                   className="w-full border border-green-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-gradient-to-r from-green-50 to-green-100"
                 >
-                  <option value="open">🎁 Open Wishes</option>
-                  <option value="In Progress">⭐ In Progress</option>
-                  <option value="closed">✅ Completed</option>
-                  <option value="all">🎄 All Statuses</option>
+                  <option value="open"> Open Wishes</option>
+                  <option value="In Progress"> In Progress</option>
+                  <option value="closed"> Completed</option>
+                  <option value="all"> All Statuses</option>
                 </select>
               </div>
 
@@ -435,19 +426,19 @@ const ViewAllRaisedTickets: React.FC = () => {
                   onChange={(e) => setAssignedToFilter(e.target.value)}
                   className="w-full border border-green-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-gradient-to-r from-green-50 to-green-100"
                 >
-                  <option value="all">🎅 All Wishes</option>
+                  <option value="all"> All Tickets</option>
                   {userRole === "SUPERADMIN" && (
                     <>
-                      <option value="ALL IT">🎄 All IT Wishes</option>
-                      <option value="ALL HR">⭐ All HR Wishes</option>
+                      <option value="ALL IT"> All IT Tickets</option>
+                      <option value="ALL HR"> All HR Tickets</option>
                     </>
                   )}
                   {filteredAssign.map((assign) => (
                     <option key={assign._id} value={assign.name}>
-                      🎅 {assign.name}
+                       {assign.name}
                     </option>
                   ))}
-                  <option value="Not Assigned">⏳ Not Assigned</option>
+                  <option value="Not Assigned"> Not Assigned</option>
                 </select>
               </div>
 
@@ -461,7 +452,7 @@ const ViewAllRaisedTickets: React.FC = () => {
                   }}
                   className="w-full border-green-300 text-green-700 hover:bg-gradient-to-r hover:from-green-100 hover:to-green-200"
                 >
-                  🎄 Clear Filters
+                   Clear Filters
                 </Button>
               </div>
             </div>
@@ -474,8 +465,7 @@ const ViewAllRaisedTickets: React.FC = () => {
           <div className="block lg:hidden">
             {currentTickets.length === 0 ? (
               <div className="text-center py-12">
-                <TreePine className="h-12 w-12 text-green-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-green-900">No holiday wishes found</h3>
+                <h3 className="text-lg font-medium text-green-900">No tickets found</h3>
                 <p className="text-green-600 mt-2">Try adjusting your filters or search terms.</p>
               </div>
             ) : (
@@ -513,7 +503,7 @@ const ViewAllRaisedTickets: React.FC = () => {
                           {ticket.priority} Priority
                         </span>
                         <span className="text-sm text-green-600">
-                          {ticket.assignedTo || "🎅 Awaiting Santa"}
+                          {ticket.assignedTo || " Awaiting Santa"}
                         </span>
                       </div>
                     </div>
@@ -530,7 +520,7 @@ const ViewAllRaisedTickets: React.FC = () => {
                         className="w-full bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700"
                         size="sm"
                       >
-                        🎄 View Wish Details
+                         View Wish Details
                       </Button>
                     </div>
                   </div>
@@ -544,23 +534,22 @@ const ViewAllRaisedTickets: React.FC = () => {
             <Table>
               <TableHeader className="bg-gradient-to-r from-green-100 to-red-100">
                 <TableRow>
-                  <TableHead className="font-semibold text-green-800">🎁 Wish #</TableHead>
-                  <TableHead className="font-semibold text-green-800">📅 Date</TableHead>
-                  <TableHead className="font-semibold text-green-800">🏷️ Category</TableHead>
-                  <TableHead className="font-semibold text-green-800">👤 Wisher</TableHead>
-                  <TableHead className="font-semibold text-green-800">📝 Description</TableHead>
-                  <TableHead className="font-semibold text-green-800">⭐ Priority</TableHead>
-                  <TableHead className="font-semibold text-green-800">🎯 Status</TableHead>
-                  <TableHead className="font-semibold text-green-800">🎅 Santa's Helper</TableHead>
-                  <TableHead className="font-semibold text-green-800">🎄 Action</TableHead>
+                  <TableHead className="font-semibold text-green-800">Ticket #</TableHead>
+                  <TableHead className="font-semibold text-green-800">Date</TableHead>
+                  <TableHead className="font-semibold text-green-800">Category</TableHead>
+                  <TableHead className="font-semibold text-green-800">Requestor</TableHead>
+                  <TableHead className="font-semibold text-green-800">Description</TableHead>
+                  <TableHead className="font-semibold text-green-800">Priority</TableHead>
+                  <TableHead className="font-semibold text-green-800">Status</TableHead>
+                  <TableHead className="font-semibold text-green-800">Admin</TableHead>
+                  <TableHead className="font-semibold text-green-800">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {currentTickets.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={9} className="text-center py-12">
-                      <TreePine className="h-12 w-12 text-green-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-green-900">No holiday wishes found</h3>
+                      <h3 className="text-lg font-medium text-green-900">No tickets found</h3>
                       <p className="text-green-600 mt-2">Try adjusting your filters or search terms.</p>
                     </TableCell>
                   </TableRow>
@@ -617,7 +606,7 @@ const ViewAllRaisedTickets: React.FC = () => {
                           </div>
                         ) : (
                           <span className="text-green-400 italic flex items-center">
-                            ⏳ Awaiting Santa
+                             Awaiting Santa
                           </span>
                         )}
                       </TableCell>
@@ -628,7 +617,7 @@ const ViewAllRaisedTickets: React.FC = () => {
                           size="sm"
                           className="border-green-300 text-green-700 hover:bg-gradient-to-r hover:from-green-100 hover:to-green-200"
                         >
-                          🎄 View
+                           View
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -642,9 +631,8 @@ const ViewAllRaisedTickets: React.FC = () => {
           {currentTickets.length > 0 && (
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 border-t border-green-300 bg-gradient-to-r from-green-50 to-red-50">
               <div className="text-sm text-green-600 flex items-center">
-                <Gift className="h-4 w-4 mr-1" />
                 Showing {startIndex + 1} to {Math.min(endIndex, filteredTickets.length)} of{" "}
-                {filteredTickets.length} wishes
+                {filteredTickets.length} tickets
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -658,7 +646,7 @@ const ViewAllRaisedTickets: React.FC = () => {
                 </Button>
                 <div className="flex items-center gap-1 mx-4">
                   <span className="text-sm font-medium text-green-700">
-                    🎄 Page {currentPage} of {totalPages}
+                     Page {currentPage} of {totalPages}
                   </span>
                 </div>
                 <Button
@@ -676,18 +664,6 @@ const ViewAllRaisedTickets: React.FC = () => {
         </div>
       </div>
       
-      {/* Christmas Footer */}
-      <div className="mt-8 text-center bg-gradient-to-r from-green-50 to-red-50 p-4 rounded-xl border border-green-200 mx-auto max-w-4xl">
-        <div className="text-green-600 text-sm flex items-center justify-center gap-2">
-          <span>🎄</span>
-          <span>May your workshop be filled with joy and completed wishes!</span>
-          <span>🎅</span>
-        </div>
-        <div className="text-xs text-green-500 mt-1 flex items-center justify-center">
-          <Snowflake className="h-3 w-3 mr-1" />
-          From Santa's Workshop Helpers
-        </div>
-      </div>
     </div>
   );
 };

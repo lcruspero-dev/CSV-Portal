@@ -45,7 +45,6 @@ import {
   CheckCircle,
   Gift,
   Snowflake,
-  Star,
 } from "lucide-react";
 import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -204,12 +203,12 @@ const formatHoursToMinutes = (hoursString: string): string => {
 };
 
 const employeeGroupOptions = [
-  { label: "🎄 All Elves", value: "csv-all" },
-  { label: "⭐ Morning Shift", value: "csv-shift1" },
-  { label: "🌟 Mid Shift", value: "csv-shift2" },
-  { label: "🌙 Night Shift", value: "csv-shift3" },
-  { label: "🎅 Santa's Helpers", value: "csv-staff" },
-  { label: "🔍 Search by Name", value: "search-by-name" },
+  { label: "All Elves", value: "csv-all" },
+  { label: "Morning Shift", value: "csv-shift1" },
+  { label: "Mid Shift", value: "csv-shift2" },
+  { label: "Night Shift", value: "csv-shift3" },
+  { label: "Agents", value: "csv-staff" },
+  { label: "Search by Name", value: "search-by-name" },
 ];
 
 const AdminTimeRecordEdit: React.FC = () => {
@@ -242,7 +241,7 @@ const AdminTimeRecordEdit: React.FC = () => {
 
   const validateSecretKey = () => {
     if (!secretKey) {
-      setSecretKeyError("🎅 Santa's key is required");
+      setSecretKeyError("Private key is required");
       return false;
     }
     setSecretKeyError("");
@@ -252,7 +251,7 @@ const AdminTimeRecordEdit: React.FC = () => {
   const handleSearch = async () => {
     if (!searchDate) {
       showChristmasToast(
-        "🎄 Validation Error",
+        "Validation Error",
         "Please select a date",
         "destructive"
       );
@@ -261,7 +260,7 @@ const AdminTimeRecordEdit: React.FC = () => {
 
     if (searchType === "search-by-name" && !searchName) {
       showChristmasToast(
-        "🎄 Validation Error",
+        "Validation Error",
         "Please enter an elf's name",
         "destructive"
       );
@@ -287,19 +286,19 @@ const AdminTimeRecordEdit: React.FC = () => {
 
       if (response.data.length === 0) {
         showChristmasToast(
-          "🎁 No Records Found",
+          " No Records Found",
           "No time records found for the given criteria"
         );
       } else {
         showChristmasToast(
-          "🎄 Search Complete!",
+          " Search Complete!",
           `Found ${response.data.length} festive record(s)`
         );
       }
     } catch (error) {
       console.error("Search failed", error);
       showChristmasToast(
-        "❌ Search Error",
+        " Search Error",
         "Failed to fetch time records",
         "destructive"
       );
@@ -356,8 +355,8 @@ const AdminTimeRecordEdit: React.FC = () => {
       );
 
       showChristmasToast(
-        "✅ Success!",
-        "Time record updated with holiday cheer!"
+        " Success!",
+        "Time record updated !"
       );
 
       setEditingRecord(null);
@@ -365,7 +364,7 @@ const AdminTimeRecordEdit: React.FC = () => {
     } catch (error) {
       console.error("Update failed", error);
       showChristmasToast(
-        "❌ Update Error",
+        " Update Error",
         "Failed to update time record",
         "destructive"
       );
@@ -380,13 +379,13 @@ const AdminTimeRecordEdit: React.FC = () => {
       setTimeRecords((prev) => prev.filter((record) => record._id !== _id));
 
       showChristmasToast(
-        "🎄 Record Cleared!",
+        " Record Cleared!",
         "Time record removed successfully"
       );
     } catch (error) {
       console.error("Delete failed", error);
       showChristmasToast(
-        "❌ Delete Error",
+        " Delete Error",
         "Failed to clear time record",
         "destructive"
       );
@@ -448,11 +447,10 @@ const AdminTimeRecordEdit: React.FC = () => {
             <BackButton />
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-red-600 bg-clip-text text-transparent">
-                🎅 Santa's Time Workshop
+                Edit time records
               </h1>
               <p className="text-green-700 mt-2 flex items-center">
-                <Star className="h-3 w-3 mr-1" />
-                Manage and edit elf time records with holiday cheer
+                Manage and edit employee time records 
               </p>
             </div>
           </div>
@@ -460,7 +458,7 @@ const AdminTimeRecordEdit: React.FC = () => {
           <div className="flex items-center gap-3">
             <Button variant="outline" className="flex items-center gap-2 border-green-300 bg-gradient-to-r from-green-50 to-red-50 text-green-900 hover:from-green-100 hover:to-red-100">
               <Download className="h-4 w-4" />
-              Export to Santa
+              Export 
             </Button>
           </div>
         </div>
@@ -470,10 +468,10 @@ const AdminTimeRecordEdit: React.FC = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl text-green-800">
               <Filter className="h-5 w-5 text-green-600" />
-              🎄 Search Elf Records
+               Search Records
             </CardTitle>
             <CardDescription className="text-green-600">
-              Find time records by elf name or workshop group
+              Find time records by employee name 
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -501,10 +499,10 @@ const AdminTimeRecordEdit: React.FC = () => {
                 <div className="lg:col-span-3">
                   <Label className="flex items-center gap-2 mb-2 text-green-700">
                     <User className="h-4 w-4 text-green-600" />
-                    Elf Name
+                    Employee Name
                   </Label>
                   <Input
-                    placeholder="Enter elf's name"
+                    placeholder="Enter employee name"
                     value={searchName}
                     onChange={(e) => setSearchName(e.target.value)}
                     className="border-green-300 bg-gradient-to-r from-green-50 to-red-50"
@@ -536,7 +534,7 @@ const AdminTimeRecordEdit: React.FC = () => {
                   ) : (
                     <Search className="h-4 w-4" />
                   )}
-                  {isLoading ? "Searching Workshop..." : "🎄 Search Records"}
+                  {isLoading ? "Searching Workshop..." : " Search Records"}
                 </Button>
                 <Button 
                   variant="outline" 
@@ -556,20 +554,20 @@ const AdminTimeRecordEdit: React.FC = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-xl text-green-800">
                 <Pencil className="h-5 w-5 text-green-600" />
-                🎄 Edit Elf Record
+                 Edit Employee Record
                 <Badge variant="secondary" className="ml-2 bg-gradient-to-r from-green-100 to-green-200 text-green-900 border border-green-300">
                   {editingRecord.employeeName}
                 </Badge>
               </CardTitle>
               <CardDescription className="text-green-600">
-                Update the elf's time record details below
+                Update the employee time record details below
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 {/* Basic Information */}
                 <div className="space-y-3">
-                  <Label className="text-green-700">📅 Date</Label>
+                  <Label className="text-green-700">Date</Label>
                   <Input
                     value={editingRecord.date}
                     onChange={(e) =>
@@ -579,7 +577,7 @@ const AdminTimeRecordEdit: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label className="text-green-700">⏰ Shift</Label>
+                  <Label className="text-green-700"> Shift</Label>
                   <Input
                     value={editingRecord.shift || ""}
                     onChange={(e) =>
@@ -589,7 +587,7 @@ const AdminTimeRecordEdit: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label className="text-green-700">🟢 Time In</Label>
+                  <Label className="text-green-700"> Time In</Label>
                   <Input
                     value={editingRecord.timeIn || ""}
                     onChange={(e) =>
@@ -599,7 +597,7 @@ const AdminTimeRecordEdit: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label className="text-green-700">🔴 Time Out</Label>
+                  <Label className="text-green-700"> Time Out</Label>
                   <Input
                     value={editingRecord.timeOut || ""}
                     onChange={(e) =>
@@ -613,7 +611,7 @@ const AdminTimeRecordEdit: React.FC = () => {
               {/* Break Times */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <div className="space-y-3">
-                  <Label className="text-green-700">☕ Break Start</Label>
+                  <Label className="text-green-700"> Break Start</Label>
                   <Input
                     value={editingRecord.breakStart || ""}
                     onChange={(e) =>
@@ -623,7 +621,7 @@ const AdminTimeRecordEdit: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label className="text-green-700">☕ Break End</Label>
+                  <Label className="text-green-700"> Break End</Label>
                   <Input
                     value={editingRecord.breakEnd || ""}
                     onChange={(e) =>
@@ -633,7 +631,7 @@ const AdminTimeRecordEdit: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label className="text-green-700">🎄 Feast Start</Label>
+                  <Label className="text-green-700"> Feast Start</Label>
                   <Input
                     value={editingRecord.lunchStart || ""}
                     onChange={(e) =>
@@ -643,7 +641,7 @@ const AdminTimeRecordEdit: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label className="text-green-700">🎄 Feast End</Label>
+                  <Label className="text-green-700"> Feast End</Label>
                   <Input
                     value={editingRecord.lunchEnd || ""}
                     onChange={(e) =>
@@ -657,7 +655,7 @@ const AdminTimeRecordEdit: React.FC = () => {
               {/* Second Break Times */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <div className="space-y-3">
-                  <Label className="text-green-700">🍪 2nd Break Start</Label>
+                  <Label className="text-green-700"> 2nd Break Start</Label>
                   <Input
                     value={editingRecord.secondBreakStart || ""}
                     onChange={(e) =>
@@ -667,7 +665,7 @@ const AdminTimeRecordEdit: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label className="text-green-700">🍪 2nd Break End</Label>
+                  <Label className="text-green-700"> 2nd Break End</Label>
                   <Input
                     value={editingRecord.secondBreakEnd || ""}
                     onChange={(e) =>
@@ -677,7 +675,7 @@ const AdminTimeRecordEdit: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label className="text-green-700">⭐ Festive Notes</Label>
+                  <Label className="text-green-700">  Notes</Label>
                   <Input
                     value={editingRecord.notes || ""}
                     onChange={(e) =>
@@ -692,7 +690,7 @@ const AdminTimeRecordEdit: React.FC = () => {
               {/* Calculated Totals */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 bg-gradient-to-r from-green-100 to-red-100 rounded-lg border border-green-300">
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-green-800">⏱️ Total Hours</Label>
+                  <Label className="text-sm font-medium text-green-800"> Total Hours</Label>
                   <div className="flex items-center gap-2">
                     <Input
                       value={editingRecord.totalHours}
@@ -705,7 +703,7 @@ const AdminTimeRecordEdit: React.FC = () => {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-green-800">☕ Break Time</Label>
+                  <Label className="text-sm font-medium text-green-800"> Break Time</Label>
                   <div className="flex items-center gap-2">
                     <Input
                       value={editingRecord.totalBreakTime || "0.00"}
@@ -718,7 +716,7 @@ const AdminTimeRecordEdit: React.FC = () => {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-green-800">🎄 Feast Time</Label>
+                  <Label className="text-sm font-medium text-green-800"> Feast Time</Label>
                   <div className="flex items-center gap-2">
                     <Input
                       value={editingRecord.totalLunchTime || "0.00"}
@@ -731,7 +729,7 @@ const AdminTimeRecordEdit: React.FC = () => {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-green-800">🍪 2nd Break</Label>
+                  <Label className="text-sm font-medium text-green-800"> 2nd Break</Label>
                   <div className="flex items-center gap-2">
                     <Input
                       value={editingRecord.totalSecondBreakTime || "0.00"}
@@ -749,17 +747,17 @@ const AdminTimeRecordEdit: React.FC = () => {
               <div className="border-t border-green-300 pt-4">
                 <Label className="flex items-center gap-2 mb-3 text-sm font-medium text-green-800">
                   <AlertTriangle className="h-4 w-4 text-green-600" />
-                  🎅 Santa's Verification
+                  Santa's Verification
                 </Label>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <div className="relative">
-                    <Label className="text-green-700">Santa's Key</Label>
+                    <Label className="text-green-700">Private Key</Label>
                     <Input
                       type={showSecretKey ? "text" : "password"}
                       value={secretKey}
                       onChange={(e) => setSecretKey(e.target.value)}
                       className={`border-green-300 bg-gradient-to-r from-green-50 to-green-100 ${secretKeyError ? "border-red-500" : ""}`}
-                      placeholder="Enter Santa's key"
+                      placeholder="Enter private key"
                     />
                     <button
                       type="button"
@@ -801,7 +799,7 @@ const AdminTimeRecordEdit: React.FC = () => {
                       ) : (
                         <CheckCircle className="h-4 w-4" />
                       )}
-                      {isLoading ? "Updating..." : "🎄 Update Record"}
+                      {isLoading ? "Updating..." : " Update Record"}
                     </Button>
                   </div>
                 </div>
@@ -816,9 +814,9 @@ const AdminTimeRecordEdit: React.FC = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-xl text-green-800">
                 <Clock className="h-5 w-5 text-green-600" />
-                🎄 Elf Time Records
+                 Employee Time Records
                 <Badge variant="secondary" className="ml-2 bg-gradient-to-r from-green-100 to-green-200 text-green-900 border border-green-300">
-                  {timeRecords.length} festive records
+                  {timeRecords.length} records
                 </Badge>
               </CardTitle>
               <CardDescription className="text-green-600">
@@ -830,17 +828,17 @@ const AdminTimeRecordEdit: React.FC = () => {
                 <Table>
                   <TableHeader className="bg-gradient-to-r from-green-100 to-red-100">
                     <TableRow>
-                      <TableHead className="font-semibold text-green-800">🎅 Elf</TableHead>
-                      <TableHead className="font-semibold text-green-800">📅 Date</TableHead>
-                      <TableHead className="font-semibold text-green-800">🟢 Time In</TableHead>
-                      <TableHead className="font-semibold text-green-800">🔴 Time Out</TableHead>
-                      <TableHead className="font-semibold text-green-800">⏱️ Total Hours</TableHead>
-                      <TableHead className="font-semibold text-green-800">☕ Break</TableHead>
-                      <TableHead className="font-semibold text-green-800">🎄 Feast</TableHead>
-                      <TableHead className="font-semibold text-green-800">🍪 2nd Break</TableHead>
-                      <TableHead className="font-semibold text-green-800">⏰ Shift</TableHead>
-                      <TableHead className="font-semibold text-green-800">⭐ Notes</TableHead>
-                      <TableHead className="font-semibold text-green-800 text-right">🎁 Actions</TableHead>
+                      <TableHead className="font-semibold text-green-800">Employee</TableHead>
+                      <TableHead className="font-semibold text-green-800">Date</TableHead>
+                      <TableHead className="font-semibold text-green-800"> Time In</TableHead>
+                      <TableHead className="font-semibold text-green-800">Time Out</TableHead>
+                      <TableHead className="font-semibold text-green-800"> Total Hours</TableHead>
+                      <TableHead className="font-semibold text-green-800"> Break</TableHead>
+                      <TableHead className="font-semibold text-green-800"> Feast</TableHead>
+                      <TableHead className="font-semibold text-green-800"> 2nd Break</TableHead>
+                      <TableHead className="font-semibold text-green-800"> Shift</TableHead>
+                      <TableHead className="font-semibold text-green-800"> Notes</TableHead>
+                      <TableHead className="font-semibold text-green-800 text-right"> Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -876,7 +874,7 @@ const AdminTimeRecordEdit: React.FC = () => {
                           )}
                         </TableCell>
                         <TableCell className="max-w-xs truncate text-green-700">
-                          {record.notes || "🎄"}
+                          {record.notes || ""}
                         </TableCell>
                         <TableCell>
                           <div className="flex justify-end gap-2">
@@ -900,7 +898,7 @@ const AdminTimeRecordEdit: React.FC = () => {
                                 <DialogHeader>
                                   <DialogTitle className="flex items-center gap-2 text-green-800">
                                     <AlertTriangle className="h-5 w-5 text-green-600" />
-                                    🎅 Confirm Record Removal
+                                    Confirm Record Removal
                                   </DialogTitle>
                                 </DialogHeader>
                                 <p className="text-green-700">
@@ -935,18 +933,6 @@ const AdminTimeRecordEdit: React.FC = () => {
         )}
       </div>
       
-      {/* Christmas Footer */}
-      <div className="mt-8 text-center bg-gradient-to-r from-green-50 to-red-50 p-4 rounded-xl border border-green-200 mx-auto max-w-4xl">
-        <div className="text-green-600 text-sm flex items-center justify-center gap-2">
-          <span>🎄</span>
-          <span>May your workshop run smoothly this holiday season!</span>
-          <span>🎅</span>
-        </div>
-        <div className="text-xs text-green-500 mt-1 flex items-center justify-center">
-          <Snowflake className="h-3 w-3 mr-1" />
-          From Santa's Workshop with Joy
-        </div>
-      </div>
     </div>
   );
 };

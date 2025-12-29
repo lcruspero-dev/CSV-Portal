@@ -8,26 +8,22 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardFooter,
   CardHeader,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Gift,
-  Snowflake,
-  TreePine,
-  Star,
   Calendar,
   Download,
   FileText,
   Send,
   Tag,
   User,
-  Home,
-  Bell,
-  CandyCane,
-  MessageSquare
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  MessageSquare,
+  Wallet,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -146,12 +142,10 @@ const UserViewIndividualTicket: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-red-50">
-        <div className="text-center">
-          <div className="animate-bounce">
-            <TreePine className="h-12 w-12 text-green-600 mx-auto mb-4" />
-          </div>
-          <p className="text-green-600 font-medium">Loading Santa's Note...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="text-gray-600">Loading ticket details...</p>
         </div>
       </div>
     );
@@ -164,36 +158,62 @@ const UserViewIndividualTicket: React.FC = () => {
     );
   };
 
-  const getStatusBadgeClass = (status: string | undefined): string => {
-    if (!status) return "bg-gray-500";
+  const getStatusInfo = (status: string | undefined) => {
+    if (!status) return { color: "bg-gray-500", icon: <Clock className="h-4 w-4" /> };
 
     switch (status.toLowerCase()) {
       case "new":
       case "open":
       case "approved":
-        return "bg-gradient-to-r from-green-500 to-green-600";
+        return {
+          color: "bg-emerald-500",
+          icon: <CheckCircle className="h-4 w-4" />,
+        };
       case "closed":
       case "rejected":
-        return "bg-gradient-to-r from-red-500 to-red-600";
+        return {
+          color: "bg-gray-500",
+          icon: <AlertCircle className="h-4 w-4" />,
+        };
       case "in progress":
-        return "bg-gradient-to-r from-yellow-500 to-yellow-600";
+        return {
+          color: "bg-blue-500",
+          icon: <Clock className="h-4 w-4" />,
+        };
       default:
-        return "bg-gradient-to-r from-blue-500 to-blue-600";
+        return {
+          color: "bg-blue-500",
+          icon: <AlertCircle className="h-4 w-4" />,
+        };
     }
   };
 
-  const getPriorityBadgeClass = (priority: string | undefined) => {
-    if (!priority) return "bg-gradient-to-r from-gray-500 to-gray-600";
-    switch (priority.toLowerCase()) {
-      case "1-critical":
-        return "bg-gradient-to-r from-red-500 to-red-700";
-      case "2-high":
-        return "bg-gradient-to-r from-yellow-500 to-yellow-700";
-      case "3-moderate":
-        return "bg-gradient-to-r from-green-500 to-green-700";
-      default:
-        return "bg-gradient-to-r from-blue-500 to-blue-700";
+  const getPriorityInfo = (priority: string | undefined) => {
+    if (!priority) return { color: "bg-gray-500", icon: <Clock className="h-4 w-4" /> };
+
+    if (priority.includes("Critical") || priority.includes("1-")) {
+      return {
+        color: "bg-red-500",
+        icon: <AlertCircle className="h-4 w-4" />,
+      };
+    } else if (priority.includes("High") || priority.includes("2-")) {
+      return {
+        color: "bg-orange-500",
+        icon: <AlertCircle className="h-4 w-4" />,
+      };
+    } else if (priority.includes("Moderate") || priority.includes("3-")) {
+      return {
+        color: "bg-yellow-500",
+        icon: <Clock className="h-4 w-4" />,
+      };
+    } else if (priority.includes("Low") || priority.includes("4-")) {
+      return {
+        color: "bg-emerald-500",
+        icon: <CheckCircle className="h-4 w-4" />,
+      };
     }
+
+    return { color: "bg-blue-500", icon: <AlertCircle className="h-4 w-4" /> };
   };
 
   const calculateBalanceAfterApproval = () => {
@@ -213,278 +233,362 @@ const UserViewIndividualTicket: React.FC = () => {
     return details.description.includes("Leave Status: Paid");
   };
 
+  const statusInfo = getStatusInfo(details?.status);
+  const priorityInfo = getPriorityInfo(details?.priority);
+
   return (
-    <div className="container py-6 mx-auto max-w-4xl min-h-screen bg-gradient-to-br from-green-50 via-white to-red-50 relative overflow-hidden">
-      {/* Animated Snowflakes Background */}
-      <div className="absolute top-4 right-10 opacity-5">
-        <Snowflake className="h-16 w-16 text-blue-400 animate-pulse" />
-      </div>
-      <div className="absolute bottom-10 left-10 opacity-5">
-        <Snowflake className="h-12 w-12 text-blue-300 animate-pulse delay-300" />
-      </div>
-      
-      <div className="text-sm scale-90 origin-top-left">
-        <BackButton />
-      </div>
-
-      <Card className="mb-6 shadow-lg border border-green-200 bg-white relative overflow-hidden">
-        <div className="absolute top-0 right-0 opacity-10">
-          <TreePine className="h-24 w-24 text-green-400" />
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto max-w-4xl p-6">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-2 text-sm text-gray-600">
+            <BackButton />
+            <span>Tickets #{details?.ticketNumber}</span>
+            <span className="font-medium"></span>
+          </div>
+          
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">My Support Ticket</h1>
+              <p className="text-gray-600 mt-1">View and manage your support request</p>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <Badge className={`${statusInfo.color} text-white flex items-center gap-1`}>
+                {statusInfo.icon}
+                <span>{details?.status || "Unknown"}</span>
+              </Badge>
+              <Badge variant="outline" className={`border ${priorityInfo.color.replace('bg-', 'border-')} ${priorityInfo.color.replace('bg-', 'text-')} flex items-center gap-1`}>
+                {priorityInfo.icon}
+                <span>{details?.priority?.replace(/^\d-/, "") || "Unset"}</span>
+              </Badge>
+            </div>
+          </div>
         </div>
-        
-        <CardHeader className="pb-2">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-            <div className="flex items-center gap-2">
-              <div className="p-2 bg-gradient-to-r from-green-600 to-red-600 rounded-lg">
-                <Gift className="h-5 w-5 text-white" />
-              </div>
-              <h1 className="text-xl font-bold text-green-900">
-                🎄 Ticket #{details?.ticketNumber}
-              </h1>
-              <Badge className={`${getStatusBadgeClass(details?.status)} text-white`}>
-                {details?.status || "Unknown"}
-              </Badge>
-            </div>
-            <div className="mt-2 md:mt-0">
-              <Badge
-                className={`${getPriorityBadgeClass(details?.priority)} text-white`}
-              >
-                ⭐ Priority: {details?.priority || "Unset"}
-              </Badge>
-            </div>
-          </div>
-        </CardHeader>
 
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-green-600" />
-                <span className="text-sm text-green-800">
-                  🗓️ Created: {formattedDate(details?.createdAt || "")}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-red-500" />
-                <span className="text-sm text-green-800">
-                  👤 Submitted by: {details?.name || "Unknown"}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Tag className="h-4 w-4 text-green-600" />
-                <span className="text-sm text-green-800">
-                  🏷️ Category: {details?.category || "Uncategorized"}
-                </span>
-              </div>
-              {details?.leaveDays && (
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-red-500" />
-                  <span className="text-sm text-green-800">
-                    📅 Leave Days: {details?.leaveDays}
-                  </span>
-                </div>
-              )}
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-green-600" />
-                <span className="text-sm text-green-800">
-                  🎅 Assigned to: {details?.assignedTo || "Santa's Helper"}
-                </span>
-              </div>
-              {details?.file && details.file.trim() !== "" && (
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-red-500" />
-                  <button
-                    onClick={() => handleFileDownload(details.file as string)}
-                    className="text-sm text-green-600 hover:text-green-800 hover:underline flex items-center gap-1"
-                    title={details.file}
-                  >
-                    <span>🎁 Attachment</span>
-                    <Download className="h-3 w-3" />
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Leave Balance Section */}
-          {showLeaveBalance && isPaidLeave() && (
-            <>
-              <div className="bg-gradient-to-r from-green-50 to-red-50 p-4 rounded-lg border border-green-200 my-4 relative overflow-hidden">
-                <div className="absolute -right-2 -top-2 opacity-10">
-                  <Star className="h-16 w-16 text-yellow-400" />
-                </div>
-                <h3 className="text-sm font-medium text-green-800 mb-2 flex items-center">
-                  <Home className="h-4 w-4 mr-2" />
-                  🎅 Leave Balance Information
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-white p-3 rounded-lg border border-green-100">
-                    <p className="text-sm text-green-700">
-                      <span className="font-medium">Current Balance:</span>{" "}
-                      {leaveCredit ? (
-                        <span className="font-bold text-green-800">
-                          {leaveCredit.currentBalance} days
-                        </span>
-                      ) : (
-                        "Loading..."
-                      )}
-                    </p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Ticket Details Card */}
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-3 border-b">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg ${statusInfo.color} bg-opacity-10`}>
+                    <div className={`${statusInfo.color.replace('bg-', 'text-')}`}>
+                      {statusInfo.icon}
+                    </div>
                   </div>
-                  <div className="bg-white p-3 rounded-lg border border-red-100">
-                    <p className="text-sm text-red-700">
-                      <span className="font-medium">Balance After Approval:</span>{" "}
-                      {balanceAfterApproval !== null ? (
-                        <span
-                          className={`font-bold ${
-                            balanceAfterApproval < 5 ? "text-red-600" : "text-green-800"
-                          }`}
-                        >
-                          {balanceAfterApproval} days
-                        </span>
-                      ) : (
-                        "Calculating..."
-                      )}
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900">
+                      #{details?.ticketNumber} - {details?.category}
+                    </h2>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Created on {formattedDate(details?.createdAt || "")}
                     </p>
                   </div>
                 </div>
-              </div>
-            </>
-          )}
+              </CardHeader>
 
-          <Separator className="my-4 bg-gradient-to-r from-green-200 to-red-200" />
+              <CardContent className="pt-6">
+                {/* Description */}
+                <div className="mb-6">
+                  <h3 className="font-medium text-gray-900 mb-3">Description</h3>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <pre className="whitespace-pre-wrap font-sans text-gray-700">
+                      {details?.description || "No description provided."}
+                    </pre>
+                  </div>
+                </div>
 
-          <div>
-            <h2 className="font-medium text-sm text-green-800 flex items-center mb-2">
-              <Bell className="h-4 w-4 mr-2" />
-              Description
-            </h2>
-            <div className="bg-gradient-to-r from-green-50 to-red-50 p-4 rounded-lg border border-green-200">
-              <pre className="whitespace-pre-wrap font-sans text-sm text-green-900">
-                {details?.description || "No description provided."}
-              </pre>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Notes Section */}
-      <div className="mb-6">
-        <h2 className="text-sm font-semibold mb-4 text-green-800 flex items-center">
-          <MessageSquare className="h-4 w-4 mr-2" />
-          🎄 Notes & Responses
-        </h2>
-
-        {details?.status !== "closed" && (
-          <Card className="mb-6 shadow-sm border border-green-200 bg-white">
-            <CardContent className="pt-6">
-              <form onSubmit={submitNote}>
-                <Textarea
-                  placeholder="🎅 Add your holiday message here..."
-                  value={message}
-                  onChange={handleChange}
-                  disabled={isSubmitting}
-                  className="min-h-24 resize-none border-green-300 focus:border-green-500 bg-green-50"
-                />
-              </form>
-            </CardContent>
-            <CardFooter className="flex justify-end pt-0">
-              <Button
-                type="submit"
-                disabled={isSubmitting || !message.trim()}
-                onClick={submitNote}
-                className="flex items-center gap-2 text-sm bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700 text-white"
-              >
-                <Send className="h-4 w-4" />
-                {isSubmitting ? "Sending to Santa..." : "Send Response"}
-              </Button>
-            </CardFooter>
-          </Card>
-        )}
-
-        <div className="space-y-4">
-          {notes?.length === 0 ? (
-            <div className="text-center text-green-600 py-8 text-sm bg-gradient-to-r from-green-50 to-red-50 rounded-lg border border-green-200">
-              <CandyCane className="h-12 w-12 text-green-300 mx-auto mb-4" />
-              <p>🎁 No notes or responses yet. Be the first to share!</p>
-            </div>
-          ) : (
-            notes
-              ?.slice()
-              .reverse()
-              .map((note: any) => {
-                const avatarFilename = avatarMap[note.user];
-                const avatarUrl = avatarFilename
-                  ? `${
-                      import.meta.env.VITE_UPLOADFILES_URL
-                    }/avatars/${avatarFilename}`
-                  : `https://ui-avatars.com/api/?background=16A34A&color=fff&name=${
-                      note.name || "?"
-                    }`;
-
-                return (
-                  <Card
-                    key={note._id}
-                    className={`shadow-sm border ${
-                      note.isStaff 
-                        ? "border-l-4 border-l-green-500 bg-gradient-to-r from-green-50 to-white" 
-                        : "border-l-4 border-l-red-500 bg-gradient-to-r from-red-50 to-white"
-                    }`}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
-                        <Avatar className="h-10 w-10 rounded-full overflow-hidden border-2 border-green-200">
-                          <AvatarImage
-                            src={avatarUrl}
-                            alt={note.name}
-                            className="object-cover"
-                          />
-                          <AvatarFallback className="bg-gradient-to-r from-green-500 to-red-500 text-white">
-                            {note.name?.substring(0, 2).toUpperCase() || "?"}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <div className="flex justify-between items-center mb-2">
-                            <div className="flex items-center gap-2">
-                              <p className="font-medium text-sm text-green-800">
-                                {note.name || "Unknown User"}
-                              </p>
-                              {note.isStaff && (
-                                <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white text-xs">
-                                  🎅 Santa's Helper
-                                </Badge>
-                              )}
-                            </div>
-                            <p className="text-xs text-green-600">
-                              ⏰ {formattedDate(note.createdAt)}
-                            </p>
-                          </div>
-                          <div className="bg-white p-3 rounded-lg border border-green-100">
-                            <p className="text-sm text-green-700 whitespace-pre-wrap">
-                              {note.text}
-                            </p>
-                          </div>
+                {/* Leave Balance Section */}
+                {showLeaveBalance && isPaidLeave() && (
+                  <div className="mb-6">
+                    <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                      <Wallet className="h-5 w-5 text-blue-600" />
+                      Leave Balance Information
+                    </h3>
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <p className="text-sm text-gray-600">Current Balance</p>
+                          <p className="text-2xl font-bold text-blue-700">
+                            {leaveCredit ? (
+                              <>{leaveCredit.currentBalance} days</>
+                            ) : (
+                              "Loading..."
+                            )}
+                          </p>
+                        </div>
+                        <div className="space-y-2">
+                          <p className="text-sm text-gray-600">After Approval</p>
+                          <p className={`text-2xl font-bold ${balanceAfterApproval !== null && balanceAfterApproval < 5 ? "text-orange-600" : "text-emerald-700"}`}>
+                            {balanceAfterApproval !== null ? (
+                              <>{balanceAfterApproval} days</>
+                            ) : (
+                              "Calculating..."
+                            )}
+                          </p>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                );
-              })
-          )}
-        </div>
-      </div>
+                      {details?.leaveDays && (
+                        <div className="mt-4 pt-4 border-t border-blue-100">
+                          <p className="text-sm text-gray-600">
+                            Requested Leave: <span className="font-medium">{details.leaveDays} days</span>
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
-      {/* Christmas Footer */}
-      <div className="mt-8 text-center bg-gradient-to-r from-green-50 to-red-50 p-4 rounded-xl border border-green-200">
-        <div className="text-green-600 text-sm flex items-center justify-center gap-2">
-          <span>🎄</span>
-          <span>May your holiday wishes come true!</span>
-          <span>🎅</span>
-        </div>
-        <div className="text-xs text-green-500 mt-1 flex items-center justify-center">
-          <Snowflake className="h-3 w-3 mr-1" />
-          From Santa's Workshop with Cheer
+                {/* Conversation Section */}
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-medium text-gray-900">Conversation</h3>
+                    <Badge variant="secondary">{notes.length} messages</Badge>
+                  </div>
+
+                  {/* Add Message Form */}
+                  {details?.status !== "closed" && (
+                    <Card className="mb-6 shadow-sm border border-gray-200">
+                      <CardContent className="p-4">
+                        <div className="flex gap-3">
+                          <Avatar className="h-10 w-10 border-2 border-gray-100">
+                            <AvatarImage
+                              src={`https://ui-avatars.com/api/?background=2563EB&color=fff&name=${details?.name || "?"}`}
+                              alt={details?.name}
+                            />
+                            <AvatarFallback>{details?.name?.substring(0, 2).toUpperCase() || "?"}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <form onSubmit={submitNote}>
+                              <Textarea
+                                placeholder="Type your message here..."
+                                value={message}
+                                onChange={handleChange}
+                                disabled={isSubmitting}
+                                className="min-h-[100px] resize-none border-gray-300 focus:border-blue-500"
+                              />
+                              <div className="flex justify-end mt-3">
+                                <Button
+                                  type="submit"
+                                  disabled={isSubmitting || !message.trim()}
+                                  onClick={submitNote}
+                                  className="gap-2 bg-gray-900 hover:bg-gray-800 text-white"
+                                >
+                                  {isSubmitting ? (
+                                    <>
+                                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                      Sending...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Send className="h-4 w-4" />
+                                      Send Message
+                                    </>
+                                  )}
+                                </Button>
+                              </div>
+                            </form>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Messages List */}
+                  <div className="space-y-4">
+                    {notes?.length === 0 ? (
+                      <div className="text-center py-8">
+                        <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                        <p className="text-gray-500">No messages yet</p>
+                        <p className="text-sm text-gray-400 mt-1">Start the conversation</p>
+                      </div>
+                    ) : (
+                      notes
+                        ?.slice()
+                        .reverse()
+                        .map((note: any) => {
+                          const avatarFilename = avatarMap[note.user];
+                          const avatarUrl = avatarFilename
+                            ? `${
+                                import.meta.env.VITE_UPLOADFILES_URL
+                              }/avatars/${avatarFilename}`
+                            : `https://ui-avatars.com/api/?background=2563EB&color=fff&name=${
+                                note.name || "?"
+                              }`;
+
+                          return (
+                            <div
+                              key={note._id}
+                              className={`flex gap-3 ${note.isStaff ? "pl-2 border-l-2 border-blue-500" : ""}`}
+                            >
+                              <Avatar className="h-10 w-10 flex-shrink-0 border-2 border-gray-100">
+                                <AvatarImage
+                                  src={avatarUrl}
+                                  alt={note.name}
+                                  className="object-cover"
+                                />
+                                <AvatarFallback>
+                                  {note.name?.substring(0, 2).toUpperCase() || "?"}
+                                </AvatarFallback>
+                              </Avatar>
+                              
+                              <div className="flex-1 bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                                <div className="flex justify-between items-start mb-2">
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-medium text-gray-900">
+                                      {note.name || "Unknown User"}
+                                    </p>
+                                    {note.isStaff && (
+                                      <Badge
+                                        variant="outline"
+                                        className="bg-blue-50 text-blue-600 border-blue-200 text-xs"
+                                      >
+                                        Support
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-gray-500">
+                                    {formattedDate(note.createdAt)}
+                                  </p>
+                                </div>
+                                <p className="text-gray-700 whitespace-pre-wrap">
+                                  {note.text}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Column - Sidebar */}
+          <div className="space-y-6">
+            {/* Ticket Information */}
+            <Card className="border-0 shadow-sm">
+              <CardHeader>
+                <h3 className="font-semibold text-gray-900">Ticket Information</h3>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-gray-100 rounded-lg">
+                      <Calendar className="h-4 w-4 text-gray-700" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Created</p>
+                      <p className="font-medium text-gray-900">
+                        {formattedDate(details?.createdAt || "")}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-gray-100 rounded-lg">
+                      <User className="h-4 w-4 text-gray-700" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Submitter</p>
+                      <p className="font-medium text-gray-900">
+                        {details?.name || "Unknown"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-gray-100 rounded-lg">
+                      <Tag className="h-4 w-4 text-gray-700" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Category</p>
+                      <p className="font-medium text-gray-900">
+                        {details?.category || "Uncategorized"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-gray-100 rounded-lg">
+                      <User className="h-4 w-4 text-gray-700" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Assigned To</p>
+                      <p className="font-medium text-gray-900">
+                        {details?.assignedTo || "Unassigned"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {details?.leaveDays && (
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-gray-100 rounded-lg">
+                        <Calendar className="h-4 w-4 text-gray-700" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Leave Days</p>
+                        <p className="font-medium text-gray-900">{details.leaveDays}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* File Attachment */}
+                {details?.file && details.file.trim() !== "" && (
+                  <>
+                    <Separator />
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-gray-700" />
+                        <p className="text-sm font-medium text-gray-900">Attachment</p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        onClick={() => handleFileDownload(details.file as string)}
+                        className="w-full justify-start gap-2 border-gray-300 hover:border-gray-400"
+                      >
+                        <Download className="h-4 w-4" />
+                        <span className="truncate">{details.file}</span>
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Status Information */}
+            <Card className="border-0 shadow-sm">
+              <CardHeader>
+                <h3 className="font-semibold text-gray-900">Current Status</h3>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Status</span>
+                    <Badge className={`${statusInfo.color} text-white`}>
+                      {statusInfo.icon}
+                      <span className="ml-1">{details?.status || "Unknown"}</span>
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Priority</span>
+                    <Badge variant="outline" className={`border ${priorityInfo.color.replace('bg-', 'border-')} ${priorityInfo.color.replace('bg-', 'text-')}`}>
+                      {priorityInfo.icon}
+                      <span className="ml-1">
+                        {details?.priority?.replace(/^\d-/, "") || "Unset"}
+                      </span>
+                    </Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+          
+          </div>
         </div>
       </div>
     </div>
