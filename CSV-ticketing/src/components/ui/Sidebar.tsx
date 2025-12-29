@@ -18,6 +18,7 @@ import {
   CalendarCheck,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Clock,
   Edit,
   FileSpreadsheet,
@@ -46,6 +47,7 @@ interface SidebarProps {
 type NavGroup = {
   name: string;
   items: NavItem[];
+  icon?: React.ReactNode; // Optional icon for collapsed state
 };
 
 interface NavItem {
@@ -64,10 +66,20 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [protectedPath, setProtectedPath] = useState("");
   const { toast } = useToast();
+  
+  // State to track which dropdowns are open
+  const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>({
+    "Actions": true,
+    "Tickets": true,
+    "Time": true,
+    "Data": true,
+    "Team": true,
+  });
 
   const navGroups: NavGroup[] = [
     {
       name: "Actions",
+      icon: <LayoutDashboard className="h-5 w-5" />,
       items: [
         {
           title: "Dashboard",
@@ -89,6 +101,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
     },
     {
       name: "Tickets",
+      icon: <Ticket className="h-5 w-5" />,
       items: [
         {
           title: "Manage Tickets",
@@ -109,6 +122,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
     },
     {
       name: "Time",
+      icon: <Clock className="h-5 w-5" />,
       items: [
         {
           title: "Time Records",
@@ -124,6 +138,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
     },
     {
       name: "Data",
+      icon: <FileSpreadsheet className="h-5 w-5" />,
       items: [
         {
           title: "Export Memos",
@@ -144,6 +159,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
     },
     {
       name: "Team",
+      icon: <Users className="h-5 w-5" />,
       items: [
         {
           title: "Leave Credits",
@@ -177,6 +193,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const handleToggle = (e: React.MouseEvent) => {
     e.preventDefault();
     toggleSidebar();
+  };
+
+  const toggleDropdown = (groupName: string) => {
+    setOpenDropdowns(prev => ({
+      ...prev,
+      [groupName]: !prev[groupName]
+    }));
   };
 
   const verifyPassword = () => {
@@ -294,49 +317,65 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
             <div className="flex-1 overflow-y-auto">
               <nav className="py-4 px-3">
                 {navGroups.map((group, groupIndex) => (
-                  <div key={groupIndex} className="mb-6">
-                    <div className="px-3 mb-3">
-                      <div className="text-xs font-semibold text-red-600 uppercase tracking-wider font-serif flex items-center gap-2">
-                        {group.name}
-                        <div className="flex-1 h-px bg-gradient-to-r from-red-200 to-green-200" />
+                  <div key={groupIndex} className="mb-2">
+                    <Button
+                      variant="ghost"
+                      onClick={() => toggleDropdown(group.name)}
+                      className="w-full justify-between px-3 py-3 rounded-xl mb-1 hover:bg-red-50/50 border border-transparent hover:border-red-300 transition-all duration-200"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-gradient-to-r from-red-200 to-green-100 text-red-600 border border-red-200">
+                          {group.icon}
+                        </div>
+                        <span className="text-sm font-semibold text-red-600">
+                          {group.name}
+                        </span>
                       </div>
-                    </div>
-                    <div className="space-y-2">
-                      {group.items.map((item, index) => {
-                        const isActive = location.pathname === item.path;
-                        return (
-                          <Button
-                            key={index}
-                            variant="ghost"
-                            onClick={() => handleNavigation(item)}
-                            className={cn(
-                              "w-full justify-start gap-3 px-3 py-3 rounded-xl transition-all duration-200 group relative border-2 overflow-hidden",
-                              isActive
-                                ? "bg-gradient-to-r from-red-200 to-green-200 border-red-400 text-red-800 font-semibold shadow-lg"
-                                : "border-transparent hover:border-red-300 text-gray-700 hover:text-red-800 bg-white/80 hover:bg-red-50/50"
-                            )}
-                          >
-                            <div
+                      <ChevronDown
+                        className={cn(
+                          "h-4 w-4 text-red-500 transition-transform duration-200",
+                          openDropdowns[group.name] ? "rotate-180" : ""
+                        )}
+                      />
+                    </Button>
+                    
+                    {openDropdowns[group.name] && (
+                      <div className="ml-4 pl-8 border-l border-red-200 space-y-1">
+                        {group.items.map((item, index) => {
+                          const isActive = location.pathname === item.path;
+                          return (
+                            <Button
+                              key={index}
+                              variant="ghost"
+                              onClick={() => handleNavigation(item)}
                               className={cn(
-                                "p-2 rounded-lg transition-all duration-300 border relative z-10",
+                                "w-full justify-start gap-3 px-3 py-2 rounded-lg transition-all duration-200 group relative",
                                 isActive
-                                  ? "bg-gradient-to-r from-red-500 to-green-500 text-white border-red-400 shadow-lg scale-110"
-                                  : "bg-gradient-to-r from-red-200 to-green-100 text-red-600 border-red-200 group-hover:from-red-500 group-hover:to-green-500 group-hover:border-red-400 group-hover:text-white group-hover:scale-110"
+                                  ? "bg-gradient-to-r from-red-200 to-green-200 text-red-800 font-semibold"
+                                  : "text-gray-700 hover:text-red-800 hover:bg-red-50/50"
                               )}
                             >
-                              {item.icon}
-                            </div>
-                            <span className="flex-1 text-left relative z-10">
-                              {item.title}
-                            </span>
-
-                            {item.protected && (
-                              <Shield className="h-3 w-3 text-red-600 flex-shrink-0 relative z-10" />
-                            )}
-                          </Button>
-                        );
-                      })}
-                    </div>
+                              <div
+                                className={cn(
+                                  "p-1 rounded-md transition-all duration-300",
+                                  isActive
+                                    ? "text-red-600"
+                                    : "text-gray-500 group-hover:text-red-600"
+                                )}
+                              >
+                                {item.icon}
+                              </div>
+                              <span className="flex-1 text-left text-sm">
+                                {item.title}
+                              </span>
+                              {item.protected && (
+                                <Shield className="h-3 w-3 text-red-600" />
+                              )}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 ))}
               </nav>
@@ -389,72 +428,117 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         <div className="flex-1 overflow-y-auto py-4">
           <TooltipProvider delayDuration={300}>
             <nav className="flex flex-col px-3">
-              {navGroups.map((group, groupIndex) => (
-                <div key={groupIndex} className="mb-6">
-                  {isOpen && (
-                    <div className="px-3 mb-3">
-                      <div className="text-xs font-semibold text-red-600 uppercase tracking-wider font-serif flex items-center gap-2">
-                        {group.name}
-                        <div className="flex-1 h-px bg-gradient-to-r from-red-200 to-green-200" />
-                      </div>
+              {navGroups.map((group, groupIndex) => {
+                // In collapsed state, show individual items with tooltips
+                if (!isOpen) {
+                  return (
+                    <div key={groupIndex} className="mb-2">
+                      {group.items.map((item, index) => {
+                        const isActive = location.pathname === item.path;
+                        return (
+                          <Tooltip key={index}>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                onClick={() => handleNavigation(item)}
+                                className={cn(
+                                  "w-full p-3 justify-center rounded-xl transition-all duration-200 group relative border-2 overflow-hidden mb-1",
+                                  isActive
+                                    ? "bg-gradient-to-r from-red-200 to-green-200 border-red-400 text-red-800 shadow-lg"
+                                    : "border-transparent hover:border-red-300 text-gray-700 hover:text-red-800 bg-white/80 hover:bg-red-50/50"
+                                )}
+                              >
+                                <div
+                                  className={cn(
+                                    "transition-colors relative z-10",
+                                    isActive
+                                      ? "text-white"
+                                      : "text-red-600 group-hover:text-white"
+                                  )}
+                                >
+                                  {item.icon}
+                                </div>
+                              </Button>
+                            </TooltipTrigger>
+                          </Tooltip>
+                        );
+                      })}
                     </div>
-                  )}
-                  <div className="space-y-2">
-                    {group.items.map((item, index) => {
-                      const isActive = location.pathname === item.path;
-                      return isOpen ? (
-                        <Button
-                          key={index}
-                          variant="ghost"
-                          onClick={() => handleNavigation(item)}
-                          className={cn(
-                            "w-full justify-start gap-3 px-3 py-3 rounded-xl transition-all duration-200 group relative border-2 overflow-hidden",
-                            isActive
-                              ? "bg-gradient-to-r from-red-200 to-green-200 border-red-400 text-red-800 font-semibold shadow-lg"
-                              : "border-transparent hover:border-red-300 text-gray-700 hover:text-red-800 bg-white/80 hover:bg-red-50/50"
-                          )}
-                        >
-                          <div className="p-2 rounded-lg transition-all duration-300 border relative z-10 flex-shrink-0">
-                            {item.icon}
-                          </div>
-                          <span className="flex-1 text-left text-sm relative z-10">
-                            {item.title}
-                          </span>
-                          {item.protected && (
-                            <Shield className="h-3 w-3 text-red-600 flex-shrink-0 relative z-10" />
-                          )}
-                        </Button>
-                      ) : (
-                        <Tooltip key={index}>
-                          <TooltipTrigger asChild>
+                  );
+                }
+
+                // In expanded state, show dropdowns
+                return (
+                  <div key={groupIndex} className="mb-2">
+                    <Button
+                      variant="ghost"
+                      onClick={() => toggleDropdown(group.name)}
+                      className={cn(
+                        "w-full justify-between px-3 py-3 rounded-xl mb-1 hover:bg-red-50/50 border border-transparent hover:border-red-300 transition-all duration-200",
+                        openDropdowns[group.name] ? "bg-red-50/30" : ""
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "p-2 rounded-lg border transition-all duration-300",
+                          openDropdowns[group.name]
+                            ? "bg-gradient-to-r from-red-500 to-green-500 text-white border-red-400"
+                            : "bg-gradient-to-r from-red-200 to-green-100 text-red-600 border-red-200"
+                        )}>
+                          {group.icon}
+                        </div>
+                        <span className="text-sm font-semibold text-red-600">
+                          {group.name}
+                        </span>
+                      </div>
+                      <ChevronDown
+                        className={cn(
+                          "h-4 w-4 text-red-500 transition-transform duration-200",
+                          openDropdowns[group.name] ? "rotate-180" : ""
+                        )}
+                      />
+                    </Button>
+                    
+                    {openDropdowns[group.name] && (
+                      <div className="ml-2 space-y-1">
+                        {group.items.map((item, index) => {
+                          const isActive = location.pathname === item.path;
+                          return (
                             <Button
+                              key={index}
                               variant="ghost"
                               onClick={() => handleNavigation(item)}
                               className={cn(
-                                "w-full p-3 justify-center rounded-xl transition-all duration-200 group relative border-2 overflow-hidden",
+                                "w-full justify-start gap-3 px-3 py-2 rounded-lg transition-all duration-200 group relative ml-2",
                                 isActive
-                                  ? "bg-gradient-to-r from-red-200 to-green-200 border-red-400 text-red-800 shadow-lg"
-                                  : "border-transparent hover:border-red-300 text-gray-700 hover:text-red-800 bg-white/80 hover:bg-red-50/50"
+                                  ? "bg-gradient-to-r from-red-200 to-green-200 text-red-800 font-semibold"
+                                  : "text-gray-700 hover:text-red-800 hover:bg-red-50/50"
                               )}
                             >
                               <div
                                 className={cn(
-                                  "transition-colors relative z-10",
+                                  "p-1 rounded-md transition-all duration-300",
                                   isActive
-                                    ? "text-white"
-                                    : "text-red-600 group-hover:text-white"
+                                    ? "text-red-600"
+                                    : "text-gray-500 group-hover:text-red-600"
                                 )}
                               >
                                 {item.icon}
                               </div>
+                              <span className="flex-1 text-left text-sm">
+                                {item.title}
+                              </span>
+                              {item.protected && (
+                                <Shield className="h-3 w-3 text-red-600" />
+                              )}
                             </Button>
-                          </TooltipTrigger>
-                        </Tooltip>
-                      );
-                    })}
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </nav>
           </TooltipProvider>
         </div>
