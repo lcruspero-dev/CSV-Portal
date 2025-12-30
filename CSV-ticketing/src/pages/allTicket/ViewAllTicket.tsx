@@ -24,7 +24,6 @@ import {
   Ticket as TicketIcon,
   Gift,
   Snowflake,
-  TreePine,
   Bell,
   Home,
 } from "lucide-react";
@@ -160,7 +159,6 @@ const ViewAllTicket: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-red-50">
         <div className="text-center">
           <div className="animate-bounce">
-            <TreePine className="h-12 w-12 text-green-600 mx-auto mb-4" />
           </div>
           <p className="text-green-600 font-medium">Loading List...</p>
         </div>
@@ -326,7 +324,6 @@ const ViewAllTicket: React.FC = () => {
                   </p>
                 </div>
                 <div className="p-2 bg-yellow-100 rounded-lg">
-                  <TreePine className="h-5 w-5 text-yellow-600" />
                 </div>
               </div>
             </CardContent>
@@ -357,7 +354,6 @@ const ViewAllTicket: React.FC = () => {
             <Card className="border border-green-200 bg-white">
               <CardContent className="text-center py-12">
                 <div className="text-4xl mb-4"></div>
-                <TreePine className="h-12 w-12 text-green-300 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-green-900 mb-2">
                   No wishes found
                 </h3>
@@ -482,7 +478,6 @@ const ViewAllTicket: React.FC = () => {
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-12">
                     <div className="text-4xl mb-4"></div>
-                    <TreePine className="h-12 w-12 text-green-300 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-green-900 mb-2">
                       No ticket found
                     </h3>
