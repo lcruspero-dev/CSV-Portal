@@ -47,40 +47,45 @@ export interface User {
 }
 
 function ViewPolicies() {
-   const [policies, setPolicies] = useState<Policies[]>([]);
-   const [filteredPolicies, setFilteredPolicies] = useState<Policies[]>([]);
-   const [loading, setLoading] = useState<boolean>(true);
-   const [currentPages, setCurrentPages] = useState<number>(1);
-   const [totalPages, setTotalPages] = useState<number>(1);
-   const [showPendingOnly, setShowPendingOnly] = useState<boolean>(false);
-   const itemsPerPage = 8;
+  const [policies, setPolicies] = useState<Policies[]>([]);
+  const [filteredPolicies, setFilteredPolicies] = useState<Policies[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [currentPages, setCurrentPages] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [showPendingOnly, setShowPendingOnly] = useState<boolean>(false);
+  const itemsPerPage = 8;
 
-   const userString = localStorage.getItem("user");
-   const user: User | null = userString ? JSON.parse(userString) : null;
-   const navigate = useNavigate();
+  const userString = localStorage.getItem("user");
+  const user: User | null = userString ? JSON.parse(userString) : null;
+  const navigate = useNavigate();
 
-   // Safe function to check if policy is acknowledged by current user
-   const isPolicyAcknowledged = useCallback((policy: Policies): boolean => {
-     if (!policy.acknowledgedby || !Array.isArray(policy.acknowledgedby)) {
-       return false;
-     }
-     return policy.acknowledgedby.some((ack) => ack.userId === user?._id);
-   }, [user]);
+  // Safe function to check if policy is acknowledged by current user
+  const isPolicyAcknowledged = useCallback(
+    (policy: Policies): boolean => {
+      if (!policy.acknowledgedby || !Array.isArray(policy.acknowledgedby)) {
+        return false;
+      }
+      return policy.acknowledgedby.some((ack) => ack.userId === user?._id);
+    },
+    [user]
+  );
 
-   {/** Functions for Policies features */}
-   const getPolicies = async () => {
+  {
+    /** Functions for Policies features */
+  }
+  const getPolicies = async () => {
     try {
       const response = await TicketAPi.getAllPolicies();
       console.log("API Response:", response);
-      
+
       // Ensure we're working with an array and each policy has acknowledgedby
-      const policiesData = Array.isArray(response.data) 
+      const policiesData = Array.isArray(response.data)
         ? response.data.map((policy: Policies) => ({
             ...policy,
-            acknowledgedby: policy.acknowledgedby || []
+            acknowledgedby: policy.acknowledgedby || [],
           }))
         : [];
-      
+
       console.log("Processed policies data:", policiesData);
       setPolicies(policiesData);
       setFilteredPolicies(policiesData);
@@ -94,16 +99,16 @@ function ViewPolicies() {
     } finally {
       setLoading(false);
     }
-   };
+  };
 
-   useEffect(() => {
+  useEffect(() => {
     getPolicies();
-   }, []);
+  }, []);
 
-   useEffect(() => {
+  useEffect(() => {
     // Ensure policies is always treated as an array
     const policiesArray = Array.isArray(policies) ? policies : [];
-    
+
     let filtered = policiesArray;
     if (showPendingOnly) {
       filtered = policiesArray.filter(
@@ -118,7 +123,9 @@ function ViewPolicies() {
   const getCurrentPagePolicies = () => {
     const startIndex = (currentPages - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    return Array.isArray(filteredPolicies) ? filteredPolicies.slice(startIndex, endIndex) : [];
+    return Array.isArray(filteredPolicies)
+      ? filteredPolicies.slice(startIndex, endIndex)
+      : [];
   };
 
   const handlePageChange = (pageNumber: number) => {
@@ -143,12 +150,12 @@ function ViewPolicies() {
   const getStatusText = (policy: Policies) => {
     const isAcknowledged = isPolicyAcknowledged(policy);
     return isAcknowledged
-      ? "Acknowledged with Holiday Cheer 🎄"
+      ? "Acknowledged"
       : "Awaiting Your Review";
   };
 
   // Safe calculation of pendingCount
-  const pendingCount = Array.isArray(policies) 
+  const pendingCount = Array.isArray(policies)
     ? policies.filter((policy) => !isPolicyAcknowledged(policy)).length
     : 0;
 
@@ -175,10 +182,10 @@ function ViewPolicies() {
                 </div>
                 <div>
                   <h1 className="text-2xl sm:text-3xl font-bold text-green-900">
-                    Christmas Policies
+                    Policies
                   </h1>
                   <p className="text-green-700 text-sm mt-1">
-                    Spread holiday cheer and important announcements this season
+                    Important announcements
                   </p>
                 </div>
               </div>
@@ -186,7 +193,10 @@ function ViewPolicies() {
 
             {user?.isAdmin && (
               <div className="sm:absolute sm:right-0 sm:top-0">
-                <CreatePolicies setPolicies={setPolicies} setLoading={setLoading} />
+                <CreatePolicies
+                  setPolicies={setPolicies}
+                  setLoading={setLoading}
+                />
               </div>
             )}
           </div>
@@ -214,7 +224,7 @@ function ViewPolicies() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-green-600">
-                  Holiday Responses
+                  Total Responses
                 </p>
                 <p className="text-2xl font-bold text-green-600 mt-1">
                   {acknowledgedCount}
@@ -242,7 +252,7 @@ function ViewPolicies() {
                 </p>
                 {pendingCount > 0 && (
                   <p className="text-xs text-red-600 mt-2 font-medium flex items-center gap-1">
-                    Click to share holiday cheer
+                    Click to show unacknowleged
                     <ChevronRight className="h-3 w-3" />
                   </p>
                 )}
@@ -261,7 +271,7 @@ function ViewPolicies() {
               <div className="flex items-center gap-2">
                 <div className="h-2 w-2 bg-red-500 rounded-full animate-pulse" />
                 <span className="text-red-800 font-medium">
-                  🎄 Spreading cheer for {pendingCount} policy
+                   {pendingCount} policy
                   {pendingCount !== 1 ? "s" : ""}
                 </span>
               </div>
@@ -287,13 +297,13 @@ function ViewPolicies() {
                   <TableHead className="text-white font-bold text-center py-4">
                     <div className="flex items-center justify-center gap-2">
                       <Calendar className="h-4 w-4" />
-                      Holiday Date
+                       Date
                     </div>
                   </TableHead>
                   <TableHead className="text-white font-bold text-center py-4">
                     <div className="flex items-center justify-center gap-2">
                       <FileText className="h-4 w-4" />
-                      Holiday Message
+                       Message
                     </div>
                   </TableHead>
                   <TableHead className="text-white font-bold text-center py-4">
@@ -330,7 +340,7 @@ function ViewPolicies() {
                         </p>
                         {policy.subject.length > 100 && (
                           <p className="text-xs text-green-600 mt-1">
-                            ❄️ Click view to read full holiday message
+                           Click view to read 
                           </p>
                         )}
                       </div>
@@ -355,7 +365,7 @@ function ViewPolicies() {
                         className="bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 flex items-center gap-2 mx-auto shadow-lg hover:shadow-xl"
                       >
                         <Eye className="h-4 w-4" />
-                        Read with Holiday Spirit
+                        Read and view
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -406,7 +416,7 @@ function ViewPolicies() {
                   className="w-full bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700 text-white font-medium py-2 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-lg"
                 >
                   <Eye className="h-4 w-4" />
-                  Read with Holiday Spirit
+                  Read 
                 </Button>
               </div>
             ))}
@@ -423,8 +433,8 @@ function ViewPolicies() {
                       {Math.min(
                         currentPages * itemsPerPage,
                         filteredPolicies.length
-                      )}{ " "}
-                      of {filteredPolicies.length} holiday message
+                      )}{" "}
+                      of {filteredPolicies.length} message
                       {filteredPolicies.length !== 1 ? "s" : ""}
                       {showPendingOnly && " (Awaiting your response)"}
                     </div>
@@ -503,13 +513,13 @@ function ViewPolicies() {
               <FileText className="h-16 w-16 text-green-300 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-green-900 mb-2">
                 {showPendingOnly
-                  ? "All caught up with holiday cheer!"
-                  : "No holiday messages yet"}
+                  ? "All caught up!"
+                  : "No messages yet"}
               </h3>
               <p className="text-green-700 max-w-sm mx-auto">
                 {showPendingOnly
-                  ? "You've acknowledged all policies with holiday spirit. What a festive heart!"
-                  : "There are no Christmas policies available at the moment. Check back later for holiday messages."}
+                  ? "You've acknowledged all policies."
+                  : "There are no policies available at the moment"}
               </p>
               {showPendingOnly && (
                 <Button
@@ -523,16 +533,7 @@ function ViewPolicies() {
           )}
         </div>
 
-        {/* Christmas Footer */}
-        <div className="mt-8 text-center">
-          <div className="text-green-600 text-sm flex items-center justify-center gap-2">
-            <span>🎅</span>
-            <span>
-              Wishing you a season filled with joy and holiday cheer
-            </span>
-            <span>❄️</span>
-          </div>
-        </div>
+      
       </div>
     </section>
   );
