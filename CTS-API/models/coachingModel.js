@@ -1,7 +1,6 @@
-const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
+import mongoose from "mongoose";
 
-const coachingSchema = new Schema({
+const coachingSchema = mongoose.Schema({
   
   coaching: {
     employeeId: {
@@ -67,4 +66,4 @@ coachingSchema.pre("save", function (next) {
   next();
 });
 
-module.exports = mongoose.model("COACHING", coachingSchema);
+export default mongoose.model("COACHING", coachingSchema);

@@ -2,18 +2,17 @@
   "name": "support-desk",
   "version": "1.0.0",
   "description": "Support Ticket App",
-  "main": "server.js",
+  "type": "module",
+  "main": "backend/server.js",
   "scripts": {
     "start": "node backend/server.js",
-    "server": "nodemon backend/server.js --ignore client",
+    "server": "nodemon backend/server.js --ignore frontend",
     "client": "npm start --prefix frontend",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm install --prefix frontend && npm run build --prefix frontend",
     "lint": "eslint . --fix"
   },
   "author": "Mohammad Arif",
   "license": "MIT",
-  "type": "commonjs",
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "colors": "^1.4.0",
@@ -34,7 +33,6 @@
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "eslint": "^9.39.1",
-    "globals": "^16.5.0",
-    "nodeman": "^1.1.2"
+    "globals": "^16.5.0"
   }
 }

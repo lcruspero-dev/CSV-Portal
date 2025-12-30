@@ -1,5 +1,5 @@
-const mongoose = require("mongoose");
-const Counter = require("./counterModel");
+import mongoose from "mongoose";
+import Counter from "./counterModel";
 
 const ticketSchema = mongoose.Schema(
   {
@@ -98,4 +98,4 @@ ticketSchema.pre("save", async function (next) {
   next();
 });
 
-module.exports = mongoose.model("ticket", ticketSchema);
+export default mongoose.model("ticket", ticketSchema);

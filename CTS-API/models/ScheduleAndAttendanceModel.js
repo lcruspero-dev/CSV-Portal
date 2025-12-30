@@ -1,10 +1,9 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const scheduleEntrySchema = new mongoose.Schema({
   employeeId: {
     type: String,
     required: true,
-    // ref: "user", // Reference to the User model
   },
   employeeName: {
     type: String,
@@ -91,4 +90,4 @@ const TeamLeaderEntry = mongoose.model(
   teamLeaderEntrySchema
 );
 
-module.exports = { ScheduleEntry, AttendanceEntry, TeamLeaderEntry };
+export default { ScheduleEntry, AttendanceEntry, TeamLeaderEntry };

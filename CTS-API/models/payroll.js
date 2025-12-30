@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const employeeSchema = new mongoose.Schema({
   userId: {
@@ -344,4 +344,4 @@ const payrollSchema = new mongoose.Schema({
 // Ensure one payroll per user
 payrollSchema.index({ "payrollRate.userId": 1 }, { unique: true, sparse: true });
 
-module.exports = mongoose.model("Payroll", payrollSchema);
+export default mongoose.model("Payroll", payrollSchema);

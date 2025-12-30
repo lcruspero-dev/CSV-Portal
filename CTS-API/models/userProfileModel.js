@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const userProfileSchema = mongoose.Schema(
   {
@@ -40,9 +40,6 @@ const userProfileSchema = mongoose.Schema(
     dateOfBirth: {
       type: String,
     },
-    // age: {
-    //   type: String,
-    // },
     emergencyContactPerson: {
       type: String,
     },
@@ -127,9 +124,6 @@ const userProfileSchema = mongoose.Schema(
     presentProvince: {
       type: String,
     },
-    presentProvince: {
-      type: String,
-    },
     homeHouseNo: {
       type: String,
     },
@@ -158,4 +152,4 @@ const userProfileSchema = mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("UserProfile", userProfileSchema);
+export default mongoose.model("UserProfile", userProfileSchema);
