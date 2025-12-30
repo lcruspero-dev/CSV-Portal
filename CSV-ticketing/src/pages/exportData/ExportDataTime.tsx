@@ -2,12 +2,16 @@
 import React, { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import * as XLSX from "xlsx";
+import { Calendar, Download, Loader2 } from "lucide-react";
 
 import { ExportDatas } from "@/API/endpoint";
 import BackButton from "@/components/kit/BackButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface FormData {
   startDate: string;
@@ -49,22 +53,27 @@ interface EmployeeSummary {
   };
   lateMinutes: number;
   earlyOutMinutes: number;
-  totalBreakTime: number; // Total of all break times (break1 + break2 + lunch)
-  totalOverbreak: number; // Minutes over allowed break times
+  totalBreakTime: number;
+  totalOverbreak: number;
 }
 
 const ExportDataTime: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [dateRangeError, setDateRangeError] = useState<string>("");
   const {
     control,
     handleSubmit,
     formState: { errors },
+    watch,
   } = useForm<FormData>({
     defaultValues: {
       startDate: "",
       endDate: "",
     },
   });
+
+  const startDate = watch("startDate");
+  const endDate = watch("endDate");
 
   const getShiftTimes = (shift: string): { start: string; end: string } => {
     switch (shift) {
@@ -89,12 +98,10 @@ const ExportDataTime: React.FC = () => {
     if (!timeStr || timeStr.trim() === "") return "";
     
     const time = timeStr.trim();
-    // Check if already in 24-hour format (contains : and no AM/PM)
     if (time.includes(":") && !time.includes("AM") && !time.includes("PM")) {
       return time;
     }
     
-    // Handle 12-hour format with AM/PM
     const [timePart, period] = time.split(" ");
     let [hours, minutes] = timePart.split(":").map(Number);
 
@@ -104,33 +111,27 @@ const ExportDataTime: React.FC = () => {
       hours = 0;
     }
 
-    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
-      2,
-      "0"
-    )}`;
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
   };
 
   const formatMinutesToHours = (minutes: number): string => {
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
     if (hours === 0) {
-      return `${remainingMinutes} minutes`;
+      return `${remainingMinutes}m`;
     } else if (remainingMinutes === 0) {
-      return `${hours} hours`;
+      return `${hours}h`;
     } else {
-      return `${hours} hours, ${remainingMinutes} minutes`;
+      return `${hours}h ${remainingMinutes}m`;
     }
   };
 
-  // Calculate overbreak time (break time exceeding allowed limits)
   const calculateOverbreak = (breakTime: number, allowedTime: number): number => {
     if (!breakTime || breakTime <= allowedTime) return 0;
-    return Math.round((breakTime - allowedTime) * 60); // Convert to minutes
+    return Math.round((breakTime - allowedTime) * 60);
   };
 
-  const generateSummary = (
-    employeeTimes: EmployeeTimes[]
-  ): EmployeeSummary[] => {
+  const generateSummary = (employeeTimes: EmployeeTimes[]): EmployeeSummary[] => {
     const summaryMap = new Map<string, EmployeeSummary>();
 
     employeeTimes.forEach((entry) => {
@@ -152,7 +153,6 @@ const ExportDataTime: React.FC = () => {
       }
 
       const summary = summaryMap.get(entry.employeeName)!;
-
       summary.daysPresent++;
 
       if (entry.shift in summary.shiftsBreakdown) {
@@ -167,44 +167,56 @@ const ExportDataTime: React.FC = () => {
         const actualTimeOut = convertTo24Hour(entry.timeOut);
 
         if (actualTimeIn && shiftTimes.start) {
-          const lateMinutes = calculateTimeDifference(
-            shiftTimes.start,
-            actualTimeIn
-          );
-          if (lateMinutes > 0) {
-            summary.lateMinutes += lateMinutes;
-          }
+          const lateMinutes = calculateTimeDifference(shiftTimes.start, actualTimeIn);
+          if (lateMinutes > 0) summary.lateMinutes += lateMinutes;
         }
 
         if (actualTimeOut && shiftTimes.end) {
-          const earlyOutMinutes = calculateTimeDifference(
-            actualTimeOut,
-            shiftTimes.end
-          );
-          if (earlyOutMinutes > 0) {
-            summary.earlyOutMinutes += earlyOutMinutes;
-          }
+          const earlyOutMinutes = calculateTimeDifference(actualTimeOut, shiftTimes.end);
+          if (earlyOutMinutes > 0) summary.earlyOutMinutes += earlyOutMinutes;
         }
       }
 
-      // Calculate total break time for this entry
       const break1Time = entry.totalBreakTime || 0;
       const break2Time = entry.totalSecondBreakTime || 0;
       const lunchTime = entry.totalLunchTime || 0;
-      const totalEntryBreakTime = break1Time + break2Time + lunchTime;
-      summary.totalBreakTime += totalEntryBreakTime;
+      summary.totalBreakTime += break1Time + break2Time + lunchTime;
 
-      // Calculate overbreak for this entry
-      const break1Overbreak = calculateOverbreak(break1Time, 0.25); // 15 minutes allowed
-      const break2Overbreak = calculateOverbreak(break2Time, 0.25); // 15 minutes allowed
-      const lunchOverbreak = calculateOverbreak(lunchTime, 1); // 60 minutes allowed
+      const break1Overbreak = calculateOverbreak(break1Time, 0.25);
+      const break2Overbreak = calculateOverbreak(break2Time, 0.25);
+      const lunchOverbreak = calculateOverbreak(lunchTime, 1);
       summary.totalOverbreak += break1Overbreak + break2Overbreak + lunchOverbreak;
     });
 
     return Array.from(summaryMap.values());
   };
 
+  const validateDateRange = () => {
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      if (end < start) {
+        setDateRangeError("End date cannot be earlier than start date");
+        return false;
+      }
+      
+      // Optional: Limit date range to 1 year
+      const diffTime = Math.abs(end.getTime() - start.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays > 365) {
+        setDateRangeError("Date range cannot exceed 1 year");
+        return false;
+      }
+    }
+    setDateRangeError("");
+    return true;
+  };
+
   const onSubmit = async (formData: FormData): Promise<void> => {
+    if (!validateDateRange()) return;
+
     setIsLoading(true);
     try {
       const response = await ExportDatas.getEmployeeTimes();
@@ -219,17 +231,14 @@ const ExportDataTime: React.FC = () => {
       const parseDate = (dateString: string): Date => {
         if (dateString.includes("/")) {
           const [month, day, year] = dateString.split("/").map(Number);
-          const date = new Date(year, month - 1, day);
-          date.setHours(0, 0, 0, 0);
-          return date;
+          return new Date(year, month - 1, day);
         }
-        const date = new Date(dateString);
-        date.setHours(0, 0, 0, 0);
-        return date;
+        return new Date(dateString);
       };
 
       const filteredEmployeeTimes = allEmployeeTimes.filter((entry) => {
         const entryDate = parseDate(entry.date);
+        entryDate.setHours(0, 0, 0, 0);
         return entryDate >= startDate && entryDate <= endDate;
       });
 
@@ -244,39 +253,34 @@ const ExportDataTime: React.FC = () => {
         const break2Minutes = entry.totalSecondBreakTime ? Math.round(entry.totalSecondBreakTime * 60) : 0;
         const lunchMinutes = entry.totalLunchTime ? Math.round(entry.totalLunchTime * 60) : 0;
         
-        // Calculate overbreak times
         const break1Overbreak = calculateOverbreak(entry.totalBreakTime || 0, 0.25);
         const break2Overbreak = calculateOverbreak(entry.totalSecondBreakTime || 0, 0.25);
         const lunchOverbreak = calculateOverbreak(entry.totalLunchTime || 0, 1);
         
         return {
           Date: entry.date,
-          EmployeeName: entry.employeeName,
+          "Employee Name": entry.employeeName,
           Shift: entry.shift,
-          TimeIn: entry.timeIn || " ",
-          TimeOut: entry.timeOut || " ",
-          TotalHours: entry.totalHours || " ",
-          // Break 1 Details
-          Break1Start: entry.breakStart || " ",
-          Break1End: entry.breakEnd || " ",
-          Break1Duration: entry.totalBreakTime ? formatMinutesToHours(break1Minutes) : " ",
-          Break1Overbreak: break1Overbreak > 0 ? `${break1Overbreak} minutes` : " ",
-          // Break 2 Details
-          Break2Start: entry.secondBreakStart || " ",
-          Break2End: entry.secondBreakEnd || " ",
-          Break2Duration: entry.totalSecondBreakTime ? formatMinutesToHours(break2Minutes) : " ",
-          Break2Overbreak: break2Overbreak > 0 ? `${break2Overbreak} minutes` : " ",
-          // Lunch Details
-          LunchStart: entry.lunchStart || " ",
-          LunchEnd: entry.lunchEnd || " ",
-          LunchDuration: entry.totalLunchTime ? formatMinutesToHours(lunchMinutes) : " ",
-          LunchOverbreak: lunchOverbreak > 0 ? `${lunchOverbreak} minutes` : " ",
-          // Total Break Summary
-          TotalBreakTime: formatMinutesToHours(break1Minutes + break2Minutes + lunchMinutes),
-          TotalOverbreak: break1Overbreak + break2Overbreak + lunchOverbreak > 0 
-            ? `${break1Overbreak + break2Overbreak + lunchOverbreak} minutes` 
-            : " ",
-          Notes: entry.notes || " ",
+          "Time In": entry.timeIn || "-",
+          "Time Out": entry.timeOut || "-",
+          "Total Hours": entry.totalHours || "-",
+          "Break 1 Start": entry.breakStart || "-",
+          "Break 1 End": entry.breakEnd || "-",
+          "Break 1 Duration": entry.totalBreakTime ? formatMinutesToHours(break1Minutes) : "-",
+          "Break 1 Overbreak": break1Overbreak > 0 ? `${break1Overbreak}m` : "-",
+          "Break 2 Start": entry.secondBreakStart || "-",
+          "Break 2 End": entry.secondBreakEnd || "-",
+          "Break 2 Duration": entry.totalSecondBreakTime ? formatMinutesToHours(break2Minutes) : "-",
+          "Break 2 Overbreak": break2Overbreak > 0 ? `${break2Overbreak}m` : "-",
+          "Lunch Start": entry.lunchStart || "-",
+          "Lunch End": entry.lunchEnd || "-",
+          "Lunch Duration": entry.totalLunchTime ? formatMinutesToHours(lunchMinutes) : "-",
+          "Lunch Overbreak": lunchOverbreak > 0 ? `${lunchOverbreak}m` : "-",
+          "Total Break Time": formatMinutesToHours(break1Minutes + break2Minutes + lunchMinutes),
+          "Total Overbreak": break1Overbreak + break2Overbreak + lunchOverbreak > 0 
+            ? `${break1Overbreak + break2Overbreak + lunchOverbreak}m` 
+            : "-",
+          Notes: entry.notes || "-",
         };
       });
 
@@ -287,72 +291,24 @@ const ExportDataTime: React.FC = () => {
           "Shift 1 Days": summary.shiftsBreakdown["Shift 1"],
           "Shift 2 Days": summary.shiftsBreakdown["Shift 2"],
           "Shift 3 Days": summary.shiftsBreakdown["Shift 3"],
-          "Staff Shift Days": summary.shiftsBreakdown["Staff"],
-          "Total Late (Minutes)": summary.lateMinutes,
-          "Total Early Out (Minutes)": summary.earlyOutMinutes,
+          "Staff Days": summary.shiftsBreakdown["Staff"],
+          "Total Late": `${summary.lateMinutes}m`,
+          "Total Early Out": `${summary.earlyOutMinutes}m`,
           "Total Break Time": formatMinutesToHours(Math.round(summary.totalBreakTime * 60)),
-          "Total Overbreak (Minutes)": summary.totalOverbreak,
+          "Total Overbreak": `${summary.totalOverbreak}m`,
         })
       );
 
       const workbook = XLSX.utils.book_new();
-
       const detailedWorksheet = XLSX.utils.json_to_sheet(detailedData);
-      XLSX.utils.book_append_sheet(
-        workbook,
-        detailedWorksheet,
-        "Detailed Time Records"
-      );
-
       const summaryWorksheet = XLSX.utils.json_to_sheet(summaryData);
-      XLSX.utils.book_append_sheet(workbook, summaryWorksheet, "Summary");
 
-      // Adjust column widths to accommodate all columns
-      detailedWorksheet["!cols"] = [
-        { wch: 12 },  // Date
-        { wch: 20 },  // EmployeeName
-        { wch: 10 },  // Shift
-        { wch: 12 },  // TimeIn
-        { wch: 12 },  // TimeOut
-        { wch: 10 },  // TotalHours
-        // Break 1 columns
-        { wch: 12 },  // Break1Start
-        { wch: 12 },  // Break1End
-        { wch: 15 },  // Break1Duration
-        { wch: 15 },  // Break1Overbreak
-        // Break 2 columns
-        { wch: 12 },  // Break2Start
-        { wch: 12 },  // Break2End
-        { wch: 15 },  // Break2Duration
-        { wch: 15 },  // Break2Overbreak
-        // Lunch columns
-        { wch: 12 },  // LunchStart
-        { wch: 12 },  // LunchEnd
-        { wch: 15 },  // LunchDuration
-        { wch: 15 },  // LunchOverbreak
-        // Summary columns
-        { wch: 15 },  // TotalBreakTime
-        { wch: 15 },  // TotalOverbreak
-        { wch: 30 },  // Notes
-      ];
+      XLSX.utils.book_append_sheet(workbook, detailedWorksheet, "Detailed Records");
+      XLSX.utils.book_append_sheet(workbook, summaryWorksheet, "Summary Report");
 
-      summaryWorksheet["!cols"] = [
-        { wch: 20 },  // Employee Name
-        { wch: 12 },  // Days Present
-        { wch: 12 },  // Shift 1 Days
-        { wch: 12 },  // Shift 2 Days
-        { wch: 12 },  // Shift 3 Days
-        { wch: 15 },  // Staff Shift Days
-        { wch: 18 },  // Total Late (Minutes)
-        { wch: 20 },  // Total Early Out (Minutes)
-        { wch: 18 },  // Total Break Time
-        { wch: 20 },  // Total Overbreak (Minutes)
-      ];
-
-      const fileName = `Employee_Time_${
-        new Date().toISOString().split("T")[0]
-      }.xlsx`;
+      const fileName = `Time_Report_${formData.startDate}_to_${formData.endDate}.xlsx`;
       XLSX.writeFile(workbook, fileName);
+      
     } catch (error) {
       console.error("Error exporting data:", error);
       alert("Failed to export data. Please try again.");
@@ -362,80 +318,190 @@ const ExportDataTime: React.FC = () => {
   };
 
   return (
-    <div className="container flex justify-center p-3">
-      <BackButton />
-      <form className="mt-5 w-1/2" onSubmit={handleSubmit(onSubmit)}>
-        <div className="text-center">
-          {/* Thanksgiving-themed header */}
-          <h1 className="text-xl sm:text-xl md:text-2xl lg:text-3xl font-bold py-1 sm:py-1 md:py-2 bg-clip-text text-transparent bg-gradient-to-r from-[#8B4513] to-[#D2691E]">
-             Your Team's Time 
-          </h1>
-          <p className="text-lg sm:text-xl md:text-xl lg:text-2xl font-bold text-amber-800">
-            Select dates to harvest your time tracking data
-          </p>
-          <p className="text-sm text-amber-600 mt-2">
-            We're grateful for your team's hard work! Now includes all break details.
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex items-center gap-4 mb-8">
+          <BackButton />
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+              Time Tracking Export
+            </h1>
+            <p className="text-gray-600 mt-1">
+              Export detailed time records and summary reports for payroll and analysis
+            </p>
+          </div>
         </div>
 
-        {/* Thanksgiving-styled form fields */}
-        <div className="mt-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
-          <Label htmlFor="startDate" className="text-base font-bold text-amber-800">
-            <p>🦃 Start Date</p>
-          </Label>
-          <Controller
-            name="startDate"
-            control={control}
-            rules={{ required: "Start date is required" }}
-            render={({ field }) => (
-              <Input 
-                {...field} 
-                type="date" 
-                required 
-                className="!mb-2 border-amber-300 focus:border-amber-500 bg-white"
-              />
-            )}
-          />
-          {errors.startDate && (
-            <p className="text-red-600">{errors.startDate.message}</p>
-          )}
+        <Tabs defaultValue="export" className="space-y-6">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="export" className="flex items-center gap-2">
+              <Download className="h-4 w-4" />
+              Export Data
+            </TabsTrigger>
+            <TabsTrigger value="instructions" className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Instructions
+            </TabsTrigger>
+          </TabsList>
 
-          <Label htmlFor="endDate" className="text-base font-bold text-amber-800 mt-4">
-            <p>End Date</p>
-          </Label>
-          <Controller
-            name="endDate"
-            control={control}
-            rules={{ required: "End date is required" }}
-            render={({ field }) => (
-              <Input 
-                {...field} 
-                type="date" 
-                required 
-                className="!mb-2 border-amber-300 focus:border-amber-500 bg-white"
-              />
-            )}
-          />
-          {errors.endDate && (
-            <p className="text-red-600">{errors.endDate.message}</p>
-          )}
+          <TabsContent value="export">
+            <Card className="border border-gray-200 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-xl">Export Time Data</CardTitle>
+                <CardDescription>
+                  Select a date range to generate detailed time tracking reports
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <Label htmlFor="startDate" className="text-sm font-medium text-gray-700">
+                        Start Date <span className="text-red-500">*</span>
+                      </Label>
+                      <Controller
+                        name="startDate"
+                        control={control}
+                        rules={{ required: "Start date is required" }}
+                        render={({ field }) => (
+                          <div className="relative">
+                            <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                            <Input
+                              {...field}
+                              type="date"
+                              required
+                              className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white"
+                            />
+                          </div>
+                        )}
+                      />
+                      {errors.startDate && (
+                        <p className="text-sm text-red-600">{errors.startDate.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label htmlFor="endDate" className="text-sm font-medium text-gray-700">
+                        End Date <span className="text-red-500">*</span>
+                      </Label>
+                      <Controller
+                        name="endDate"
+                        control={control}
+                        rules={{ required: "End date is required" }}
+                        render={({ field }) => (
+                          <div className="relative">
+                            <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                            <Input
+                              {...field}
+                              type="date"
+                              required
+                              className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white"
+                            />
+                          </div>
+                        )}
+                      />
+                      {errors.endDate && (
+                        <p className="text-sm text-red-600">{errors.endDate.message}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {dateRangeError && (
+                    <Alert variant="destructive">
+                      <AlertDescription>{dateRangeError}</AlertDescription>
+                    </Alert>
+                  )}
+
+                  {startDate && endDate && !dateRangeError && (
+                    <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg">
+                      <p className="text-sm text-blue-700 font-medium">
+                        Selected date range: {new Date(startDate).toLocaleDateString()} to {new Date(endDate).toLocaleDateString()}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="pt-4 border-t border-gray-200">
+                    <Button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full md:w-auto min-w-[200px] bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <Download className="mr-2 h-4 w-4" />
+                          Generate Excel Report
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="instructions">
+            <Card className="border border-gray-200 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-xl">Report Information</CardTitle>
+                <CardDescription>
+                  Understand what data will be included in your export
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-gray-900">📋 Detailed Records Sheet Includes:</h3>
+                  <ul className="space-y-2 text-sm text-gray-600 list-disc list-inside">
+                    <li>Daily time in/out records for each employee</li>
+                    <li>Break and lunch durations with overbreak calculations</li>
+                    <li>Shift assignments and total hours worked</li>
+                    <li>Employee notes and attendance remarks</li>
+                  </ul>
+                </div>
+
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-gray-900">📊 Summary Report Sheet Includes:</h3>
+                  <ul className="space-y-2 text-sm text-gray-600 list-disc list-inside">
+                    <li>Total days present per employee</li>
+                    <li>Shift distribution breakdown</li>
+                    <li>Cumulative late and early departure minutes</li>
+                    <li>Total break time and overbreak calculations</li>
+                  </ul>
+                </div>
+
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <h4 className="font-semibold text-amber-800 mb-2">⚠️ Important Notes</h4>
+                  <ul className="text-sm text-amber-700 space-y-1">
+                    <li>• Reports are generated in Excel (.xlsx) format</li>
+                    <li>• Each export includes two sheets: Detailed Records and Summary Report</li>
+                    <li>• Date range cannot exceed 1 year</li>
+                    <li>• Break times exceeding policy limits are calculated as overbreak</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="p-4 bg-white border border-gray-200 rounded-lg">
+            <h3 className="font-semibold text-gray-900 mb-1">Format</h3>
+            <p className="text-sm text-gray-600">Excel (.xlsx) with multiple sheets</p>
+          </div>
+          <div className="p-4 bg-white border border-gray-200 rounded-lg">
+            <h3 className="font-semibold text-gray-900 mb-1">Data Included</h3>
+            <p className="text-sm text-gray-600">Time records, breaks, and summaries</p>
+          </div>
+          <div className="p-4 bg-white border border-gray-200 rounded-lg">
+            <h3 className="font-semibold text-gray-900 mb-1">Use Cases</h3>
+            <p className="text-sm text-gray-600">Payroll, compliance, and analytics</p>
+          </div>
         </div>
-
-        {/* Thanksgiving-themed button */}
-        <Button 
-          className="w-full mt-4 bg-gradient-to-r from-[#8B4513] to-[#D2691E] hover:from-[#A0522D] hover:to-[#CD853F] text-white font-bold py-3 rounded-lg transition-all duration-300 transform hover:scale-105"
-          type="submit" 
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            "🦃 Gather"
-          ) : (
-            "🍁 Export"
-          )}
-        </Button>
-
-       
-      </form>
+      </div>
     </div>
   );
 };
