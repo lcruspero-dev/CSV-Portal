@@ -62,7 +62,6 @@ export const createMemo = async (req, res) => {
       message: "Create memo successfully",
       data: memo,
     });
-
   } catch (error) {
     console.error("", error);
     return res.status(500).json({
@@ -79,78 +78,87 @@ export const updateMemo = async (req, res) => {
     if (!memo) {
       return res.status(404).json({
         success: false,
-        message: "Memo not found"
+        message: "Memo not found",
       });
     }
 
-    const {subject, description} = req.body;
+    const { subject, description } = req.body;
 
     if (!subject || !description) {
-    res.status(400).json({
-      success: false,
-      message: "All fields are required"
+      res.status(400).json({
+        success: false,
+        message: "All fields are required",
+      });
+    }
+
+    const updatedMemo = await Memo.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
     });
-  }
 
-  const updatedMemo = await Memo.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-  });
-
-  res.status(200).json({
-    success: true,
-    message: "Updated memo",
-    data: updatedMemo,
-  });
-
-
+    res.status(200).json({
+      success: true,
+      message: "Updated memo",
+      data: updatedMemo,
+    });
   } catch (error) {
     console.error("", error);
     return res.status(500).json({
       success: false,
-      message: "Internal Server Error"
-    })
-
+      message: "Internal Server Error",
+    });
   }
-  
 };
 
 export const deleteMemo = async (req, res) => {
-
   try {
     const memo = await Memo.findById(req.params.id);
 
     if (!memo) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: "Memo not found" 
+        message: "Memo not found",
       });
     }
 
-    await memo.remove(); 
+    await memo.remove();
 
-    res.status(200).json({ 
+    res.status(200).json({
       success: true,
       message: "Memo deleted successfully",
-      id: req.params.id 
+      id: req.params.id,
     });
-
   } catch (error) {
     console.error("Failed to delete memo:", error);
     return res.status(500).json({
       success: false,
-      message: "Internal Server Error"
+      message: "Internal Server Error",
     });
   }
 };
 
-
 export const getMemoById = async (req, res) => {
-  const memo = await Memo.findById(req.params.id);
-  if (!memo) {
-    res.status(404);
-    throw new Error("Memo not found");
+  try {
+    const memo = await Memo.findById(req.params.id);
+
+    if (!memo) {
+      return res.status(404).json({
+        success: false,
+        message: "Memo not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Get Memo ID",
+      data: memo,
+    });
+  } catch (error) {
+    console.error("Failed to get memo ID", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
-  res.status(200).json(memo);
 };
 
 export const updateAcknowledged = async (req, res) => {
@@ -158,52 +166,82 @@ export const updateAcknowledged = async (req, res) => {
   const name = req.user.name;
   const { id } = req.params;
 
-  const memo = await Memo.findById(id);
-  if (!memo) {
-    res.status(404);
-    throw new Error("Memo not found");
+  try {
+    const memo = await Memo.findById(id);
+
+    if (!memo) {
+      return res.status(404).json({
+        status: false,
+        message: "Memo not found",
+      });
+    }
+
+    const alreadyAcknowledged = memo.acknowledgedby.some(
+      (acknowledged) => acknowledged.userId === userId
+    );
+
+    if (alreadyAcknowledged) {
+      return res.status(400).json({
+        success: false,
+        message: "You already acknowledged this memo",
+      });
+    }
+
+    const newAcknowledgment = {
+      name,
+      userId,
+      acknowledgedAt: new Date(),
+    };
+
+    const updatedMemo = await Memo.findByIdAndUpdate(
+      id,
+      {
+        $push: { acknowledgedby: newAcknowledgment },
+      },
+      { new: true }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Acknowleged this memo successfully",
+      data: updatedMemo,
+    });
+  } catch (error) {
+    console.error("Failed to acknowledge", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
-
-  const alreadyAcknowledged = memo.acknowledgedby.some(
-    (acknowledged) => acknowledged.userId === userId
-  );
-
-  if (alreadyAcknowledged) {
-    res.status(400);
-    throw new Error("You already acknowledged this memo");
-  }
-
-  const newAcknowledgment = {
-    name,
-    userId,
-    acknowledgedAt: new Date(),
-  };
-
-  const updatedMemo = await Memo.findByIdAndUpdate(
-    id,
-    {
-      $push: { acknowledgedby: newAcknowledgment },
-    },
-    { new: true }
-  );
-
-  res.status(200).json(updatedMemo);
 };
 
 export const getUserUnacknowledged = async (req, res) => {
+
   try {
+
     const { memoId } = req.params;
 
+    // Validate memoId
     if (!mongoose.Types.ObjectId.isValid(memoId)) {
-      return res.status(400).json({ message: "Invalid memo ID" });
+      return res.status(400).json({
+        success: false,
+        message: "Invalid memo ID",
+      });
     }
 
+    // Fetch memo
     const memo = await Memo.findById(memoId);
     if (!memo) {
-      return res.status(404).json({ message: "Memo not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Memo not found",
+      });
     }
 
+    // Extract acknowledged user IDs
     const acknowledgedUserIds = memo.acknowledgedby.map((ack) => ack.userId);
+
+    // Fetch unacknowledged users
     const unacknowledgedUsers = await User.find(
       {
         _id: { $nin: acknowledgedUserIds },
@@ -213,14 +251,23 @@ export const getUserUnacknowledged = async (req, res) => {
       "name _id"
     );
 
+    // Return response
     return res.status(200).json({
+      success: true,
+      message: "Get user Unacknowledged",
       memoId,
       unacknowledgedUsers: unacknowledgedUsers.map((user) => ({
         userId: user._id,
         name: user.name,
       })),
     });
+
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    console.error("Error fetching unacknowledged users:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+    
   }
 };

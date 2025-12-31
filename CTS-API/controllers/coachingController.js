@@ -1,6 +1,5 @@
-const asyncHandler = require("express-async-handler");
-const Coaching = require("../models/coachingModel");
-const mongoose = require("mongoose");
+import Coaching from "../models/coachingModel";
+import mongoose from "mongoose";
 
 // Authorization middleware
 const canUpdateCoaching = (user) => {
@@ -8,20 +7,40 @@ const canUpdateCoaching = (user) => {
 };
 
 // Get all NTEs
-const getCoachings = asyncHandler(async (req, res) => {
-  const coaching = await Coaching.find()
+export const getCoachings = async (req, res) => {
+
+  try {
+      const coaching = await Coaching.find()
     .populate("coaching.employeeId", "name email")
     .sort({ createdAt: -1 });
 
   if (!coaching) {
-    res.status(404);
-    throw new Error("Coaching's not found");
+    res.status(404).json({
+      success: false,
+      message: "Coaching not found"
+    });
   }
-  res.status(200).json(coaching);
-});
+
+  res.status(200).json({
+    success: true,
+    message: "Fetch NTEs",
+    data: coaching,
+  });
+    
+  } catch (error) {
+
+    console.error("Fetch NTEs", error)
+    return res.status(500).json({
+      success: true,
+      message: "Internal Server Error"
+    });
+    
+  }
+
+};
 
 // Get single NTE
-const getCoaching = asyncHandler(async (req, res) => {
+export const getCoaching = async (req, res) => {
 
   const { id } = req.params;
 
@@ -38,10 +57,10 @@ const getCoaching = asyncHandler(async (req, res) => {
 
   res.status(200).json(coaching);
 
-});
+};
 
 // Create NTE - Only admin/TL/TM
-const createCoaching = asyncHandler(async (req, res) => {
+export const createCoaching = async (req, res) => {
   const createdBy = req.user.name;
   const { coaching, status } = req.body;
 
@@ -93,9 +112,9 @@ const createCoaching = asyncHandler(async (req, res) => {
   });
 
   res.status(201).json(newCoaching);
-});
+};
 
-const updateCoaching = asyncHandler(async (req, res) => {
+export const updateCoaching = async (req, res) => {
   const { id } = req.params;
   const { coachingObjectives, employeeResponse, ...updateFields } = req.body;
 
@@ -153,10 +172,10 @@ const updateCoaching = asyncHandler(async (req, res) => {
     message: "Coaching record updated successfully",
     data: updatedCoaching
   });
-});
+};
 
 // Delete NTE - Only admin/TL/TM
-const deleteCoaching = asyncHandler(async (req, res) => {
+export const deleteCoaching = async (req, res) => {
   const { id } = req.params;
 
   if (!canUpdateCoaching(req.user)) {
@@ -177,16 +196,16 @@ const deleteCoaching = asyncHandler(async (req, res) => {
 
   await coaching.deleteOne();
   res.status(200).json({ message: "Coaching deleted successfully" });
-});
+};
 
 //get nte by status query param
-const getCoachingByStatus = asyncHandler(async (req, res) => {
+export const getCoachingByStatus = async (req, res) => {
   const status = req.params.status;
   const coachings = await Coaching.find({ status }).sort({ createdAt: -1 }); // newest first
   res.status(200).json(coachings);
-});
+};
 
-const getCoachingByUser = asyncHandler(async (req, res) => {
+export const getCoachingByUser = async (req, res) => {
   const userId = req.user?._id?.toString();
 
   if (!userId) {
@@ -201,14 +220,6 @@ const getCoachingByUser = asyncHandler(async (req, res) => {
     .lean();
 
   res.status(200).json(coachings);
-});
-
-module.exports = {
-  getCoachings,
-  getCoaching,
-  createCoaching,
-  updateCoaching,
-  deleteCoaching,
-  getCoachingByStatus,
-  getCoachingByUser,
 };
+
+

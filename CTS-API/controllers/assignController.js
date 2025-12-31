@@ -1,9 +1,11 @@
 // controllers/assignController.js
-const Assign = require("../models/assignModel");
+import Assign from "../models/assignModel";
 
 // Create new assignment
-const createAssign = async (req, res) => {
+export const createAssign = async (req, res) => {
+
   try {
+
     const { name, role } = req.body;
 
     if (!name || !role) {
@@ -15,6 +17,7 @@ const createAssign = async (req, res) => {
 
     // Check if the name already exists
     const existingAssign = await Assign.findOne({ name });
+
     if (existingAssign) {
       return res.status(400).json({
         success: false,
@@ -30,36 +33,45 @@ const createAssign = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      assign,
+      message: "Create assign successfully",
+      data: assign,
     });
+
   } catch (error) {
+    console.error("Failed to create a new assign", error);
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Internal Server Error",
     });
   }
+
 };
 
 // Get all assignments
-const getAllAssigns = async (req, res) => {
+export const getAllAssigns = async (req, res) => {
+
   try {
+
     const assigns = await Assign.find();
 
     res.status(200).json({
       success: true,
+      message: "Fetch assignments",
       count: assigns.length,
-      assigns,
+      data: assigns,
     });
+
   } catch (error) {
+    console.error("Failed fetch assignments", error);
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Inernal Server Error",
     });
   }
 };
 
 // Get single assignment
-const getAssign = async (req, res) => {
+export const getAssign = async (req, res) => {
   try {
     const assign = await Assign.findById(req.params.id);
 
@@ -72,18 +84,22 @@ const getAssign = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      assign,
+      message: "Fetch assignment",
+      data: assign,
     });
+
   } catch (error) {
-    res.status(500).json({
+      console.error("Failed fetch assignment", error);
+      return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Internal Server Error",
     });
   }
 };
 
 // Update assignment
-const updateAssign = async (req, res) => {
+export const updateAssign = async (req, res) => {
+
   try {
     const { name, role } = req.body;
 
@@ -103,18 +119,22 @@ const updateAssign = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      assign,
+      message: "Upadete assignment successfully",
+      data: assign,
     });
+
   } catch (error) {
+    console.error("Failed to update assignment", error);
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Internal Server Error",
     });
   }
+
 };
 
 // Delete assignment
-const deleteAssign = async (req, res) => {
+export const deleteAssign = async (req, res) => {
   try {
     const assign = await Assign.findById(req.params.id);
 
@@ -131,18 +151,13 @@ const deleteAssign = async (req, res) => {
       success: true,
       message: "Assignment deleted successfully",
     });
+
   } catch (error) {
-    res.status(500).json({
+    console.error("Failed to delete assignment", error)
+    return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Internal Server Error",
     });
   }
 };
 
-module.exports = {
-  createAssign,
-  getAllAssigns,
-  getAssign,
-  updateAssign,
-  deleteAssign,
-};

@@ -1,8 +1,7 @@
-// controllers/categoryController.js
-const Category = require("../models/categoryModel");
+import Category from "../models/categoryModel";
 
 // Create new category
-const createCategory = async (req, res) => {
+export const createCategory = async (req, res) => {
   try {
     const { category, role } = req.body;
 
@@ -30,18 +29,21 @@ const createCategory = async (req, res) => {
 
     res.status(201).json({
       success: true,
+      message: "Created category successfully",
       category: newCategory,
     });
+
   } catch (error) {
+    console.error("Failed to create category", error);
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Internal Server Error",
     });
   }
 };
 
 // Get all categories
-const getAllCategories = async (req, res) => {
+export const getAllCategories = async (req, res) => {
   try {
     const categories = await Category.find();
 
@@ -54,19 +56,22 @@ const getAllCategories = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      message: "Fetch categories",
       count: sortedCategories.length,
       categories: sortedCategories,
     });
+
   } catch (error) {
+    console.error("Failed to fetch categories", error)
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Internal Server Error",
     });
   }
 };
 
 // Get single category
-const getCategory = async (req, res) => {
+export const getCategory = async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
 
@@ -79,18 +84,22 @@ const getCategory = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      message: "Fetch category",
       category,
     });
+
   } catch (error) {
+    console.error("Failed to fetch category", error)
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Internal Server Error",
     });
   }
 };
 
 // Update category
-const updateCategory = async (req, res) => {
+export const updateCategory = async (req, res) => {
+
   try {
     const { category: categoryName, role } = req.body;
 
@@ -118,18 +127,21 @@ const updateCategory = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      category,
+      message: "Update category successfully",
+      data: category,
     });
+
   } catch (error) {
+    console.error("Failed to update catefgory ", error)
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Internal Server Error",
     });
   }
 };
 
 // Delete category
-const deleteCategory = async (req, res) => {
+export const deleteCategory = async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
 
@@ -145,17 +157,20 @@ const deleteCategory = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Category deleted successfully",
+      data: category
     });
+
   } catch (error) {
+    console.error("Failed to delete category", error)
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Internal Server Error",
     });
   }
 };
 
 // Get categories by role
-const getCategoriesByRole = async (req, res) => {
+export const getCategoriesByRole = async (req, res) => {
   try {
     const { role } = req.params;
 
@@ -170,22 +185,18 @@ const getCategoriesByRole = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      message: "Fetch categories by role",
       count: categories.length,
       categories,
     });
+
   } catch (error) {
+    console.error("Failed to fetch categories by role", error)
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Internal Server Error",
     });
   }
 };
 
-module.exports = {
-  createCategory,
-  getAllCategories,
-  getCategory,
-  updateCategory,
-  deleteCategory,
-  getCategoriesByRole,
-};
+

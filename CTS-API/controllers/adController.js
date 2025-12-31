@@ -1,13 +1,31 @@
-const Ad = require("../models/adModel");
+import Ad from "../models/adModel";
 
 // Get the current ad
-const getActiveAd = async (req, res) => {
+export const getActiveAd = async (req, res) => {
+
   try {
+
     const ad = await Ad.findOne();
-    if (!ad) return res.status(404).json({ message: "No ad found" });
-    res.json(ad);
+
+    if (!ad) {
+      return res.status(404).json({ 
+        success: false,
+        message: "No ad found" 
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Fetch Ad",
+      data: ad,
+    });
+
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Failed getch Ad", error)
+    res.status(500).json({ 
+      success: false,
+      message: "Internal Server Error",
+     });
   }
 };
 
@@ -33,4 +51,3 @@ const getActiveAd = async (req, res) => {
 //   }
 // };
 
-module.exports = { getActiveAd };
