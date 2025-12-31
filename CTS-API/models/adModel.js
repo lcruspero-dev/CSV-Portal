@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const adSchema = new mongoose.Schema({
   imageUrl: {
@@ -11,4 +11,4 @@ const adSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model("Ad", adSchema);
+export default mongoose.model("Ad", adSchema);

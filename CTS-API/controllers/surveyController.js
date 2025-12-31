@@ -1,11 +1,11 @@
-const asyncHandler = require("express-async-handler");
-const Survey = require("../models/surveyModel");
-const mongoose = require("mongoose");
+import asyncHandler from "express-async-handler";
+import Survey from "../models/surveyModel";
+import mongoose from "mongoose";
 
 // Helper function to check if ObjectId is valid
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
-const createSurvey = asyncHandler(async (req, res) => {
+export const createSurvey = asyncHandler(async (req, res) => {
   const { title, question } = req.body;
 
   // Validate required fields
@@ -41,7 +41,7 @@ const createSurvey = asyncHandler(async (req, res) => {
   });
 });
 
-const getAllSurveys = asyncHandler(async (req, res) => {
+export const getAllSurveys = asyncHandler(async (req, res) => {
   const { status, startDate, endDate } = req.query;
   const filter = {};
 
@@ -60,7 +60,7 @@ const getAllSurveys = asyncHandler(async (req, res) => {
   });
 });
 
-const getSurveyById = asyncHandler(async (req, res) => {
+export const getSurveyById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   if (!isValidObjectId(id)) {
@@ -87,7 +87,7 @@ const getSurveyById = asyncHandler(async (req, res) => {
   });
 });
 
-const updateSurvey = asyncHandler(async (req, res) => {
+export const updateSurvey = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const updateData = req.body;
 
@@ -139,7 +139,7 @@ const updateSurvey = asyncHandler(async (req, res) => {
   });
 });
 
-const deleteSurvey = asyncHandler(async (req, res) => {
+export const deleteSurvey = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   if (!isValidObjectId(id)) {
@@ -173,7 +173,7 @@ const deleteSurvey = asyncHandler(async (req, res) => {
   });
 });
 
-const submitResponse = asyncHandler(async (req, res) => {
+export const submitResponse = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { feedback, ratingAnswer, isAnonymous } = req.body;
 
@@ -239,7 +239,7 @@ const submitResponse = asyncHandler(async (req, res) => {
 });
 
 //get all survey with active status
-const getAllActiveSurveys = asyncHandler(async (req, res) => {
+export const getAllActiveSurveys = asyncHandler(async (req, res) => {
   // Fetch all active surveys
   const surveys = await Survey.find({ status: "active" });
 
@@ -268,7 +268,7 @@ const getAllActiveSurveys = asyncHandler(async (req, res) => {
 
   // Map surveys to hide the "responses" field
   const sanitizedSurveys = filteredSurveys.map((survey) => {
-    const { responses, ...rest } = survey.toObject();
+    const { ...rest } = survey.toObject();
     return rest;
   });
 
@@ -278,7 +278,7 @@ const getAllActiveSurveys = asyncHandler(async (req, res) => {
   });
 });
 
-const getAllSurveyTitles = asyncHandler(async (req, res) => {
+export const getAllSurveyTitles = asyncHandler(async (req, res) => {
   // Fetch all survey titles without status filter
   const surveyTitles = await Survey.find(
     {}, // Empty filter to get all surveys
@@ -306,13 +306,4 @@ const getAllSurveyTitles = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = {
-  createSurvey,
-  getAllSurveys,
-  getSurveyById,
-  updateSurvey,
-  deleteSurvey,
-  submitResponse,
-  getAllActiveSurveys,
-  getAllSurveyTitles,
-};
+

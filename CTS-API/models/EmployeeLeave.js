@@ -1,5 +1,4 @@
-// models/EmployeeLeave.js
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const EmployeeLeaveSchema = new mongoose.Schema(
   {
@@ -28,4 +27,4 @@ const EmployeeLeaveSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("EmployeeLeave", EmployeeLeaveSchema);
+export default mongoose.model("EmployeeLeave", EmployeeLeaveSchema);

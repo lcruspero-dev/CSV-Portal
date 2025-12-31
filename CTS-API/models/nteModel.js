@@ -1,7 +1,6 @@
-const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
+import mongoose from "mongoose";
 
-const nteSchema = new Schema({
+const nteSchema = mongoose.Schema({
   nte: {
     employeeId: {
       type: String,

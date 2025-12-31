@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const timeEntrySchema = new mongoose.Schema({
     date: { type: String, required: true },
@@ -44,6 +44,6 @@ const payslipSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-module.exports = mongoose.model("Payslip", payslipSchema);
+export default mongoose.model("Payslip", payslipSchema);
 
 

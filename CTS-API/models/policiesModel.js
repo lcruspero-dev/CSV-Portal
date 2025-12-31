@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const policiesSchema = mongoose.Schema({
   subject: {
@@ -36,4 +36,4 @@ const policiesSchema = mongoose.Schema({
 }
 );
 
-module.exports = mongoose.model("Policies", policiesSchema);
+export default mongoose.model("Policies", policiesSchema);

@@ -1,10 +1,8 @@
-const User = require("../models/userModel");
-const mongoose = require("mongoose");
+import User from "../models/userModel.js";
+import mongoose from "mongoose";
+import Memo from "../models/memoModel";
 
-const asyncHandler = require("express-async-handler");
-const Memo = require("../models/memoModel");
-
-const getMemos = asyncHandler(async (_req, res) => {
+export const getMemos = async (_req, res) => {
   try {
     const user = await User.findById(_req.user._id);
 
@@ -24,71 +22,138 @@ const getMemos = asyncHandler(async (_req, res) => {
           },
         ],
       }).sort({ createdAt: -1 });
+
+      if (!memos) {
+        return res.status(404).json({
+          success: false,
+          message: "Memos not found",
+        });
+      }
     }
 
-    res.status(200).json(memos);
+    res.status(200).json({
+      success: true,
+      message: "Fetch memos",
+      data: memos,
+    });
   } catch (error) {
-    console.log(error);
-    res.status(404);
-    throw new Error("Memos not found");
+    console.log("", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
-});
+};
 
-const createMemo = asyncHandler(async (req, res) => {
-  const { subject, description } = req.body;
-  if (!subject || !description) {
-    res.status(400);
-    throw new Error("Please add all required fields");
+export const createMemo = async (req, res) => {
+  try {
+    const { subject, description } = req.body;
+    if (!subject || !description) {
+      res.status(400).json({
+        success: false,
+        message: "All fields required",
+      });
+    }
+
+    const memo = await Memo.create(req.body);
+
+    res.status(201).json({
+      success: true,
+      message: "Create memo successfully",
+      data: memo,
+    });
+
+  } catch (error) {
+    console.error("", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
+};
 
-  const memo = await Memo.create(req.body);
-  res.status(200).json(memo);
-});
+export const updateMemo = async (req, res) => {
+  try {
+    const memo = await Memo.findById(req.params.id);
 
-const updateMemo = asyncHandler(async (req, res) => {
-  const memo = await Memo.findById(req.params.id);
+    if (!memo) {
+      return res.status(404).json({
+        success: false,
+        message: "Memo not found"
+      });
+    }
 
-  if (!memo) {
-    res.status(404);
-    throw new Error("Memo not found");
-  }
+    const {subject, description} = req.body;
 
-  const { subject, description } = req.body;
-  if (!subject || !description) {
-    res.status(400);
-    throw new Error("Please add all required fields");
+    if (!subject || !description) {
+    res.status(400).json({
+      success: false,
+      message: "All fields are required"
+    });
   }
 
   const updatedMemo = await Memo.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
   });
 
-  res.status(200).json(updatedMemo);
-});
+  res.status(200).json({
+    success: true,
+    message: "Updated memo",
+    data: updatedMemo,
+  });
 
-const deleteMemo = asyncHandler(async (req, res) => {
-  const memo = await Memo.findById(req.params.id);
 
-  if (!memo) {
-    res.status(404);
-    throw new Error("Memo not found");
+  } catch (error) {
+    console.error("", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error"
+    })
+
   }
+  
+};
 
-  await memo.remove();
+export const deleteMemo = async (req, res) => {
 
-  res.status(200).json({ id: req.params.id });
-});
+  try {
+    const memo = await Memo.findById(req.params.id);
 
-const getMemoById = asyncHandler(async (req, res) => {
+    if (!memo) {
+      return res.status(404).json({ 
+        success: false,
+        message: "Memo not found" 
+      });
+    }
+
+    await memo.remove(); 
+
+    res.status(200).json({ 
+      success: true,
+      message: "Memo deleted successfully",
+      id: req.params.id 
+    });
+
+  } catch (error) {
+    console.error("Failed to delete memo:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error"
+    });
+  }
+};
+
+
+export const getMemoById = async (req, res) => {
   const memo = await Memo.findById(req.params.id);
   if (!memo) {
     res.status(404);
     throw new Error("Memo not found");
   }
   res.status(200).json(memo);
-});
+};
 
-const updateAcknowledged = asyncHandler(async (req, res) => {
+export const updateAcknowledged = async (req, res) => {
   const userId = req.user.id;
   const name = req.user.name;
   const { id } = req.params;
@@ -123,9 +188,9 @@ const updateAcknowledged = asyncHandler(async (req, res) => {
   );
 
   res.status(200).json(updatedMemo);
-});
+};
 
-const getUserUnacknowledged = asyncHandler(async (req, res) => {
+export const getUserUnacknowledged = async (req, res) => {
   try {
     const { memoId } = req.params;
 
@@ -158,14 +223,4 @@ const getUserUnacknowledged = asyncHandler(async (req, res) => {
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
-});
-
-module.exports = {
-  getMemos,
-  createMemo,
-  updateMemo,
-  deleteMemo,
-  getMemoById,
-  updateAcknowledged,
-  getUserUnacknowledged,
 };
