@@ -122,7 +122,7 @@ function ViewMemo() {
       (ack) => ack.userId === user?._id
     );
     return isAcknowledged
-      ? "Acknowledged with Holiday Cheer 🎄"
+      ? "Acknowledged "
       : "Awaiting Your Review";
   };
 
@@ -148,10 +148,10 @@ function ViewMemo() {
                 </div>
                 <div>
                   <h1 className="text-2xl sm:text-3xl font-bold text-green-900">
-                    Christmas Memos
+                    Memos
                   </h1>
                   <p className="text-green-700 text-sm mt-1">
-                    Spread holiday cheer and important announcements this season
+                    Important memos 
                   </p>
                 </div>
               </div>
@@ -187,7 +187,7 @@ function ViewMemo() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-green-600">
-                  Holiday Responses
+                  Total Responses
                 </p>
                 <p className="text-2xl font-bold text-green-600 mt-1">
                   {
@@ -221,7 +221,7 @@ function ViewMemo() {
                 </p>
                 {pendingCount > 0 && (
                   <p className="text-xs text-red-600 mt-2 font-medium flex items-center gap-1">
-                    Click to share holiday cheer
+                    Click to show unacknowlege
                     <ChevronRight className="h-3 w-3" />
                   </p>
                 )}
@@ -240,7 +240,7 @@ function ViewMemo() {
               <div className="flex items-center gap-2">
                 <div className="h-2 w-2 bg-red-500 rounded-full animate-pulse" />
                 <span className="text-red-800 font-medium">
-                  🎄 Spreading cheer for {pendingCount} memo
+                 {pendingCount} memo
                   {pendingCount !== 1 ? "s" : ""}
                 </span>
               </div>
@@ -265,19 +265,16 @@ function ViewMemo() {
                 <TableRow className="border-0 hover:bg-transparent">
                   <TableHead className="text-white font-bold text-center py-4">
                     <div className="flex items-center justify-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      Holiday Date
+                       Date
                     </div>
                   </TableHead>
                   <TableHead className="text-white font-bold text-center py-4">
                     <div className="flex items-center justify-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      Holiday Message
+                       Message
                     </div>
                   </TableHead>
                   <TableHead className="text-white font-bold text-center py-4">
                     <div className="flex items-center justify-center gap-2">
-                      <Heart className="h-4 w-4" />
                       Your Response
                     </div>
                   </TableHead>
@@ -309,7 +306,7 @@ function ViewMemo() {
                         </p>
                         {memo.subject.length > 100 && (
                           <p className="text-xs text-green-600 mt-1">
-                            ❄️ Click view to read full holiday message
+                             Click view to read
                           </p>
                         )}
                       </div>
@@ -336,7 +333,7 @@ function ViewMemo() {
                         className="bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 flex items-center gap-2 mx-auto shadow-lg hover:shadow-xl"
                       >
                         <Eye className="h-4 w-4" />
-                        Read with Holiday Spirit
+                        View and Read  
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -389,7 +386,7 @@ function ViewMemo() {
                   className="w-full bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700 text-white font-medium py-2 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-lg"
                 >
                   <Eye className="h-4 w-4" />
-                  Read with Holiday Spirit
+                  Read 
                 </Button>
               </div>
             ))}
@@ -486,13 +483,13 @@ function ViewMemo() {
               <FileText className="h-16 w-16 text-green-300 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-green-900 mb-2">
                 {showPendingOnly
-                  ? "All caught up with holiday cheer!"
-                  : "No holiday messages yet"}
+                  ? "All caught up !"
+                  : "No messages yet"}
               </h3>
               <p className="text-green-700 max-w-sm mx-auto">
                 {showPendingOnly
-                  ? "You've acknowledged all memos with holiday spirit. What a festive heart!"
-                  : "There are no Christmas memos available at the moment. Check back later for holiday messages."}
+                  ? "You've acknowledged all memos"
+                  : "There are no memos available at the moment. Check back later."}
               </p>
               {showPendingOnly && (
                 <Button
@@ -506,16 +503,6 @@ function ViewMemo() {
           )}
         </div>
 
-        {/* Christmas Footer */}
-        <div className="mt-8 text-center">
-          <div className="text-green-600 text-sm flex items-center justify-center gap-2">
-            <span>🎅</span>
-            <span>
-              Wishing you a season filled with joy and holiday cheer
-            </span>
-            <span>❄️</span>
-          </div>
-        </div>
       </div>
     </div>
   );

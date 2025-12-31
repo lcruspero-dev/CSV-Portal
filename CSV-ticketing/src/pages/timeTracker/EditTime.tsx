@@ -44,7 +44,6 @@ import {
   AlertTriangle,
   CheckCircle,
   Gift,
-  Snowflake,
 } from "lucide-react";
 import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -432,13 +431,6 @@ const AdminTimeRecordEdit: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-red-50 py-6 relative overflow-hidden">
-      {/* Animated Snowflakes Background */}
-      <div className="absolute top-4 right-10 opacity-5">
-        <Snowflake className="h-16 w-16 text-blue-400 animate-pulse" />
-      </div>
-      <div className="absolute bottom-10 left-10 opacity-5">
-        <Snowflake className="h-12 w-12 text-blue-300 animate-pulse delay-300" />
-      </div>
       
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Header */}
