@@ -1,13 +1,35 @@
-const express = require("express");
-const { errorHandler } = require("./middleware/errorMiddleware");
-const connectDB = require("./config/db");
+import express from "express";
+import { errorHandler } from "./middleware/errorMiddleware.js";
+import connectDB from "./config/db.js";
+import dotenv from "dotenv";
+import cors from "cors";
+
+// Import routes
+import userRoutes from "./routes/userRoutes.js";
+import ticketRoutes from "./routes/ticketRoutes.js";
+import memoRoutes from "./routes/memoRoutes.js";
+import policiesRoute from "./routes/policiesRoute.js";
+import assignRoutes from "./routes/assignRoutes.js";
+import categoryRoutes from "./routes/categoryRoutes.js";
+import employeeTimeRoutes from "./routes/employeeTimeRoutes.js";
+import ScheduleAndAttendanceRoutes from "./routes/ScheduleAndAttendanceRoutes.js";
+import surveyRoutes from "./routes/surveyRoutes.js";
+import nteRoutes from "./routes/nteRoutes.js";
+import coachingRoutes from "./routes/coachingRoutes.js";
+import userProfileRoutes from "./routes/userProfileRoutes.js";
+import leaveRoutes from "./routes/leaveRoutes.js";
+import payrollRoute from "./routes/payrollRoute.js";
+
+// Import job
+import "./jobs/leaveAccrualJob.js";
+
+dotenv.config();
+
 const PORT = process.env.PORT || 3000;
-const cors = require("cors");
 
 // Connect to database
 connectDB();
 
-require("./jobs/leaveAccrualJob.js");
 const app = express();
 
 /**
@@ -36,26 +58,22 @@ app.use(cors(corsOptions));
 app.use(express.urlencoded({ extended: false }));
 
 // Routes endpoints
-app.use("/api/users", require("./routes/userRoutes"));
-app.use("/api/tickets", require("./routes/ticketRoutes"));
-app.use("/api/memos", require("./routes/memoRoutes"));
-app.use("/api/policies", require("./routes/policiesRoute"));
-app.use("/api/assigns", require("./routes/assignRoutes"));
-app.use("/api/categories", require("./routes/categoryRoutes"));
-app.use("/api/employeeTimes", require("./routes/employeeTimeRoutes"));
-app.use(
-  "/api/ScheduleAndAttendanceRoutes",
-  require("./routes/ScheduleAndAttendanceRoutes")
-);
-app.use("/api/surveys", require("./routes/surveyRoutes"));
-app.use("/api/ntes", require("./routes/nteRoutes"));
-app.use("/api/coaching", require("./routes/coachingRoutes"));
-app.use("/api/userprofiles", require("./routes/userProfileRoutes"));
-app.use("/api/leave", require("./routes/leaveRoutes"));
-app.use("/api/payroll", require("./routes/payrollRoute.js"));
+app.use("/api/users", userRoutes);
+app.use("/api/tickets", ticketRoutes);
+app.use("/api/memos", memoRoutes);
+app.use("/api/policies", policiesRoute);
+app.use("/api/assigns", assignRoutes);
+app.use("/api/categories", categoryRoutes);
+app.use("/api/employeeTimes", employeeTimeRoutes);
+app.use("/api/ScheduleAndAttendanceRoutes", ScheduleAndAttendanceRoutes);
+app.use("/api/surveys", surveyRoutes);
+app.use("/api/ntes", nteRoutes);
+app.use("/api/coaching", coachingRoutes);
+app.use("/api/userprofiles", userProfileRoutes);
+app.use("/api/leave", leaveRoutes);
+app.use("/api/payroll", payrollRoute);
 
 // Serve frontend time
-
 app.get("/api/current-time", (_req, res) => {
   const currentTime = new Date();
   res.json({

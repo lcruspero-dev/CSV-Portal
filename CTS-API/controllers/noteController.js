@@ -1,71 +1,99 @@
-const asyncHandler = require("express-async-handler");
+import User from "../models/userModel";
+import Note from "../models/noteModel";
+import Ticket from "../models/ticketModel";
 
-const User = require("../models/userModel");
-const Note = require("../models/noteModel");
-const Ticket = require("../models/ticketModel");
+export const getNotes = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
 
-// @desc    Get notes for a ticket
-// @route   GET /api/tickets/:ticketId/notes
-// @access  Private
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "User not found or not authenticated",
+      });
+    }
 
-/**
- * 'asyncHandler' is a simple middleware for handling exceptions
- * inside of async express routes and passing them to your express
- * error handlers.
- */
-const getNotes = asyncHandler(async (req, res) => {
-  // Get user using the id and JWT
-  const user = await User.findById(req.user.id);
+    const ticket = await Ticket.findById(req.params.ticketId);
 
-  if (!user) {
-    res.status(401);
-    throw new Error("User not found");
+    if (!ticket) {
+      return res.status(404).json({
+        success: false,
+        message: "Ticketing not found",
+      });
+    }
+
+    if (ticket.user.toString() !== req.user.id && !req.user.isAdmin) {
+      return res.status(401).json({
+        success: false,
+        message: "User not authorized",
+      });
+    }
+
+    const notes = await Note.find({
+      ticket: req.params.ticketId,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Fetch Notes",
+      data: notes,
+    });
+  } catch (error) {
+    console.error("", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
+};
 
-  const ticket = await Ticket.findById(req.params.ticketId);
+export const addNote = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
 
-  if (ticket.user.toString() !== req.user.id && !req.user.isAdmin) {
-    res.status(401);
-    throw new Error("User not authorized");
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "User not found or not authenticated",
+      });
+    }
+
+    // Get the ticket
+    const ticket = await Ticket.findById(req.params.ticketId);
+
+    if (!ticket) {
+      return res.status(404).json({
+        success: false,
+        message: "Ticket not found",
+      });
+    }
+
+    if (ticket.user.toString() !== req.user.id && !req.user.isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: "User not authorized to add note",
+      });
+    }
+
+    // Create the note
+    const note = await Note.create({
+      ticket: req.params.ticketId,
+      text: req.body.text,
+      isStaff: false,
+      user: req.user.id,
+      name: req.user.name,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Note created successfully",
+      data: note,
+    });
+  } catch (error) {
+    console.error("", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
-
-  const notes = await Note.find({ ticket: req.params.ticketId });
-
-  res.status(200).json(notes);
-});
-
-// @desc    Create ticket note
-// @route   POST /api/tickets/:ticketId/notes
-// @access  Private
-
-const addNote = asyncHandler(async (req, res) => {
-  // Get user using the id and JWT
-  const user = await User.findById(req.user.id);
-
-  if (!user) {
-    res.status(401);
-    throw new Error("User not found");
-  }
-
-  const ticket = await Ticket.findById(req.params.ticketId);
-
-  if (ticket.user.toString() !== req.user.id && !req.user.isAdmin) {
-    res.status(401);
-    throw new Error("User not authorized");
-  }
-
-  const note = await Note.create({
-    ticket: req.params.ticketId,
-    text: req.body.text,
-    isStaff: false,
-    user: req.user.id,
-    name: req.user.name,
-  });
-
-  res.status(200).json(note);
-});
-
-module.exports = {
-  getNotes,
-  addNote,
 };

@@ -1,11 +1,11 @@
-const asyncHandler = require("express-async-handler");
-const User = require("../models/userModel");
-const Ticket = require("../models/ticketModel");
+import asyncHandler from "express-async-handler";
+import User from "../models/userModel";
+import Ticket from "../models/ticketModel";
 
 // @desc    Get user tickets
 // @route   GET /api/tickets
 // @access  Private
-const getTickets = asyncHandler(async (req, res) => {
+export const getTickets = asyncHandler(async (req, res) => {
   // Get user using the id and JWT
   const user = await User.findById(req.user.id);
 
@@ -24,7 +24,7 @@ const getTickets = asyncHandler(async (req, res) => {
 // @desc    Get user ticket
 // @route   GET /api/tickets/:id
 // @access  Private
-const getTicket = asyncHandler(async (req, res) => {
+export const getTicket = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id);
 
   if (!user) {
@@ -51,7 +51,7 @@ const getTicket = asyncHandler(async (req, res) => {
 // @desc    Create new ticket
 // @route   POST /api/tickets
 // @access  Private
-const createTicket = asyncHandler(async (req, res) => {
+export const createTicket = asyncHandler(async (req, res) => {
   const {
     category,
     description,
@@ -108,7 +108,7 @@ const createTicket = asyncHandler(async (req, res) => {
 // @desc    Delete ticket
 // @route   DELETE /api/tickets/:id
 // @access  Private
-const deleteTicket = asyncHandler(async (req, res) => {
+export const deleteTicket = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id);
 
   if (!user) {
@@ -131,7 +131,7 @@ const deleteTicket = asyncHandler(async (req, res) => {
 // @desc    Update ticket
 // @route   PUT /api/tickets/:id
 // @access  Private
-const updateTicket = asyncHandler(async (req, res) => {
+export const updateTicket = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id);
 
   if (!user) {
@@ -184,7 +184,7 @@ const updateTicket = asyncHandler(async (req, res) => {
 // @desc    View all tickets
 // @route   GET /api/tickets/all
 // @access  Private (Admin)
-const viewAllTickets = asyncHandler(async (req, res) => {
+export const viewAllTickets = asyncHandler(async (req, res) => {
   const tickets = await Ticket.find()
     .sort({ createdAt: -1 })
     .populate("user", "name email");
@@ -194,7 +194,7 @@ const viewAllTickets = asyncHandler(async (req, res) => {
 // @desc    View open tickets
 // @route   GET /api/tickets/open
 // @access  Private
-const viewOpenTickets = asyncHandler(async (req, res) => {
+export const viewOpenTickets = asyncHandler(async (req, res) => {
   const tickets = await Ticket.find({
     status: { $in: ["open", "In Progress"] },
   })
@@ -206,7 +206,7 @@ const viewOpenTickets = asyncHandler(async (req, res) => {
 // @desc    View closed tickets
 // @route   GET /api/tickets/closed
 // @access  Private
-const viewClosedTickets = asyncHandler(async (req, res) => {
+export const viewClosedTickets = asyncHandler(async (req, res) => {
   const tickets = await Ticket.find({ status: "closed" })
     .sort({ createdAt: -1 })
     .populate("user", "name email");
@@ -216,7 +216,7 @@ const viewClosedTickets = asyncHandler(async (req, res) => {
 // @desc    View tickets by department
 // @route   GET /api/tickets/department/:dept
 // @access  Private
-const viewTicketsByDepartment = asyncHandler(async (req, res) => {
+export const viewTicketsByDepartment = asyncHandler(async (req, res) => {
   const { dept } = req.params;
 
   if (!["HR", "IT"].includes(dept)) {
@@ -233,7 +233,7 @@ const viewTicketsByDepartment = asyncHandler(async (req, res) => {
 // @desc    View tickets by priority
 // @route   GET /api/tickets/priority/:level
 // @access  Private
-const viewTicketsByPriority = asyncHandler(async (req, res) => {
+export const viewTicketsByPriority = asyncHandler(async (req, res) => {
   const { level } = req.params;
 
   if (!["4-Low", "3-Moderate", "2-High", "1-Critical"].includes(level)) {
@@ -247,7 +247,7 @@ const viewTicketsByPriority = asyncHandler(async (req, res) => {
   res.status(200).json(tickets);
 });
 
-const viewTicketsByCategory = asyncHandler(async (req, res) => {
+export const viewTicketsByCategory = asyncHandler(async (req, res) => {
   const { category } = req.params;
 
   const tickets = await Ticket.find({ category })
@@ -256,16 +256,3 @@ const viewTicketsByCategory = asyncHandler(async (req, res) => {
   res.status(200).json(tickets);
 });
 
-module.exports = {
-  getTickets,
-  createTicket,
-  getTicket,
-  deleteTicket,
-  updateTicket,
-  viewAllTickets,
-  viewOpenTickets,
-  viewClosedTickets,
-  viewTicketsByDepartment,
-  viewTicketsByPriority,
-  viewTicketsByCategory,
-};

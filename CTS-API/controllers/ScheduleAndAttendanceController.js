@@ -1,11 +1,11 @@
-const {
+import {
   ScheduleEntry,
   AttendanceEntry,
   TeamLeaderEntry,
-} = require("../models/ScheduleAndAttendanceModel");
+} from "../models/ScheduleAndAttendanceModel";
 
 // Get all schedule entries
-exports.getScheduleEntries = async (req, res) => {
+export const getScheduleEntries = async (req, res) => {
   try {
     const scheduleEntries = await ScheduleEntry.find({
       teamLeader: { $ne: "Inactive" }, // Exclude entries where teamLeader is "inactive"
@@ -25,7 +25,7 @@ exports.getScheduleEntries = async (req, res) => {
 };
 
 // Create a new schedule entry
-exports.createScheduleEntry = async (req, res) => {
+export const createScheduleEntry = async (req, res) => {
   try {
     const existingScheduleEntry = await ScheduleEntry.findOne({
       employeeId: req.body.employeeId,
@@ -48,7 +48,7 @@ exports.createScheduleEntry = async (req, res) => {
 };
 
 // Update a schedule entry
-exports.updateScheduleEntry = async (req, res) => {
+export const updateScheduleEntry = async (req, res) => {
   const { id } = req.params;
   const { date, shiftType, startTime, endTime, break1, break2, lunch } =
     req.body;
@@ -112,7 +112,7 @@ exports.updateScheduleEntry = async (req, res) => {
 };
 
 // this will remove the employee from the list
-exports.updateTeamLeaderToInactive = async (req, res) => {
+export const updateTeamLeaderToInactive = async (req, res) => {
   try {
     const scheduleEntry = await ScheduleEntry.findById(req.params.id);
     if (!scheduleEntry) {
@@ -129,7 +129,7 @@ exports.updateTeamLeaderToInactive = async (req, res) => {
 };
 
 // Get all attendance entries
-exports.getAttendanceEntries = async (req, res) => {
+export const getAttendanceEntries = async (req, res) => {
   try {
     const attendanceEntries = await AttendanceEntry.find().populate(
       "employeeId"
@@ -141,7 +141,7 @@ exports.getAttendanceEntries = async (req, res) => {
 };
 
 // Create a new attendance entry
-exports.createAttendanceEntry = async (req, res) => {
+export const createAttendanceEntry = async (req, res) => {
   try {
     const { date, employeeId } = req.body; // Assuming your request body contains these fields
 
@@ -171,7 +171,7 @@ exports.createAttendanceEntry = async (req, res) => {
 };
 
 // Update an attendance entry
-exports.updateAttendanceEntry = async (req, res) => {
+export const updateAttendanceEntry = async (req, res) => {
   const { id } = req.params;
   const { status, checkinTime, checkoutTime } = req.body;
   try {
@@ -187,7 +187,7 @@ exports.updateAttendanceEntry = async (req, res) => {
 };
 
 // Create Team Leader Entry
-exports.createTeamLeaderEntry = async (req, res) => {
+export const createTeamLeaderEntry = async (req, res) => {
   try {
     const newTeamLeaderEntry = new TeamLeaderEntry({ ...req.body });
     await newTeamLeaderEntry.save();
@@ -198,7 +198,7 @@ exports.createTeamLeaderEntry = async (req, res) => {
 };
 
 // Get All team leader entries
-exports.getAllTeamLeaderEntries = async (req, res) => {
+export const getAllTeamLeaderEntries = async (req, res) => {
   try {
     const teamLeaderEntries = await TeamLeaderEntry.find();
     res.status(200).json(teamLeaderEntries);
@@ -207,7 +207,7 @@ exports.getAllTeamLeaderEntries = async (req, res) => {
   }
 };
 
-exports.checkExistingEntry = async (req, res) => {
+export const checkExistingEntry = async (req, res) => {
   try {
     const { employeeId } = req.body;
 
@@ -229,7 +229,7 @@ exports.checkExistingEntry = async (req, res) => {
   }
 };
 
-exports.getSchedulePerEmployeeByDate = async (req, res) => {
+export const getSchedulePerEmployeeByDate = async (req, res) => {
   const { date } = req.query; // Read date from query parameters
   const employeeId = req.user.id; // Get employeeId from authenticated user
 
@@ -256,7 +256,7 @@ exports.getSchedulePerEmployeeByDate = async (req, res) => {
   }
 };
 
-exports.getSchedulePerEmployee = async (req, res) => {
+export const getSchedulePerEmployee = async (req, res) => {
   const employeeId = req.user.id; // Get employeeId from authenticated user
 
   try {

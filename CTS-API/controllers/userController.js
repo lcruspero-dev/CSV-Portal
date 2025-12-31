@@ -1,27 +1,28 @@
-const asyncHandler = require("express-async-handler");
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcryptjs");
+import asyncHandler from "express-async-handler";
+import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
+import User from "../models/userModel.js";
 
-const User = require("../models/userModel");
-
-// @desc    Register a new user
-// @route   /api/users
-// @access  Public
-const registerUser = asyncHandler(async (req, res) => {
+{/** Register User */}
+export const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password, isAdmin } = req.body;
 
   // Validation
   if (!name || !email || !password) {
-    res.status(400);
-    throw new Error("Please provide all required fields");
+    return res.status(400).json({
+      success: false,
+      message: "Fields not found"
+    });
   }
 
   // Check for existing user
   const userExists = await User.findOne({ email });
 
   if (userExists) {
-    res.status(400);
-    throw new Error("User already exists");
+    return res.status(400).json({
+      success: false,
+      message: "User already exists"
+    })
   }
 
   // Hash password
@@ -33,13 +34,15 @@ const registerUser = asyncHandler(async (req, res) => {
     name,
     email,
     password: hashedPassword,
-    isAdmin: isAdmin || false, // Set isAdmin, default to false if not provided
+    isAdmin: isAdmin || false, 
     role: "user",
   });
 
   // User is created
   if (user) {
     res.status(201).json({
+      status: true,
+      message: "Registration Complete",
       _id: user._id,
       name: user.name,
       email: user.email,
@@ -49,15 +52,15 @@ const registerUser = asyncHandler(async (req, res) => {
       loginLimit: user.loginLimit,
     });
   } else {
-    res.status(400);
-    throw new Error("User could not be created");
+    res.status(400).json({
+      success: false,
+      message: "Registration failed"
+    });
   }
 });
 
-// @desc    Login a user
-// @route   /api/users/login
-// @access  Public
-const loginUser = asyncHandler(async (req, res) => {
+{/** Login User */}
+export const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
   const user = await User.findOne({ email });
@@ -75,7 +78,10 @@ const loginUser = asyncHandler(async (req, res) => {
       token: generateToken(user._id, user.isAdmin, user.name),
     });
   } else {
-    res.status(401);
+    res.status(401).json({
+      success: true,
+      message: ""
+    });
     throw new Error("Invalid credentials");
   }
 });
@@ -83,7 +89,7 @@ const loginUser = asyncHandler(async (req, res) => {
 // @desc    Get current user
 // @route   /api/users/me
 // @access  Private
-const getMe = asyncHandler(async (req, res) => {
+export const getMe = asyncHandler(async (req, res) => {
   const user = {
     id: req.user._id,
     email: req.user.email,
@@ -94,14 +100,14 @@ const getMe = asyncHandler(async (req, res) => {
 });
 
 // Generate token
-const generateToken = (id, isAdmin, name) => {
+export const generateToken = (id, isAdmin, name) => {
   return jwt.sign({ id, isAdmin, name }, process.env.JWT_SECRET, {
     expiresIn: "30d",
   });
 };
 
 // Reset password using secret key
-const adminResetPassword = asyncHandler(async (req, res) => {
+export const adminResetPassword = asyncHandler(async (req, res) => {
   const { email, password, confirmPassword, secretKey } = req.body;
 
   // Validate input fields
@@ -164,12 +170,12 @@ const adminResetPassword = asyncHandler(async (req, res) => {
 });
 
 //get all users emails
-const getAllUsersEmails = asyncHandler(async (req, res) => {
+export const getAllUsersEmails = asyncHandler(async (req, res) => {
   const users = await User.find({}, { email: 1 });
   res.status(200).json(users);
 });
 
-const searchUsers = asyncHandler(async (req, res) => {
+export const searchUsers = asyncHandler(async (req, res) => {
   // Get user information from the authenticated request
   const requestingUser = req.user; // Assuming you have user data in req.user from auth middleware
 
@@ -196,11 +202,10 @@ const searchUsers = asyncHandler(async (req, res) => {
       { password: 0 } // Excludes password field
     );
   }
-
   res.status(200).json(users);
 });
 
-const setUserToInactive = asyncHandler(async (req, res) => {
+export const setUserToInactive = asyncHandler(async (req, res) => {
   const { userId } = req.params;
   const user = await User.findById(userId);
   if (!user) {
@@ -210,7 +215,8 @@ const setUserToInactive = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(userId, { status: "inactive" });
   res.status(200).json({ message: "User set to inactive" });
 });
-const setUserToActive = asyncHandler(async (req, res) => {
+
+export const setUserToActive = asyncHandler(async (req, res) => {
   const { userId } = req.params;
   const user = await User.findById(userId);
   if (!user) {
@@ -221,7 +227,7 @@ const setUserToActive = asyncHandler(async (req, res) => {
   res.status(200).json({ message: "User set to active" });
 });
 
-const changePassword = asyncHandler(async (req, res) => {
+export const changePassword = asyncHandler(async (req, res) => {
   const userId = req.user._id;
   const { currentPassword, newPassword } = req.body;
   const user = await User.findById(userId);
@@ -241,7 +247,7 @@ const changePassword = asyncHandler(async (req, res) => {
 });
 
 //update login limit
-const updateLoginLimit = asyncHandler(async (req, res) => {
+export const updateLoginLimit = asyncHandler(async (req, res) => {
   const { userId } = req.params; // Destructure userId from params
   const { loginLimit } = req.body;
 
@@ -256,7 +262,7 @@ const updateLoginLimit = asyncHandler(async (req, res) => {
   res.status(200).json({ message: "Login limit updated successfully" });
 });
 
-const addUser = asyncHandler(async (req, res) => {
+export const addUser = asyncHandler(async (req, res) => {
   const { 
     name, 
     email, 
@@ -307,16 +313,4 @@ const addUser = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = {
-  registerUser,
-  loginUser,
-  getMe,
-  adminResetPassword,
-  getAllUsersEmails,
-  searchUsers,
-  setUserToInactive,
-  setUserToActive,
-  changePassword,
-  updateLoginLimit,
-  addUser
-};
+
