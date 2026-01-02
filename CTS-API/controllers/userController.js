@@ -1,95 +1,119 @@
-import asyncHandler from "express-async-handler";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import User from "../models/userModel.js";
 
 {/** Register User */}
-export const registerUser = asyncHandler(async (req, res) => {
-  const { name, email, password, isAdmin } = req.body;
+export const registerUser = async (req, res) => {
+  try {
+    const { name, email, password, isAdmin } = req.body;
 
-  // Validation
-  if (!name || !email || !password) {
-    return res.status(400).json({
+    // Validation
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Required fields are missing",
+      });
+    }
+
+    // Check for existing user
+    const userExists = await User.findOne({ email });
+
+    if (userExists) {
+      return res.status(409).json({
+        success: false,
+        message: "User already exists",
+      });
+    }
+
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create user
+    const user = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      isAdmin: isAdmin ?? false,
+      role: "user",
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Registration complete",
+      data: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isAdmin: user.isAdmin,
+        loginLimit: user.loginLimit,
+        token: generateToken(user._id, user.isAdmin, user.name),
+      },
+    });
+
+  } catch (error) {
+    console.error("Register User Error:", error);
+
+    return res.status(500).json({
       success: false,
-      message: "Fields not found"
+      message: "Internal server error",
     });
   }
-
-  // Check for existing user
-  const userExists = await User.findOne({ email });
-
-  if (userExists) {
-    return res.status(400).json({
-      success: false,
-      message: "User already exists"
-    })
-  }
-
-  // Hash password
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(password, salt);
-
-  // Create user
-  const user = await User.create({
-    name,
-    email,
-    password: hashedPassword,
-    isAdmin: isAdmin || false, 
-    role: "user",
-  });
-
-  // User is created
-  if (user) {
-    res.status(201).json({
-      status: true,
-      message: "Registration Complete",
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      isAdmin: user.isAdmin,
-      role: user.role,
-      token: generateToken(user._id, user.isAdmin, user.name),
-      loginLimit: user.loginLimit,
-    });
-  } else {
-    res.status(400).json({
-      success: false,
-      message: "Registration failed"
-    });
-  }
-});
+};
 
 {/** Login User */}
-export const loginUser = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+export const loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-  const user = await User.findOne({ email });
+    // Validation
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and password are required",
+      });
+    }
 
-  // Check User and Password match
-  if (user && (await bcrypt.compare(password, user.password))) {
-    res.status(200).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      isAdmin: user.isAdmin,
-      role: user.role,
-      status: user.status,
-      loginLimit: user.loginLimit,
-      token: generateToken(user._id, user.isAdmin, user.name),
-    });
-  } else {
-    res.status(401).json({
+    // Find user
+    const user = await User.findOne({ email });
+
+    // Check credentials
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password",
+      });
+    }
+
+    // Successful login
+    return res.status(200).json({
       success: true,
-      message: ""
+      message: "Login successful",
+      data: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isAdmin: user.isAdmin,
+        status: user.status,
+        loginLimit: user.loginLimit,
+        token: generateToken(user._id, user.isAdmin, user.name),
+      },
     });
-    throw new Error("Invalid credentials");
-  }
-});
 
-// @desc    Get current user
-// @route   /api/users/me
-// @access  Private
-export const getMe = asyncHandler(async (req, res) => {
+  } catch (error) {
+    console.error("Login User Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+
+export const getMe = async (req, res) => {
   const user = {
     id: req.user._id,
     email: req.user.email,
@@ -97,7 +121,7 @@ export const getMe = asyncHandler(async (req, res) => {
     isAdmin: req.user.isAdmin,
   };
   res.status(200).json(user);
-});
+};
 
 // Generate token
 export const generateToken = (id, isAdmin, name) => {
@@ -107,7 +131,7 @@ export const generateToken = (id, isAdmin, name) => {
 };
 
 // Reset password using secret key
-export const adminResetPassword = asyncHandler(async (req, res) => {
+export const adminResetPassword = async (req, res) => {
   const { email, password, confirmPassword, secretKey } = req.body;
 
   // Validate input fields
@@ -167,15 +191,15 @@ export const adminResetPassword = asyncHandler(async (req, res) => {
     email: user.email,
     name: user.name,
   });
-});
+};
 
 //get all users emails
-export const getAllUsersEmails = asyncHandler(async (req, res) => {
+export const getAllUsersEmails = async (req, res) => {
   const users = await User.find({}, { email: 1 });
   res.status(200).json(users);
-});
+};
 
-export const searchUsers = asyncHandler(async (req, res) => {
+export const searchUsers = async (req, res) => {
   // Get user information from the authenticated request
   const requestingUser = req.user; // Assuming you have user data in req.user from auth middleware
 
@@ -203,9 +227,9 @@ export const searchUsers = asyncHandler(async (req, res) => {
     );
   }
   res.status(200).json(users);
-});
+};
 
-export const setUserToInactive = asyncHandler(async (req, res) => {
+export const setUserToInactive = async (req, res) => {
   const { userId } = req.params;
   const user = await User.findById(userId);
   if (!user) {
@@ -214,9 +238,9 @@ export const setUserToInactive = asyncHandler(async (req, res) => {
   }
   await User.findByIdAndUpdate(userId, { status: "inactive" });
   res.status(200).json({ message: "User set to inactive" });
-});
+};
 
-export const setUserToActive = asyncHandler(async (req, res) => {
+export const setUserToActive = async (req, res) => {
   const { userId } = req.params;
   const user = await User.findById(userId);
   if (!user) {
@@ -225,9 +249,9 @@ export const setUserToActive = asyncHandler(async (req, res) => {
   }
   await User.findByIdAndUpdate(userId, { status: "active" });
   res.status(200).json({ message: "User set to active" });
-});
+};
 
-export const changePassword = asyncHandler(async (req, res) => {
+export const changePassword = async (req, res) => {
   const userId = req.user._id;
   const { currentPassword, newPassword } = req.body;
   const user = await User.findById(userId);
@@ -244,10 +268,10 @@ export const changePassword = asyncHandler(async (req, res) => {
   const hashedPassword = await bcrypt.hash(newPassword, salt);
   await User.findByIdAndUpdate(userId, { password: hashedPassword });
   res.status(200).json({ message: "Password changed successfully" });
-});
+};
 
 //update login limit
-export const updateLoginLimit = asyncHandler(async (req, res) => {
+export const updateLoginLimit = async (req, res) => {
   const { userId } = req.params; // Destructure userId from params
   const { loginLimit } = req.body;
 
@@ -260,9 +284,9 @@ export const updateLoginLimit = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(userId, { loginLimit });
 
   res.status(200).json({ message: "Login limit updated successfully" });
-});
+};
 
-export const addUser = asyncHandler(async (req, res) => {
+export const addUser = async (req, res) => {
   const { 
     name, 
     email, 
@@ -311,6 +335,6 @@ export const addUser = asyncHandler(async (req, res) => {
       loginLimit: user.loginLimit,
     },
   });
-});
+};
 
 
