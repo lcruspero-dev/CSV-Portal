@@ -6,11 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/context/useAuth";
 import { ChangeEvent, useState } from "react";
 import { Navigate, useNavigate, Link } from "react-router-dom";
-import {
-  Eye,
-  EyeOff,
-  Loader2,
-} from "lucide-react";
+import { Eye, EyeOff, Loader2, UserPlus, Building2 } from "lucide-react";
 
 interface Form {
   firstName: string;
@@ -47,10 +43,9 @@ const Registration = () => {
     setIsLoading(true);
 
     const middleInitial = form.middleName
-    ? `${form.middleName.charAt(0).toUpperCase()}.`
-    : "";
-    const fullName = 
-    `${form.firstName} ${middleInitial} ${form.lastName}`.trim();
+      ? `${form.middleName.charAt(0).toUpperCase()}.`
+      : "";
+    const fullName = `${form.firstName} ${middleInitial} ${form.lastName}`.trim();
 
     // Password validation - must be at least 12 characters with alphanumeric + special characters
     if (form.password.length < 12) {
@@ -75,8 +70,8 @@ const Registration = () => {
     // Email validation
     if (!form.email.endsWith("@csvnow.com")) {
       toast({
-        title: " Invalid email domain",
-        description: "Please use your company email address",
+        title: "Invalid email domain",
+        description: "Please use your company email address (@csvnow.com)",
         variant: "destructive",
       });
       return;
@@ -93,7 +88,7 @@ const Registration = () => {
       const response = await AuthAPI.register(payload);
       console.log(response.data);
       toast({
-        title: "✅Account created successfully!",
+        title: "✅ Account created successfully!",
         description: "Welcome to CSV NOW",
       });
 
@@ -161,149 +156,260 @@ const Registration = () => {
   };
 
   return (
-    <div className="max-w-4xl w-full space-y-2 bg-gradient-to-br from-green-50 via-white to-red-50 p-10 rounded-2xl shadow-2xl border-2 border-green-300 relative overflow-hidden">
-      <form
-        className="w-full max-w-4xl space-y-6 relative z-10"
-        onSubmit={handleSubmit}
-      >
-        <div className="text-center mb-4">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-green-700 via-red-600 to-yellow-600 text-transparent bg-clip-text md:text-3xl">
-            Join CSV now 
+    <div className="min-h-screen flex items-center justify-center px-4 py-8">
+      <div className="w-full max-w-2xl">
+        <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <div className="p-3 rounded-full bg-gradient-to-br from-purple-100 to-indigo-100">
+              <UserPlus className="h-8 w-8 text-purple-600" />
+            </div>
+          </div>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
+            Create Your Account
           </h1>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4">
-          <div className="space-y-4">
-            <div className="relative">
-              <Input
-                placeholder="First Name"
-                name="firstName"
-                type="text"
-                className="w-full border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-gradient-to-r from-green-50 to-green-100"
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="relative">
-              <Input
-                placeholder="Last Name"
-                name="lastName"
-                type="text"
-                className="w-full border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-gradient-to-r from-green-50 to-green-100"
-                onChange={handleChange}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="relative">
-              <Input
-                placeholder="Middle Name"
-                name="middleName"
-                type="text"
-                className="w-full border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 bg-gradient-to-r from-yellow-50 to-yellow-100"
-                onChange={handleChange}
-              />
-            </div>
-            <div className="relative">
-              <Input
-                placeholder="Company Email"
-                name="email"
-                type="email"
-                className="w-full border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200 bg-gradient-to-r from-red-50 to-red-100"
-                onChange={handleChange}
-                required
-              />
-            </div>
+          <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
+            <Building2 className="h-4 w-4" />
+            <span>CSV NOW Employee Portal</span>
           </div>
         </div>
 
-        <div className="space-y-4">
-          {/* Password Input with Toggle */}
-          <div className="relative">
-            <Input
-              placeholder="Password (min 12 characters)"
-              name="password"
-              type={showPassword ? "text" : "password"}
-              className="w-full border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 pr-10 bg-gradient-to-r from-green-50 to-green-100"
-              onChange={handleChange}
-              required
-            />
-            <button
-              type="button"
-              onClick={togglePasswordVisibility}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500 hover:text-green-700 transition-colors duration-200"
-            >
-              {showPassword ? (
-                <EyeOff className="h-5 w-5" />
-              ) : (
-                <Eye className="h-5 w-5" />
-              )}
-            </button>
-          </div>
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 md:p-8">
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* First Name */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  First Name *
+                </label>
+                <Input
+                  placeholder="Enter your first name"
+                  name="firstName"
+                  type="text"
+                  className="w-full border-gray-300 focus:border-purple-500 rounded-lg focus:ring-2 focus:ring-purple-200 transition-all duration-200"
+                  onChange={handleChange}
+                  required
+                />
+              </div>
 
-          {/* Confirm Password Input with Toggle */}
-          <div className="relative">
-            <Input
-              placeholder="Confirm Password"
-              name="confirm_password"
-              type={showConfirmPassword ? "text" : "password"}
-              className="w-full border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200 pr-10 bg-gradient-to-r from-red-50 to-red-100"
-              onChange={handleChange}
-              required
-            />
-            <button
-              type="button"
-              onClick={toggleConfirmPasswordVisibility}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 transition-colors duration-200"
-            >
-              {showConfirmPassword ? (
-                <EyeOff className="h-5 w-5" />
-              ) : (
-                <Eye className="h-5 w-5" />
-              )}
-            </button>
-          </div>
+              {/* Last Name */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Last Name *
+                </label>
+                <Input
+                  placeholder="Enter your last name"
+                  name="lastName"
+                  type="text"
+                  className="w-full border-gray-300 focus:border-purple-500 rounded-lg focus:ring-2 focus:ring-purple-200 transition-all duration-200"
+                  onChange={handleChange}
+                  required
+                />
+              </div>
 
-          {/* Password Requirements */}
-          <div className="text-xs text-green-600 bg-gradient-to-r from-green-50 to-green-100 p-2 rounded-lg border border-green-200">
-            <p className="flex items-center mb-1">
-              Password must be at least 12 characters long
+              {/* Middle Name */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Middle Name (Optional)
+                </label>
+                <Input
+                  placeholder="Enter your middle name"
+                  name="middleName"
+                  type="text"
+                  className="w-full border-gray-300 focus:border-purple-500 rounded-lg focus:ring-2 focus:ring-purple-200 transition-all duration-200"
+                  onChange={handleChange}
+                />
+              </div>
+
+              {/* Email */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Company Email *
+                </label>
+                <Input
+                  placeholder="your.name@csvnow.com"
+                  name="email"
+                  type="email"
+                  className="w-full border-gray-300 focus:border-purple-500 rounded-lg focus:ring-2 focus:ring-purple-200 transition-all duration-200"
+                  onChange={handleChange}
+                  required
+                />
+                <p className="text-xs text-gray-500">
+                  Must use @csvnow.com domain
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              {/* Password */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Password *
+                </label>
+                <div className="relative">
+                  <Input
+                    placeholder="Create a strong password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    className="w-full border-gray-300 focus:border-purple-500 rounded-lg focus:ring-2 focus:ring-purple-200 transition-all duration-200 pr-10"
+                    onChange={handleChange}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={togglePasswordVisibility}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-purple-600 transition-colors duration-200"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm Password */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Confirm Password *
+                </label>
+                <div className="relative">
+                  <Input
+                    placeholder="Re-enter your password"
+                    name="confirm_password"
+                    type={showConfirmPassword ? "text" : "password"}
+                    className="w-full border-gray-300 focus:border-purple-500 rounded-lg focus:ring-2 focus:ring-purple-200 transition-all duration-200 pr-10"
+                    onChange={handleChange}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={toggleConfirmPasswordVisibility}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-purple-600 transition-colors duration-200"
+                    tabIndex={-1}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Password Requirements */}
+              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <h3 className="text-sm font-medium text-gray-700 mb-2">
+                  Password Requirements:
+                </h3>
+                <ul className="text-xs text-gray-600 space-y-1">
+                  <li className="flex items-center">
+                    <div
+                      className={`h-2 w-2 rounded-full mr-2 ${
+                        form.password.length >= 12
+                          ? "bg-green-500"
+                          : "bg-gray-300"
+                      }`}
+                    />
+                    At least 12 characters long
+                  </li>
+                  <li className="flex items-center">
+                    <div
+                      className={`h-2 w-2 rounded-full mr-2 ${
+                        /[A-Z]/.test(form.password)
+                          ? "bg-green-500"
+                          : "bg-gray-300"
+                      }`}
+                    />
+                    Contains uppercase letters
+                  </li>
+                  <li className="flex items-center">
+                    <div
+                      className={`h-2 w-2 rounded-full mr-2 ${
+                        /[0-9]/.test(form.password)
+                          ? "bg-green-500"
+                          : "bg-gray-300"
+                      }`}
+                    />
+                    Contains numbers
+                  </li>
+                  <li className="flex items-center">
+                    <div
+                      className={`h-2 w-2 rounded-full mr-2 ${
+                        /[^A-Za-z0-9]/.test(form.password)
+                          ? "bg-green-500"
+                          : "bg-gray-300"
+                      }`}
+                    />
+                    Contains special characters
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating Account...
+                </>
+              ) : (
+                "Create Account"
+              )}
+            </Button>
+
+            {/* Divider */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">
+                  Already have an account?
+                </span>
+              </div>
+            </div>
+
+            {/* Sign In Link */}
+            <div className="text-center">
+              <Link
+                to="/sign-in"
+                className="inline-flex items-center justify-center w-full py-3 border border-gray-300 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-colors duration-200 text-gray-700 font-medium"
+              >
+                Sign In to Existing Account
+              </Link>
+            </div>
+          </form>
+
+          {/* Terms and Conditions */}
+          <div className="mt-6 pt-6 border-t border-gray-100">
+            <p className="text-xs text-gray-500 text-center">
+              By creating an account, you agree to our{" "}
+              <Link
+                to="/terms"
+                className="text-purple-600 hover:text-purple-800 hover:underline"
+              >
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link
+                to="/privacy"
+                className="text-purple-600 hover:text-purple-800 hover:underline"
+              >
+                Privacy Policy
+              </Link>
             </p>
           </div>
-
         </div>
 
-        <div className="pt-2">
-          <Button
-            type="submit"
-            className="w-full py-3 bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700 text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-green-500/40"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Singing in...
-              </>
-            ) : (
-              <>Sign up</>
-            )}
-          </Button>
-        </div>
-
-        <div className="text-center text-sm text-green-700 pt-2">
-          <p className="flex items-center justify-center">
-            Already part of CSV?{" "}
-            <Link
-              to={"/sign-in"}
-              className="text-red-600 hover:underline font-semibold ml-1"
-            >
-              Sign In
-            </Link>
-          </p>
-        </div>
-      </form>
+       
+      </div>
     </div>
   );
 };
