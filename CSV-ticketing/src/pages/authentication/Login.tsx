@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/context/useAuth";
-import { Eye, EyeOff, Lock, Mail, Loader2, TreePine , Sparkles } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, Loader2  } from "lucide-react";
 import { ChangeEvent, useState } from "react";
 import { Navigate, useLocation, useNavigate, Link } from "react-router-dom";
 
@@ -83,7 +83,7 @@ const Login = () => {
 
       toast({
         title: "Welcome Back!",
-        description: "You're successfully signed in. Merry Christmas! 🎄",
+        description: "You're successfully signed in.",
         variant: "default",
       });
 
@@ -113,19 +113,7 @@ const Login = () => {
 
   return (
     <div className="max-w-md w-full space-y-8 bg-gradient-to-b from-red-50 via-white to-green-50 p-10 rounded-2xl shadow-xl border border-red-200 relative overflow-hidden">
-      {/* Christmas decorations */}
-      <div className="absolute -top-6 -left-6 text-green-600 opacity-20">
-        <TreePine  size={48} />
-      </div>
-      <div className="absolute -bottom-6 -right-6 text-red-600 opacity-20 rotate-90">
-        <TreePine  size={48} />
-      </div>
-      <div className="absolute top-4 right-4 text-green-500 opacity-30">
-        <Sparkles size={24} />
-      </div>
-      <div className="absolute bottom-4 left-4 text-red-500 opacity-30">
-        <Sparkles size={24} />
-      </div>
+    
 
       {/* Header */}
       <div className="flex flex-col items-center space-y-3 relative z-10">
@@ -133,7 +121,6 @@ const Login = () => {
           <h1 className="text-xl font-bold bg-gradient-to-r from-green-700 via-red-600 to-green-600 text-transparent bg-clip-text md:text-3xl">
             Employee Portal
           </h1>
-          <Sparkles className="h-6 w-6 text-red-500 animate-pulse" />
         </div>
         <p className="text-green-700 font-medium bg-gradient-to-r from-red-500 to-green-600 text-transparent bg-clip-text">
           Sign in to your account
@@ -204,7 +191,6 @@ const Login = () => {
           ) : (
             <>
               Sign in 
-              <Sparkles className="ml-2 h-4 w-4 animate-pulse" />
             </>
           )}
         </Button>
@@ -216,20 +202,14 @@ const Login = () => {
           Not a member?{" "}
           <Link
             to={"/sign-up"}
-            className="text-red-600 hover:text-red-800 font-semibold hover:underline transition-colors duration-200"
+            className="text-red-600 hover:text-red-800 font-semibold hover:underline"
           >
-            Join the family <span className="animate-pulse">🎁</span>
+            Sign up
           </Link>
         </p>
       </div>
 
-      {/* Christmas pattern overlay */}
-      <div className="absolute inset-0 pointer-events-none opacity-5">
-        <div className="absolute top-1/4 left-1/4 w-8 h-8 rounded-full bg-red-400"></div>
-        <div className="absolute bottom-1/3 right-1/3 w-6 h-6 rounded-full bg-green-400"></div>
-        <div className="absolute top-1/3 right-1/4 w-4 h-4 rounded-full bg-red-400"></div>
-        <div className="absolute bottom-1/4 left-1/3 w-6 h-6 rounded-full bg-green-400"></div>
-      </div>
+  
     </div>
   );
 };

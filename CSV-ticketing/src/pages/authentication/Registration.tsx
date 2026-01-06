@@ -10,8 +10,6 @@ import {
   Eye,
   EyeOff,
   Loader2,
-  Star,
-  CandyCane,
 } from "lucide-react";
 
 interface Form {
@@ -128,7 +126,7 @@ const Registration = () => {
       } catch (leaveError) {
         console.error("Error creating leave credit:", leaveError);
         toast({
-          title: "🎅 Account created but leave credit setup failed",
+          title: "Account created but leave credit setup failed",
           description: "Please contact HR to set up your leave credits",
           variant: "destructive",
         });
@@ -169,13 +167,8 @@ const Registration = () => {
         onSubmit={handleSubmit}
       >
         <div className="text-center mb-4">
-          <div className="flex justify-center mb-4">
-            <div className="p-3 bg-gradient-to-r from-green-600 to-red-600 rounded-full">
-              <Star className="h-8 w-8 text-white" />
-            </div>
-          </div>
           <h1 className="text-2xl font-bold bg-gradient-to-r from-green-700 via-red-600 to-yellow-600 text-transparent bg-clip-text md:text-3xl">
-            🎅 Join CSV now 
+            Join CSV now 
           </h1>
         </div>
 
@@ -276,7 +269,6 @@ const Registration = () => {
           {/* Password Requirements */}
           <div className="text-xs text-green-600 bg-gradient-to-r from-green-50 to-green-100 p-2 rounded-lg border border-green-200">
             <p className="flex items-center mb-1">
-              <CandyCane className="h-3 w-3 mr-1" />
               Password must be at least 12 characters long
             </p>
           </div>
@@ -292,7 +284,7 @@ const Registration = () => {
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Joining Workshop...
+                Singing in...
               </>
             ) : (
               <>Sign up</>
@@ -302,14 +294,13 @@ const Registration = () => {
 
         <div className="text-center text-sm text-green-700 pt-2">
           <p className="flex items-center justify-center">
-            Already part of the team?{" "}
+            Already part of CSV?{" "}
             <Link
               to={"/sign-in"}
               className="text-red-600 hover:underline font-semibold ml-1"
             >
               Sign In
             </Link>
-            <span className="ml-1">🎅</span>
           </p>
         </div>
       </form>
