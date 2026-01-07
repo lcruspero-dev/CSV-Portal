@@ -24,6 +24,7 @@ import {
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import RealTimeClock from "./Realtime";
+import TitleCase from "@/utils/titleCase";
 
 /* Main Header */
 const Header: React.FC = () => {
@@ -145,7 +146,7 @@ const Header: React.FC = () => {
                           </Avatar>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-gray-900 truncate">
-                              {user.name}
+                              {TitleCase(user.name)}
                             </p>
                             <p className="text-xs text-gray-500 truncate">
                               {user.email}
@@ -236,7 +237,7 @@ const Header: React.FC = () => {
                   {/* User Info for Desktop */}
                   <div className="hidden md:flex flex-col items-start text-right">
                     <span className="text-sm font-semibold text-gray-900">
-                      {user.name}
+                      {TitleCase(user.name)}
                     </span>
                     <span className="text-xs text-gray-500 truncate max-w-[150px]">
                       {user.email}

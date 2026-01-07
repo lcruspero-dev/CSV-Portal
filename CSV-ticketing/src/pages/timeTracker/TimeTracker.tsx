@@ -1094,7 +1094,7 @@ export const AttendanceTracker: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-6 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-6 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Alert Dialog */}
         {alert.show && (
@@ -1222,6 +1222,7 @@ export const AttendanceTracker: React.FC = () => {
                   </Button>
                 ) : (
                   <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
+
                     <Select
                       value={selectedAction || undefined}
                       onValueChange={handleActionChange}
@@ -1229,6 +1230,7 @@ export const AttendanceTracker: React.FC = () => {
                       <SelectTrigger className="w-full sm:w-56">
                         <SelectValue placeholder="Select Action" />
                       </SelectTrigger>
+
                       <SelectContent>
                         {getAvailableActions().map((action) => (
                           <SelectItem key={action.value} value={action.value}>
@@ -1236,6 +1238,7 @@ export const AttendanceTracker: React.FC = () => {
                           </SelectItem>
                         ))}
                       </SelectContent>
+
                     </Select>
 
                     {selectedAction && (

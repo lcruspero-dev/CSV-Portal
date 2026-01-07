@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import TitleCase from "@/utils/titleCase";
 
 // Animation variants
 const container = {
@@ -269,7 +270,6 @@ const UserHome = () => {
   return (
     <>
       <SurveyModal />
-
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-6 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           {/* Header Section */}
@@ -290,7 +290,7 @@ const UserHome = () => {
                   </h1>
                 </div>
                 <p className="text-gray-600">
-                  Welcome back, {user?.name || "Employee"}! Here's everything you need today.
+                  Welcome back, {TitleCase(user?.name) || "Employee"}. Here's everything you need today.
                 </p>
               </div>
             </div>

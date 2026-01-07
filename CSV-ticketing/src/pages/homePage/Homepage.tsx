@@ -38,7 +38,7 @@ const Homepage: React.FC = () => {
   }
 
   return (
-    <div className="relative min-h-screen w-full justify-center bg-cover bg-center bg-no-repeat">
+    <div className="relative min-h-screen w-full">
       {user.isAdmin && (
         <div className="absolute top-4 right-4 z-10">
           <Button

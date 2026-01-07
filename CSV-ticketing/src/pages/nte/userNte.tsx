@@ -27,11 +27,13 @@ import {
   ClipboardCheck,
   Eye,
   MessageSquare,
-  Snowflake,
-  TreePine,
-  Star,
   Bell,
-  FileText
+  FileText,
+  AlertCircle,
+  Clock,
+  CheckCircle,
+  User,
+  Calendar,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
@@ -178,9 +180,9 @@ const NteSummaryTable: React.FC = () => {
   } => {
     const statusMap = {
       PER: {
-        color: "text-green-800",
-        bgColor: "bg-green-100",
-        hoverColor: "hover:bg-green-200",
+        color: "text-purple-800",
+        bgColor: "bg-purple-100",
+        hoverColor: "hover:bg-purple-200",
         text:
           item?.nte.employeeSignatureDate === null
             ? "Pending Receipt"
@@ -188,25 +190,25 @@ const NteSummaryTable: React.FC = () => {
         icon: <ClipboardCheck className="h-4 w-4" />,
       },
       PNOD: {
-        color: "text-yellow-800",
-        bgColor: "bg-yellow-100",
-        hoverColor: "hover:bg-yellow-200",
+        color: "text-amber-800",
+        bgColor: "bg-amber-100",
+        hoverColor: "hover:bg-amber-200",
         text: "Decision Pending",
-        icon: <Eye className="h-4 w-4" />,
+        icon: <Clock className="h-4 w-4" />,
       },
       PNODA: {
         color: "text-red-800",
         bgColor: "bg-red-100",
         hoverColor: "hover:bg-red-200",
         text: "Signature Required",
-        icon: <CheckSquare className="h-4 w-4" />,
+        icon: <AlertCircle className="h-4 w-4" />,
       },
       FTHR: {
         color: "text-green-800",
         bgColor: "bg-green-100",
         hoverColor: "hover:bg-green-200",
         text: "Completed",
-        icon: <CheckSquare className="h-4 w-4" />,
+        icon: <CheckCircle className="h-4 w-4" />,
       },
     };
 
@@ -228,11 +230,11 @@ const NteSummaryTable: React.FC = () => {
     const statusText: Record<NteData["status"], string> = {
       PER:
         item?.nte.employeeSignatureDate === null
-          ? "🎄 Please confirm receipt of this notice"
-          : "🎁 Submit your response to this notice",
-      PNOD: "⭐ A decision is pending. You'll be notified soon.",
-      PNODA: "📜 Please review and sign to acknowledge the decision",
-      FTHR: "✅ This case has been completed and forwarded",
+          ? "Please confirm receipt of this notice"
+          : "Submit your response to this notice",
+      PNOD: "A decision is pending. You'll be notified soon.",
+      PNODA: "Please review and sign to acknowledge the decision",
+      FTHR: "This case has been completed and forwarded",
     };
     return statusText[status] || status;
   };
@@ -276,382 +278,347 @@ const NteSummaryTable: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-7xl min-h-screen bg-gradient-to-br from-green-50 via-white to-red-50 relative overflow-hidden">
-      {/* Animated Snowflakes Background */}
-      <div className="absolute top-4 left-4 opacity-5">
-        <Snowflake className="h-12 w-12 text-blue-400 animate-pulse" />
-      </div>
-      <div className="absolute top-20 right-10 opacity-5">
-        <Snowflake className="h-8 w-8 text-blue-300 animate-pulse delay-300" />
-      </div>
-      <div className="absolute bottom-20 left-20 opacity-5">
-        <Snowflake className="h-10 w-10 text-blue-400 animate-pulse delay-700" />
-      </div>
-      
-      <div className="flex items-center mb-6">
-        <div className="scale-90">
-          <BackButton />
-        </div>
-        <motion.div
-          className="flex-1 text-center"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <h1 className="text-3xl font-bold text-green-900 flex items-center justify-center gap-2">
-            <div className="p-2 bg-gradient-to-r from-green-600 to-red-600 rounded-xl">
-              <FileText className="h-6 w-6 text-white" />
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-6 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <BackButton />
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+                Notice to Explain (NTE) Records
+              </h1>
+              <p className="text-gray-600 mt-1">
+                Review and respond to disciplinary notices
+              </p>
             </div>
-            🎅 Santa's Notice Board
-          </h1>
-          <p className="text-green-700 text-sm mt-1 flex items-center justify-center">
-            <Star className="h-3 w-3 mr-1" />
-            Review and respond to holiday notices
-          </p>
-        </motion.div>
-      </div>
+          </div>
+        </div>
 
-      <Tabs defaultValue="all" className="mb-6" onValueChange={setActiveTab}>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          <TabsList className="grid grid-cols-3 w-full max-w-md mb-4 bg-gradient-to-r from-green-50 to-red-50 border border-green-200">
-            <TabsTrigger 
-              value="all"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-red-600 data-[state=active]:text-white"
-            >
-              🎄 All Notices
+        <Tabs defaultValue="all" className="space-y-6" onValueChange={setActiveTab}>
+          <TabsList className="grid grid-cols-3 w-full max-w-md">
+            <TabsTrigger value="all">
+              <FileText className="h-4 w-4 mr-2" />
+              All Notices
             </TabsTrigger>
-            <TabsTrigger 
-              value="pending"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-red-600 data-[state=active]:text-white"
-            >
-              ⭐ Pending
+            <TabsTrigger value="pending">
+              <Clock className="h-4 w-4 mr-2" />
+              Pending
             </TabsTrigger>
-            <TabsTrigger 
-              value="completed"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-red-600 data-[state=active]:text-white"
-            >
-              ✅ Completed
+            <TabsTrigger value="completed">
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Completed
             </TabsTrigger>
           </TabsList>
-        </motion.div>
 
-        <TabsContent value={activeTab} className="mt-0">
-          {loading ? (
-            <div className="space-y-4">
-              {[1, 2].map((i) => (
-                <Card key={i} className="overflow-hidden border-green-200 bg-white">
-                  <CardHeader className="pb-2">
-                    <Skeleton className="h-6 w-32 bg-green-100" />
-                    <Skeleton className="h-4 w-24 mt-1 bg-green-100" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <Skeleton className="h-24 w-full bg-green-100" />
-                      <Skeleton className="h-24 w-full bg-red-100" />
-                      <Skeleton className="h-24 w-full bg-yellow-100" />
+          <TabsContent value={activeTab} className="mt-0">
+            {loading ? (
+              <div className="space-y-4">
+                {[1, 2].map((i) => (
+                  <Card key={i} className="border border-gray-200">
+                    <CardHeader className="pb-2">
+                      <Skeleton className="h-6 w-32" />
+                      <Skeleton className="h-4 w-24 mt-1" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Skeleton className="h-24 w-full" />
+                        <Skeleton className="h-24 w-full" />
+                        <Skeleton className="h-24 w-full" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : filteredData.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5 }}
+              >
+                <Card className="border border-gray-200 border-dashed">
+                  <CardContent className="flex flex-col items-center justify-center py-10">
+                    <div className="p-4 bg-gray-100 rounded-full mb-4">
+                      <FileText className="h-8 w-8 text-gray-400" />
                     </div>
+                    <p className="text-gray-700 mb-2 font-medium">No notices found</p>
+                    <p className="text-gray-500 text-sm">
+                      You have no pending notices at the moment.
+                    </p>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
-          ) : filteredData.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-            >
-              <Card className="bg-gradient-to-br from-green-50 to-red-50 border-green-200 border-dashed">
-                <CardContent className="flex flex-col items-center justify-center py-10">
-                  <TreePine className="h-16 w-16 text-green-400 mb-4 opacity-70 animate-bounce" />
-                  <p className="text-green-700 mb-2 font-medium">No notices found</p>
-                  <p className="text-green-600 text-sm">
-                    🎄 You're on the nice list! No notices at the moment.
-                  </p>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ) : (
-            <ScrollArea className="h-[calc(100vh-220px)]">
-              <div className="space-y-4">
-                {filteredData.map((item, index) => {
-                  const statusInfo = getStatusInfo(item.status, item);
-                  const offenseDesc = truncateText(
-                    item.nte.offenseDescription,
-                    100
-                  );
-                  const feedbackDetail = item.employeeFeedback
-                    ? truncateText(item.employeeFeedback.responseDetail, 100)
-                    : { text: "No response submitted yet", isTruncated: false };
-                  const decisionText = item.noticeOfDecision
-                    ? truncateText(item.noticeOfDecision.decision, 100)
-                    : { text: "Decision pending review", isTruncated: false };
+              </motion.div>
+            ) : (
+              <ScrollArea className="h-[calc(100vh-220px)]">
+                <div className="space-y-4">
+                  {filteredData.map((item, index) => {
+                    const statusInfo = getStatusInfo(item.status, item);
+                    const offenseDesc = truncateText(
+                      item.nte.offenseDescription,
+                      100
+                    );
+                    const feedbackDetail = item.employeeFeedback
+                      ? truncateText(item.employeeFeedback.responseDetail, 100)
+                      : { text: "No response submitted yet", isTruncated: false };
+                    const decisionText = item.noticeOfDecision
+                      ? truncateText(item.noticeOfDecision.decision, 100)
+                      : { text: "Decision pending review", isTruncated: false };
 
-                  return (
-                    <motion.div
-                      key={item._id}
-                      variants={cardVariants}
-                      initial="hidden"
-                      animate="visible"
-                      transition={{ delay: index * 0.1 }}
-                    >
-                      <Card className="overflow-hidden transition-all hover:shadow-lg border-green-200 bg-gradient-to-br from-white to-green-50 shadow-sm">
-                        <CardHeader className="pb-2 flex flex-row items-start justify-between">
-                          <div>
-                            <div className="flex items-center space-x-2">
-                              <CardTitle className="text-lg text-green-900">
-                                {item.nte.name}
-                              </CardTitle>
-                              <Badge
-                                className={`${statusInfo.bgColor} ${statusInfo.color} ${statusInfo.hoverColor} transition-colors duration-200 border-green-200`}
-                              >
-                                <span className="flex items-center">
-                                  {statusInfo.icon}
-                                  <span className="ml-1">
-                                    {statusInfo.text}
+                    return (
+                      <motion.div
+                        key={item._id}
+                        variants={cardVariants}
+                        initial="hidden"
+                        animate="visible"
+                        transition={{ delay: index * 0.1 }}
+                      >
+                        <Card className="overflow-hidden transition-all hover:shadow-md border border-gray-200">
+                          <CardHeader className="pb-2 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                            <div className="flex-1">
+                              <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 gap-2">
+                                <CardTitle className="text-lg font-semibold text-gray-900">
+                                  {item.nte.name}
+                                </CardTitle>
+                                <Badge
+                                  className={`${statusInfo.bgColor} ${statusInfo.color} ${statusInfo.hoverColor} transition-colors duration-200 border border-gray-200 w-fit`}
+                                >
+                                  <span className="flex items-center">
+                                    {statusInfo.icon}
+                                    <span className="ml-1">
+                                      {statusInfo.text}
+                                    </span>
                                   </span>
-                                </span>
-                              </Badge>
+                                </Badge>
+                              </div>
+                              <CardDescription className="text-gray-600 flex items-center mt-1">
+                                <User className="h-3 w-3 mr-1" />
+                                {item.nte.position} •{" "}
+                                <Calendar className="h-3 w-3 mx-1" />
+                                Issue Date: {formatDate(item.nte.dateIssued)}
+                              </CardDescription>
                             </div>
-                            <CardDescription className="text-green-700 flex items-center">
-                              <span className="mr-2">🎄</span>
-                              {item.nte.position} • Issue Date:{" "}
-                              {formatDate(item.nte.dateIssued)}
-                            </CardDescription>
-                          </div>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <motion.div
-                                  variants={buttonVariants}
-                                  whileHover="hover"
-                                  whileTap="tap"
-                                >
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="flex items-center gap-1 scale-95 border-gradient-to-r to-red-300 bg-gradient-to-r from-green-50 text-green-700 hover:bg-gradient-to-r hover:from-green-100 hover:to-red-100"
-                                    onClick={() => handleView(item, 1)}
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <motion.div
+                                    variants={buttonVariants}
+                                    whileHover="hover"
+                                    whileTap="tap"
                                   >
-                                    <Eye className="h-4 w-4" />
-                                    <span>View Details</span>
-                                  </Button>
-                                </motion.div>
-                              </TooltipTrigger>
-                              <TooltipContent className="bg-gradient-to-r from-green-600 to-red-600 text-white">
-                                <p className="flex items-center">
-                                  <Eye className="h-3 w-3 mr-1" />
-                                  View full details of this notice
-                                </p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </CardHeader>
-
-                        <CardContent>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {/* Notice to Explain */}
-                            <motion.div
-                              className="space-y-2"
-                              whileHover={{ scale: 1.01 }}
-                            >
-                              <h3 className="font-semibold text-green-800 flex items-center">
-                                <span className="h-6 w-1 bg-gradient-to-b from-green-500 to-green-700 rounded mr-2"></span>
-                                📜 Notice to Explain
-                              </h3>
-                              <div className="text-sm bg-green-50 p-3 rounded-lg border border-green-100">
-                                <p className="font-medium text-green-900">
-                                  {item.nte.offenseType}
-                                </p>
-                                <p className="text-green-700 mt-1">
-                                  {offenseDesc.text}
-                                </p>
-                                {offenseDesc.text !== "-" && (
-                                  <motion.button
-                                    onClick={() => handleView(item, 1)}
-                                    className="text-green-600 hover:text-green-800 mt-1 text-xs font-medium flex items-center"
-                                    whileHover={{ scale: 1.05 }}
-                                  >
-                                    <ChevronRight className="h-3 w-3 mr-1" />
-                                    Read more
-                                  </motion.button>
-                                )}
-                              </div>
-                            </motion.div>
-
-                            {/* Employee Feedback */}
-                            <motion.div
-                              className="space-y-2"
-                              whileHover={{ scale: 1.01 }}
-                            >
-                              <h3 className="font-semibold text-red-800 flex items-center">
-                                <span className="h-6 w-1 bg-gradient-to-b from-red-500 to-red-700 rounded mr-2"></span>
-                                🎁 Your Response
-                              </h3>
-                              <div className="text-sm bg-red-50 p-3 rounded-lg border border-red-100">
-                                {item.employeeFeedback ? (
-                                  <>
-                                    <p className="text-xs text-red-600">
-                                      🗓️ Responded on{" "}
-                                      {formatDate(
-                                        item.employeeFeedback.responseDate
-                                      )}
-                                    </p>
-                                    <p className="text-red-700 mt-1">
-                                      {feedbackDetail.text}
-                                    </p>
-                                    {feedbackDetail.text !==
-                                      "No response submitted yet" && (
-                                      <motion.button
-                                        onClick={() => handleView(item, 2)}
-                                        className="text-red-600 hover:text-red-800 mt-1 text-xs font-medium flex items-center"
-                                        whileHover={{ scale: 1.05 }}
-                                      >
-                                        <ChevronRight className="h-3 w-3 mr-1" />
-                                        Read more
-                                      </motion.button>
-                                    )}
-                                  </>
-                                ) : (
-                                  <p className="text-red-500 italic">
-                                    ⏳ No response submitted yet
-                                  </p>
-                                )}
-                              </div>
-                            </motion.div>
-
-                            {/* Notice of Decision */}
-                            <motion.div
-                              className="space-y-2"
-                              whileHover={{ scale: 1.01 }}
-                            >
-                              <h3 className="font-semibold text-yellow-800 flex items-center">
-                                <span className="h-6 w-1 bg-gradient-to-b from-yellow-500 to-yellow-700 rounded mr-2"></span>
-                                ⭐ Santa's Decision
-                              </h3>
-                              <div className="text-sm bg-yellow-50 p-3 rounded-lg border border-yellow-100">
-                                {item.noticeOfDecision ? (
-                                  <>
-                                    <p className="text-xs text-yellow-600">
-                                      🎅 Decision date:{" "}
-                                      {formatDate(
-                                        item.noticeOfDecision.nteIssuanceDate
-                                      )}
-                                    </p>
-                                    <p className="text-yellow-700 mt-1">
-                                      {decisionText.text}
-                                    </p>
-                                    {decisionText.text !==
-                                      "Decision pending review" && (
-                                      <motion.button
-                                        onClick={() => handleView(item, 3)}
-                                        className="text-yellow-600 hover:text-yellow-800 mt-1 text-xs font-medium flex items-center"
-                                        whileHover={{ scale: 1.05 }}
-                                      >
-                                        <ChevronRight className="h-3 w-3 mr-1" />
-                                        Read more
-                                      </motion.button>
-                                    )}
-                                  </>
-                                ) : (
-                                  <p className="text-yellow-500 italic">
-                                    🤔 Decision pending review
-                                  </p>
-                                )}
-                              </div>
-                            </motion.div>
-                          </div>
-
-                          {/* Action Buttons */}
-                          <div className="mt-4 pt-3 border-t border-green-200 flex justify-end">
-                            <p className="text-sm text-green-700 flex-1 mt-1 flex items-center">
-                              <Bell className="h-4 w-4 mr-1" />
-                              {getStatusDescription(item.status, item)}
-                            </p>
-
-                            <div className="flex gap-2">
-                              {item.status === "PER" && (
-                                <>
-                                  {item.nte.employeeSignatureDate === null ? (
-                                    <motion.div
-                                      variants={buttonVariants}
-                                      whileHover="hover"
-                                      whileTap="tap"
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="flex items-center gap-1"
+                                      onClick={() => handleView(item, 1)}
                                     >
-                                      <Button
-                                        size="sm"
-                                        onClick={() =>
-                                          handleConfirmReceipt(item._id, item)
-                                        }
-                                        className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white scale-95 border-green-700"
-                                      >
-                                        <ClipboardCheck className="h-4 w-4 mr-1" />
-                                        Confirm Receipt
-                                      </Button>
-                                    </motion.div>
-                                  ) : (
-                                    <motion.div
-                                      variants={buttonVariants}
-                                      whileHover="hover"
-                                      whileTap="tap"
+                                      <Eye className="h-4 w-4" />
+                                      View Details
+                                    </Button>
+                                  </motion.div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="flex items-center">
+                                    <Eye className="h-3 w-3 mr-1" />
+                                    View full details of this notice
+                                  </p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </CardHeader>
+
+                          <CardContent>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              {/* Notice to Explain */}
+                              <motion.div
+                                className="space-y-2"
+                                whileHover={{ scale: 1.01 }}
+                              >
+                                <h3 className="font-semibold text-gray-700 flex items-center">
+                                  <div className="h-5 w-1 bg-purple-500 rounded mr-2"></div>
+                                  Notice to Explain
+                                </h3>
+                                <div className="text-sm bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                  <p className="font-medium text-gray-900">
+                                    {item.nte.offenseType}
+                                  </p>
+                                  <p className="text-gray-700 mt-1">
+                                    {offenseDesc.text}
+                                  </p>
+                                  {offenseDesc.text !== "-" && (
+                                    <motion.button
+                                      onClick={() => handleView(item, 1)}
+                                      className="text-purple-600 hover:text-purple-800 mt-1 text-xs font-medium flex items-center"
+                                      whileHover={{ scale: 1.05 }}
                                     >
-                                      <Button
-                                        size="sm"
-                                        onClick={() => handleRespond(item)}
-                                        className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white scale-95"
-                                      >
-                                        <MessageSquare className="h-4 w-4 mr-1" />
-                                        Submit Response
-                                      </Button>
-                                    </motion.div>
+                                      <ChevronRight className="h-3 w-3 mr-1" />
+                                      Read more
+                                    </motion.button>
                                   )}
-                                </>
-                              )}
-                              {item.status === "PNODA" && (
-                                <motion.div
-                                  variants={buttonVariants}
-                                  whileHover="hover"
-                                  whileTap="tap"
-                                >
-                                  <Button
-                                    size="sm"
-                                    onClick={() =>
-                                      handleAcknowledge(item._id, item)
-                                    }
-                                    className="bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white"
-                                  >
-                                    <CheckSquare className="h-4 w-4 mr-1" />
-                                    Sign & Acknowledge
-                                  </Button>
-                                </motion.div>
-                              )}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            </ScrollArea>
-          )}
-        </TabsContent>
-      </Tabs>
+                                </div>
+                              </motion.div>
 
-      {/* Christmas Footer */}
-      <div className="mt-8 text-center bg-gradient-to-r from-green-50 to-red-50 p-4 rounded-xl border border-green-200">
-        <div className="text-green-600 text-sm flex items-center justify-center gap-2">
-          <span>🎄</span>
-          <span>May your holiday season be peaceful and bright!</span>
-          <span>🎅</span>
-        </div>
-        <div className="text-xs text-green-500 mt-1 flex items-center justify-center">
-          <Snowflake className="h-3 w-3 mr-1" />
-          From Santa's Workshop with Care
-        </div>
+                              {/* Employee Feedback */}
+                              <motion.div
+                                className="space-y-2"
+                                whileHover={{ scale: 1.01 }}
+                              >
+                                <h3 className="font-semibold text-gray-700 flex items-center">
+                                  <div className="h-5 w-1 bg-blue-500 rounded mr-2"></div>
+                                  Your Response
+                                </h3>
+                                <div className="text-sm bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                  {item.employeeFeedback ? (
+                                    <>
+                                      <p className="text-xs text-gray-600 flex items-center">
+                                        <Calendar className="h-3 w-3 mr-1" />
+                                        Responded on{" "}
+                                        {formatDate(
+                                          item.employeeFeedback.responseDate
+                                        )}
+                                      </p>
+                                      <p className="text-gray-700 mt-1">
+                                        {feedbackDetail.text}
+                                      </p>
+                                      {feedbackDetail.text !==
+                                        "No response submitted yet" && (
+                                        <motion.button
+                                          onClick={() => handleView(item, 2)}
+                                          className="text-blue-600 hover:text-blue-800 mt-1 text-xs font-medium flex items-center"
+                                          whileHover={{ scale: 1.05 }}
+                                        >
+                                          <ChevronRight className="h-3 w-3 mr-1" />
+                                          Read more
+                                        </motion.button>
+                                      )}
+                                    </>
+                                  ) : (
+                                    <p className="text-gray-500 italic">
+                                      No response submitted yet
+                                    </p>
+                                  )}
+                                </div>
+                              </motion.div>
+
+                              {/* Notice of Decision */}
+                              <motion.div
+                                className="space-y-2"
+                                whileHover={{ scale: 1.01 }}
+                              >
+                                <h3 className="font-semibold text-gray-700 flex items-center">
+                                  <div className="h-5 w-1 bg-amber-500 rounded mr-2"></div>
+                                  Decision
+                                </h3>
+                                <div className="text-sm bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                  {item.noticeOfDecision ? (
+                                    <>
+                                      <p className="text-xs text-gray-600 flex items-center">
+                                        <Calendar className="h-3 w-3 mr-1" />
+                                        Decision date:{" "}
+                                        {formatDate(
+                                          item.noticeOfDecision.nteIssuanceDate
+                                        )}
+                                      </p>
+                                      <p className="text-gray-700 mt-1">
+                                        {decisionText.text}
+                                      </p>
+                                      {decisionText.text !==
+                                        "Decision pending review" && (
+                                        <motion.button
+                                          onClick={() => handleView(item, 3)}
+                                          className="text-amber-600 hover:text-amber-800 mt-1 text-xs font-medium flex items-center"
+                                          whileHover={{ scale: 1.05 }}
+                                        >
+                                          <ChevronRight className="h-3 w-3 mr-1" />
+                                          Read more
+                                        </motion.button>
+                                      )}
+                                    </>
+                                  ) : (
+                                    <p className="text-gray-500 italic">
+                                      Decision pending review
+                                    </p>
+                                  )}
+                                </div>
+                              </motion.div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="mt-4 pt-3 border-t border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                              <div className="flex-1">
+                                <p className="text-sm text-gray-700 flex items-center">
+                                  <Bell className="h-4 w-4 mr-2 text-gray-500" />
+                                  {getStatusDescription(item.status, item)}
+                                </p>
+                              </div>
+
+                              <div className="flex flex-wrap gap-2">
+                                {item.status === "PER" && (
+                                  <>
+                                    {item.nte.employeeSignatureDate === null ? (
+                                      <motion.div
+                                        variants={buttonVariants}
+                                        whileHover="hover"
+                                        whileTap="tap"
+                                      >
+                                        <Button
+                                          size="sm"
+                                          onClick={() =>
+                                            handleConfirmReceipt(item._id, item)
+                                          }
+                                          className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
+                                        >
+                                          <ClipboardCheck className="h-4 w-4 mr-1" />
+                                          Confirm Receipt
+                                        </Button>
+                                      </motion.div>
+                                    ) : (
+                                      <motion.div
+                                        variants={buttonVariants}
+                                        whileHover="hover"
+                                        whileTap="tap"
+                                      >
+                                        <Button
+                                          size="sm"
+                                          onClick={() => handleRespond(item)}
+                                          className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white"
+                                        >
+                                          <MessageSquare className="h-4 w-4 mr-1" />
+                                          Submit Response
+                                        </Button>
+                                      </motion.div>
+                                    )}
+                                  </>
+                                )}
+                                {item.status === "PNODA" && (
+                                  <motion.div
+                                    variants={buttonVariants}
+                                    whileHover="hover"
+                                    whileTap="tap"
+                                  >
+                                    <Button
+                                      size="sm"
+                                      onClick={() =>
+                                        handleAcknowledge(item._id, item)
+                                      }
+                                      className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white"
+                                    >
+                                      <CheckSquare className="h-4 w-4 mr-1" />
+                                      Sign & Acknowledge
+                                    </Button>
+                                  </motion.div>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
 
       {selectedNte && (

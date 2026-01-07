@@ -18,10 +18,9 @@ import {
   TrendingUp,
   Activity,
   Eye,
-  Download,
-  Filter,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import TitleCase from "@/utils/titleCase";
 
 interface Ticket {
   _id: string;
@@ -36,6 +35,8 @@ interface Ticket {
 const AdminHome = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const userString = localStorage.getItem("user");
+  const user = userString ? JSON.parse(userString) : null;
   const [isMobile, setIsMobile] = useState(false);
   const [isTablet, setIsTablet] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -201,27 +202,10 @@ const AdminHome = () => {
                   Admin Dashboard
                 </h1>
                 <p className="text-gray-600 mt-1">
-                  Welcome back! Here's your overview for today.
+                  Welcome back, {TitleCase(user?.name)}. Here's your overview for today.
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-gray-300"
-                >
-                  <Filter className="h-4 w-4 mr-2" />
-                  Filter
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-gray-300"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Export
-                </Button>
-              </div>
+              
             </div>
           </motion.div>
 
