@@ -14,11 +14,14 @@ import {
   CalendarIcon,
   ChevronLeft,
   ChevronRight,
-  Gift,
-  Snowflake,
-  TreePine,
-  Star,
-  Bell,
+  Users,
+  Filter,
+  Calendar,
+  Clock,
+  AlertCircle,
+  TrendingUp,
+  Download,
+  Eye,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
@@ -35,14 +38,12 @@ import { EmployeesOnLunchDialog } from "@/components/kit/employeeLunchDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -146,30 +147,30 @@ export type AttendanceEntry = {
 
 type ViewMode = "weekly" | "monthly" | "dateRange";
 
-// Christmas-themed shift colors
+// Professional shift colors with purple theme
 const getShiftColor = (shiftType: ShiftType): string => {
   if (!shiftType || !shiftType.type)
-    return "bg-gradient-to-r from-green-50 to-green-100 text-green-800 border-green-200";
+    return "bg-gray-100 text-gray-800 border-gray-200";
 
   switch (shiftType.type) {
     case "Morning":
-      return "bg-gradient-to-r from-green-100 to-green-200 text-green-900 border-green-300";
+      return "bg-purple-100 text-purple-800 border-purple-200";
     case "Mid":
-      return "bg-gradient-to-r from-red-100 to-red-200 text-red-900 border-red-300";
+      return "bg-indigo-100 text-indigo-800 border-indigo-200";
     case "Night":
-      return "bg-gradient-to-r from-blue-100 to-blue-200 text-blue-900 border-blue-300";
+      return "bg-violet-100 text-violet-800 border-violet-200";
     case "restday":
-      return "bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-900 border-yellow-300";
+      return "bg-gray-100 text-gray-800 border-gray-200";
     case "paidTimeOff":
-      return "bg-gradient-to-r from-purple-100 to-purple-200 text-purple-900 border-purple-300";
+      return "bg-blue-100 text-blue-800 border-blue-200";
     case "plannedLeave":
-      return "bg-gradient-to-r from-pink-100 to-pink-200 text-pink-900 border-pink-300";
+      return "bg-amber-100 text-amber-800 border-amber-200";
     case "holiday":
-      return "bg-gradient-to-r from-red-200 to-red-300 text-red-900 border-red-400";
+      return "bg-red-100 text-red-800 border-red-200";
     case "rdot":
-      return "bg-gradient-to-r from-brown-100 to-brown-200 text-brown-900 border-brown-300";
+      return "bg-teal-100 text-teal-800 border-teal-200";
     default:
-      return "bg-gradient-to-r from-green-50 to-green-100 text-green-800 border-green-200";
+      return "bg-gray-100 text-gray-800 border-gray-200";
   }
 };
 
@@ -203,28 +204,28 @@ const displayShiftInfo = (
 
   switch (shiftType.type) {
     case "Morning":
-      displayName = "🌅 Morning";
+      displayName = "Morning Shift";
       break;
     case "Mid":
-      displayName = "☀️ Mid";
+      displayName = "Mid Shift";
       break;
     case "Night":
-      displayName = "🌙 Night";
+      displayName = "Night Shift";
       break;
     case "restday":
-      displayName = " Rest Day";
+      displayName = "Rest Day";
       break;
     case "paidTimeOff":
-      displayName = "🎁 PTO";
+      displayName = "Paid Time Off";
       break;
     case "plannedLeave":
-      displayName = "⭐ Leave";
+      displayName = "Planned Leave";
       break;
     case "holiday":
-      displayName = "🎅 Holiday";
+      displayName = "Holiday";
       break;
     case "rdot":
-      displayName = "⏰ RDOT";
+      displayName = "RDOT";
       break;
     default:
       displayName = shiftType.type;
@@ -241,15 +242,15 @@ const displayShiftInfo = (
 
     const detailsParts = [];
     if (shiftType.startTime)
-      detailsParts.push(`⏰ Login: ${formatTimeToAMPM(shiftType.startTime)}`);
+      detailsParts.push(`Login: ${formatTimeToAMPM(shiftType.startTime)}`);
     if (shiftType.endTime)
-      detailsParts.push(`🚪 Logout: ${formatTimeToAMPM(shiftType.endTime)}`);
+      detailsParts.push(`Logout: ${formatTimeToAMPM(shiftType.endTime)}`);
     if (shiftType.break1)
-      detailsParts.push(`☕ Break1: ${formatTimeToAMPM(shiftType.break1)}`);
+      detailsParts.push(`Break 1: ${formatTimeToAMPM(shiftType.break1)}`);
     if (shiftType.break2)
-      detailsParts.push(`🍪 Break2: ${formatTimeToAMPM(shiftType.break2)}`);
+      detailsParts.push(`Break 2: ${formatTimeToAMPM(shiftType.break2)}`);
     if (shiftType.lunch)
-      detailsParts.push(` Lunch: ${formatTimeToAMPM(shiftType.lunch)}`);
+      detailsParts.push(`Lunch: ${formatTimeToAMPM(shiftType.lunch)}`);
 
     details = detailsParts.join("\n");
   }
@@ -297,23 +298,17 @@ const ScheduleAndAttendance: React.FC = () => {
   const DepartmentFilterDropdown = () => {
     return (
       <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-        <SelectTrigger className="w-48 border-green-300 bg-gradient-to-r from-green-50 to-red-50 text-green-900">
-          <SelectValue placeholder="🎅 Select Team Leader" />
+        <SelectTrigger className="w-48">
+          <SelectValue placeholder="Select Team Leader" />
         </SelectTrigger>
-        <SelectContent className="bg-gradient-to-r from-green-50 to-red-50 border-green-200">
-          <SelectItem value="all" className="text-green-900 hover:bg-gradient-to-r hover:from-green-100 hover:to-red-100">
-             All Elves
-          </SelectItem>
+        <SelectContent>
+          <SelectItem value="all">All Employees</SelectItem>
           {Array.from(new Set(employees.map((emp) => emp.teamLeader)))
             .filter((leader) => leader && leader.trim() !== "")
             .sort()
             .map((leader) => (
-              <SelectItem
-                key={leader}
-                value={leader}
-                className="text-green-900 hover:bg-gradient-to-r hover:from-green-100 hover:to-red-100"
-              >
-                🎅 {leader}
+              <SelectItem key={leader} value={leader}>
+                {leader}
               </SelectItem>
             ))}
         </SelectContent>
@@ -347,7 +342,7 @@ const ScheduleAndAttendance: React.FC = () => {
         const avatarFilename = avatarMap[entry.employeeId];
         const avatarUrl = avatarFilename
           ? `${import.meta.env.VITE_UPLOADFILES_URL}/avatars/${avatarFilename}`
-          : `https://ui-avatars.com/api/?background=16A34A&color=fff&name=${entry.employeeName}`;
+          : `https://ui-avatars.com/api/?background=7C3AED&color=fff&name=${entry.employeeName}`;
 
         return {
           id: entry.employeeId,
@@ -450,20 +445,19 @@ const ScheduleAndAttendance: React.FC = () => {
 
   if (loading)
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-red-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-bounce">
-            <TreePine className="h-12 w-12 text-green-600 mx-auto mb-4" />
-          </div>
-          <p className="text-green-600 font-medium">Loading Santa's Workshop...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-700 font-medium">Loading employee data...</p>
         </div>
       </div>
     );
 
   if (error)
     return (
-      <div className="bg-gradient-to-r from-red-50 to-red-100 border border-red-200 rounded-lg p-4 text-red-700">
-        ❌ {error}
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+        <AlertCircle className="inline h-5 w-5 mr-2" />
+        {error}
       </div>
     );
 
@@ -561,16 +555,16 @@ const ScheduleAndAttendance: React.FC = () => {
 
   const getHeaderText = () => {
     if (viewMode === "weekly") {
-      return ` Week of ${format(startOfWeek(currentDate), "MMM d, yyyy")}`;
+      return `Week of ${format(startOfWeek(currentDate), "MMM d, yyyy")}`;
     } else if (viewMode === "monthly") {
-      return format(currentDate, "🎅 MMMM yyyy");
+      return format(currentDate, "MMMM yyyy");
     } else if (fromDate && toDate) {
       if (isSameDay(fromDate, toDate)) {
-        return format(fromDate, "⭐ MMM d, yyyy");
+        return format(fromDate, "MMM d, yyyy");
       }
-      return `${format(fromDate, "MMM d")} - ${format(toDate, "MMM d, yyyy")} `;
+      return `${format(fromDate, "MMM d")} - ${format(toDate, "MMM d, yyyy")}`;
     }
-    return "🎅 Select Date Range";
+    return "Select Date Range";
   };
 
   const findScheduleEntry = (
@@ -855,43 +849,40 @@ const ScheduleAndAttendance: React.FC = () => {
   };
 
   return (
-    <section className="bg-gradient-to-br from-green-50 via-white to-red-50 min-h-screen relative overflow-hidden">
-      {/* Animated Snowflakes */}
-      <div className="absolute top-4 left-4 opacity-5">
-        <Snowflake className="h-16 w-16 text-blue-400 animate-pulse" />
-      </div>
-      <div className="absolute top-20 right-10 opacity-5">
-        <Snowflake className="h-12 w-12 text-blue-300 animate-pulse delay-300" />
-      </div>
-      
-      <BackButton />
+    <div className="min-h-screen bg-gray-50 py-6 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header Section */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+              Schedule & Attendance Management
+            </h1>
+            <p className="text-gray-600 mt-1">
+              Manage employee schedules and track attendance records
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <BackButton />
+          </div>
+        </div>
 
-      <div className="container mx-auto py-6">
-        <Card className="w-full border-green-200 shadow-xl bg-white/95 backdrop-blur-sm">
-          <CardHeader className="bg-gradient-to-r from-green-600 to-red-600 text-white rounded-t-lg border-b-4 border-green-400">
-            <div className="mb-3">
-              <div className="flex items-center gap-2 mb-2">
-                <TreePine className="h-6 w-6" />
-                <CardTitle className="text-white">
-                   Santa's Workshop Schedule & Attendance
-                </CardTitle>
-              </div>
-              <CardDescription className="text-green-100">
-                🎅 Manage your elves' schedules with holiday cheer! ⭐
-              </CardDescription>
-              <AbsenteeismAnalytics
-                employees={employees}
-                attendance={attendance}
-                schedule={schedule}
-                viewMode={viewMode}
-                currentDate={currentDate}
-                filteredEmployees={filteredEmployees.map((emp) => emp.id)}
-                fromDate={fromDate}
-                toDate={toDate}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
+        {/* Analytics Section */}
+        <AbsenteeismAnalytics
+          employees={employees}
+          attendance={attendance}
+          schedule={schedule}
+          viewMode={viewMode}
+          currentDate={currentDate}
+          filteredEmployees={filteredEmployees.map((emp) => emp.id)}
+          fromDate={fromDate}
+          toDate={toDate}
+        />
+
+        {/* Main Card */}
+        <Card className="border border-gray-200">
+          <CardHeader className="border-b border-gray-200">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 <DepartmentFilterDropdown />
 
                 <Tabs
@@ -908,24 +899,18 @@ const ScheduleAndAttendance: React.FC = () => {
                     }
                   }}
                 >
-                  <TabsList className="bg-gradient-to-r from-green-100 to-red-100 border-green-200">
-                    <TabsTrigger
-                      value="weekly"
-                      className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-green-600 data-[state=active]:text-white"
-                    >
-                      📅 Weekly
+                  <TabsList>
+                    <TabsTrigger value="weekly">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Weekly
                     </TabsTrigger>
-                    <TabsTrigger
-                      value="monthly"
-                      className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-red-600 data-[state=active]:text-white"
-                    >
-                      🗓️ Monthly
+                    <TabsTrigger value="monthly">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Monthly
                     </TabsTrigger>
-                    <TabsTrigger
-                      value="dateRange"
-                      className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-red-500 data-[state=active]:text-white"
-                    >
-                      ⭐ Date Range
+                    <TabsTrigger value="dateRange">
+                      <Filter className="h-4 w-4 mr-2" />
+                      Date Range
                     </TabsTrigger>
                   </TabsList>
                 </Tabs>
@@ -939,14 +924,14 @@ const ScheduleAndAttendance: React.FC = () => {
                           setShowToCalendar(false);
                           setShowFromCalendar(!showFromCalendar);
                         }}
-                        className="w-[120px] justify-start text-left font-normal border-green-300 bg-gradient-to-r from-green-50 to-green-100 text-green-900 hover:from-green-100 hover:to-green-200"
+                        className="w-[140px] justify-start"
                       >
-                        <CalendarIcon className="mr-2 h-4 w-4 text-green-600" />
-                        {fromDate ? format(fromDate, "MMM d") : "🎅 From"}
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {fromDate ? format(fromDate, "MMM d") : "From"}
                       </Button>
                       {showFromCalendar && (
                         <div
-                          className="absolute z-10 mt-1 bg-white border border-green-200 rounded-md shadow-lg"
+                          className="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg"
                           ref={(node) => {
                             if (node) {
                               const handleClickOutside = (
@@ -967,7 +952,7 @@ const ScheduleAndAttendance: React.FC = () => {
                             }
                           }}
                         >
-                          <Calendar
+                          <CalendarComponent
                             mode="single"
                             selected={fromDate}
                             onSelect={(date) => {
@@ -980,7 +965,7 @@ const ScheduleAndAttendance: React.FC = () => {
                       )}
                     </div>
 
-                    <span className="text-green-700">to</span>
+                    <span className="text-gray-500">to</span>
 
                     <div className="relative">
                       <Button
@@ -989,14 +974,14 @@ const ScheduleAndAttendance: React.FC = () => {
                           setShowFromCalendar(false);
                           setShowToCalendar(!showToCalendar);
                         }}
-                        className="w-[120px] justify-start text-left font-normal border-red-300 bg-gradient-to-r from-red-50 to-red-100 text-red-900 hover:from-red-100 hover:to-red-200"
+                        className="w-[140px] justify-start"
                       >
-                        <CalendarIcon className="mr-2 h-4 w-4 text-red-600" />
-                        {toDate ? format(toDate, "MMM d") : " To"}
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {toDate ? format(toDate, "MMM d") : "To"}
                       </Button>
                       {showToCalendar && (
                         <div
-                          className="absolute z-10 mt-1 bg-white border border-red-200 rounded-md shadow-lg"
+                          className="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg"
                           ref={(node) => {
                             if (node) {
                               const handleClickOutside = (
@@ -1017,7 +1002,7 @@ const ScheduleAndAttendance: React.FC = () => {
                             }
                           }}
                         >
-                          <Calendar
+                          <CalendarComponent
                             mode="single"
                             selected={toDate}
                             onSelect={(date) => {
@@ -1032,196 +1017,190 @@ const ScheduleAndAttendance: React.FC = () => {
                   </div>
                 )}
               </div>
-              <div>
-                <h2 className="text-xl font-bold text-white bg-gradient-to-r from-green-600/50 to-red-600/50 px-3 py-1 rounded-lg">
-                  {getHeaderText()}
-                </h2>
-              </div>
+
               <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={goToPreviousPeriod}
-                  className="border-green-300 bg-gradient-to-r from-green-50 to-green-100 text-green-900 hover:from-green-100 hover:to-green-200"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={goToToday}
-                  className="border-gradient-to-r to-red-300 bg-gradient-to-r from-green-50 text-green-900 hover:from-green-100"
-                >
-                   Today
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={goToNextPeriod}
-                  className="border-red-300 bg-gradient-to-r from-red-50 to-red-100 text-red-900 hover:from-red-100 hover:to-red-200"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+                <div className="text-center">
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    {getHeaderText()}
+                  </h2>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToPreviousPeriod}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={goToToday}>
+                    Today
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={goToNextPeriod}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="bg-gradient-to-br from-green-50/50 to-red-50/50">
+
+          <CardContent className="p-0">
             <Tabs defaultValue="schedule" onValueChange={setActiveTab}>
-              <TabsList className="mb-0 bg-gradient-to-r from-green-100 to-red-100 border-green-200">
-                <TabsTrigger
-                  value="schedule"
-                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-green-600 data-[state=active]:text-white"
-                >
-                  📅 Schedule
-                </TabsTrigger>
-                <TabsTrigger
-                  value="attendance"
-                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-red-600 data-[state=active]:text-white"
-                >
-                  ✅ Attendance
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="schedule" className="overflow-x-auto mt-4">
-                <table className="min-w-full divide-y divide-green-200">
-                  <thead>
-                    <tr className="bg-gradient-to-r from-green-100 to-red-100">
-                      <th className="p-2 border border-green-200 sticky left-0 bg-gradient-to-r from-green-100 to-green-200 z-10 min-w-40 text-green-900">
-                        <div className="flex items-center gap-2">
-                          <Gift className="h-4 w-4" />
-                          🎅 Elf
-                        </div>
-                      </th>
-                      {days.map((day) => (
-                        <th
-                          key={day.toString()}
-                          className="p-2 border border-green-200 text-center min-w-32 bg-gradient-to-r from-green-100 to-red-100"
-                        >
-                          <div
-                            className={`font-medium ${
-                              isToday(day)
-                                ? "text-green-600 font-bold"
-                                : "text-green-700"
-                            }`}
-                          >
-                            {format(day, "EEE")}
-                          </div>
-                          <div
-                            className={`text-sm ${
-                              isToday(day)
-                                ? "text-red-600 font-bold"
-                                : "text-red-600"
-                            }`}
-                          >
-                            {format(day, "MMM d")}
+              <div className="border-b border-gray-200 px-6 pt-4">
+                <TabsList>
+                  <TabsTrigger value="schedule" className="flex items-center">
+                    <Clock className="h-4 w-4 mr-2" />
+                    Schedule
+                  </TabsTrigger>
+                  <TabsTrigger value="attendance" className="flex items-center">
+                    <Eye className="h-4 w-4 mr-2" />
+                    Attendance
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+
+              <TabsContent value="schedule" className="m-0">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead>
+                      <tr className="bg-gray-50">
+                        <th className="p-3 border border-gray-200 sticky left-0 bg-gray-50 z-10 min-w-48">
+                          <div className="flex items-center gap-2">
+                            <Users className="h-4 w-4 text-gray-500" />
+                            <span className="font-medium text-gray-700">
+                              Employee
+                            </span>
                           </div>
                         </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-green-100">
-                    {filteredEmployees.map((employee) => (
-                      <tr
-                        key={employee.id}
-                        className="group hover:bg-gradient-to-r hover:from-green-50 hover:to-red-50 transition-colors"
-                      >
-                        <td className="p-2 border border-green-200 sticky left-0 z-10 group-hover:bg-gradient-to-r group-hover:from-green-50 group-hover:to-red-50 bg-gradient-to-r from-green-50 to-green-100">
-                          <div className="flex items-center">
-                            <Avatar className="h-8 w-8 mr-2 rounded-full overflow-hidden border-2 border-green-300">
-                              <AvatarImage
-                                src={employee.avatarUrl}
-                                alt={employee.name}
-                                className="object-cover"
-                              />
-                              <AvatarFallback className="bg-gradient-to-r from-green-500 to-red-500 text-white">
-                                {employee.name.substring(0, 2).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <div className="font-bold text-sm text-green-900">
-                                {employee.name}
-                              </div>
-                              <div className="text-xs text-red-600">
-                                {employee.department}
+                        {days.map((day) => (
+                          <th
+                            key={day.toString()}
+                            className="p-3 border border-gray-200 text-center min-w-36"
+                          >
+                            <div
+                              className={`font-medium ${
+                                isToday(day)
+                                  ? "text-purple-600 font-semibold"
+                                  : "text-gray-700"
+                              }`}
+                            >
+                              {format(day, "EEE")}
+                            </div>
+                            <div
+                              className={`text-sm ${
+                                isToday(day)
+                                  ? "text-purple-600 font-semibold"
+                                  : "text-gray-600"
+                              }`}
+                            >
+                              {format(day, "MMM d")}
+                            </div>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {filteredEmployees.map((employee) => (
+                        <tr
+                          key={employee.id}
+                          className="hover:bg-gray-50 transition-colors"
+                        >
+                          <td className="p-3 border border-gray-200 sticky left-0 z-10 bg-white">
+                            <div className="flex items-center">
+                              <Avatar className="h-8 w-8 mr-3">
+                                <AvatarImage
+                                  src={employee.avatarUrl}
+                                  alt={employee.name}
+                                />
+                                <AvatarFallback className="bg-purple-100 text-purple-700">
+                                  {employee.name.substring(0, 2).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <div className="font-medium text-gray-900">
+                                  {employee.name}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {employee.department}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </td>
-                        {days.map((day) => {
-                          const scheduleEntry = findScheduleEntry(
-                            employee.id,
-                            day
-                          );
-                          return (
-                            <td
-                              key={day.toString()}
-                              className={`p-2 border border-green-200 text-center cursor-pointer transition-all ${
-                                isToday(day)
-                                  ? "bg-gradient-to-r from-green-100 to-red-100 hover:!bg-gradient-to-r hover:!from-green-200 hover:!to-red-200"
-                                  : ""
-                              } hover:bg-gradient-to-r hover:from-green-50 hover:to-red-50`}
-                              onClick={() =>
-                                handleScheduleCellClick(employee, day)
-                              }
-                            >
-                              {scheduleEntry && scheduleEntry.shiftType && (
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <div className="flex flex-col items-center">
-                                        <Badge
-                                          variant="outline"
-                                          className={`w-fit flex items-center justify-center px-3 py-1 min-w-24 ${getShiftColor(
-                                            scheduleEntry.shiftType
-                                          )}`}
-                                        >
-                                          {
-                                            displayShiftInfo(
+                          </td>
+                          {days.map((day) => {
+                            const scheduleEntry = findScheduleEntry(
+                              employee.id,
+                              day
+                            );
+                            return (
+                              <td
+                                key={day.toString()}
+                                className={`p-3 border border-gray-200 text-center cursor-pointer ${
+                                  isToday(day) ? "bg-purple-50" : ""
+                                } hover:bg-gray-50`}
+                                onClick={() =>
+                                  handleScheduleCellClick(employee, day)
+                                }
+                              >
+                                {scheduleEntry && scheduleEntry.shiftType && (
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <div className="flex flex-col items-center">
+                                          <Badge
+                                            variant="outline"
+                                            className={`w-full flex items-center justify-center px-2 py-1 ${getShiftColor(
                                               scheduleEntry.shiftType
-                                            ).name
-                                          }
-                                        </Badge>
-                                        {displayShiftInfo(
-                                          scheduleEntry.shiftType
-                                        ).time && (
-                                          <span className="text-xs text-green-600 mt-1">
+                                            )}`}
+                                          >
                                             {
                                               displayShiftInfo(
                                                 scheduleEntry.shiftType
-                                              ).time
+                                              ).name
                                             }
-                                          </span>
-                                        )}
-                                      </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent className="max-w-xs whitespace-pre-line text-sm bg-gradient-to-r from-green-50 to-red-50 border-green-200 text-green-900">
-                                      <div className="space-y-1">
-                                        <p className="font-semibold">
-                                          {
-                                            displayShiftInfo(
-                                              scheduleEntry.shiftType
-                                            ).name
-                                          }
-                                        </p>
-                                        {displayShiftInfo(
-                                          scheduleEntry.shiftType
-                                        )
-                                          .details?.split("\n")
-                                          .map((line, i) => (
-                                            <p key={i}>{line}</p>
-                                          ))}
-                                      </div>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              )}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                                          </Badge>
+                                          {displayShiftInfo(
+                                            scheduleEntry.shiftType
+                                          ).time && (
+                                            <span className="text-xs text-gray-600 mt-1">
+                                              {
+                                                displayShiftInfo(
+                                                  scheduleEntry.shiftType
+                                                ).time
+                                              }
+                                            </span>
+                                          )}
+                                        </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent className="max-w-xs whitespace-pre-line text-sm">
+                                        <div className="space-y-1">
+                                          <p className="font-semibold">
+                                            {
+                                              displayShiftInfo(
+                                                scheduleEntry.shiftType
+                                              ).name
+                                            }
+                                          </p>
+                                          {displayShiftInfo(
+                                            scheduleEntry.shiftType
+                                          )
+                                            .details?.split("\n")
+                                            .map((line, i) => (
+                                              <p key={i}>{line}</p>
+                                            ))}
+                                        </div>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </TabsContent>
+
               <TabsContent value="attendance">
                 <Attendance
                   viewMode={viewMode}
@@ -1235,14 +1214,25 @@ const ScheduleAndAttendance: React.FC = () => {
               </TabsContent>
             </Tabs>
           </CardContent>
-          <CardFooter className="flex justify-between bg-gradient-to-r from-green-100 to-red-100 border-t border-green-200">
-            <div className="text-sm text-green-700 flex items-center">
-              <Star className="h-3 w-3 mr-1" />
-              Showing {filteredEmployees.length} elves 
+
+          <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-gray-200 bg-gray-50">
+            <div className="text-sm text-gray-600 flex items-center">
+              <Users className="h-4 w-4 mr-2" />
+              Showing {filteredEmployees.length} employees
             </div>
-            <div className="flex gap-2 text-xs">
+            <div className="flex gap-3">
               <IncompleteBreaksDialog />
               <EmployeesOnLunchDialog />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  // Export functionality
+                }}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
               <AddEmployee
                 onEmployeeAdded={async () => {
                   try {
@@ -1276,7 +1266,7 @@ const ScheduleAndAttendance: React.FC = () => {
           </CardFooter>
         </Card>
 
-        {/* Christmas-themed Dialog */}
+        {/* Edit Dialog */}
         <Dialog
           open={isAddShiftOpen}
           onOpenChange={(open) => {
@@ -1284,47 +1274,38 @@ const ScheduleAndAttendance: React.FC = () => {
             if (!open) resetDialogState();
           }}
         >
-          <DialogContent className="bg-gradient-to-r from-green-50 to-red-50 border-green-200">
+          <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle className="text-green-900 flex items-center gap-2">
-                <TreePine className="h-5 w-5" />
+              <DialogTitle>
                 {selectedEmployee && selectedDate ? (
                   <>
-                     Update {format(selectedDate, "MMM d, yyyy")} for{" "}
+                    Update {format(selectedDate, "MMM d, yyyy")} for{" "}
                     {selectedEmployee.name}
                   </>
                 ) : (
-                  "🎅 Update Schedule"
+                  "Update Schedule"
                 )}
               </DialogTitle>
-              <DialogDescription className="text-green-700">
-                ⭐ Manage schedules with holiday cheer and joy! 🎁
+              <DialogDescription>
+                Modify shift details or attendance status
               </DialogDescription>
             </DialogHeader>
+
             <Tabs
               defaultValue={activeTab === "schedule" ? "shift" : "attendance"}
+              className="mt-4"
             >
-              <TabsList className="grid w-full grid-cols-2 bg-gradient-to-r from-green-100 to-red-100 border-green-200">
-                <TabsTrigger
-                  value="shift"
-                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-green-600 data-[state=active]:text-white"
-                >
-                  📅 Shift Schedule
-                </TabsTrigger>
-                <TabsTrigger
-                  value="attendance"
-                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-red-600 data-[state=active]:text-white"
-                >
-                  ✅ Attendance
-                </TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="shift">Shift Schedule</TabsTrigger>
+                <TabsTrigger value="attendance">Attendance</TabsTrigger>
               </TabsList>
-              <TabsContent value="shift">
-                <div className="space-y-4 mt-4">
-                  <Label htmlFor="shift-type" className="text-green-900">
-                     Shift Type
+
+              <TabsContent value="shift" className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Shift Type
                   </Label>
                   <RadioGroup
-                    id="shift-type"
                     value={selectedShiftType}
                     onValueChange={(value: string) => {
                       setSelectedShiftType(value as ShiftTypeValue);
@@ -1337,275 +1318,256 @@ const ScheduleAndAttendance: React.FC = () => {
                         setSelectedBreak2(undefined);
                       }
                     }}
-                    className="space-y-2"
+                    className="grid grid-cols-2 gap-2"
                   >
-                    <div className="grid grid-cols-2 gap-2">
-                      {[
-                        { value: "Morning", label: "🌅 Morning" },
-                        { value: "Mid", label: "☀️ Mid" },
-                        { value: "Night", label: "🌙 Night" },
-                        { value: "restday", label: " Rest Day" },
-                        { value: "paidTimeOff", label: "🎁 PTO" },
-                        { value: "plannedLeave", label: "⭐ Leave" },
-                        { value: "holiday", label: "🎅 Holiday" },
-                        { value: "rdot", label: "⏰ RDOT" },
-                      ].map((shift) => (
-                        <div
-                          key={shift.value}
-                          className="flex items-center space-x-2 p-2 rounded hover:bg-gradient-to-r hover:from-green-100 hover:to-red-100"
-                        >
-                          <RadioGroupItem
-                            value={shift.value}
-                            id={shift.value}
-                            className="text-green-500 border-green-300"
-                          />
-                          <Label htmlFor={shift.value} className="text-green-900">
-                            {shift.label}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
+                    {[
+                      { value: "Morning", label: "Morning" },
+                      { value: "Mid", label: "Mid" },
+                      { value: "Night", label: "Night" },
+                      { value: "restday", label: "Rest Day" },
+                      { value: "paidTimeOff", label: "Paid Time Off" },
+                      { value: "plannedLeave", label: "Planned Leave" },
+                      { value: "holiday", label: "Holiday" },
+                      { value: "rdot", label: "RDOT" },
+                    ].map((shift) => (
+                      <div
+                        key={shift.value}
+                        className="flex items-center space-x-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+                      >
+                        <RadioGroupItem
+                          value={shift.value}
+                          id={`shift-${shift.value}`}
+                        />
+                        <Label htmlFor={`shift-${shift.value}`}>
+                          {shift.label}
+                        </Label>
+                      </div>
+                    ))}
                   </RadioGroup>
+                </div>
 
-                  {hasShiftTime(selectedShiftType) && (
-                    <>
-                      <div className="flex space-x-4">
-                        <div>
-                          <Label
-                            htmlFor="start-time"
-                            className="text-green-900"
-                          >
-                            ⏰ Shift Start
-                          </Label>
-                          <input
-                            id="start-time"
-                            type="time"
-                            value={selectedStartTime}
-                            onChange={(e) =>
-                              setSelectedStartTime(e.target.value)
-                            }
-                            className="border border-green-300 p-2 rounded text-sm bg-gradient-to-r from-green-50 to-green-100 text-green-900"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="end-time" className="text-green-900">
-                            🚪 Shift End
-                          </Label>
-                          <input
-                            id="end-time"
-                            type="time"
-                            value={selectedEndTime}
-                            onChange={(e) => setSelectedEndTime(e.target.value)}
-                            className="border border-red-300 p-2 rounded text-sm bg-gradient-to-r from-red-50 to-red-100 text-red-900"
-                          />
-                        </div>
+                {hasShiftTime(selectedShiftType) && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                          Shift Start
+                        </Label>
+                        <input
+                          type="time"
+                          value={selectedStartTime}
+                          onChange={(e) => setSelectedStartTime(e.target.value)}
+                          className="w-full p-2 border border-gray-300 rounded-md"
+                        />
                       </div>
-
-                      <div className="grid grid-cols-3 gap-4">
-                        <div>
-                          <Label htmlFor="break1" className="text-green-900">
-                            ☕ 1st Break
-                          </Label>
-                          <input
-                            id="break1"
-                            type="time"
-                            value={selectedBreak1 || ""}
-                            onChange={(e) =>
-                              setSelectedBreak1(e.target.value || undefined)
-                            }
-                            className="border border-green-300 p-2 rounded text-sm w-full bg-gradient-to-r from-green-50 to-green-100 text-green-900"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="lunch" className="text-green-900">
-                             Lunch
-                          </Label>
-                          <input
-                            id="lunch"
-                            type="time"
-                            value={selectedLunch || ""}
-                            onChange={(e) =>
-                              setSelectedLunch(e.target.value || undefined)
-                            }
-                            className="border border-red-300 p-2 rounded text-sm w-full bg-gradient-to-r from-red-50 to-red-100 text-red-900"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="break2" className="text-green-900">
-                            🍪 2nd Break
-                          </Label>
-                          <input
-                            id="break2"
-                            type="time"
-                            value={selectedBreak2 || ""}
-                            onChange={(e) =>
-                              setSelectedBreak2(e.target.value || undefined)
-                            }
-                            className="border border-green-300 p-2 rounded text-sm w-full bg-gradient-to-r from-green-50 to-green-100 text-green-900"
-                          />
-                        </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                          Shift End
+                        </Label>
+                        <input
+                          type="time"
+                          value={selectedEndTime}
+                          onChange={(e) => setSelectedEndTime(e.target.value)}
+                          className="w-full p-2 border border-gray-300 rounded-md"
+                        />
                       </div>
-                    </>
-                  )}
+                    </div>
 
-                  <div className="flex items-center space-x-2 text-sm p-2 bg-gradient-to-r from-green-100 to-red-100 rounded">
-                    <span className="text-green-900">🎁 Repeat for</span>
-                    <Select
-                      value={repeatDays.toString()}
-                      onValueChange={(value) => setRepeatDays(parseInt(value))}
-                    >
-                      <SelectTrigger className="w-40 text-sm border-green-300 bg-gradient-to-r from-green-50 to-red-50 text-green-900">
-                        <SelectValue placeholder="Repeat days" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-gradient-to-r from-green-50 to-red-50 border-green-200">
-                        {[1, 2, 3, 4, 5, 6, 7, 15, 30].map((days) => (
-                          <SelectItem
-                            key={days}
-                            value={days.toString()}
-                            className="text-green-900 hover:bg-gradient-to-r hover:from-green-100 hover:to-red-100"
-                          >
-                            ⭐ {days} day{days !== 1 ? "s" : ""}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                          1st Break
+                        </Label>
+                        <input
+                          type="time"
+                          value={selectedBreak1 || ""}
+                          onChange={(e) =>
+                            setSelectedBreak1(e.target.value || undefined)
+                          }
+                          className="w-full p-2 border border-gray-300 rounded-md"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                          Lunch
+                        </Label>
+                        <input
+                          type="time"
+                          value={selectedLunch || ""}
+                          onChange={(e) =>
+                            setSelectedLunch(e.target.value || undefined)
+                          }
+                          className="w-full p-2 border border-gray-300 rounded-md"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                          2nd Break
+                        </Label>
+                        <input
+                          type="time"
+                          value={selectedBreak2 || ""}
+                          onChange={(e) =>
+                            setSelectedBreak2(e.target.value || undefined)
+                          }
+                          className="w-full p-2 border border-gray-300 rounded-md"
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                <div className="flex items-center space-x-3">
+                  <Label className="text-sm font-medium text-gray-700">
+                    Repeat for
+                  </Label>
+                  <Select
+                    value={repeatDays.toString()}
+                    onValueChange={(value) => setRepeatDays(parseInt(value))}
+                  >
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Repeat days" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[1, 2, 3, 4, 5, 6, 7, 15, 30].map((days) => (
+                        <SelectItem key={days} value={days.toString()}>
+                          {days} day{days !== 1 ? "s" : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </TabsContent>
-              <TabsContent value="attendance">
-                <div className="space-y-4 mt-4">
-                  <Label htmlFor="attendance-status" className="text-green-900">
-                    🎅 Attendance Status
+
+              <TabsContent value="attendance" className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Attendance Status
                   </Label>
                   <RadioGroup
-                    id="attendance-status"
                     value={selectedAttendanceStatus}
                     onValueChange={(value: string) => {
                       setSelectedAttendanceStatus(value as AttendanceStatus);
                     }}
+                    className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto"
                   >
-                    <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto">
-                      {[
-                        "Present",
-                        "NCNS",
-                        "Call In",
-                        "Rest Day",
-                        "Tardy",
-                        "RDOT",
-                        "Suspended",
-                        "Attrition",
-                        "LOA",
-                        "PTO",
-                        "Half Day",
-                        "Early Log Out",
-                        "VTO",
-                        "TB",
-                      ].map((status) => (
-                        <div
-                          key={status}
-                          className="flex items-center space-x-2 p-2 rounded hover:bg-gradient-to-r hover:from-green-100 hover:to-red-100"
-                        >
-                          <RadioGroupItem
-                            value={status}
-                            id={status.toLowerCase().replace(" ", "-")}
-                            className="text-green-500 border-green-300"
-                          />
-                          <Label
-                            htmlFor={status.toLowerCase().replace(" ", "-")}
-                            className="text-green-900"
-                          >
-                            {status}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                  </RadioGroup>
-                  {selectedAttendanceStatus === "Present" && (
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center space-x-2 mt-6 p-2 bg-gradient-to-r from-green-100 to-red-100 rounded">
-                        <Checkbox
-                          id="has-ot"
-                          checked={showOtInput}
-                          onCheckedChange={(checked) => {
-                            setShowOtInput(!!checked);
-                            if (!checked) {
-                              setOtHours("");
-                              setOtMinutes("");
-                            }
-                          }}
-                          className="text-green-500 border-green-300"
+                    {[
+                      "Present",
+                      "NCNS",
+                      "Call In",
+                      "Rest Day",
+                      "Tardy",
+                      "RDOT",
+                      "Suspended",
+                      "Attrition",
+                      "LOA",
+                      "PTO",
+                      "Half Day",
+                      "Early Log Out",
+                      "VTO",
+                      "TB",
+                    ].map((status) => (
+                      <div
+                        key={status}
+                        className="flex items-center space-x-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+                      >
+                        <RadioGroupItem
+                          value={status}
+                          id={`status-${status
+                            .toLowerCase()
+                            .replace(" ", "-")}`}
                         />
-                        <Label htmlFor="has-ot" className="text-green-900">
-                           With Overtime?
+                        <Label
+                          htmlFor={`status-${status
+                            .toLowerCase()
+                            .replace(" ", "-")}`}
+                        >
+                          {status}
                         </Label>
                       </div>
-
-                      {showOtInput && (
-                        <div className="grid grid-cols-2 gap-4 p-2 bg-gradient-to-r from-green-50 to-red-50 rounded border border-green-200">
-                          <div>
-                            <Label
-                              htmlFor="ot-hours"
-                              className="text-green-900"
-                            >
-                              ⏰ OT Hours
-                            </Label>
-                            <input
-                              id="ot-hours"
-                              type="number"
-                              min="0"
-                              max="24"
-                              value={otHours}
-                              onChange={(e) => setOtHours(e.target.value)}
-                              className="border border-green-300 p-2 rounded text-sm w-full bg-white text-green-900"
-                              placeholder="Hours"
-                            />
-                          </div>
-                          <div>
-                            <Label
-                              htmlFor="ot-minutes"
-                              className="text-green-900"
-                            >
-                              ⏳ OT Minutes
-                            </Label>
-                            <input
-                              id="ot-minutes"
-                              type="number"
-                              min="0"
-                              max="59"
-                              value={otMinutes}
-                              onChange={(e) => setOtMinutes(e.target.value)}
-                              className="border border-red-300 p-2 rounded text-sm w-full bg-white text-red-900"
-                              placeholder="Minutes"
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {(selectedAttendanceStatus === "Tardy" ||
-                    selectedAttendanceStatus === "Half Day" ||
-                    selectedAttendanceStatus === "Present" ||
-                    selectedAttendanceStatus === "RDOT" ||
-                    selectedAttendanceStatus === "Early Log Out") && (
-                    <div className="text-sm text-green-700 bg-gradient-to-r from-green-100 to-red-100 p-2 rounded">
-                      <p className="flex items-center">
-                        <Bell className="h-3 w-3 mr-1" />
-                        🎅 Time data will be automatically filled from time records.
-                      </p>
-                    </div>
-                  )}
+                    ))}
+                  </RadioGroup>
                 </div>
+
+                {selectedAttendanceStatus === "Present" && (
+                  <div className="space-y-3 border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="has-ot"
+                        checked={showOtInput}
+                        onCheckedChange={(checked) => {
+                          setShowOtInput(!!checked);
+                          if (!checked) {
+                            setOtHours("");
+                            setOtMinutes("");
+                          }
+                        }}
+                      />
+                      <Label
+                        htmlFor="has-ot"
+                        className="text-sm font-medium text-gray-700"
+                      >
+                        Include Overtime
+                      </Label>
+                    </div>
+
+                    {showOtInput && (
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                            OT Hours
+                          </Label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="24"
+                            value={otHours}
+                            onChange={(e) => setOtHours(e.target.value)}
+                            className="w-full p-2 border border-gray-300 rounded-md"
+                            placeholder="Hours"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                            OT Minutes
+                          </Label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="59"
+                            value={otMinutes}
+                            onChange={(e) => setOtMinutes(e.target.value)}
+                            className="w-full p-2 border border-gray-300 rounded-md"
+                            placeholder="Minutes"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {(selectedAttendanceStatus === "Tardy" ||
+                  selectedAttendanceStatus === "Half Day" ||
+                  selectedAttendanceStatus === "Present" ||
+                  selectedAttendanceStatus === "RDOT" ||
+                  selectedAttendanceStatus === "Early Log Out") && (
+                  <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+                    <p className="flex items-center">
+                      <TrendingUp className="h-4 w-4 mr-2" />
+                      Time data will be automatically filled from time records.
+                    </p>
+                  </div>
+                )}
               </TabsContent>
             </Tabs>
-            <DialogFooter className="text-xs">
+
+            <DialogFooter>
               <Button
                 variant="outline"
                 onClick={() => {
                   resetDialogState();
                   setIsAddShiftOpen(false);
                 }}
-                className="border-green-300 text-green-900 hover:bg-gradient-to-r hover:from-green-100 hover:to-green-200"
               >
                 Cancel
               </Button>
@@ -1615,28 +1577,15 @@ const ScheduleAndAttendance: React.FC = () => {
                     ? handleAddShift
                     : handleUpdateAttendance
                 }
-                className="bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700 text-white"
+                className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
               >
-                 Save Changes
+                Save Changes
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
-      
-      {/* Christmas Footer */}
-      <div className="mt-8 text-center bg-gradient-to-r from-green-50 to-red-50 p-4 rounded-xl border border-green-200 mx-auto max-w-4xl">
-        <div className="text-green-600 text-sm flex items-center justify-center gap-2">
-          <span></span>
-          <span>May your workshop run smoothly this holiday season!</span>
-          <span>🎅</span>
-        </div>
-        <div className="text-xs text-green-500 mt-1 flex items-center justify-center">
-          <Snowflake className="h-3 w-3 mr-1" />
-          From Santa's Workshop with Joy
-        </div>
-      </div>
-    </section>
+    </div>
   );
 };
 

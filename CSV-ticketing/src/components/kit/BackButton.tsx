@@ -1,4 +1,4 @@
-import IonArrowBackCircleSharp from "@/assets/arrow";
+import { ChevronLeft } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
@@ -13,10 +13,11 @@ const BackButton: React.FC = () => {
   return (
     <Button
       onClick={handleBack}
-      className="bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-all duration-300 transform hover:scale-105 shadow-lg"
+      variant="outline"
+      className="border border-gray-300 hover:border-purple-300 hover:bg-purple-50 text-gray-700 hover:text-purple-700 transition-colors duration-200"
     >
-      <IonArrowBackCircleSharp  className="w-5 h-5" />
-      Back 
+      <ChevronLeft className="w-4 h-4 mr-2" />
+      Back
     </Button>
   );
 };
