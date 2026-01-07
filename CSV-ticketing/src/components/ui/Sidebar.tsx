@@ -11,6 +11,7 @@ import {
   Tooltip,
   TooltipProvider,
   TooltipTrigger,
+  TooltipContent,
 } from "@/components/ui/tooltip";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
@@ -28,13 +29,16 @@ import {
   Ticket,
   UserPlus,
   Users,
-  BadgeDollarSign,
   LayoutDashboard,
   Settings,
-  BarChart3,
   Key,
-  Gift,
   Shield,
+  Home,
+  CreditCard,
+  Database,
+  Lock,
+  Bell,
+  FileBarChart,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -66,13 +70,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [protectedPath, setProtectedPath] = useState("");
   const { toast } = useToast();
-  
+
   const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>({
-    "Actions": true,
-    "Tickets": true,
-    "Time": true,
-    "Data": true,
-    "Team": true,
+    Actions: true,
+    Tickets: true,
+    "Time Management": true,
+    "Data Export": true,
+    "Team Management": true,
   });
 
   const navGroups: NavGroup[] = [
@@ -93,7 +97,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         {
           title: "Payroll",
           path: "/payroll",
-          icon: <BadgeDollarSign className="h-5 w-5" />,
+          icon: <CreditCard className="h-5 w-5" />,
           badge: "New",
         },
       ],
@@ -120,7 +124,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       ],
     },
     {
-      name: "Time",
+      name: "Time Management",
       icon: <Clock className="h-5 w-5" />,
       items: [
         {
@@ -136,8 +140,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       ],
     },
     {
-      name: "Data",
-      icon: <FileSpreadsheet className="h-5 w-5" />,
+      name: "Data Export",
+      icon: <Database className="h-5 w-5" />,
       items: [
         {
           title: "Export Memos",
@@ -147,7 +151,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         {
           title: "Export Survey",
           path: "/exportsurveydata",
-          icon: <BarChart3 className="h-5 w-5" />,
+          icon: <FileBarChart className="h-5 w-5" />,
         },
         {
           title: "Export Tickets",
@@ -157,13 +161,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       ],
     },
     {
-      name: "Team",
+      name: "Team Management",
       icon: <Users className="h-5 w-5" />,
       items: [
         {
           title: "Leave Credits",
           path: "/leavecredits",
-          icon: <FileText className="h-5 w-5" />,
+          icon: <CalendarCheck className="h-5 w-5" />,
           protected: true,
         },
         {
@@ -174,12 +178,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         {
           title: "Reset Password",
           path: "/resetuserpassword",
-          icon: <Key className="h-5 w-5" />,
+          icon: <Lock className="h-5 w-5" />,
         },
         {
           title: "Manage Survey",
           path: "/createsurvey",
           icon: <Settings className="h-5 w-5" />,
+        },
+        {
+          title: "Notifications",
+          path: "/notifications",
+          icon: <Bell className="h-5 w-5" />,
         },
       ],
     },
@@ -195,9 +204,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   };
 
   const toggleDropdown = (groupName: string) => {
-    setOpenDropdowns(prev => ({
+    setOpenDropdowns((prev) => ({
       ...prev,
-      [groupName]: !prev[groupName]
+      [groupName]: !prev[groupName],
     }));
   };
 
@@ -208,15 +217,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       setIsPasswordDialogOpen(false);
       setPassword("");
       toast({
-        title: "Access Granted!",
-        description: "Welcome!",
+        title: "Access Granted",
+        description: "Welcome to the protected section.",
         variant: "default",
-        className:
-          "bg-gradient-to-r from-red-600 to-green-600 text-white border-red-400",
       });
     } else {
       toast({
-        title: "Incorrect Password!",
+        title: "Incorrect Password",
         description: "Please try again.",
         variant: "destructive",
       });
@@ -243,52 +250,56 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         open={isPasswordDialogOpen}
         onOpenChange={setIsPasswordDialogOpen}
       >
-        <DialogContent className="sm:max-w-md bg-gradient-to-br from-red-50 via-white to-green-50 border-2 border-red-400 shadow-2xl">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-r from-red-500 to-green-500 rounded-lg border border-red-400 shadow-lg">
+              <div className="p-2 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-lg">
                 <Shield className="h-6 w-6 text-white" />
               </div>
               <div>
-                <DialogTitle className="text-red-700 font-bold">
+                <DialogTitle className="text-gray-900 font-semibold">
                   Protected Section
                 </DialogTitle>
-                <div className="text-green-700 text-sm mt-1">
-                  This section requires a secret password.
+                <div className="text-gray-600 text-sm mt-1">
+                  This section requires additional authentication.
                 </div>
               </div>
             </div>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="relative">
-              <Input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password"
-                className="w-full bg-white/80 border-red-400 text-red-900 placeholder:text-red-500 pl-10 focus:ring-red-500 focus:border-red-500"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    verifyPassword();
-                  }
-                }}
-              />
-              <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-red-500" />
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">
+                Enter Password
+              </label>
+              <div className="relative">
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  className="w-full pl-10"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      verifyPassword();
+                    }
+                  }}
+                />
+                <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              </div>
             </div>
             <div className="flex gap-3 justify-end">
               <Button
                 variant="outline"
                 onClick={() => setIsPasswordDialogOpen(false)}
-                className="border-red-400 text-red-700 hover:bg-red-50"
+                className="border-gray-300"
               >
                 Cancel
               </Button>
               <Button
                 onClick={verifyPassword}
-                className="gap-2 bg-gradient-to-r from-red-600 to-green-600 hover:from-red-700 hover:to-green-700 text-white border border-red-400 shadow-lg"
+                className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
               >
-                <Gift className="h-4 w-4" />
-                Enter
+                Verify & Continue
               </Button>
             </div>
           </div>
@@ -301,45 +312,56 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden fixed top-4 left-4 z-50 bg-gradient-to-r from-red-600 to-green-600 backdrop-blur-sm shadow-2xl rounded-full border-2 border-white/30 hover:from-red-700 hover:to-green-700 transition-all duration-300"
+            className="md:hidden fixed top-4 left-4 z-50 bg-gradient-to-r from-purple-600 to-indigo-600 shadow-lg rounded-full border border-white"
           >
             <Menu className="h-5 w-5 text-white" />
-            <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
           </Button>
         </SheetTrigger>
-        <SheetContent
-          side="left"
-          className="w-80 p-0 border-r-0 bg-gradient-to-b from-red-50 via-white to-green-50"
-        >
-          <div className="flex flex-col h-full bg-gradient-to-b from-red-50 via-white to-green-50">
-            {/* Navigation with Scroll */}
-            <div className="flex-1 overflow-y-auto">
-              <nav className="py-2 px-3">
+        <SheetContent side="left" className="w-80 p-0 bg-white">
+          <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-lg">
+                  <Home className="h-6 w-6 text-purple-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    Admin Panel
+                  </h2>
+                  <p className="text-sm text-gray-600">Management Dashboard</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Navigation */}
+            <div className="flex-1 overflow-y-auto py-4">
+              <nav className="px-4">
                 {navGroups.map((group, groupIndex) => (
-                  <div key={groupIndex} className="mb-1">
+                  <div key={groupIndex} className="mb-6">
                     <Button
                       variant="ghost"
                       onClick={() => toggleDropdown(group.name)}
-                      className="w-full justify-between px-3 py-2 rounded-lg mb-0 hover:bg-red-50/50 border border-transparent hover:border-red-300 transition-all duration-200"
+                      className="w-full justify-between px-2 py-3 rounded-lg hover:bg-gray-50 transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="p-1.5 rounded-md bg-gradient-to-r from-red-200 to-green-100 text-red-600 border border-red-200">
+                        <div className="p-2 bg-gray-100 rounded-lg text-gray-600">
                           {group.icon}
                         </div>
-                        <span className="text-sm font-semibold text-red-600">
+                        <span className="text-sm font-medium text-gray-900">
                           {group.name}
                         </span>
                       </div>
                       <ChevronDown
                         className={cn(
-                          "h-4 w-4 text-red-500 transition-transform duration-200",
+                          "h-4 w-4 text-gray-400 transition-transform duration-200",
                           openDropdowns[group.name] ? "rotate-180" : ""
                         )}
                       />
                     </Button>
-                    
+
                     {openDropdowns[group.name] && (
-                      <div className="ml-3 pl-7 border-l border-red-100">
+                      <div className="ml-2 mt-2 space-y-1">
                         {group.items.map((item, index) => {
                           const isActive = location.pathname === item.path;
                           return (
@@ -348,27 +370,27 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                               variant="ghost"
                               onClick={() => handleNavigation(item)}
                               className={cn(
-                                "w-full justify-start gap-2 px-2 py-1.5 rounded-md transition-all duration-200 group relative mt-0.5",
+                                "w-full justify-start gap-3 px-2 py-2.5 rounded-lg transition-colors",
                                 isActive
-                                  ? "bg-gradient-to-r from-red-200 to-green-200 text-red-800 font-semibold"
-                                  : "text-gray-700 hover:text-red-800 hover:bg-red-50/50"
+                                  ? "bg-purple-50 text-purple-700 border border-purple-200"
+                                  : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                               )}
                             >
                               <div
                                 className={cn(
-                                  "p-1 rounded-sm transition-all duration-300",
+                                  "p-1.5 rounded-md",
                                   isActive
-                                    ? "text-red-600"
-                                    : "text-gray-500 group-hover:text-red-600"
+                                    ? "bg-gradient-to-br from-purple-600 to-indigo-600 text-white"
+                                    : "bg-gray-100 text-gray-600"
                                 )}
                               >
                                 {item.icon}
                               </div>
-                              <span className="flex-1 text-left text-xs">
+                              <span className="text-sm flex-1 text-left">
                                 {item.title}
                               </span>
                               {item.protected && (
-                                <Shield className="h-3 w-3 text-red-600" />
+                                <Shield className="h-3.5 w-3.5 text-purple-500" />
                               )}
                             </Button>
                           );
@@ -379,6 +401,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                 ))}
               </nav>
             </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-gray-200">
+              <div className="text-center">
+                <p className="text-xs text-gray-500">CSV Now Admin v2.0</p>
+              </div>
+            </div>
           </div>
         </SheetContent>
       </Sheet>
@@ -386,23 +415,26 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       {/* Desktop Sidebar */}
       <div
         className={cn(
-          "hidden md:flex flex-col transition-all duration-300 ease-in-out h-screen sticky top-0 bg-gradient-to-b from-red-50 via-white to-green-50 border-r border-red-300 shadow-2xl",
+          "hidden md:flex flex-col transition-all duration-300 ease-in-out h-screen sticky top-0 bg-white border-r border-gray-200 shadow-sm",
           isOpen ? "w-64" : "w-20",
           isMounted ? "opacity-100" : "opacity-0"
         )}
       >
+        {/* Header */}
         <div
           className={cn(
-            "flex items-center border-b border-red-300 transition-all duration-300 flex-shrink-0 relative",
-            isOpen ? "justify-between p-3" : "justify-center p-2"
+            "flex items-center border-b border-gray-200 transition-all duration-300 flex-shrink-0",
+            isOpen ? "justify-between p-6" : "justify-center p-4"
           )}
         >
           {isOpen && (
             <div className="flex items-center gap-3">
+              <div className="p-2 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-lg">
+                <Home className="h-6 w-6 text-purple-600" />
+              </div>
               <div>
-                <h2 className="text-lg font-bold bg-gradient-to-r from-red-600 via-green-600 to-blue-600 bg-clip-text text-transparent font-serif">
-                  Welcome {}
-                </h2>
+                <h2 className="font-semibold text-gray-900">Admin Panel</h2>
+                <p className="text-xs text-gray-600">Management Console</p>
               </div>
             </div>
           )}
@@ -410,28 +442,28 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
             variant="ghost"
             size="icon"
             className={cn(
-              "rounded-lg transition-all duration-200 hover:bg-red-100 border border-red-300 shadow-sm relative",
-              isOpen ? "h-7 w-7" : "h-8 w-8"
+              "rounded-lg transition-all duration-200 hover:bg-gray-100 border border-gray-300",
+              isOpen ? "h-8 w-8" : "h-9 w-9"
             )}
             onClick={handleToggle}
           >
             {isOpen ? (
-              <ChevronLeft className="h-3.5 w-3.5 text-red-600" />
+              <ChevronLeft className="h-4 w-4 text-gray-600" />
             ) : (
-              <ChevronRight className="h-3.5 w-3.5 text-red-600" />
+              <ChevronRight className="h-4 w-4 text-gray-600" />
             )}
           </Button>
         </div>
 
-        {/* Navigation with Scroll */}
-        <div className="flex-1 overflow-y-auto py-2">
+        {/* Navigation */}
+        <div className="flex-1 overflow-y-auto py-4">
           <TooltipProvider delayDuration={300}>
-            <nav className="flex flex-col px-2">
+            <nav className="flex flex-col px-3">
               {navGroups.map((group, groupIndex) => {
-                // In collapsed state, show individual items with tooltips
+                // In collapsed state
                 if (!isOpen) {
                   return (
-                    <div key={groupIndex} className="mb-0.5">
+                    <div key={groupIndex} className="mb-1">
                       {group.items.map((item, index) => {
                         const isActive = location.pathname === item.path;
                         return (
@@ -441,24 +473,32 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                                 variant="ghost"
                                 onClick={() => handleNavigation(item)}
                                 className={cn(
-                                  "w-full p-2 justify-center rounded-lg transition-all duration-200 group relative border overflow-hidden mb-0.5",
+                                  "w-full p-2 justify-center rounded-lg mb-1 transition-colors",
                                   isActive
-                                    ? "bg-gradient-to-r from-red-200 to-green-200 border-red-400 text-red-800 shadow-md"
-                                    : "border-transparent hover:border-red-300 text-gray-700 hover:text-red-800 bg-white/80 hover:bg-red-50/50"
+                                    ? "bg-purple-50 text-purple-700"
+                                    : "text-gray-600 hover:text-purple-700 hover:bg-gray-50"
                                 )}
                               >
                                 <div
                                   className={cn(
-                                    "transition-colors relative z-10",
+                                    "p-1.5 rounded-md",
                                     isActive
-                                      ? "text-white"
-                                      : "text-red-600 group-hover:text-white"
+                                      ? "bg-gradient-to-br from-purple-600 to-indigo-600 text-white"
+                                      : "bg-gray-100 text-gray-600"
                                   )}
                                 >
                                   {item.icon}
                                 </div>
                               </Button>
                             </TooltipTrigger>
+                            <TooltipContent side="right">
+                              <div className="flex items-center gap-2">
+                                <span>{item.title}</span>
+                                {item.protected && (
+                                  <Shield className="h-3 w-3 text-purple-500" />
+                                )}
+                              </div>
+                            </TooltipContent>
                           </Tooltip>
                         );
                       })}
@@ -466,40 +506,35 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                   );
                 }
 
-                // In expanded state, show dropdowns
+                // In expanded state
                 return (
-                  <div key={groupIndex} className="mb-0.5">
+                  <div key={groupIndex} className="mb-4">
                     <Button
                       variant="ghost"
                       onClick={() => toggleDropdown(group.name)}
                       className={cn(
-                        "w-full justify-between px-2 py-2 rounded-lg mb-0 hover:bg-red-50/50 border border-transparent hover:border-red-300 transition-all duration-200",
-                        openDropdowns[group.name] ? "bg-red-50/30" : ""
+                        "w-full justify-between px-3 py-3 rounded-lg hover:bg-gray-50 transition-colors",
+                        openDropdowns[group.name] ? "bg-gray-50" : ""
                       )}
                     >
-                      <div className="flex items-center gap-2">
-                        <div className={cn(
-                          "p-1.5 rounded-md border transition-all duration-300",
-                          openDropdowns[group.name]
-                            ? "bg-gradient-to-r from-red-500 to-green-500 text-white border-red-400"
-                            : "bg-gradient-to-r from-red-200 to-green-100 text-red-600 border-red-200"
-                        )}>
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-gray-100 rounded-lg text-gray-600">
                           {group.icon}
                         </div>
-                        <span className="text-xs font-semibold text-red-600">
+                        <span className="text-sm font-medium text-gray-900">
                           {group.name}
                         </span>
                       </div>
                       <ChevronDown
                         className={cn(
-                          "h-3.5 w-3.5 text-red-500 transition-transform duration-200",
+                          "h-4 w-4 text-gray-400 transition-transform duration-200",
                           openDropdowns[group.name] ? "rotate-180" : ""
                         )}
                       />
                     </Button>
-                    
+
                     {openDropdowns[group.name] && (
-                      <div className="ml-1">
+                      <div className="ml-2 mt-2 space-y-1">
                         {group.items.map((item, index) => {
                           const isActive = location.pathname === item.path;
                           return (
@@ -508,27 +543,27 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                               variant="ghost"
                               onClick={() => handleNavigation(item)}
                               className={cn(
-                                "w-full justify-start gap-2 px-2 py-1.5 rounded-md transition-all duration-200 group relative mt-0",
+                                "w-full justify-start gap-3 px-3 py-2.5 rounded-lg transition-colors",
                                 isActive
-                                  ? "bg-gradient-to-r from-red-200 to-green-200 text-red-800 font-semibold"
-                                  : "text-gray-700 hover:text-red-800 hover:bg-red-50/50"
+                                  ? "bg-purple-50 text-purple-700 border border-purple-200"
+                                  : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                               )}
                             >
                               <div
                                 className={cn(
-                                  "p-0.5 rounded-sm transition-all duration-300",
+                                  "p-1.5 rounded-md",
                                   isActive
-                                    ? "text-red-600"
-                                    : "text-gray-500 group-hover:text-red-600"
+                                    ? "bg-gradient-to-br from-purple-600 to-indigo-600 text-white"
+                                    : "bg-gray-100 text-gray-600"
                                 )}
                               >
                                 {item.icon}
                               </div>
-                              <span className="flex-1 text-left text-xs">
+                              <span className="text-sm flex-1 text-left">
                                 {item.title}
                               </span>
                               {item.protected && (
-                                <Shield className="h-2.5 w-2.5 text-red-600" />
+                                <Shield className="h-3.5 w-3.5 text-purple-500" />
                               )}
                             </Button>
                           );
@@ -541,32 +576,19 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
             </nav>
           </TooltipProvider>
         </div>
-      </div>
 
-      <style>{`
-        @keyframes float {
-          0%, 100% {
-            transform: translateY(0);
-          }
-          50% {
-            transform: translateY(-5px);
-          }
-        }
-        .animate-float {
-          animation: float 3s ease-in-out infinite;
-        }
-        .animate-spin {
-          animation: spin 2s linear infinite;
-        }
-        @keyframes spin {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
-      `}</style>
+        {/* Footer */}
+        {isOpen && (
+          <div className="p-4 border-t border-gray-200">
+            <div className="text-center">
+              <p className="text-xs text-gray-500 mb-1">CSV Now Admin Panel</p>
+              <p className="text-xs text-gray-400">
+                {new Date().getFullYear()}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
     </>
   );
 };
