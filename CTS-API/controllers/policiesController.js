@@ -133,7 +133,6 @@ const updateAcknowledged = asyncHandler(async (req, res) => {
 
 const getUserUnacknowledged = asyncHandler(async (req, res) => {
   try {
-    // The parameter name might be different. Try using req.params.id instead
    const policyId = req.params.policyId;
     
     console.log('Received policy ID:', policyId, 'from params:', req.params);

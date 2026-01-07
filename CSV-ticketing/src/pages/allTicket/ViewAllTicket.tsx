@@ -225,7 +225,7 @@ const ViewAllTicket: React.FC = () => {
 
   if (loading && !refreshing) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white">
+      <div className="flex items-center justify-center bg-gradient-to-b from-gray-50 to-white">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin text-green-600 mx-auto mb-4" />
           <p className="text-green-600 font-medium">Loading tickets...</p>
@@ -236,7 +236,7 @@ const ViewAllTicket: React.FC = () => {
 
   if (error && !refreshing) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white">
+      <div className="flex items-center justify-center bg-gradient-to-b from-gray-50 to-white">
         <div className="text-center max-w-md">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -253,7 +253,7 @@ const ViewAllTicket: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-6">
+    <div className="bg-gradient-to-b from-gray-50 to-white py-6">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
