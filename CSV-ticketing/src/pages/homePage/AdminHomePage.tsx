@@ -6,19 +6,20 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import {
-  BarChart3,
   Ticket,
   Clock,
   AlertTriangle,
   RefreshCw,
-  Gift,
-  Star,
-  Snowflake,
-  TreePine,
-  CandyCane,
   Bell,
   Package,
   Menu,
+  Users,
+  CheckCircle,
+  TrendingUp,
+  Activity,
+  Eye,
+  Download,
+  Filter,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -51,8 +52,8 @@ const AdminHome = () => {
   useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth;
-      setIsMobile(width < 640); 
-      setIsTablet(width >= 640 && width < 1024); 
+      setIsMobile(width < 640);
+      setIsTablet(width >= 640 && width < 1024);
 
       if (width < 640) {
         setSidebarOpen(false);
@@ -130,22 +131,16 @@ const AdminHome = () => {
     }
   };
 
-  // Christmas-themed loading component
-  const ChristmasLoader = () => (
+  // Loading component
+  const Loader = () => (
     <div className="flex items-center justify-center">
       <div className="relative">
-        <TreePine className="h-8 w-8 sm:h-10 sm:w-10 text-green-500 animate-pulse drop-shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
-        <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2">
-          <Star
-            className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-400 animate-spin"
-            style={{ animationDuration: "2s" }}
-          />
-        </div>
+        <div className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
       </div>
     </div>
   );
 
-  // Animation variants for responsive animations
+  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     show: {
@@ -162,15 +157,14 @@ const AdminHome = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-red-50 via-white to-green-50">
+    <div className="flex min-h-screen bg-gray-50">
       {/* Mobile Menu Button */}
       {isMobile && !sidebarOpen && (
         <button
           onClick={toggleSidebar}
-          className="fixed top-4 left-4 z-50 w-12 h-12 bg-gradient-to-r from-red-600 to-green-600 rounded-full flex items-center justify-center border-2 border-white/30 shadow-2xl hover:from-red-700 hover:to-green-700 transition-all duration-300"
+          className="fixed top-4 left-4 z-50 w-12 h-12 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full flex items-center justify-center border-2 border-white shadow-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-300"
         >
           <Menu className="h-5 w-5 text-white" />
-          <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
         </button>
       )}
 
@@ -193,113 +187,116 @@ const AdminHome = () => {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-h-screen overflow-x-hidden">
-
         {/* Main content area */}
-        <main className="flex-1 mx-auto w-full px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
-          {/* Header - Responsive */}
-          <div className="text-center mb-4 sm:mb-6 md:mb-8 px-1">
-            <motion.h1
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-red-600 via-green-600 to-blue-600 bg-clip-text text-transparent font-serif drop-shadow-lg px-2"
-            >
-              Dashboard
-            </motion.h1>
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="text-blue-700 mt-1 sm:mt-2 text-xs sm:text-sm bg-gradient-to-r from-red-100 via-white to-green-100 rounded-lg py-1 sm:py-2 px-2 sm:px-4 border border-red-200/30 inline-block shadow-sm max-w-[90%] sm:max-w-none"
-            >
-              {isMobile
-                ? "Activities & tasks"
-                : "Monitoring Activities and tasks"}
-            </motion.p>
-          </div>
-
-          {/* Stats Grid - Responsive */}
+        <main className="flex-1 mx-auto w-full px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
+          {/* Header */}
           <motion.div
-            className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+                  Admin Dashboard
+                </h1>
+                <p className="text-gray-600 mt-1">
+                  Welcome back! Here's your overview for today.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-gray-300"
+                >
+                  <Filter className="h-4 w-4 mr-2" />
+                  Filter
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-gray-300"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Stats Grid */}
+          <motion.div
+            className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4"
             variants={containerVariants}
             initial="hidden"
             animate="show"
           >
             {[
               {
-                title: "🎁 Total Tasks",
+                title: "Total Tickets",
                 value: stats.total,
-                description: "All tasks",
-                icon: (
-                  <Package className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />
-                ),
-                color: "border-red-400",
-                bgColor: "from-red-50/90 to-rose-100/90",
-                textColor: "text-red-900",
-                accentColor: "text-red-700",
+                description: "All tickets in system",
+                icon: <Package className="h-5 w-5 sm:h-6 sm:w-6" />,
+                color: "border-purple-200",
+                bgColor: "bg-gradient-to-br from-purple-50 to-indigo-50",
+                iconBg: "bg-gradient-to-br from-purple-600 to-indigo-600",
+                trend: "+12%",
               },
               {
-                title: "❄️ Open Tasks",
+                title: "Open Tickets",
                 value: stats.open,
-                description: "Todo's",
-                icon: (
-                  <Snowflake className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
-                ),
-                color: "border-green-400",
-                bgColor: "from-green-50/90 to-emerald-100/90",
-                textColor: "text-green-900",
-                accentColor: "text-green-700",
-                badge: <Clock className="h-3 w-3 mr-1" />,
+                description: "Requiring attention",
+                icon: <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6" />,
+                color: "border-blue-200",
+                bgColor: "bg-gradient-to-br from-blue-50 to-cyan-50",
+                iconBg: "bg-gradient-to-br from-blue-600 to-cyan-600",
+                trend: "+5%",
               },
               {
-                title: "🎄 In Progress",
+                title: "In Progress",
                 value: stats.inProgress,
-                description: "In Progress",
-                icon: (
-                  <RefreshCw className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
-                ),
-                color: "border-blue-400",
-                bgColor: "from-blue-50/90 to-cyan-100/90",
-                textColor: "text-blue-900",
-                accentColor: "text-blue-700",
+                description: "Being worked on",
+                icon: <RefreshCw className="h-5 w-5 sm:h-6 sm:w-6" />,
+                color: "border-amber-200",
+                bgColor: "bg-gradient-to-br from-amber-50 to-yellow-50",
+                iconBg: "bg-gradient-to-br from-amber-600 to-yellow-600",
+                trend: "+8%",
               },
               {
-                title: "🎯 Priority Tasks",
+                title: "High Priority",
                 value: stats.highPriority,
-                description: "Needs attention",
-                icon: <Bell className="h-5 w-5 sm:h-6 sm:w-6 text-amber-600" />,
-                color: "border-amber-400",
-                bgColor: "from-amber-50/90 to-yellow-100/90",
-                textColor: "text-amber-900",
-                accentColor: "text-amber-700",
-                badge: <AlertTriangle className="h-3 w-3 mr-1" />,
+                description: "Critical issues",
+                icon: <Bell className="h-5 w-5 sm:h-6 sm:w-6" />,
+                color: "border-rose-200",
+                bgColor: "bg-gradient-to-br from-rose-50 to-pink-50",
+                iconBg: "bg-gradient-to-br from-rose-600 to-pink-600",
+                trend: "+3%",
               },
             ].map((stat, index) => (
               <motion.div key={index} variants={itemVariants}>
-                <Card
-                  className={`relative overflow-hidden border-2 ${stat.color} shadow-lg sm:shadow-2xl bg-gradient-to-br ${stat.bgColor} backdrop-blur-sm h-full`}
-                >
-                  <CardContent className="p-3 sm:p-4 md:p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1 min-w-0">
-                        <p
-                          className={`text-xs sm:text-sm font-medium ${stat.accentColor} truncate`}
-                        >
-                          {stat.title}
-                        </p>
-                        <p className="text-2xl sm:text-3xl font-bold mt-1 sm:mt-2 ${stat.textColor}">
-                          {stat.value}
-                        </p>
-                        <div className="flex items-center gap-1 mt-1 sm:mt-2 flex-wrap">
-                          {stat.badge}
-                          <span
-                            className={`text-xs ${stat.accentColor} truncate`}
-                          >
-                            {stat.description}
+                <Card className="relative overflow-hidden border border-gray-200 hover:border-gray-300 transition-all duration-300 h-full">
+                  <CardContent className="p-5">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-xs font-medium text-gray-500">
+                            {stat.title}
                           </span>
                         </div>
-                      </div>
-                      <div className="p-2 sm:p-3 bg-gradient-to-r from-red-500/20 to-green-500/20 rounded-lg border border-current ml-2 flex-shrink-0">
-                        {stat.icon}
+                        <div className="flex items-end justify-between">
+                          <div>
+                            <p className="text-2xl font-bold text-gray-900">
+                              {stat.value}
+                            </p>
+                            <p className="text-sm text-gray-600 mt-1">
+                              {stat.description}
+                            </p>
+                          </div>
+                          <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                            {stat.trend}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
@@ -308,92 +305,148 @@ const AdminHome = () => {
             ))}
           </motion.div>
 
-          {/* Charts and Analytics Section - Responsive */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+          {/* Charts and Analytics Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Main Chart */}
-            <Card className="lg:col-span-2 border-2 border-red-400 shadow-xl sm:shadow-2xl bg-gradient-to-br from-red-50/90 to-rose-100/90 backdrop-blur-sm">
-              <CardHeader className="pb-2 sm:pb-4 px-3 sm:px-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg text-red-700 font-serif">
-                    <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
-                    Analytics
-                  </CardTitle>
-                  <Badge className="bg-red-100 text-red-700 border-red-400 text-xs w-fit">
-                    {isMobile ? "Live Data" : "Real-time data"}
-                  </Badge>
+            <Card className="lg:col-span-2 border border-gray-200">
+              <CardHeader className="pb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <CardTitle className="text-lg font-semibold text-gray-900">
+                      Ticket Analytics
+                    </CardTitle>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Overview of ticket status and trends
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-purple-100 text-purple-700 border-purple-200">
+                      <Activity className="h-3 w-3 mr-1" />
+                      Live Data
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-gray-600 hover:text-purple-600"
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      Details
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
-              <CardContent className="px-3 sm:px-6">
+              <CardContent>
                 {loading ? (
-                  <div className="flex items-center justify-center h-48 sm:h-64">
-                    <ChristmasLoader />
+                  <div className="flex items-center justify-center h-64">
+                    <Loader />
                   </div>
                 ) : (
-                  <div className="bg-white/60 rounded-lg p-2 sm:p-4 border border-red-400/30 shadow-inner">
-                    <div className={isMobile ? "scale-90 origin-left" : ""}>
-                      <Chart tickets={tickets} />
-                    </div>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <Chart tickets={tickets} />
                   </div>
                 )}
               </CardContent>
             </Card>
 
             {/* Quick Stats Sidebar */}
-            <div className="space-y-4 sm:space-y-6">
-              <Card className="border-2 border-green-400 shadow-xl sm:shadow-2xl bg-gradient-to-br from-green-50/90 to-emerald-100/90 backdrop-blur-sm">
-                <CardHeader className="px-3 sm:px-6 py-3">
-                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg text-green-700 font-serif">
-                    <Star className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
-                    {isMobile ? "Status" : "Task Status"}
+            <div className="space-y-6">
+              <Card className="border border-gray-200">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg font-semibold text-gray-900">
+                    Performance Metrics
                   </CardTitle>
                 </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-700">
+                        Resolution Rate
+                      </span>
+                      <span className="text-sm font-semibold text-green-600">
+                        {tickets.length > 0
+                          ? Math.round((stats.closed / tickets.length) * 100)
+                          : 0}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-gradient-to-r from-purple-600 to-indigo-600 h-2 rounded-full transition-all duration-500"
+                        style={{
+                          width: `${
+                            tickets.length > 0
+                              ? (stats.closed / tickets.length) * 100
+                              : 0
+                          }%`,
+                        }}
+                      ></div>
+                    </div>
+                  </div>
 
-                <CardContent className="space-y-2 sm:space-y-4 px-3 sm:px-6">
-                  <div className="flex justify-between items-center p-2 sm:p-3 bg-green-100 rounded-lg border border-green-300">
-                    <span className="text-xs sm:text-sm font-medium text-green-700">
-                      Completed
-                    </span>
-                      {stats.closed}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-700">
+                        Avg. Response Time
+                      </span>
+                      <span className="text-sm font-semibold text-blue-600">
+                        2.4 hrs
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-600">
+                      <TrendingUp className="h-3 w-3" />
+                      <span>Improvement of 15% this month</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-700">
+                        Team Members Active
+                      </span>
+                      <span className="text-sm font-semibold text-purple-600">
+                        12/15
+                      </span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="border-2 border-amber-400 shadow-xl sm:shadow-2xl bg-gradient-to-br from-amber-50/90 to-yellow-100/90 backdrop-blur-sm">
-                <CardHeader className="px-3 sm:px-6 py-3">
-                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg text-amber-700 font-serif">
-                    <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" />
-                    {isMobile ? "⚠️ Priority" : " Priority Tasks"}
+              <Card className="border border-gray-200">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg font-semibold text-gray-900">
+                    Priority Alerts
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="px-3 sm:px-6">
+                <CardContent>
                   {stats.highPriority > 0 ? (
-                    <div className="space-y-2 sm:space-y-3">
-                      <div className="p-2 sm:p-3 bg-amber-100 border-2 border-amber-400 rounded-lg">
-                        <div className="flex items-center gap-2 mb-1">
-                          <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-amber-600 animate-pulse" />
-                          <span className="font-medium text-amber-700 text-sm">
-                           Alert!
+                    <div className="space-y-4">
+                      <div className="p-4 bg-rose-50 border border-rose-200 rounded-lg">
+                        <div className="flex items-center gap-3 mb-2">
+                          <AlertTriangle className="h-5 w-5 text-rose-600" />
+                          <span className="font-semibold text-rose-700">
+                            Attention Required
                           </span>
                         </div>
-                        <p className="text-xs sm:text-sm text-amber-600">
-                          {stats.highPriority}{" "}
-                          {isMobile
-                            ? "Urgent tasks"
-                            : "Tasks need immediate attention!"}
+                        <p className="text-sm text-rose-600">
+                          {stats.highPriority} high priority tickets need
+                          immediate attention
                         </p>
                       </div>
                       <Button
-                        className="w-full bg-gradient-to-r from-red-500 to-amber-600 hover:from-red-600 hover:to-amber-700 text-white border border-red-400 text-xs sm:text-sm"
-                        size={isMobile ? "sm" : "default"}
+                        className="w-full bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white"
+                        size="sm"
                       >
-                        {isMobile ? "🚨 View Tasks" : "🚨 View Priority Tasks"}
+                        <AlertTriangle className="h-4 w-4 mr-2" />
+                        View Priority Tickets
                       </Button>
                     </div>
                   ) : (
-                    <div className="text-center py-3 sm:py-4">
-                      <TreePine className="h-8 w-8 sm:h-10 sm:w-10 text-green-500 mx-auto mb-2" />
-                      <p className="text-green-700 text-sm">
-                        All tasks are on track!
+                    <div className="text-center py-8">
+                      <CheckCircle className="h-12 w-12 text-green-400 mx-auto mb-3" />
+                      <p className="text-gray-700 font-medium">
+                        All systems operational
+                      </p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        No critical issues detected
                       </p>
                     </div>
                   )}
@@ -402,112 +455,202 @@ const AdminHome = () => {
             </div>
           </div>
 
-          {/* Recent Activity Section - Responsive */}
-          <Card className="border-2 border-blue-400 shadow-xl sm:shadow-2xl bg-gradient-to-br from-blue-50/90 to-cyan-100/90 backdrop-blur-sm">
-            <CardHeader className="px-3 sm:px-6 py-3">
-              <CardTitle className="flex items-center gap-2 text-base sm:text-lg text-blue-700 font-serif">
-                <CandyCane className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
-                {isMobile ? "Recent" : "Recent Activities"}
-              </CardTitle>
+          {/* Recent Activity Section */}
+          <Card className="border border-gray-200">
+            <CardHeader>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <CardTitle className="text-lg font-semibold text-gray-900">
+                    Recent Activity
+                  </CardTitle>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Latest tickets and updates
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-gray-300"
+                >
+                  <Ticket className="h-4 w-4 mr-2" />
+                  View All Tickets
+                </Button>
+              </div>
             </CardHeader>
-            <CardContent className="px-3 sm:px-6">
+            <CardContent>
               {loading ? (
-                <div className="flex items-center justify-center py-4 sm:py-8">
-                  <ChristmasLoader />
+                <div className="flex items-center justify-center py-8">
+                  <Loader />
                 </div>
               ) : tickets.length > 0 ? (
-                <div className="space-y-2 sm:space-y-3">
+                <div className="space-y-3">
                   {tickets.slice(0, isMobile ? 3 : 5).map((ticket) => (
                     <div
                       key={ticket._id}
-                      className="flex items-center justify-between p-2 sm:p-3 bg-blue-100 rounded-lg border border-blue-300 hover:bg-blue-200 transition-colors"
+                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
                     >
-                      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                        <Gift className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600 flex-shrink-0" />
-                        <div className="min-w-0">
-                          <p className="text-xs sm:text-sm font-medium text-blue-900 truncate">
-                            {ticket.category}
-                          </p>
-                          <p className="text-xs text-blue-700 truncate">
-                            {isMobile
-                              ? "Team"
-                              : `Handled by: ${
-                                  ticket.assignedTo || "Team"
-                                }`}
-                          </p>
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="p-2 bg-white rounded-lg border border-gray-300">
+                          <Ticket className="h-4 w-4 text-purple-600" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {ticket.category}
+                            </p>
+                            <Badge
+                              className={`text-xs ${getStatusColor(
+                                ticket.status
+                              )}`}
+                            >
+                              {ticket.status}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-4 text-xs text-gray-600">
+                            <span className="flex items-center gap-1">
+                              <Users className="h-3 w-3" />
+                              {ticket.assignedTo || "Unassigned"}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {new Date(ticket.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                      <Badge
-                        className={`text-xs ${getStatusColor(
-                          ticket.status
-                        )} ml-2 flex-shrink-0`}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-gray-600 hover:text-purple-600"
                       >
-                        {isMobile
-                          ? ticket.status.substring(0, 1)
-                          : ticket.status}
-                      </Badge>
+                        <Eye className="h-4 w-4" />
+                      </Button>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-4 sm:py-8">
-                  <TreePine className="h-8 w-8 sm:h-12 sm:w-12 text-green-400 mx-auto mb-2 sm:mb-3 animate-float" />
-                  <p className="text-blue-700 text-sm">No activities yet</p>
-                  <p className="text-xs sm:text-sm text-blue-600 mt-1 px-2">
-                    {isMobile
-                      ? "Work starting soon"
-                      : "Tasks will appear here once work starts"}
+                <div className="text-center py-8">
+                  <div className="p-4 bg-gray-100 rounded-full inline-block mb-3">
+                    <Ticket className="h-8 w-8 text-gray-400" />
+                  </div>
+                  <p className="text-gray-700 font-medium">No tickets found</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Tickets will appear here once created
                   </p>
                 </div>
               )}
             </CardContent>
           </Card>
+
+          {/* Additional Info Section */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="border border-gray-200">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <Users className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      Team Performance
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      This week's metrics
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Tickets Closed</span>
+                    <span className="font-medium text-gray-900">42</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Avg. Time</span>
+                    <span className="font-medium text-gray-900">4.2 hrs</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Satisfaction</span>
+                    <span className="font-medium text-green-600">94%</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border border-gray-200">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Clock className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      Response Time
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      Average across teams
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">IT Support</span>
+                    <span className="font-medium text-gray-900">1.8 hrs</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">HR Support</span>
+                    <span className="font-medium text-gray-900">3.1 hrs</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">General</span>
+                    <span className="font-medium text-gray-900">5.2 hrs</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border border-gray-200">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      System Status
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      All services operational
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                      <span className="text-sm text-gray-600">API Service</span>
+                    </div>
+                    <Badge className="bg-green-100 text-green-700">Active</Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                      <span className="text-sm text-gray-600">Database</span>
+                    </div>
+                    <Badge className="bg-green-100 text-green-700">Active</Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                      <span className="text-sm text-gray-600">Storage</span>
+                    </div>
+                    <Badge className="bg-green-100 text-green-700">Active</Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </main>
       </div>
-
-      <style>{`
-        @keyframes snowfall {
-          0% {
-            transform: translateY(-10px) translateX(0);
-            opacity: 0.7;
-          }
-          100% {
-            transform: translateY(100vh) translateX(20px);
-            opacity: 0;
-          }
-        }
-        @keyframes float {
-          0%, 100% {
-            transform: translateY(0);
-          }
-          50% {
-            transform: translateY(-8px);
-          }
-        }
-        .animate-float {
-          animation: float 3s ease-in-out infinite;
-        }
-        
-        /* Custom breakpoints */
-        @media (max-width: 480px) {
-          .xs\\:grid-cols-2 {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-          }
-        }
-        
-        /* Hide scrollbar but keep functionality */
-        .overflow-x-hidden {
-          overflow-x: hidden;
-        }
-        
-        /* Better mobile touch targets */
-        @media (max-width: 640px) {
-          button, [role="button"] {
-            min-height: 44px;
-            min-width: 44px;
-          }
-        }
-      `}</style>
     </div>
   );
 };
