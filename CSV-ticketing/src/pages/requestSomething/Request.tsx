@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Category, LeaveCreditAPI, TicketAPi } from "@/API/endpoint";
 import { Button } from "@/components/ui/button";
@@ -27,9 +28,23 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import axios from "axios";
-import { format } from "date-fns";
-import { Paperclip, User, Mail, FolderOpen, CalendarIcon, FileText, Clock, Building, Gift, TreePine , Snowflake, Star, CandyCane } from "lucide-react";
-import { useEffect, useState } from "react";
+import { format, parseISO, isValid } from "date-fns";
+import { 
+  Paperclip, 
+  User, 
+  Mail, 
+  CalendarIcon, 
+  FileText, 
+  Loader2,
+  AlertCircle,
+  UploadCloud,
+  CheckCircle2,
+  Briefcase,
+  FileCheck,
+  PlusCircle,
+  Trash2
+} from "lucide-react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import BackButton from "../../components/kit/BackButton";
 
@@ -39,10 +54,40 @@ interface LeaveBalance {
   employmentStatus: string;
 }
 
+interface FormData {
+  name: string;
+  email: string;
+  category: string;
+  description: string;
+  purpose: string;
+  file: string | null;
+  department: string;
+  leaveType: string;
+  leaveCategory: string;
+  leaveReason: string;
+  startDate: string;
+  endDate: string;
+  delegatedTasks: string;
+  formDepartment: string;
+  leaveDays: number;
+  selectedDates: Date[];
+  isPaidLeave: boolean;
+}
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_FILE_TYPES = [
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'image/jpg',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+];
+
 const Request = () => {
   const userLogin = JSON.parse(localStorage.getItem("user")!);
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<FormData>({
     name: `${userLogin.name}`,
     email: `${userLogin.email}`,
     category: "",
@@ -58,17 +103,19 @@ const Request = () => {
     delegatedTasks: "",
     formDepartment: "Marketing",
     leaveDays: 0,
-    selectedDates: [] as Date[],
+    selectedDates: [],
     isPaidLeave: true,
   });
   const [categories, setCategories] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [leaveBalance, setLeaveBalance] = useState<LeaveBalance | null>(null);
-  const [updatedBalance, setUpdatedBalance] = useState<number | null>(null);
   const [selectedFileName, setSelectedFileName] = useState<string>("");
+  const [showLeaveTypeDialog, setShowLeaveTypeDialog] = useState(false);
+  const [isFileUploading, setIsFileUploading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [showLeaveTypeDialog, setShowLeaveTypeDialog] = useState(false);
 
   // Fetch leave balance on component mount
   useEffect(() => {
@@ -79,15 +126,20 @@ const Request = () => {
         setLeaveBalance(data);
       } catch (error) {
         console.error("Error fetching leave balance:", error);
+        toast({
+          title: "Failed to load leave balance",
+          description: "Please try again later",
+          variant: "destructive",
+        });
       }
     };
 
     fetchLeaveBalance();
-  }, []);
+  }, [toast]);
 
   // Calculate leave days when leave category or dates change
   useEffect(() => {
-    if (form.category === "Leave Request" && form.isPaidLeave) {
+    if (form.category === "Leave Request") {
       let days = 0;
 
       if (form.leaveCategory === "Full-Day Leave") {
@@ -96,64 +148,54 @@ const Request = () => {
         days = 0.5;
       }
 
-      setForm((prev) => ({ ...prev, leaveDays: days }));
-
-      if (leaveBalance) {
-        setUpdatedBalance(leaveBalance.currentBalance - days);
-      }
-    } else if (form.category === "Leave Request" && !form.isPaidLeave) {
-      let days = 0;
-      if (form.leaveCategory === "Full-Day Leave") {
-        days = form.selectedDates.length;
-      } else if (form.leaveCategory && form.startDate) {
-        days = 0.5;
-      }
       setForm((prev) => ({ ...prev, leaveDays: days }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    form.startDate,
-    form.leaveCategory,
-    form.selectedDates,
-    leaveBalance,
-    form.isPaidLeave,
-  ]);
+  }, [form.startDate, form.leaveCategory, form.selectedDates, form.category]);
 
-  const handleDateSelect = (dates: Date[] | undefined) => {
+  const handleDateSelect = useCallback((dates: Date[] | undefined) => {
     if (!dates) return;
 
-    // Only cap dates if it's paid leave and we have a leave balance
     if (form.isPaidLeave && leaveBalance) {
-      // Cap the selected dates at the current leave balance
       const maxSelectableDates = Math.min(
         dates.length,
         leaveBalance.currentBalance
       );
       const cappedDates = dates.slice(0, maxSelectableDates);
       setForm((prev) => ({ ...prev, selectedDates: cappedDates }));
+      
+      if (dates.length > leaveBalance.currentBalance) {
+        toast({
+          title: "Maximum days selected",
+          description: `You can only select up to ${leaveBalance.currentBalance} days for paid leave`,
+          variant: "destructive",
+        });
+      }
     } else {
-      // For unpaid leave or when no balance info, just set all selected dates
       setForm((prev) => ({ ...prev, selectedDates: dates }));
     }
-  };
+    setShowDatePicker(false);
+  }, [form.isPaidLeave, leaveBalance, toast]);
 
-  // Also update the isDateDisabled function to account for paid/unpaid leave
-  const isDateDisabled = (date: Date) => {
+  const isDateDisabled = useCallback((date: Date) => {
     if (!leaveBalance || !form.isPaidLeave) return false;
 
-    // If we've already selected the maximum allowed dates for paid leave, disable other dates
     return (
       form.selectedDates.length >= leaveBalance.currentBalance &&
       !form.selectedDates.some(
         (selectedDate) => selectedDate.getTime() === date.getTime()
       )
     );
-  };
+  }, [form.selectedDates, form.isPaidLeave, leaveBalance]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+    // Clear validation error when user starts typing
+    if (validationErrors[name]) {
+      setValidationErrors(prev => ({ ...prev, [name]: "" }));
+    }
   };
 
   const handleFileUpload = async (
@@ -165,7 +207,7 @@ const Request = () => {
     if (!file) return;
 
     // Validate file size (5MB limit)
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > MAX_FILE_SIZE) {
       toast({
         title: "File too large",
         description: "Please select a file smaller than 5MB",
@@ -174,7 +216,18 @@ const Request = () => {
       return;
     }
 
+    // Validate file type
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload PDF, Word, or image files only",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSelectedFileName(file.name);
+    setIsFileUploading(true);
 
     const formData = new FormData();
     formData.append("file", file);
@@ -187,6 +240,7 @@ const Request = () => {
           headers: {
             "Content-Type": "multipart/form-data",
           },
+          timeout: 30000,
         }
       );
       const newFilename = response.data.filename;
@@ -201,10 +255,18 @@ const Request = () => {
       setSelectedFileName("");
       toast({
         title: "File upload failed",
-        description: "Could not upload attachment",
+        description: "Could not upload attachment. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsFileUploading(false);
+      fileInput.value = "";
     }
+  };
+
+  const removeFile = () => {
+    setSelectedFileName("");
+    setForm(prev => ({ ...prev, file: null }));
   };
 
   const handleCategoryChange = (value: string) => {
@@ -212,6 +274,9 @@ const Request = () => {
       setShowLeaveTypeDialog(true);
     }
     setForm({ ...form, category: value });
+    if (validationErrors.category) {
+      setValidationErrors(prev => ({ ...prev, category: "" }));
+    }
   };
 
   const isRegularEmployee = leaveBalance?.employmentStatus === "Regular";
@@ -227,6 +292,8 @@ const Request = () => {
       startDate: "",
       endDate: "",
       leaveDays: 0,
+      leaveCategory: "",
+      leaveType: "",
     }));
     setShowLeaveTypeDialog(false);
 
@@ -240,21 +307,56 @@ const Request = () => {
     }
   };
 
-  const formatDateToMMDDYYYY = (dateString: string) => {
-    if (!dateString) return "";
-    const [year, month, day] = dateString.split("-");
-    return `${month}/${day}/${year}`;
-  };
-
   const formatSelectedDates = () => {
     if (form.selectedDates.length === 0) return "No dates selected";
     return form.selectedDates
-      .map((date) => format(date, "MM/dd/yyyy"))
+      .map((date) => format(date, "MMM dd, yyyy"))
       .join(", ");
+  };
+
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+
+    if (!form.category) {
+      errors.category = "Please select a request category";
+    }
+
+    if (form.category === "Leave Request") {
+      if (!form.leaveType) errors.leaveType = "Please select leave type";
+      if (!form.leaveCategory) errors.leaveCategory = "Please select leave category";
+      if (!form.leaveReason.trim()) errors.leaveReason = "Please provide a reason for leave";
+      if (!form.formDepartment) errors.formDepartment = "Please select department";
+      
+      if (form.leaveCategory === "Full-Day Leave") {
+        if (form.selectedDates.length === 0) {
+          errors.selectedDates = "Please select at least one date";
+        }
+      } else if (form.leaveCategory && !form.startDate) {
+        errors.startDate = "Please select a leave date";
+      }
+    } else if (form.category === "Certificate of Employment") {
+      if (!form.purpose.trim()) errors.purpose = "Please specify purpose";
+      if (!form.description.trim()) errors.description = "Please provide details";
+    } else if (form.category) {
+      if (!form.description.trim()) errors.description = "Please describe your request";
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      toast({
+        title: "Please complete all required fields",
+        description: "Check the form for errors",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (isSubmitting) return;
 
     setIsSubmitting(true);
@@ -266,7 +368,7 @@ const Request = () => {
         if (form.leaveCategory === "Full-Day Leave") {
           dateRange = `Selected Dates: ${formatSelectedDates()}`;
         } else {
-          dateRange = `Date: ${formatDateToMMDDYYYY(form.startDate)}`;
+          dateRange = `Date: ${form.startDate}`;
         }
 
         description = `Leave Request Details:
@@ -303,15 +405,40 @@ const Request = () => {
       });
 
       toast({
-        title: "🎄 Request submitted successfully!",
+        title: "Request submitted successfully!",
         description: `Ticket #${response.data.ticketNumber} has been created`,
         variant: "default",
       });
-      navigate("/view-ticket");
+      
+      // Reset form
+      setForm({
+        name: `${userLogin.name}`,
+        email: `${userLogin.email}`,
+        category: "",
+        description: "",
+        purpose: "",
+        file: null,
+        department: "HR",
+        leaveType: "",
+        leaveCategory: "",
+        leaveReason: "",
+        startDate: "",
+        endDate: "",
+        delegatedTasks: "",
+        formDepartment: "Marketing",
+        leaveDays: 0,
+        selectedDates: [],
+        isPaidLeave: true,
+      });
+      setSelectedFileName("");
+      setValidationErrors({});
+      
+      // Navigate after a short delay
+      setTimeout(() => navigate("/view-ticket"), 1500);
     } catch (error) {
       toast({
-        title: "❌ Error",
-        description: "Failed to create request",
+        title: "Submission failed",
+        description: "Failed to create request. Please try again.",
         variant: "destructive",
       });
       console.error(error);
@@ -326,6 +453,11 @@ const Request = () => {
       setCategories(response.data.categories);
     } catch (error) {
       console.error(error);
+      toast({
+        title: "Failed to load categories",
+        description: "Please refresh the page",
+        variant: "destructive",
+      });
     }
   };
 
@@ -333,58 +465,89 @@ const Request = () => {
     getCategory();
   }, []);
 
+  const updatedBalance = useMemo(() => {
+    if (!leaveBalance || !form.isPaidLeave) return null;
+    return leaveBalance.currentBalance - form.leaveDays;
+  }, [leaveBalance, form.isPaidLeave, form.leaveDays]);
+
+  const formatNextAccrualDate = (dateString: string) => {
+    try {
+      const date = parseISO(dateString);
+      if (!isValid(date)) return dateString;
+      return format(date, "MMM dd, yyyy");
+    } catch {
+      return dateString;
+    }
+  };
+
   const renderLeaveRequestContent = () => {
     return (
-      <div className="space-y-6 mt-6">
+      <div className="space-y-6 mt-6 animate-in fade-in duration-300">
         {/* Leave Balance Display - Only show for paid leave */}
         {form.isPaidLeave && leaveBalance && (
-          <div className="p-4 border border-green-200 rounded-xl bg-green-50 shadow-sm relative overflow-hidden">
-            <div className="absolute -right-4 -top-4 opacity-10">
-              <Gift className="h-16 w-16 text-green-500" />
-            </div>
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-              <div className="flex items-center">
-                <Star className="h-4 w-4 text-green-600 mr-2" />
-                <span className="text-sm font-semibold text-gray-700">
-                  Current Leave Balance:
-                </span>
-                <span className="ml-2 font-bold text-green-700">
-                  {leaveBalance.currentBalance}{" "}
-                  {leaveBalance.currentBalance <= 1 ? "day" : "days"}
-                </span>
-              </div>
-              {updatedBalance !== null && (
-                <div className="flex items-center">
+          <div className="p-4 border border-blue-100 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+              <div className="flex-1">
+                <div className="flex items-center mb-2">
+                  <Briefcase className="h-4 w-4 text-blue-600 mr-2" />
                   <span className="text-sm font-semibold text-gray-700">
-                    Balance After Leave:
-                  </span>
-                  <span className="ml-2 font-bold text-red-600">
-                    {updatedBalance} {updatedBalance <= 1 ? "day" : "days"}
+                    Leave Balance
                   </span>
                 </div>
+                <div className="flex items-baseline">
+                  <span className="text-2xl font-bold text-blue-700">
+                    {leaveBalance.currentBalance}
+                  </span>
+                  <span className="ml-2 text-sm text-gray-600">
+                    day{leaveBalance.currentBalance !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                <div className="mt-1 text-xs text-blue-600">
+                  <CalendarIcon className="h-3 w-3 inline mr-1" />
+                  Next accrual: {formatNextAccrualDate(leaveBalance.nextAccrualDate)}
+                </div>
+              </div>
+              
+              {updatedBalance !== null && (
+                <div className="bg-white px-4 py-3 rounded-lg border border-blue-200 min-w-[160px]">
+                  <div className="text-xs font-medium text-gray-500 mb-1">
+                    Balance After Leave
+                  </div>
+                  <div className={`text-lg font-bold ${updatedBalance < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    {updatedBalance.toFixed(1)} day{Math.abs(updatedBalance) !== 1 ? 's' : ''}
+                  </div>
+                  {updatedBalance < 0 && (
+                    <div className="text-xs text-red-500 mt-1 flex items-center">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      Negative balance
+                    </div>
+                  )}
+                </div>
               )}
-            </div>
-            <div className="mt-2 text-xs text-green-600">
-              🎅 Next accrual: {new Date(leaveBalance.nextAccrualDate).toLocaleDateString()}
             </div>
           </div>
         )}
 
         {/* Leave Status Indicator */}
-        <div className="p-3 rounded-lg bg-gradient-to-r from-red-50 to-green-50 border border-red-200 shadow-sm relative">
-          <div className="absolute -left-2 top-1/2 transform -translate-y-1/2">
-            <CandyCane className="h-6 w-6 text-red-400 rotate-12" />
+        <div className="p-4 rounded-lg bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="font-semibold text-gray-700">Leave Type: </span>
+              <span className={`font-bold ml-2 ${form.isPaidLeave ? 'text-green-600' : 'text-blue-600'}`}>
+                {form.isPaidLeave ? "Paid Leave" : "Unpaid Leave"}
+              </span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowLeaveTypeDialog(true)}
+              className="text-xs h-8"
+            >
+              Change
+            </Button>
           </div>
-          <span className="font-semibold text-gray-700">Leave Status: </span>
-          <span
-            className={`font-bold ml-2 ${
-              form.isPaidLeave ? "text-green-600" : "text-red-600"
-            }`}
-          >
-            {form.isPaidLeave ? "🎁 Paid Leave" : "❄️ Unpaid Leave"}
-          </span>
           {!form.isPaidLeave && (
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-gray-600 mt-2">
               This leave will not deduct from your leave credits.
             </p>
           )}
@@ -394,37 +557,48 @@ const Request = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Leave Type */}
           <div className="space-y-2">
-            <Label htmlFor="leaveType" className="text-sm font-semibold flex items-center text-gray-700">
-              <FileText className="h-4 w-4 mr-2 text-green-600" />
+            <Label htmlFor="leaveType" className="text-sm font-semibold text-gray-700">
               Leave Type *
             </Label>
             <Select
-              onValueChange={(value) => setForm({ ...form, leaveType: value })}
+              value={form.leaveType}
+              onValueChange={(value) => {
+                setForm({ ...form, leaveType: value });
+                if (validationErrors.leaveType) {
+                  setValidationErrors(prev => ({ ...prev, leaveType: "" }));
+                }
+              }}
               required
             >
-              <SelectTrigger className="h-11 border-green-200 focus:border-green-500 bg-white">
+              <SelectTrigger className={`h-11 ${validationErrors.leaveType ? 'border-red-500' : 'border-gray-300'}`}>
                 <SelectValue placeholder="Select leave type" />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value="Maternity Leave">Maternity Leave</SelectItem>
-                  <SelectItem value="Paternity Leave">Paternity Leave</SelectItem>
                   <SelectItem value="Vacation Leave">Vacation Leave</SelectItem>
                   <SelectItem value="Sick Leave">Sick Leave</SelectItem>
+                  <SelectItem value="Maternity Leave">Maternity Leave</SelectItem>
+                  <SelectItem value="Paternity Leave">Paternity Leave</SelectItem>
                   <SelectItem value="Emergency Leave">Emergency Leave</SelectItem>
                   <SelectItem value="Bereavement Leave">Bereavement Leave</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
+            {validationErrors.leaveType && (
+              <p className="text-xs text-red-500 flex items-center mt-1">
+                <AlertCircle className="h-3 w-3 mr-1" />
+                {validationErrors.leaveType}
+              </p>
+            )}
           </div>
 
           {/* Leave Category */}
           <div className="space-y-2">
-            <Label htmlFor="leaveCategory" className="text-sm font-semibold flex items-center text-gray-700">
-              <Clock className="h-4 w-4 mr-2 text-red-500" />
-              Leave Category *
+            <Label htmlFor="leaveCategory" className="text-sm font-semibold text-gray-700">
+              Duration *
             </Label>
             <Select
+              value={form.leaveCategory}
               onValueChange={(value) => {
                 setForm({
                   ...form,
@@ -433,35 +607,48 @@ const Request = () => {
                   endDate: "",
                   selectedDates: [],
                 });
+                if (validationErrors.leaveCategory) {
+                  setValidationErrors(prev => ({ ...prev, leaveCategory: "" }));
+                }
               }}
               required
             >
-              <SelectTrigger className="h-11 border-red-200 focus:border-red-500 bg-white">
-                <SelectValue placeholder="Select leave category" />
+              <SelectTrigger className={`h-11 ${validationErrors.leaveCategory ? 'border-red-500' : 'border-gray-300'}`}>
+                <SelectValue placeholder="Select duration" />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value="AM Leave">AM Leave</SelectItem>
-                  <SelectItem value="PM Leave">PM Leave</SelectItem>
-                  <SelectItem value="Full-Day Leave">Full-Day Leave</SelectItem>
+                  <SelectItem value="Full-Day Leave">Full Day</SelectItem>
+                  <SelectItem value="AM Leave">Morning (AM)</SelectItem>
+                  <SelectItem value="PM Leave">Afternoon (PM)</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
+            {validationErrors.leaveCategory && (
+              <p className="text-xs text-red-500 flex items-center mt-1">
+                <AlertCircle className="h-3 w-3 mr-1" />
+                {validationErrors.leaveCategory}
+              </p>
+            )}
           </div>
         </div>
 
         {/* Department */}
         <div className="space-y-2">
-          <Label htmlFor="department" className="text-sm font-semibold flex items-center text-gray-700">
-            <Building className="h-4 w-4 mr-2 text-green-600" />
+          <Label htmlFor="department" className="text-sm font-semibold text-gray-700">
             Department *
           </Label>
           <Select
             value={form.formDepartment}
-            onValueChange={(value) => setForm({ ...form, formDepartment: value })}
+            onValueChange={(value) => {
+              setForm({ ...form, formDepartment: value });
+              if (validationErrors.formDepartment) {
+                setValidationErrors(prev => ({ ...prev, formDepartment: "" }));
+              }
+            }}
             required
           >
-            <SelectTrigger className="h-11 border-green-200 focus:border-green-500 bg-white">
+            <SelectTrigger className={`h-11 ${validationErrors.formDepartment ? 'border-red-500' : 'border-gray-300'}`}>
               <SelectValue placeholder="Select department" />
             </SelectTrigger>
             <SelectContent>
@@ -470,54 +657,75 @@ const Request = () => {
                 <SelectItem value="IT">IT</SelectItem>
                 <SelectItem value="Operations">Operations</SelectItem>
                 <SelectItem value="Admin">Admin</SelectItem>
+                <SelectItem value="HR">HR</SelectItem>
+                <SelectItem value="Finance">Finance</SelectItem>
+                <SelectItem value="Sales">Sales</SelectItem>
+                <SelectItem value="Engineering">Engineering</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
+          {validationErrors.formDepartment && (
+            <p className="text-xs text-red-500 flex items-center mt-1">
+              <AlertCircle className="h-3 w-3 mr-1" />
+              {validationErrors.formDepartment}
+            </p>
+          )}
         </div>
 
         {/* Date Selection based on Leave Category */}
         {form.leaveCategory === "Full-Day Leave" ? (
           <div className="space-y-2">
-            <Label className="text-sm font-semibold flex items-center text-gray-700">
-              <CalendarIcon className="h-4 w-4 mr-2 text-red-500" />
+            <Label className="text-sm font-semibold text-gray-700">
               Select Leave Dates *
             </Label>
-            <Popover>
+            <Popover open={showDatePicker} onOpenChange={setShowDatePicker}>
               <PopoverTrigger asChild>
                 <Button
-                  variant={"outline"}
-                  className="w-full h-11 justify-start text-left font-normal border-red-200 hover:border-red-300 bg-red-50 hover:bg-red-100"
+                  variant="outline"
+                  className="w-full h-11 justify-start text-left font-normal border-gray-300 hover:border-gray-400 bg-white"
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  <CalendarIcon className="mr-2 h-4 w-4 text-gray-500" />
                   {form.selectedDates.length > 0
-                    ? `${form.selectedDates.length} date(s) selected`
-                    : "Pick dates"}
+                    ? `${form.selectedDates.length} date${form.selectedDates.length !== 1 ? 's' : ''} selected`
+                    : "Select dates"}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 border-green-200" align="start">
+              <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="multiple"
                   selected={form.selectedDates}
                   onSelect={handleDateSelect}
-                  initialFocus
                   disabled={isDateDisabled}
                   className="p-3"
                   classNames={{
-                    day_selected: "bg-green-600 text-white hover:bg-green-700",
-                    day_today: "border border-red-400",
+                    day_selected: "bg-blue-600 text-white hover:bg-blue-700",
+                    day_today: "border border-blue-400",
                   }}
                 />
               </PopoverContent>
             </Popover>
+            {validationErrors.selectedDates && (
+              <p className="text-xs text-red-500 flex items-center mt-1">
+                <AlertCircle className="h-3 w-3 mr-1" />
+                {validationErrors.selectedDates}
+              </p>
+            )}
             {form.selectedDates.length > 0 && (
-              <div className="text-sm text-gray-600 p-2 bg-green-50 rounded-lg border border-green-100">
-                <span className="font-medium">🎄 Selected dates:</span> {formatSelectedDates()}
+              <div className="text-sm text-gray-600 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="font-medium mb-1">Selected dates:</div>
+                <div className="flex flex-wrap gap-1">
+                  {form.selectedDates.map((date, index) => (
+                    <span key={index} className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
+                      {format(date, "MMM dd")}
+                    </span>
+                  ))}
+                </div>
                 {leaveBalance &&
                   form.selectedDates.length === leaveBalance.currentBalance &&
                   form.isPaidLeave === true && (
-                    <div className="text-red-600 text-xs mt-1 font-medium flex items-center">
-                      <Snowflake className="h-3 w-3 mr-1" />
-                      You've reached your maximum leave balance. Cannot select more dates.
+                    <div className="text-amber-600 text-xs mt-2 flex items-center">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      Maximum leave balance reached
                     </div>
                   )}
               </div>
@@ -527,61 +735,78 @@ const Request = () => {
           (form.leaveCategory === "AM Leave" ||
             form.leaveCategory === "PM Leave") && (
             <div className="space-y-2">
-              <Label htmlFor="startDate" className="text-sm font-semibold flex items-center text-gray-700">
-                <CalendarIcon className="h-4 w-4 mr-2 text-green-600" />
+              <Label htmlFor="startDate" className="text-sm font-semibold text-gray-700">
                 Leave Date *
               </Label>
               <Input
                 name="startDate"
                 type="date"
+                value={form.startDate}
                 required
-                className="h-11 border-green-200 focus:border-green-500 bg-white"
+                className={`h-11 ${validationErrors.startDate ? 'border-red-500' : 'border-gray-300'}`}
                 onChange={handleChange}
                 disabled={isSubmitting}
+                min={new Date().toISOString().split('T')[0]}
               />
+              {validationErrors.startDate && (
+                <p className="text-xs text-red-500 flex items-center mt-1">
+                  <AlertCircle className="h-3 w-3 mr-1" />
+                  {validationErrors.startDate}
+                </p>
+              )}
             </div>
           )
         )}
 
         {/* Display calculated leave days */}
         {form.leaveDays > 0 && (
-          <div className="p-3 bg-gradient-to-r from-green-50 to-red-50 border border-green-200 rounded-lg relative overflow-hidden">
-            <div className="absolute -right-2 -bottom-2 opacity-20">
-              <Star className="h-12 w-12 text-green-400" />
+          <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <CalendarIcon className="h-5 w-5 text-green-600 mr-2" />
+                <span className="text-sm font-semibold text-gray-700">
+                  Total Leave Duration:
+                </span>
+              </div>
+              <span className="text-lg font-bold text-green-700">
+                {form.leaveDays} {form.leaveDays <= 1 ? "day" : "days"}
+              </span>
             </div>
-            <span className="text-sm font-semibold text-gray-700">🎁 Leave Days Requested:</span>
-            <span className="ml-2 font-bold text-green-700">
-              {form.leaveDays} {form.leaveDays <= 1 ? "day" : "days"}
-            </span>
           </div>
         )}
 
         {/* Reason and Delegation */}
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="leaveReason" className="text-sm font-semibold text-gray-700 flex items-center">
-              <Gift className="h-4 w-4 mr-2 text-red-500" />
-              Why are you requesting for a leave? *
+            <Label htmlFor="leaveReason" className="text-sm font-semibold text-gray-700">
+              Reason for Leave *
             </Label>
             <Textarea
-              className="min-h-[100px] resize-none border-green-200 focus:border-green-500 bg-white"
+              className={`min-h-[100px] resize-none ${validationErrors.leaveReason ? 'border-red-500' : 'border-gray-300'}`}
               name="leaveReason"
               placeholder="Please provide the reason for your leave..."
+              value={form.leaveReason}
               required
               onChange={handleChange}
               disabled={isSubmitting}
             />
+            {validationErrors.leaveReason && (
+              <p className="text-xs text-red-500 flex items-center mt-1">
+                <AlertCircle className="h-3 w-3 mr-1" />
+                {validationErrors.leaveReason}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="delegatedTasks" className="text-sm font-semibold text-gray-700 flex items-center">
-              <TreePine  className="h-4 w-4 mr-2 text-green-600" />
-              Tasks to be delegated while out of office *
+            <Label htmlFor="delegatedTasks" className="text-sm font-semibold text-gray-700">
+              Tasks to be Delegated
             </Label>
             <Textarea
-              className="min-h-[100px] resize-none border-red-200 focus:border-red-500 bg-white"
+              className="min-h-[100px] resize-none border-gray-300"
               name="delegatedTasks"
               placeholder="List tasks that need to be handled by others during your absence..."
+              value={form.delegatedTasks}
               onChange={handleChange}
               disabled={isSubmitting}
             />
@@ -590,127 +815,83 @@ const Request = () => {
 
         {/* File attachment */}
         <div className="space-y-2">
-          <Label htmlFor="attachment" className="text-sm font-semibold flex items-center text-gray-700">
-            <Paperclip className="h-4 w-4 mr-2 text-green-600" />
-            Attach File (Optional)
+          <Label htmlFor="attachment" className="text-sm font-semibold text-gray-700">
+            Supporting Documents (Optional)
           </Label>
-          <div className="border-2 border-dashed border-green-300 rounded-lg p-4 text-center hover:border-green-400 transition-colors duration-200 bg-gradient-to-br from-green-50 to-white relative overflow-hidden">
-            <div className="absolute top-2 left-2 opacity-10">
-              <Snowflake className="h-8 w-8 text-blue-400" />
-            </div>
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors duration-200 bg-gray-50">
             <Input
               id="attachment"
               name="attachment"
               type="file"
               onChange={handleFileUpload}
               className="hidden"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isFileUploading}
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
             />
             <label htmlFor="attachment" className="cursor-pointer block">
-              <Paperclip className="mx-auto h-8 w-8 text-green-400 mb-2" />
-              <p className="text-sm text-gray-600 mb-1">
-                Click to upload or drag and drop
-              </p>
-              <p className="text-xs text-gray-500">
-                Maximum file size: 5MB
-              </p>
+              {isFileUploading ? (
+                <div className="flex flex-col items-center">
+                  <Loader2 className="h-8 w-8 text-blue-500 animate-spin mb-2" />
+                  <p className="text-sm text-gray-600">Uploading...</p>
+                </div>
+              ) : (
+                <>
+                  <UploadCloud className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-600 mb-1">
+                    Click to upload or drag and drop
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    PDF, Word, JPG, PNG up to 5MB
+                  </p>
+                </>
+              )}
             </label>
           </div>
           {selectedFileName && (
             <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-              <span className="text-sm text-green-700 flex items-center">
-                <Paperclip className="h-3 w-3 mr-2" />
-                {selectedFileName}
-              </span>
-              <span className="text-xs text-green-600 flex items-center">
-                <Star className="h-3 w-3 mr-1" />
-                Uploaded ✓
-              </span>
+              <div className="flex items-center min-w-0">
+                <Paperclip className="h-3 w-3 text-green-600 mr-2 flex-shrink-0" />
+                <span className="text-sm text-green-700 truncate">
+                  {selectedFileName}
+                </span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={removeFile}
+                  className="h-6 w-6 p-0"
+                >
+                  <Trash2 className="h-3 w-3 text-gray-500" />
+                </Button>
+              </div>
             </div>
           )}
         </div>
-
-        {/* Submit Button */}
-        <Button 
-          type="submit" 
-          disabled={isSubmitting}
-          className="w-full h-12 bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 relative overflow-hidden group"
-        >
-          <div className="absolute -left-4 top-0 opacity-20 group-hover:opacity-30 transition-opacity">
-            <Snowflake className="h-12 w-12 text-white animate-spin-slow" />
-          </div>
-          {isSubmitting ? (
-            <span className="flex items-center justify-center">
-              <svg
-                className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
-              </svg>
-              Submitting Leave Request...
-            </span>
-          ) : (
-            <span className="flex items-center justify-center">
-              <Gift className="mr-2 h-5 w-5" />
-              Submit Leave Request
-            </span>
-          )}
-        </Button>
       </div>
     );
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-red-50 py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Snowflake Background Decorations */}
-      <div className="absolute top-10 left-10 opacity-10">
-        <Snowflake className="h-12 w-12 text-blue-400 animate-pulse" />
-      </div>
-      <div className="absolute bottom-10 right-10 opacity-10">
-        <Snowflake className="h-16 w-16 text-blue-300 animate-pulse" />
-      </div>
-      <div className="absolute top-1/3 right-20 opacity-5">
-        <TreePine  className="h-24 w-24 text-green-400" />
-      </div>
-      
-      <BackButton />
-      <div className="max-w-4xl mx-auto relative z-10">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8 px-4">
+      <div className="max-w-4xl mx-auto">
+        {/* Back Button and Header */}
+        <div className="mb-8">
+          <BackButton />
+        </div>
+
         {/* Main Card */}
-        <div className="bg-white rounded-2xl shadow-xl border border-green-200 overflow-hidden relative">
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
           {/* Header Section */}
-          <div className="bg-gradient-to-r from-green-600 to-red-600 px-6 py-8 text-center relative overflow-hidden">
-            {/* Christmas decorative elements */}
-            <div className="absolute top-2 left-4 opacity-20">
-              <Snowflake className="h-8 w-8 text-white" />
-            </div>
-            <div className="absolute bottom-2 right-4 opacity-20">
-              <Gift className="h-8 w-8 text-white" />
-            </div>
-            <div className="absolute top-4 right-8 opacity-20">
-              <Star className="h-6 w-6 text-yellow-300" />
-            </div>
-            
-            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 relative z-10 border-2 border-white/30">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-8 text-center">
+            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
               <FileText className="h-8 w-8 text-white" />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2 relative z-10">
-              🎄 HR Support Request Form
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+              HR Request Form
             </h1>
-            <p className="text-green-100 text-sm sm:text-base relative z-10">
+            <p className="text-blue-100 text-sm sm:text-base">
               Submit your HR-related requests and leave applications
             </p>
           </div>
@@ -719,55 +900,56 @@ const Request = () => {
           <form onSubmit={handleSubmit} className="p-6 sm:p-8">
             <div className="space-y-6">
               {/* Personal Information Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Name Field */}
                 <div className="space-y-2">
-                  <Label htmlFor="name" className="text-sm font-semibold flex items-center text-gray-700">
-                    <User className="mr-2 h-4 w-4 text-green-600" />
+                  <Label htmlFor="name" className="text-sm font-semibold text-gray-700">
                     Name
                   </Label>
                   <div className="relative">
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
                       name="name"
                       type="text"
                       required
                       value={form.name}
                       readOnly
-                      className="bg-green-50 border-green-200 text-gray-600 pl-10 h-11"
+                      className="pl-10 bg-gray-50 border-gray-300 text-gray-600 h-11"
                     />
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-green-500" />
                   </div>
                 </div>
 
                 {/* Email Field */}
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-semibold flex items-center text-gray-700">
-                    <Mail className="mr-2 h-4 w-4 text-red-500" />
+                  <Label htmlFor="email" className="text-sm font-semibold text-gray-700">
                     Email
                   </Label>
                   <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
                       name="email"
                       type="email"
                       required
                       value={form.email}
                       readOnly
-                      className="bg-red-50 border-red-200 text-gray-600 pl-10 h-11"
+                      className="pl-10 bg-gray-50 border-gray-300 text-gray-600 h-11"
                     />
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-red-500" />
                   </div>
                 </div>
               </div>
 
               {/* Category Field */}
               <div className="space-y-2">
-                <Label htmlFor="category" className="text-sm font-semibold flex items-center text-gray-700">
-                  <FolderOpen className="mr-2 h-4 w-4 text-green-600" />
-                  Request Category *
+                <Label htmlFor="category" className="text-sm font-semibold text-gray-700">
+                  Request Type *
                 </Label>
-                <Select onValueChange={handleCategoryChange} required>
-                  <SelectTrigger className="h-11 border-green-200 focus:border-green-500 bg-white">
-                    <SelectValue placeholder="Select request category" />
+                <Select 
+                  value={form.category} 
+                  onValueChange={handleCategoryChange} 
+                  required
+                >
+                  <SelectTrigger className={`h-11 ${validationErrors.category ? 'border-red-500' : 'border-gray-300'}`}>
+                    <SelectValue placeholder="Select request type" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
@@ -779,16 +961,21 @@ const Request = () => {
                     </SelectGroup>
                   </SelectContent>
                 </Select>
+                {validationErrors.category && (
+                  <p className="text-xs text-red-500 flex items-center mt-1">
+                    <AlertCircle className="h-3 w-3 mr-1" />
+                    {validationErrors.category}
+                  </p>
+                )}
               </div>
 
               {/* Dynamic Content Based on Category */}
-              {form.category !== "Leave Request" && (
-                <div className="space-y-4">
+              {form.category && form.category !== "Leave Request" && (
+                <div className="space-y-4 animate-in fade-in duration-300">
                   {/* Certificate of Employment Purpose */}
                   {form.category === "Certificate of Employment" && (
                     <div className="space-y-2">
-                      <Label htmlFor="purpose" className="text-sm font-semibold text-gray-700 flex items-center">
-                        <Gift className="h-4 w-4 mr-2 text-red-500" />
+                      <Label htmlFor="purpose" className="text-sm font-semibold text-gray-700">
                         Purpose *
                       </Label>
                       <Input
@@ -796,179 +983,191 @@ const Request = () => {
                         placeholder="Purpose for requesting Certificate of Employment"
                         type="text"
                         required
-                        className="h-11 border-green-200 focus:border-green-500 bg-white"
+                        value={form.purpose}
+                        className={`h-11 ${validationErrors.purpose ? 'border-red-500' : 'border-gray-300'}`}
                         onChange={handleChange}
                         disabled={isSubmitting}
                       />
+                      {validationErrors.purpose && (
+                        <p className="text-xs text-red-500 flex items-center mt-1">
+                          <AlertCircle className="h-3 w-3 mr-1" />
+                          {validationErrors.purpose}
+                        </p>
+                      )}
                     </div>
                   )}
 
                   {/* Description for non-leave requests */}
                   <div className="space-y-2">
-                    <Label htmlFor="description" className="text-sm font-semibold text-gray-700 flex items-center">
-                      <FileText className="h-4 w-4 mr-2 text-green-600" />
-                      Description of the request *
+                    <Label htmlFor="description" className="text-sm font-semibold text-gray-700">
+                      Description *
                     </Label>
                     <Textarea
-                      className="min-h-[120px] resize-none border-green-200 focus:border-green-500 bg-white"
+                      className={`min-h-[120px] resize-none ${validationErrors.description ? 'border-red-500' : 'border-gray-300'}`}
                       name="description"
                       placeholder="Please describe your request in detail..."
                       required
+                      value={form.description}
                       onChange={handleChange}
                       disabled={isSubmitting}
                     />
+                    {validationErrors.description && (
+                      <p className="text-xs text-red-500 flex items-center mt-1">
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                        {validationErrors.description}
+                      </p>
+                    )}
                   </div>
 
                   {/* File attachment for non-leave requests */}
                   <div className="space-y-2">
-                    <Label htmlFor="attachment" className="text-sm font-semibold flex items-center text-gray-700">
-                      <Paperclip className="h-4 w-4 mr-2 text-green-600" />
-                      Attach File (Optional)
+                    <Label htmlFor="attachment" className="text-sm font-semibold text-gray-700">
+                      Supporting Documents (Optional)
                     </Label>
-                    <div className="border-2 border-dashed border-green-300 rounded-lg p-4 text-center hover:border-green-400 transition-colors duration-200 bg-gradient-to-br from-green-50 to-white">
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors duration-200 bg-gray-50">
                       <Input
-                        id="attachment"
+                        id="general-attachment"
                         name="attachment"
                         type="file"
                         onChange={handleFileUpload}
                         className="hidden"
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isFileUploading}
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                       />
-                      <label htmlFor="attachment" className="cursor-pointer block">
-                        <Paperclip className="mx-auto h-8 w-8 text-green-400 mb-2" />
-                        <p className="text-sm text-gray-600 mb-1">
-                          Click to upload or drag and drop
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Maximum file size: 5MB
-                        </p>
+                      <label htmlFor="general-attachment" className="cursor-pointer block">
+                        {isFileUploading ? (
+                          <div className="flex flex-col items-center">
+                            <Loader2 className="h-8 w-8 text-blue-500 animate-spin mb-2" />
+                            <p className="text-sm text-gray-600">Uploading...</p>
+                          </div>
+                        ) : (
+                          <>
+                            <UploadCloud className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                            <p className="text-sm text-gray-600 mb-1">
+                              Click to upload or drag and drop
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              PDF, Word, JPG, PNG up to 5MB
+                            </p>
+                          </>
+                        )}
                       </label>
                     </div>
                     {selectedFileName && (
                       <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-                        <span className="text-sm text-green-700 flex items-center">
-                          <Paperclip className="h-3 w-3 mr-2" />
-                          {selectedFileName}
-                        </span>
-                        <span className="text-xs text-green-600 flex items-center">
-                          <Star className="h-3 w-3 mr-1" />
-                          Uploaded ✓
-                        </span>
+                        <div className="flex items-center min-w-0">
+                          <Paperclip className="h-3 w-3 text-green-600 mr-2 flex-shrink-0" />
+                          <span className="text-sm text-green-700 truncate">
+                            {selectedFileName}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={removeFile}
+                            className="h-6 w-6 p-0"
+                          >
+                            <Trash2 className="h-3 w-3 text-gray-500" />
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>
-
-                  {/* Submit Button for non-leave requests */}
-                  <Button 
-                    type="submit" 
-                    disabled={isSubmitting}
-                    className="w-full h-12 bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 relative overflow-hidden group"
-                  >
-                    <div className="absolute -right-4 top-0 opacity-20 group-hover:opacity-30 transition-opacity">
-                      <Snowflake className="h-12 w-12 text-white animate-spin-slow" />
-                    </div>
-                    {isSubmitting ? (
-                      <span className="flex items-center justify-center">
-                        <svg
-                          className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          ></circle>
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          ></path>
-                        </svg>
-                        Creating Request...
-                      </span>
-                    ) : (
-                      <span className="flex items-center justify-center">
-                        <TreePine  className="mr-2 h-5 w-5" />
-                        Submit Request
-                      </span>
-                    )}
-                  </Button>
                 </div>
               )}
 
               {/* Leave Request Content */}
               {form.category === "Leave Request" && renderLeaveRequestContent()}
+
+              {/* Submit Button */}
+              <Button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="w-full h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 mt-8"
+              >
+                {isSubmitting ? (
+                  <span className="flex items-center justify-center">
+                    <Loader2 className="h-5 w-5 animate-spin mr-3" />
+                    {form.category === "Leave Request" ? "Submitting Leave Request..." : "Creating Request..."}
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center">
+                    {form.category === "Leave Request" ? (
+                      <>
+                        <FileCheck className="mr-2 h-5 w-5" />
+                        Submit Leave Request
+                      </>
+                    ) : (
+                      <>
+                        <PlusCircle className="mr-2 h-5 w-5" />
+                        Submit Request
+                      </>
+                    )}
+                  </span>
+                )}
+              </Button>
             </div>
           </form>
         </div>
 
         {/* Help Text */}
-        <div className="mt-6 text-center p-4 bg-white/80 backdrop-blur-sm rounded-xl border border-green-200">
-          <p className="text-sm text-gray-600 flex items-center justify-center">
-            <span className="mr-2">🎅</span>
-            Need immediate assistance? Contact HR at{" "}
-            <a href="tel:+1234567890" className="text-green-600 hover:text-green-700 font-medium ml-1">
+        <div className="mt-6 text-center p-4 bg-white/80 backdrop-blur-sm rounded-xl border border-gray-200">
+          <p className="text-sm text-gray-600">
+            Need assistance? Contact HR at{" "}
+            <a href="tel:+1234567890" className="text-blue-600 hover:text-blue-700 font-medium">
               (123) 456-7890
             </a>
-            <span className="ml-2">☃️</span>
           </p>
         </div>
       </div>
 
       {/* Leave Type Selection Dialog */}
       <Dialog open={showLeaveTypeDialog} onOpenChange={setShowLeaveTypeDialog}>
-        <DialogContent className="sm:max-w-md bg-gradient-to-br from-green-50 to-red-50 border-green-200 relative overflow-hidden">
-          <div className="absolute top-2 right-2 opacity-10">
-            <TreePine  className="h-16 w-16 text-green-400" />
-          </div>
+        <DialogContent className="sm:max-w-md">
+          <div className="absolute -top-2 -right-2 w-16 h-16 bg-blue-100 rounded-full opacity-10" />
+          <div className="absolute -bottom-2 -left-2 w-20 h-20 bg-indigo-100 rounded-full opacity-10" />
+          
           <DialogHeader>
-            <DialogTitle className="text-center text-xl text-green-800">🎄 Select Leave Type</DialogTitle>
-            <DialogDescription className="text-center text-green-600">
+            <DialogTitle className="text-center text-xl text-gray-900">
+              Select Leave Type
+            </DialogTitle>
+            <DialogDescription className="text-center text-gray-600">
               Choose between paid or unpaid leave
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="flex flex-col gap-3">
-              <Button
-                onClick={() => handleLeaveTypeSelect("paid")}
-                className="py-6 text-lg bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold rounded-xl shadow-lg relative overflow-hidden group"
-                disabled={!isRegularEmployee}
-              >
-                <div className="absolute -left-2 top-0 opacity-20 group-hover:opacity-30">
-                  <Star className="h-12 w-12 text-yellow-300" />
+            <Button
+              onClick={() => handleLeaveTypeSelect("paid")}
+              className="py-6 text-lg bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold rounded-xl relative overflow-hidden group"
+              disabled={!isRegularEmployee}
+            >
+              <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-20 transition-opacity" />
+              <div className="text-center relative z-10">
+                <div className="font-bold text-lg">Paid Leave</div>
+                <div className="text-sm font-normal opacity-90 mt-1">
+                  Uses Leave Credits
                 </div>
-                <div className="text-center relative z-10">
-                  <div className="font-bold">🎁 Paid Leave</div>
-                  <div className="text-sm font-normal opacity-90">
-                    Uses Leave Credits
+                {!isRegularEmployee && (
+                  <div className="text-xs text-green-200 mt-2">
+                    Available for regular employees only
                   </div>
-                  {!isRegularEmployee && (
-                    <div className="text-xs text-green-200 mt-1">
-                      Available for regular employees only
-                    </div>
-                  )}
+                )}
+              </div>
+            </Button>
+            <Button
+              onClick={() => handleLeaveTypeSelect("unpaid")}
+              className="py-6 text-lg bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-semibold rounded-xl relative overflow-hidden group"
+            >
+              <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-20 transition-opacity" />
+              <div className="text-center relative z-10">
+                <div className="font-bold text-lg">Unpaid Leave</div>
+                <div className="text-sm font-normal opacity-90 mt-1">
+                  No leave credits required
                 </div>
-              </Button>
-              <Button
-                onClick={() => handleLeaveTypeSelect("unpaid")}
-                className="py-6 text-lg bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold rounded-xl shadow-lg relative overflow-hidden group"
-              >
-                <div className="absolute -right-2 bottom-0 opacity-20 group-hover:opacity-30">
-                  <Snowflake className="h-12 w-12 text-white" />
-                </div>
-                <div className="text-center relative z-10">
-                  <div className="font-bold">❄️ Unpaid Leave</div>
-                  <div className="text-sm font-normal opacity-90">
-                    No leave credits required
-                  </div>
-                </div>
-              </Button>
-            </div>
+              </div>
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
