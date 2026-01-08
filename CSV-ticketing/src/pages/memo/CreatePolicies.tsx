@@ -16,11 +16,21 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { useState } from "react";
 import { Textarea } from "../../components/ui/textarea";
-import { Policies } from './ViewPolicies';
 import { Gift, Snowflake, Star, TreePine } from "lucide-react";
 
+// Import the Policy interface from ViewPolicies or define it here
+export interface Policy {
+  _id: string;
+  subject: string;
+  file: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+  acknowledgedby: { userId: string | undefined; _id: string; name: string }[];
+}
+
 interface CreatePoliciesProps {
-  setPolicies: React.Dispatch<React.SetStateAction<Policies[]>>;
+  setPolicies: React.Dispatch<React.SetStateAction<Policy[]>>;
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
