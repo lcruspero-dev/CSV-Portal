@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { TicketAPi } from "@/API/endpoint";
 import BackButton from "@/components/kit/BackButton";
 import { Button } from "@/components/ui/button";
@@ -286,27 +285,6 @@ const ExportData = () => {
     }
   };
 
-  const addDocumentDetails = (doc: jsPDFWithAutoTable, document: MemoDetails | PolicyDetails, type: 'MEMO' | 'POLICY') => {
-    // Add document type header
-    doc.setFontSize(14);
-    doc.setTextColor(100, 100, 100);
-    doc.text(type, 20, 20);
-
-    // Add document details
-    doc.setFontSize(18);
-    doc.setTextColor(0, 0, 0);
-    doc.text(document.subject, 20, 30);
-
-    doc.setFontSize(12);
-    doc.text(`Created: ${formatDate(document.createdAt)}`, 20, 40);
-    
-    // Add description
-    doc.setFontSize(11);
-    const splitDescription = doc.splitTextToSize(document.description, 170);
-    doc.text(splitDescription, 20, 50);
-
-    return 50 + (splitDescription.length * 7); // Return the Y position after description
-  };
 
   const addAcknowledgedUsers = (doc: jsPDFWithAutoTable, acknowledgedby: Array<{ name: string; acknowledgedAt: string; }>, type?: string) => {
     if (acknowledgedby && acknowledgedby.length > 0) {
@@ -340,8 +318,6 @@ const ExportData = () => {
 
       const type = 'MEMO' as const;
       
-      // Add memo details
-      const yPos = addDocumentDetails(doc, memo, type);
 
       // Add file if exists
       if (memo.file) {
@@ -375,7 +351,6 @@ const ExportData = () => {
       const type = 'POLICY' as const;
       
       // Add policy details
-      const yPos = addDocumentDetails(doc, policy, type);
 
       // Add file if exists
       if (policy.file) {
