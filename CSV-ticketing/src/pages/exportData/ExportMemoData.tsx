@@ -463,7 +463,7 @@ const ExportData = () => {
                             : "bg-gray-100 text-gray-800"
                         }`}
                       >
-                        {memo.status || 'N/A'}
+
                       </span>
                     </Label>
                   </div>
@@ -509,7 +509,6 @@ const ExportData = () => {
                             : "bg-gray-100 text-gray-800"
                         }`}
                       >
-                        {policy.status || 'N/A'}
                       </span>
                     </Label>
                   </div>
