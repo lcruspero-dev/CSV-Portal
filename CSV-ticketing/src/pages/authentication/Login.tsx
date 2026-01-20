@@ -217,7 +217,7 @@ const Login = () => {
             </Button>
 
             {/* Divider */}
-               <div className="relative">
+            <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-200"></div>
               </div>
@@ -237,7 +237,6 @@ const Login = () => {
               </Link>
             </div>
           </form>
-
         </div>
 
         {/* Footer */}

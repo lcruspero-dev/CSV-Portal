@@ -176,7 +176,10 @@ const CreateTicket = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Name Field */}
                 <div className="space-y-2">
-                  <Label htmlFor="name" className="text-sm font-medium text-gray-700">
+                  <Label
+                    htmlFor="name"
+                    className="text-sm font-medium text-gray-700"
+                  >
                     Name
                   </Label>
                   <div className="relative">
@@ -194,7 +197,10 @@ const CreateTicket = () => {
 
                 {/* Email Field */}
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                  <Label
+                    htmlFor="email"
+                    className="text-sm font-medium text-gray-700"
+                  >
                     Email
                   </Label>
                   <div className="relative">
@@ -213,7 +219,10 @@ const CreateTicket = () => {
 
               {/* Category Field */}
               <div className="space-y-2">
-                <Label htmlFor="category" className="text-sm font-medium text-gray-700">
+                <Label
+                  htmlFor="category"
+                  className="text-sm font-medium text-gray-700"
+                >
                   Category *
                 </Label>
                 <Select
@@ -227,7 +236,10 @@ const CreateTicket = () => {
                   <SelectContent>
                     <SelectGroup>
                       {categories.map((category: any) => (
-                        <SelectItem key={category.category} value={category.category}>
+                        <SelectItem
+                          key={category.category}
+                          value={category.category}
+                        >
                           {category.category}
                         </SelectItem>
                       ))}
@@ -238,7 +250,10 @@ const CreateTicket = () => {
 
               {/* Description Field */}
               <div className="space-y-2">
-                <Label htmlFor="description" className="text-sm font-medium text-gray-700">
+                <Label
+                  htmlFor="description"
+                  className="text-sm font-medium text-gray-700"
+                >
                   Description *
                 </Label>
                 <Textarea
@@ -253,7 +268,10 @@ const CreateTicket = () => {
 
               {/* Attachment Section */}
               <div className="space-y-3">
-                <Label htmlFor="attachment" className="text-sm font-medium text-gray-700">
+                <Label
+                  htmlFor="attachment"
+                  className="text-sm font-medium text-gray-700"
+                >
                   Attach File (Optional)
                 </Label>
                 <div className="border border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors duration-200 bg-gray-50">
@@ -281,16 +299,14 @@ const CreateTicket = () => {
                       <Paperclip className="h-3 w-3 mr-2" />
                       {selectedFileName}
                     </span>
-                    <span className="text-xs text-blue-600">
-                      Uploaded
-                    </span>
+                    <span className="text-xs text-blue-600">Uploaded</span>
                   </div>
                 )}
               </div>
 
               {/* Submit Button */}
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={isSubmitting}
                 className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md"
               >

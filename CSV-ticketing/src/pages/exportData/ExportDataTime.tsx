@@ -1,4 +1,3 @@
-/* eslint-disable prefer-const */
 import React, { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import * as XLSX from "xlsx";
@@ -42,21 +41,6 @@ interface EmployeeTimes {
   totalSecondBreakTime: number;
 }
 
-interface EmployeeSummary {
-  name: string;
-  daysPresent: number;
-  shiftsBreakdown: {
-    "Shift 1": number;
-    "Shift 2": number;
-    "Shift 3": number;
-    Staff: number;
-  };
-  lateMinutes: number;
-  earlyOutMinutes: number;
-  totalBreakTime: number;
-  totalOverbreak: number;
-}
-
 const ExportDataTime: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [dateRangeError, setDateRangeError] = useState<string>("");
@@ -75,44 +59,6 @@ const ExportDataTime: React.FC = () => {
   const startDate = watch("startDate");
   const endDate = watch("endDate");
 
-  const getShiftTimes = (shift: string): { start: string; end: string } => {
-    switch (shift) {
-      case "Shift 1":
-        return { start: "14:00", end: "22:00" };
-      case "Shift 2":
-        return { start: "22:00", end: "06:00" };
-      case "Shift 3":
-        return { start: "06:00", end: "14:00" };
-      default:
-        return { start: "09:00", end: "17:00" };
-    }
-  };
-
-  const calculateTimeDifference = (time1: string, time2: string): number => {
-    const [hours1, minutes1] = time1.split(":").map(Number);
-    const [hours2, minutes2] = time2.split(":").map(Number);
-    return hours2 * 60 + minutes2 - (hours1 * 60 + minutes1);
-  };
-
-  const convertTo24Hour = (timeStr: string): string => {
-    if (!timeStr || timeStr.trim() === "") return "";
-    
-    const time = timeStr.trim();
-    if (time.includes(":") && !time.includes("AM") && !time.includes("PM")) {
-      return time;
-    }
-    
-    const [timePart, period] = time.split(" ");
-    let [hours, minutes] = timePart.split(":").map(Number);
-
-    if (period === "PM" && hours !== 12) {
-      hours += 12;
-    } else if (period === "AM" && hours === 12) {
-      hours = 0;
-    }
-
-    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
-  };
 
   const formatMinutesToHours = (minutes: number): string => {
     const hours = Math.floor(minutes / 60);
@@ -129,66 +75,6 @@ const ExportDataTime: React.FC = () => {
   const calculateOverbreak = (breakTime: number, allowedTime: number): number => {
     if (!breakTime || breakTime <= allowedTime) return 0;
     return Math.round((breakTime - allowedTime) * 60);
-  };
-
-  const generateSummary = (employeeTimes: EmployeeTimes[]): EmployeeSummary[] => {
-    const summaryMap = new Map<string, EmployeeSummary>();
-
-    employeeTimes.forEach((entry) => {
-      if (!summaryMap.has(entry.employeeName)) {
-        summaryMap.set(entry.employeeName, {
-          name: entry.employeeName,
-          daysPresent: 0,
-          shiftsBreakdown: {
-            "Shift 1": 0,
-            "Shift 2": 0,
-            "Shift 3": 0,
-            Staff: 0,
-          },
-          lateMinutes: 0,
-          earlyOutMinutes: 0,
-          totalBreakTime: 0,
-          totalOverbreak: 0,
-        });
-      }
-
-      const summary = summaryMap.get(entry.employeeName)!;
-      summary.daysPresent++;
-
-      if (entry.shift in summary.shiftsBreakdown) {
-        summary.shiftsBreakdown[
-          entry.shift as keyof typeof summary.shiftsBreakdown
-        ]++;
-      }
-
-      if (entry.timeIn && entry.timeOut && entry.shift !== "Staff") {
-        const shiftTimes = getShiftTimes(entry.shift);
-        const actualTimeIn = convertTo24Hour(entry.timeIn);
-        const actualTimeOut = convertTo24Hour(entry.timeOut);
-
-        if (actualTimeIn && shiftTimes.start) {
-          const lateMinutes = calculateTimeDifference(shiftTimes.start, actualTimeIn);
-          if (lateMinutes > 0) summary.lateMinutes += lateMinutes;
-        }
-
-        if (actualTimeOut && shiftTimes.end) {
-          const earlyOutMinutes = calculateTimeDifference(actualTimeOut, shiftTimes.end);
-          if (earlyOutMinutes > 0) summary.earlyOutMinutes += earlyOutMinutes;
-        }
-      }
-
-      const break1Time = entry.totalBreakTime || 0;
-      const break2Time = entry.totalSecondBreakTime || 0;
-      const lunchTime = entry.totalLunchTime || 0;
-      summary.totalBreakTime += break1Time + break2Time + lunchTime;
-
-      const break1Overbreak = calculateOverbreak(break1Time, 0.25);
-      const break2Overbreak = calculateOverbreak(break2Time, 0.25);
-      const lunchOverbreak = calculateOverbreak(lunchTime, 1);
-      summary.totalOverbreak += break1Overbreak + break2Overbreak + lunchOverbreak;
-    });
-
-    return Array.from(summaryMap.values());
   };
 
   const validateDateRange = () => {
@@ -284,27 +170,10 @@ const ExportDataTime: React.FC = () => {
         };
       });
 
-      const summaryData = generateSummary(filteredEmployeeTimes).map(
-        (summary) => ({
-          "Employee Name": summary.name,
-          "Days Present": summary.daysPresent,
-          "Shift 1 Days": summary.shiftsBreakdown["Shift 1"],
-          "Shift 2 Days": summary.shiftsBreakdown["Shift 2"],
-          "Shift 3 Days": summary.shiftsBreakdown["Shift 3"],
-          "Staff Days": summary.shiftsBreakdown["Staff"],
-          "Total Late": `${summary.lateMinutes}m`,
-          "Total Early Out": `${summary.earlyOutMinutes}m`,
-          "Total Break Time": formatMinutesToHours(Math.round(summary.totalBreakTime * 60)),
-          "Total Overbreak": `${summary.totalOverbreak}m`,
-        })
-      );
-
       const workbook = XLSX.utils.book_new();
       const detailedWorksheet = XLSX.utils.json_to_sheet(detailedData);
-      const summaryWorksheet = XLSX.utils.json_to_sheet(summaryData);
 
-      XLSX.utils.book_append_sheet(workbook, detailedWorksheet, "Detailed Records");
-      XLSX.utils.book_append_sheet(workbook, summaryWorksheet, "Summary Report");
+      XLSX.utils.book_append_sheet(workbook, detailedWorksheet, "Time Records");
 
       const fileName = `Time_Report_${formData.startDate}_to_${formData.endDate}.xlsx`;
       XLSX.writeFile(workbook, fileName);
@@ -327,7 +196,7 @@ const ExportDataTime: React.FC = () => {
               Time Tracking Export
             </h1>
             <p className="text-gray-600 mt-1">
-              Export detailed time records and summary reports for payroll and analysis
+              Export detailed time records for payroll and analysis
             </p>
           </div>
         </div>
@@ -454,7 +323,7 @@ const ExportDataTime: React.FC = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-3">
-                  <h3 className="font-semibold text-gray-900">📋 Detailed Records Sheet Includes:</h3>
+                  <h3 className="font-semibold text-gray-900">📋 Time Records Sheet Includes:</h3>
                   <ul className="space-y-2 text-sm text-gray-600 list-disc list-inside">
                     <li>Daily time in/out records for each employee</li>
                     <li>Break and lunch durations with overbreak calculations</li>
@@ -463,21 +332,10 @@ const ExportDataTime: React.FC = () => {
                   </ul>
                 </div>
 
-                <div className="space-y-3">
-                  <h3 className="font-semibold text-gray-900">📊 Summary Report Sheet Includes:</h3>
-                  <ul className="space-y-2 text-sm text-gray-600 list-disc list-inside">
-                    <li>Total days present per employee</li>
-                    <li>Shift distribution breakdown</li>
-                    <li>Cumulative late and early departure minutes</li>
-                    <li>Total break time and overbreak calculations</li>
-                  </ul>
-                </div>
-
                 <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
                   <h4 className="font-semibold text-amber-800 mb-2">⚠️ Important Notes</h4>
                   <ul className="text-sm text-amber-700 space-y-1">
                     <li>• Reports are generated in Excel (.xlsx) format</li>
-                    <li>• Each export includes two sheets: Detailed Records and Summary Report</li>
                     <li>• Date range cannot exceed 1 year</li>
                     <li>• Break times exceeding policy limits are calculated as overbreak</li>
                   </ul>
@@ -490,15 +348,15 @@ const ExportDataTime: React.FC = () => {
         <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="p-4 bg-white border border-gray-200 rounded-lg">
             <h3 className="font-semibold text-gray-900 mb-1">Format</h3>
-            <p className="text-sm text-gray-600">Excel (.xlsx) with multiple sheets</p>
+            <p className="text-sm text-gray-600">Excel (.xlsx) format</p>
           </div>
           <div className="p-4 bg-white border border-gray-200 rounded-lg">
             <h3 className="font-semibold text-gray-900 mb-1">Data Included</h3>
-            <p className="text-sm text-gray-600">Time records, breaks, and summaries</p>
+            <p className="text-sm text-gray-600">Detailed time records and break data</p>
           </div>
           <div className="p-4 bg-white border border-gray-200 rounded-lg">
             <h3 className="font-semibold text-gray-900 mb-1">Use Cases</h3>
-            <p className="text-sm text-gray-600">Payroll, compliance, and analytics</p>
+            <p className="text-sm text-gray-600">Payroll, compliance, and attendance tracking</p>
           </div>
         </div>
       </div>
