@@ -1,7 +1,7 @@
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { TicketAPi } from "@/API/endpoint";
-import { Checkbox } from "@/components/ui/checkbox"; 
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -16,9 +16,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { useState } from "react";
 import { Textarea } from "../../components/ui/textarea";
-import { Gift, Snowflake, Star, TreePine } from "lucide-react";
 
-// Import the Policy interface from ViewPolicies or define it here
 export interface Policy {
   _id: string;
   subject: string;
@@ -34,7 +32,10 @@ interface CreatePoliciesProps {
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const CreatePolicies: React.FC<CreatePoliciesProps> = ({ setPolicies, setLoading }) => {
+const CreatePolicies: React.FC<CreatePoliciesProps> = ({
+  setPolicies,
+  setLoading,
+}) => {
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
   const [filename, setFilename] = useState("");
@@ -56,7 +57,7 @@ const CreatePolicies: React.FC<CreatePoliciesProps> = ({ setPolicies, setLoading
   };
 
   const handleDescriptionChange = (
-    e: React.ChangeEvent<HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLTextAreaElement>,
   ) => {
     setDescription(e.target.value);
   };
@@ -81,10 +82,11 @@ const CreatePolicies: React.FC<CreatePoliciesProps> = ({ setPolicies, setLoading
       console.log(response.data);
       getPolicies();
       toast({
-        title: "🎄 Success",
-        description: "Holiday policy created successfully",
+        title: "Success",
+        description: "Policy created successfully",
         variant: "default",
-        className: "bg-gradient-to-r from-green-600 to-red-600 border border-green-400 text-white"
+        className:
+          "bg-gradient-to-r from-blue-600 to-blue-600 border border-blue-400 text-white",
       });
       setSubject("");
       setDescription("");
@@ -93,7 +95,7 @@ const CreatePolicies: React.FC<CreatePoliciesProps> = ({ setPolicies, setLoading
       setIsDialogOpen(false);
     } catch (error) {
       toast({
-        title: "❄️ Error",
+        title: "Error",
         description: "Please add all required fields",
         variant: "destructive",
       });
@@ -104,7 +106,7 @@ const CreatePolicies: React.FC<CreatePoliciesProps> = ({ setPolicies, setLoading
   };
 
   const handleFileUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const fileInput = event.target;
     const file = fileInput.files && fileInput.files[0];
@@ -122,7 +124,7 @@ const CreatePolicies: React.FC<CreatePoliciesProps> = ({ setPolicies, setLoading
           headers: {
             "Content-Type": "multipart/form-data",
           },
-        }
+        },
       );
       console.log("Upload response:", response.data);
       setFilename(response.data.filename);
@@ -134,44 +136,43 @@ const CreatePolicies: React.FC<CreatePoliciesProps> = ({ setPolicies, setLoading
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700 text-white font-medium border border-green-400">
-          <TreePine className="mr-2 h-4 w-4" />
-          Compose Holiday Policy
-        </Button>
+        <Button className="text-white font-mediu">Create Policy</Button>
       </DialogTrigger>
-      <DialogContent className="w-[900px] h-[800px] max-w-none bg-gradient-to-br from-green-50 to-red-50">
+      <DialogContent className="w-[900px] h-[700px] max-w-none ">
         <DialogHeader>
-          <DialogTitle className="text-2xl drop-shadow-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-red-600 flex items-center gap-2">
-            <Star className="h-5 w-5 text-yellow-500" />
-            Compose Holiday Policy
-            <Snowflake className="h-5 w-5 text-blue-400 animate-pulse" />
+          <DialogTitle className="text-3xl font-bold flex items-center">
+            Create Policy
           </DialogTitle>
-          <DialogDescription className="text-green-700">
-            Input holiday policy details here. Click save when you're ready to spread the festive guidelines.
+          <DialogDescription className="text-gray-600 text-md">
+            Input policy details here.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 h-full pl-4">
-          <Label htmlFor="subject" className="text-base font-bold text-green-800 flex items-center gap-2">
-            <span className="text-red-500">🎄</span>
-            Policy Subject
+        <div className="grid gap-4">
+          <Label
+            htmlFor="subject"
+            className="text-base font-bold flex items-center gap-2"
+          >
+            Subject
           </Label>
           <Input
             name="subject"
-            placeholder="Enter holiday policy subject..."
+            placeholder="Title"
             type="text"
             required
-            className="!mb-2 border-green-300 focus:border-green-500 focus:ring-green-500 bg-white"
+            className="mb-2"
             value={subject}
             onChange={handleSubjectChange}
           />
-          <Label htmlFor="description" className="text-base font-bold text-green-800 flex items-center gap-2">
-            <span className="text-red-500">❄️</span>
-            Holiday Policy Details
+          <Label
+            htmlFor="description"
+            className="text-base font-bold flex items-center gap-2"
+          >
+            Policy Details
           </Label>
           <Textarea
-            className="h-60 border-green-300 focus:border-green-500 focus:ring-green-500 bg-white"
+            className="h-60 "
             name="description"
-            placeholder="Share festive policy guidelines and holiday procedures..."
+            placeholder="Policy guidelines and procedures..."
             required
             value={description}
             onChange={handleDescriptionChange}
@@ -179,15 +180,14 @@ const CreatePolicies: React.FC<CreatePoliciesProps> = ({ setPolicies, setLoading
           <div className="flex flex-col gap-2">
             <Label
               htmlFor="picture"
-              className="text-sm font-medium text-green-700 w-1/2 flex items-center gap-2"
+              className="text-md font-medium text-black w-1/2 flex items-center gap-2"
             >
-              <span className="text-red-500">🎁</span>
-              Upload holiday policy file
+              Upload file
             </Label>
             <Input
               id="picture"
               type="file"
-              className="block w-1/2 text-sm text-green-900 border border-green-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 bg-white"
+              className="block w-1/2 text-sm text-gray-700"
               onChange={handleFileUpload}
             />
           </div>
@@ -200,41 +200,30 @@ const CreatePolicies: React.FC<CreatePoliciesProps> = ({ setPolicies, setLoading
                 id="pin-policy"
                 checked={isPinned}
                 onCheckedChange={(checked) => setIsPinned(checked as boolean)}
-                className="border-green-400 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                className="border-black data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
               />
               <Label
                 htmlFor="pin-policy"
-                className="text-sm font-medium leading-none text-green-700 flex items-center gap-1"
+                className="text-sm font-medium leading-none text-black flex items-center gap-1"
               >
-                <Star className="h-3 w-3 text-yellow-500" />
-                Star This Holiday Policy
+                Pin Policy
               </Label>
             </div>
 
             {/* Save button */}
             <Button
               type="submit"
-              className="px-8 text-xs bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700 text-white font-medium border border-green-400"
+              className="px-8 text-xs"
               onClick={handleSave}
               disabled={isSaving}
             >
-              {isSaving ? (
-                <>
-                  <Snowflake className="h-3 w-3 mr-2 animate-spin" />
-                  Spreading Festive Cheer...
-                </>
-              ) : (
-                <>
-                  <Gift className="h-3 w-3 mr-2" />
-                  Save Holiday Policy
-                </>
-              )}
+              {isSaving ? <> saving...</> : <>Save Policy</>}
             </Button>
           </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};
 
 export default CreatePolicies;

@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import CreateMemo from "@/pages/memo/CreateMemo";
-import { Eye, Calendar } from "lucide-react";
+import { Eye, Calendar, Filter } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { formattedDate } from "../../API/helper";
@@ -140,6 +140,10 @@ function ViewMemo() {
     currentPage * itemsPerPage
   );
 
+  const clearFilter = () => {
+    setShowPendingOnly(false);
+  };
+
   if (loading) return <LoadingComponent />;
 
   return (
@@ -174,21 +178,32 @@ function ViewMemo() {
           />
         </div>
 
-        {showPendingOnly && (
-          <div className="mb-6 flex items-center justify-between bg-yellow-50 border border-yellow-300 rounded-lg p-4">
-            <span className="text-sm text-yellow-800">
-              Showing memoranda pending your acknowledgement
-            </span>
-            <Button variant="outline" size="sm" onClick={() => setShowPendingOnly(false)}>
-              Show All
-            </Button>
-          </div>
-        )}
-
         {/* Table */}
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
           <Table>
             <TableHeader className="bg-gray-100">
+              {showPendingOnly ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="p-0">
+                    <div className="flex items-center justify-between px-4 py-3 bg-yellow-50 border-b border-yellow-300">
+                      <div className="flex items-center gap-2 text-yellow-800">
+                        <Filter className="h-4 w-4" />
+                        <span className="text-sm font-medium">
+                          Showing memoranda pending your acknowledgement
+                        </span>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={clearFilter}
+                        className="border-yellow-400 text-yellow-700 hover:bg-yellow-100"
+                      >
+                        Clear Filter
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : null}
               <TableRow>
                 <TableHead>Date Issued</TableHead>
                 <TableHead>Subject</TableHead>
@@ -252,9 +267,12 @@ function ViewMemo() {
 
           {filteredMemos.length === 0 && (
             <div className="text-center py-10 text-gray-600">
-              No memoranda available.
+              {showPendingOnly 
+                ? "No memoranda pending your acknowledgement."
+                : "No memoranda available."}
             </div>
           )}
+          
         </div>
       </div>
     </div>
