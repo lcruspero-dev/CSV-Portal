@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
-import { Camera, Upload, User } from "lucide-react";
+import { Camera, Upload, User, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
@@ -82,16 +82,19 @@ interface EditProfileFormProps {
   onCancel?: () => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSave?: (updatedData: any) => void;
+  onAvatarUpdate?: (newAvatarUrl: string) => void;
 }
 
 export default function EditProfileForm({
   userData,
   onCancel,
   onSave,
+  onAvatarUpdate,
 }: EditProfileFormProps) {
   const [avatar, setAvatar] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [age, setAge] = useState<string>("");
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -115,7 +118,6 @@ export default function EditProfileForm({
       const birthDate = new Date(birthDateString);
       const today = new Date();
       
-      // Check if the date is valid
       if (isNaN(birthDate.getTime())) {
         setAge("");
         return;
@@ -193,9 +195,11 @@ export default function EditProfileForm({
   });
 
   const onSubmit = async (data: ProfileFormData) => {
+    setIsSaving(true);
     try {
       let avatarFilename = data.avatar;
 
+      // Only upload avatar if a new one was selected
       if (avatar) {
         const validImageTypes = [
           "image/jpeg",
@@ -210,6 +214,7 @@ export default function EditProfileForm({
             description:
               "Please upload a valid image file (JPEG, PNG, GIF, or WEBP)",
           });
+          setIsSaving(false);
           return;
         }
 
@@ -220,6 +225,7 @@ export default function EditProfileForm({
             title: "File too large",
             description: "Image size should not exceed 10MB",
           });
+          setIsSaving(false);
           return;
         }
 
@@ -240,6 +246,7 @@ export default function EditProfileForm({
             title: "Upload failed",
             description: "Failed to upload avatar",
           });
+          setIsSaving(false);
           return;
         }
 
@@ -247,8 +254,9 @@ export default function EditProfileForm({
         avatarFilename = uploadResult.filename;
       }
 
+      // Use the existing updateProfile API to update all profile data
       const profileData = { ...data, avatar: avatarFilename };
-      const response = await UserProfileAPI.createProfile(profileData);
+      const response = await UserProfileAPI.updateProfile(profileData);
 
       toast({
         title: "Success",
@@ -256,8 +264,18 @@ export default function EditProfileForm({
       });
 
       if (onSave) onSave(response.data);
+      
+      // Call the onAvatarUpdate callback if provided and avatar was changed
+      if (onAvatarUpdate && avatar) {
+        const fullAvatarUrl = `${import.meta.env.VITE_UPLOADFILES_URL}/avatars/${avatarFilename}`;
+        onAvatarUpdate(fullAvatarUrl);
+      }
+
+      // Reset avatar state after successful save
+      setAvatar(null);
+
     } catch (error) {
-      console.error("Error creating profile:", error);
+      console.error("Error updating profile:", error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -266,6 +284,8 @@ export default function EditProfileForm({
             ? error.message
             : "An unexpected error occurred",
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -279,6 +299,16 @@ export default function EditProfileForm({
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleCancelAvatar = () => {
+    setAvatar(null);
+    // Reset to original avatar if exists
+    setPreviewUrl(
+      userData?.avatar
+        ? `${import.meta.env.VITE_UPLOADFILES_URL}/avatars/${userData.avatar}`
+        : ""
+    );
   };
 
   return (
@@ -307,14 +337,12 @@ export default function EditProfileForm({
                   <User className="h-16 w-16 text-gray-400" />
                 </div>
               )}
-              {!userData?.avatar && (
-                <label
-                  htmlFor="avatar-upload"
-                  className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-200 opacity-0 group-hover:opacity-100 cursor-pointer"
-                >
-                  <Camera className="h-6 w-6 text-white" />
-                </label>
-              )}
+              <label
+                htmlFor="avatar-upload"
+                className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-200 opacity-0 group-hover:opacity-100 cursor-pointer"
+              >
+                <Camera className="h-6 w-6 text-white" />
+              </label>
             </div>
 
             <input
@@ -323,7 +351,6 @@ export default function EditProfileForm({
               accept="image/*"
               className="hidden"
               onChange={handleAvatarChange}
-              disabled={!!userData?.avatar}
             />
 
             <div className="text-center">
@@ -339,15 +366,27 @@ export default function EditProfileForm({
               </p>
             </div>
 
-            {!userData?.avatar && (
-              <label
-                htmlFor="avatar-upload"
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-blue-50 text-blue-700 rounded-md cursor-pointer hover:bg-blue-100 transition-colors h-10"
-              >
-                <Upload className="h-3 w-3" />
-                Upload New Photo
-              </label>
-            )}
+            {/* Avatar Action Buttons - Simplified */}
+            <div className="flex flex-col gap-2 w-full">
+              {avatar ? (
+                <Button
+                  onClick={handleCancelAvatar}
+                  variant="outline"
+                  className="w-full text-sm h-10"
+                >
+                  <X className="h-3 w-3 mr-1" />
+                  Cancel New Photo
+                </Button>
+              ) : (
+                <label
+                  htmlFor="avatar-upload"
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm bg-blue-50 text-blue-700 rounded-md cursor-pointer hover:bg-blue-100 transition-colors h-10 w-full"
+                >
+                  <Upload className="h-3 w-3" />
+                  {userData?.avatar ? "Change Photo" : "Upload Photo"}
+                </label>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -1184,7 +1223,7 @@ export default function EditProfileForm({
                   </div>
                 </div>
 
-                {/* Form submission buttons */}
+                {/* Single Save Changes Button */}
                 <div className="flex justify-end gap-2 mt-6">
                   <Button
                     type="button"
@@ -1196,9 +1235,10 @@ export default function EditProfileForm({
                   </Button>
                   <Button
                     type="submit"
+                    disabled={isSaving}
                     className="text-sm h-10 bg-blue-600 hover:bg-blue-700"
                   >
-                    Save Changes
+                    {isSaving ? "Saving..." : "Save Changes"}
                   </Button>
                 </div>
               </div>

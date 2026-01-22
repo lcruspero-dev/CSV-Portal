@@ -15,11 +15,11 @@ export default function ProfilePage() {
         const response = await UserProfileAPI.getProfile();
         console.log(response.data.message);
         if (response.data.message === "User profile not found") {
-          setIsEditing(true); // Allow user to edit profile
+          setIsEditing(true);
         } else {
           setUserData(response.data);
         }
-      } catch (err) {
+      } catch (err) { 
         if (err instanceof Error) {
           setError(err.message);
         } else {
