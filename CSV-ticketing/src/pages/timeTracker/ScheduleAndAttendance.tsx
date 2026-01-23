@@ -20,7 +20,6 @@ import {
   Clock,
   AlertCircle,
   TrendingUp,
-  Download,
   Eye,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
@@ -194,7 +193,7 @@ const formatTimeToAMPM = (time: string): string => {
 
 // Helper function to display shift information
 const displayShiftInfo = (
-  shiftType: ShiftType
+  shiftType: ShiftType,
 ): { name: string; time: string; details?: string } => {
   if (!shiftType || !shiftType.type) return { name: "", time: "" };
 
@@ -237,7 +236,7 @@ const displayShiftInfo = (
     shiftType.endTime
   ) {
     displayTime = `${formatTimeToAMPM(
-      shiftType.startTime
+      shiftType.startTime,
     )} - ${formatTimeToAMPM(shiftType.endTime)}`;
 
     const detailsParts = [];
@@ -274,7 +273,7 @@ const ScheduleAndAttendance: React.FC = () => {
   const [attendance, setAttendance] = useState<AttendanceEntry[]>([]);
   const [isAddShiftOpen, setIsAddShiftOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
-    null
+    null,
   );
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedShiftType, setSelectedShiftType] =
@@ -417,12 +416,12 @@ const ScheduleAndAttendance: React.FC = () => {
         const avatarMap = avatarResponse.data.reduce(
           (
             acc: Record<string, string>,
-            curr: { userId: string; avatar: string }
+            curr: { userId: string; avatar: string },
           ) => {
             acc[curr.userId] = curr.avatar;
             return acc;
           },
-          {}
+          {},
         );
 
         await fetchEmployees(avatarMap);
@@ -490,12 +489,12 @@ const ScheduleAndAttendance: React.FC = () => {
       setCurrentDate((prevDate) => addDays(prevDate, -7));
     } else if (viewMode === "monthly") {
       setCurrentDate(
-        (prevDate) => new Date(prevDate.setMonth(prevDate.getMonth() - 1))
+        (prevDate) => new Date(prevDate.setMonth(prevDate.getMonth() - 1)),
       );
     } else if (viewMode === "dateRange" && fromDate && toDate) {
       const dayCount =
         Math.ceil(
-          (toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)
+          (toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24),
         ) + 1;
       setFromDate(addDays(fromDate, -dayCount));
       setToDate(addDays(toDate, -dayCount));
@@ -507,12 +506,12 @@ const ScheduleAndAttendance: React.FC = () => {
       setCurrentDate((prevDate) => addDays(prevDate, 7));
     } else if (viewMode === "monthly") {
       setCurrentDate(
-        (prevDate) => new Date(prevDate.setMonth(prevDate.getMonth() + 1))
+        (prevDate) => new Date(prevDate.setMonth(prevDate.getMonth() + 1)),
       );
     } else if (viewMode === "dateRange" && fromDate && toDate) {
       const dayCount =
         Math.ceil(
-          (toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)
+          (toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24),
         ) + 1;
       setFromDate(addDays(fromDate, dayCount));
       setToDate(addDays(toDate, dayCount));
@@ -569,25 +568,25 @@ const ScheduleAndAttendance: React.FC = () => {
 
   const findScheduleEntry = (
     employeeId: string,
-    date: Date
+    date: Date,
   ): ScheduleEntry | undefined => {
     return schedule.find(
       (entry) =>
         entry.employeeId === employeeId &&
         entry.date &&
-        isSameDay(new Date(entry.date), date)
+        isSameDay(new Date(entry.date), date),
     );
   };
 
   const findAttendanceEntry = (
     employeeId: string,
-    date: Date
+    date: Date,
   ): AttendanceEntry | undefined => {
     return attendance.find(
       (entry) =>
         entry.employeeId === employeeId &&
         entry.date &&
-        isSameDay(entry.date, date)
+        isSameDay(entry.date, date),
     );
   };
 
@@ -596,7 +595,7 @@ const ScheduleAndAttendance: React.FC = () => {
       const updatedSchedule = [...schedule];
 
       const formattedDate = `${selectedDate.getFullYear()}-${String(
-        selectedDate.getMonth() + 1
+        selectedDate.getMonth() + 1,
       ).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`;
 
       const scheduleData = {
@@ -623,7 +622,7 @@ const ScheduleAndAttendance: React.FC = () => {
       for (let i = 0; i < repeatDays; i++) {
         const currentDate = addDays(selectedDate, i);
         const currentFormattedDate = `${currentDate.getFullYear()}-${String(
-          currentDate.getMonth() + 1
+          currentDate.getMonth() + 1,
         ).padStart(2, "0")}-${String(currentDate.getDate()).padStart(2, "0")}`;
 
         const currentScheduleData = {
@@ -634,7 +633,7 @@ const ScheduleAndAttendance: React.FC = () => {
         const existingEntryIndex = updatedSchedule.findIndex(
           (entry) =>
             entry.employeeId === selectedEmployee.id &&
-            isSameDay(new Date(entry.date), currentDate)
+            isSameDay(new Date(entry.date), currentDate),
         );
 
         if (existingEntryIndex !== -1) {
@@ -678,13 +677,13 @@ const ScheduleAndAttendance: React.FC = () => {
         try {
           await ScheduleAndAttendanceAPI.updateScheduleEntry(
             selectedEmployee.id,
-            currentScheduleData
+            currentScheduleData,
           );
           console.log(`Successfully updated shift for ${currentFormattedDate}`);
         } catch (err) {
           console.error(
             `Error updating shift for ${currentFormattedDate}:`,
-            err
+            err,
           );
           setError(`Failed to update shift for ${currentFormattedDate}`);
         }
@@ -764,7 +763,7 @@ const ScheduleAndAttendance: React.FC = () => {
             const response =
               await TimeRecordAPI.getEmployeeTimeByEmployeeIdandDate(
                 selectedEmployee.id,
-                formattedDate
+                formattedDate,
               );
             timeRecordData = response.data;
           } catch (err) {
@@ -783,7 +782,7 @@ const ScheduleAndAttendance: React.FC = () => {
           const minutes = otMinutes || "0";
           attendanceData.ot = `${hours.padStart(2, "0")}:${minutes.padStart(
             2,
-            "0"
+            "0",
           )}`;
         } else if (!needsTimeData) {
           attendanceData.ot = null;
@@ -830,7 +829,7 @@ const ScheduleAndAttendance: React.FC = () => {
           const existingIndex = prev.findIndex(
             (entry) =>
               entry.employeeId === selectedEmployee.id &&
-              isSameDay(entry.date, selectedDate)
+              isSameDay(entry.date, selectedDate),
           );
           if (existingIndex >= 0) {
             const newAttendance = [...prev];
@@ -935,19 +934,19 @@ const ScheduleAndAttendance: React.FC = () => {
                           ref={(node) => {
                             if (node) {
                               const handleClickOutside = (
-                                event: MouseEvent
+                                event: MouseEvent,
                               ) => {
                                 if (!node.contains(event.target as Node)) {
                                   setShowFromCalendar(false);
                                   document.removeEventListener(
                                     "mousedown",
-                                    handleClickOutside
+                                    handleClickOutside,
                                   );
                                 }
                               };
                               document.addEventListener(
                                 "mousedown",
-                                handleClickOutside
+                                handleClickOutside,
                               );
                             }
                           }}
@@ -985,19 +984,19 @@ const ScheduleAndAttendance: React.FC = () => {
                           ref={(node) => {
                             if (node) {
                               const handleClickOutside = (
-                                event: MouseEvent
+                                event: MouseEvent,
                               ) => {
                                 if (!node.contains(event.target as Node)) {
                                   setShowToCalendar(false);
                                   document.removeEventListener(
                                     "mousedown",
-                                    handleClickOutside
+                                    handleClickOutside,
                                   );
                                 }
                               };
                               document.addEventListener(
                                 "mousedown",
-                                handleClickOutside
+                                handleClickOutside,
                               );
                             }
                           }}
@@ -1128,7 +1127,7 @@ const ScheduleAndAttendance: React.FC = () => {
                           {days.map((day) => {
                             const scheduleEntry = findScheduleEntry(
                               employee.id,
-                              day
+                              day,
                             );
                             return (
                               <td
@@ -1148,22 +1147,22 @@ const ScheduleAndAttendance: React.FC = () => {
                                           <Badge
                                             variant="outline"
                                             className={`w-full flex items-center justify-center px-2 py-1 ${getShiftColor(
-                                              scheduleEntry.shiftType
+                                              scheduleEntry.shiftType,
                                             )}`}
                                           >
                                             {
                                               displayShiftInfo(
-                                                scheduleEntry.shiftType
+                                                scheduleEntry.shiftType,
                                               ).name
                                             }
                                           </Badge>
                                           {displayShiftInfo(
-                                            scheduleEntry.shiftType
+                                            scheduleEntry.shiftType,
                                           ).time && (
                                             <span className="text-xs text-gray-600 mt-1">
                                               {
                                                 displayShiftInfo(
-                                                  scheduleEntry.shiftType
+                                                  scheduleEntry.shiftType,
                                                 ).time
                                               }
                                             </span>
@@ -1175,12 +1174,12 @@ const ScheduleAndAttendance: React.FC = () => {
                                           <p className="font-semibold">
                                             {
                                               displayShiftInfo(
-                                                scheduleEntry.shiftType
+                                                scheduleEntry.shiftType,
                                               ).name
                                             }
                                           </p>
                                           {displayShiftInfo(
-                                            scheduleEntry.shiftType
+                                            scheduleEntry.shiftType,
                                           )
                                             .details?.split("\n")
                                             .map((line, i) => (
@@ -1223,16 +1222,7 @@ const ScheduleAndAttendance: React.FC = () => {
             <div className="flex gap-3">
               <IncompleteBreaksDialog />
               <EmployeesOnLunchDialog />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  // Export functionality
-                }}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export
-              </Button>
+
               <AddEmployee
                 onEmployeeAdded={async () => {
                   try {
@@ -1242,19 +1232,19 @@ const ScheduleAndAttendance: React.FC = () => {
                     const avatarMap = avatarResponse.data.reduce(
                       (
                         acc: Record<string, string>,
-                        curr: { userId: string; avatar: string }
+                        curr: { userId: string; avatar: string },
                       ) => {
                         acc[curr.userId] = curr.avatar;
                         return acc;
                       },
-                      {}
+                      {},
                     );
                     await fetchEmployees(avatarMap);
                     await fetchAttendance();
                   } catch (err) {
                     console.error(
                       "Error refreshing after adding employee:",
-                      err
+                      err,
                     );
                     setError("Failed to refresh data after adding employee");
                   } finally {

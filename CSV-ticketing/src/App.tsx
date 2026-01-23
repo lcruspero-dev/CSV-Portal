@@ -21,7 +21,7 @@ import CreateTicket from "./pages/getHelp/CreateTicket";
 import Homepage from "./pages/homePage/Homepage";
 import LeaveCredit from "./pages/LeaveCredit/LeaveCredit";
 import ViewPolociesMemo from "./pages/memo/View";
-import ViewPolicies from "./pages/memo/ViewPolicies"
+import ViewPolicies from "./pages/memo/ViewPolicies";
 import ViewIndividualMemo from "./pages/memo/ViewIndividualMemo";
 import ViewIndividualPolicy from "./pages/memo/ViewIndividualPolicy";
 import ViewMemo from "./pages/memo/ViewMemo";
@@ -42,64 +42,60 @@ function App() {
   return (
     <AuthProvider>
       <>
-      
         <Header />
 
-          <Routes>
-            {/* Public Routes */}
-              <Route path="/api-documentaion" element={<ApiDocumentation />} />
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/api-documentaion" element={<ApiDocumentation />} />
 
-            <Route element={<Layout />}>
-              <Route path="/sign-in" element={<Login />} />
-              <Route path="/sign-up" element={<Registration />} />
-            </Route>
+          <Route element={<Layout />}>
+            <Route path="/sign-in" element={<Login />} />
+            <Route path="/sign-up" element={<Registration />} />
+          </Route>
 
-            {/* Protected Routes */}
-            <Route element={<ProtectedRoute requiresAdmin={false} />}>
-              <Route path="/" element={<Homepage />} />
-              <Route path="/create-ticket" element={<CreateTicket />} />
-              <Route path="/view-ticket" element={<ViewAllTicket />} />
-              <Route path="/request-something" element={<Request />} />
-              <Route path="/ticket/:id" element={<ViewIndividualTicket />} />
-              <Route path="/all-tickets" element={<ViewAllRaisedTickets />} />
-              <Route path="/all-memo" element={<ViewMemo />} />
-              <Route path="/all-policies" element={<ViewPolicies />} />
-              <Route path="/view-polMemo" element={<ViewPolociesMemo />} />
-              <Route path="/memo/:id" element={<ViewIndividualMemo />} />
-              <Route path="/policies/:id" element={<ViewIndividualPolicy />} />
-              <Route path="/addcategory" element={<CreateCategory />} />
-              <Route path="/addassign" element={<CreateAssign />} />
-              <Route path="/exportdata" element={<ExportData />} />
-              <Route path="/timetracker" element={<TimeTracker />} />
-              <Route path="/exporttimetracker" element={<ExportDataTime />} />
-              <Route path="/payroll" element={<Payroll />} />
-              <Route path="/payslip" element={<PayslipPage />} />
-              <Route
-                path="/resetuserpassword"
-                element={<AdminResetPassword />}
-              />
-              <Route path="/leavecredits" element={<LeaveCredit />} />
-              <Route path="/timerecord" element={<AdminTimeRecordEdit />} />
-              <Route path="/exportsurveydata" element={<ExportSurveyData />} />
-              <Route path="/createsurvey" element={<CreateSurvey />} />
-              <Route path="/exportmemo" element={<ExportMemoData />} />
-              <Route path="/nte" element={<UserNte />} />
-              <Route
-                path="/profile/change-password"
-                element={<ChangePassword />}
-              />
-              <Route path="profile/edit" element={<ProfilePage />} />
-              <Route path="/manageemployees" element={<ManageEmployees />} />
-              <Route
-                path="/schedule-and-attendance"
-                element={
-                  <ProtectedRoute2>
-                    <ScheduleAndAttendance />
-                  </ProtectedRoute2>
-                }
-              />
-            </Route>
-          </Routes>
+          {/* Protected Routes */}
+          <Route element={<ProtectedRoute requiresAdmin={false} />}>
+            <Route path="/" element={<Homepage />} />
+            <Route path="/create-ticket" element={<CreateTicket />} />
+            <Route path="/view-ticket" element={<ViewAllTicket />} />
+            <Route path="/request-something" element={<Request />} />
+            <Route path="/ticket/:id" element={<ViewIndividualTicket />} />
+            <Route path="/all-tickets" element={<ViewAllRaisedTickets />} />
+            <Route path="/all-memo" element={<ViewMemo />} />
+            <Route path="/all-policies" element={<ViewPolicies />} />
+            <Route path="/view-polMemo" element={<ViewPolociesMemo />} />
+            <Route path="/memo/:id" element={<ViewIndividualMemo />} />
+            <Route path="/policies/:id" element={<ViewIndividualPolicy />} />
+            <Route path="/addcategory" element={<CreateCategory />} />
+            <Route path="/addassign" element={<CreateAssign />} />
+            <Route path="/exportdata" element={<ExportData />} />
+            <Route path="/timetracker" element={<TimeTracker />} />
+            <Route path="/exporttimetracker" element={<ExportDataTime />} />
+            <Route path="/payroll" element={<Payroll />} />
+            <Route path="/payslip" element={<PayslipPage />} />
+            <Route path="/resetuserpassword" element={<AdminResetPassword />} />
+            <Route path="/leavecredits" element={<LeaveCredit />} />
+            <Route path="/timerecord" element={<AdminTimeRecordEdit />} />
+            <Route path="/exportsurveydata" element={<ExportSurveyData />} />
+            <Route path="/createsurvey" element={<CreateSurvey />} />
+            <Route path="/exportmemo" element={<ExportMemoData />} />
+            <Route path="/nte" element={<UserNte />} />
+            <Route
+              path="/profile/change-password"
+              element={<ChangePassword />}
+            />
+            <Route path="profile/edit" element={<ProfilePage />} />
+            <Route path="/manageemployees" element={<ManageEmployees />} />
+            <Route
+              path="/schedule-and-attendance"
+              element={
+                <ProtectedRoute2>
+                  <ScheduleAndAttendance />
+                </ProtectedRoute2>
+              }
+            />
+          </Route>
+        </Routes>
         <Toaster />
       </>
     </AuthProvider>
