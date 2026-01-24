@@ -11,7 +11,7 @@ const scheduleEntrySchema = new mongoose.Schema({
   schedule: [
     {
       date: {
-        type: String, // You can also use Date type if needed
+        type: String,
       },
       shiftType: {
         type: String,
@@ -83,11 +83,18 @@ const teamLeaderEntrySchema = new mongoose.Schema({
 const ScheduleEntry = mongoose.model("ScheduleEntry", scheduleEntrySchema);
 const AttendanceEntry = mongoose.model(
   "AttendanceEntry",
-  attendanceEntrySchema
+  attendanceEntrySchema,
 );
 const TeamLeaderEntry = mongoose.model(
   "TeamLeaderEntry",
-  teamLeaderEntrySchema
+  teamLeaderEntrySchema,
 );
 
-export default { ScheduleEntry, AttendanceEntry, TeamLeaderEntry };
+export default {
+  ScheduleEntry,
+  AttendanceEntry,
+  TeamLeaderEntry,
+};
+
+
+

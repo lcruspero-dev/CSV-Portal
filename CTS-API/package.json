@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "Support Ticket App",
   "type": "module",
-  "main": "backend/server.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node backend/server.js",
-    "server": "nodemon backend/server.js --ignore frontend",
+    "start": "node server.js",
+    "server": "nodemon server.js --ignore frontend",
     "client": "npm start --prefix frontend",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "lint": "eslint . --fix"

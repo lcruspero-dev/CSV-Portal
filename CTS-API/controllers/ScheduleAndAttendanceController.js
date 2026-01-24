@@ -8,7 +8,9 @@ import {
 export const getScheduleEntries = async (req, res) => {
   try {
     const scheduleEntries = await ScheduleEntry.find({
-      teamLeader: { $ne: "Inactive" }, // Exclude entries where teamLeader is "inactive"
+      teamLeader: {
+        $ne: "Inactive",
+      },
     }).populate("employeeId");
 
     // Sort by employeeName alphabetically (case-insensitive)
@@ -18,9 +20,17 @@ export const getScheduleEntries = async (req, res) => {
       return nameA.localeCompare(nameB);
     });
 
-    res.status(200).json(scheduleEntries);
+    res.status(200).json({
+      status: true,
+      message: "Successfully Fetch Schedule Entries",
+      scheduleEntries,
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error.message);
+    res.status(500).json({
+      statuss: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -34,16 +44,28 @@ export const createScheduleEntry = async (req, res) => {
       const updatedScheduleEntry = await ScheduleEntry.findByIdAndUpdate(
         existingScheduleEntry._id,
         { ...req.body },
-        { new: true }
+        { new: true },
       );
-      res.status(200).json(updatedScheduleEntry);
+      res.status(200).json({
+        status: true,
+        message: "Update Schedule Entry Successfully",
+        updatedScheduleEntry,
+      });
     } else {
       const newScheduleEntry = new ScheduleEntry({ ...req.body });
       await newScheduleEntry.save();
-      res.status(201).json(newScheduleEntry);
+      res.status(201).json({
+        status: true,
+        message: "Successfully Created Schedule Entry",
+        newScheduleEntry,
+      });
     }
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error(error.message);
+    res.status(400).json({
+      status: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -55,13 +77,17 @@ export const updateScheduleEntry = async (req, res) => {
 
   try {
     const scheduleEntry = await ScheduleEntry.findOne({ employeeId: id });
+
     if (!scheduleEntry) {
-      return res.status(404).json({ message: "Schedule entry not found" });
+      return res.status(404).json({
+        status: false,
+        message: "Schedule entry not found",
+      });
     }
 
     // Check if the date already exists in the schedule array
     const existingSchedule = scheduleEntry.schedule.find(
-      (entry) => entry.date === date
+      (entry) => entry.date === date,
     );
 
     // Determine if we should clear startTime and endTime
@@ -105,9 +131,17 @@ export const updateScheduleEntry = async (req, res) => {
     // Save the updated document
     await scheduleEntry.save();
 
-    res.status(200).json(scheduleEntry);
+    res.status(200).json({
+      status: true,
+      message: "Successfully Updated Schedule Entry",
+      scheduleEntry,
+    });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error(error.message);
+    res.status(500).json({
+      status: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -116,27 +150,46 @@ export const updateTeamLeaderToInactive = async (req, res) => {
   try {
     const scheduleEntry = await ScheduleEntry.findById(req.params.id);
     if (!scheduleEntry) {
-      return res.status(404).json({ message: "Schedule entry not found" });
+      return res.status(404).json({
+        status: false,
+        message: "Schedule entry not found",
+      });
     }
 
     scheduleEntry.teamLeader = "Inactive";
     await scheduleEntry.save();
 
-    res.status(200).json({ message: "User set to Inactive", scheduleEntry });
+    res.status(200).json({
+      status: true,
+      message: "User set to Inactive",
+      scheduleEntry,
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error.message);
+    res.status(500).json({
+      status: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
 // Get all attendance entries
 export const getAttendanceEntries = async (req, res) => {
   try {
-    const attendanceEntries = await AttendanceEntry.find().populate(
-      "employeeId"
-    );
-    res.status(200).json(attendanceEntries);
+    const attendanceEntries =
+      await AttendanceEntry.find().populate("employeeId");
+
+    res.status(200).json({
+      status: true,
+      message: "Fetch attendance entries",
+      attendanceEntries,
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error.message);
+    res.status(500).json({
+      status: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -156,17 +209,29 @@ export const createAttendanceEntry = async (req, res) => {
       const updatedEntry = await AttendanceEntry.findByIdAndUpdate(
         existingEntry._id,
         { ...req.body },
-        { new: true } // Return the updated document
+        { new: true }, // Return the updated document
       );
-      return res.status(200).json(updatedEntry);
+      return res.status(200).json({
+        status: true,
+        message: "Successfully Updated new data",
+        updatedEntry,
+      });
     } else {
       // If no entry exists, create a new one
       const newAttendanceEntry = new AttendanceEntry({ ...req.body });
       await newAttendanceEntry.save();
-      return res.status(201).json(newAttendanceEntry);
+      return res.status(201).json({
+        status: true,
+        message: "Create New Attendance Entry",
+        newAttendanceEntry,
+      });
     }
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error(error.message);
+    res.status(400).json({
+      status: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -178,11 +243,19 @@ export const updateAttendanceEntry = async (req, res) => {
     const updatedAttendanceEntry = await AttendanceEntry.findByIdAndUpdate(
       id,
       { status, checkinTime, checkoutTime },
-      { new: true }
+      { new: true },
     );
-    res.status(200).json(updatedAttendanceEntry);
+    res.status(200).json({
+      status: true,
+      message: "Update Attendance Entry",
+      updatedAttendanceEntry,
+    });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error(error.message);
+    res.status(400).json({
+      status: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -191,9 +264,17 @@ export const createTeamLeaderEntry = async (req, res) => {
   try {
     const newTeamLeaderEntry = new TeamLeaderEntry({ ...req.body });
     await newTeamLeaderEntry.save();
-    res.status(201).json(newTeamLeaderEntry);
+    res.status(201).json({
+      status: true,
+      message: "Create Team Leader Successfully",
+      newTeamLeaderEntry,
+    });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error(error.message);
+    res.status(400).json({
+      status: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -201,9 +282,17 @@ export const createTeamLeaderEntry = async (req, res) => {
 export const getAllTeamLeaderEntries = async (req, res) => {
   try {
     const teamLeaderEntries = await TeamLeaderEntry.find();
-    res.status(200).json(teamLeaderEntries);
+    res.status(200).json({
+      status: true,
+      message: "Fetch Team Leader Entries",
+      teamLeaderEntries,
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error.message);
+    res.status(500).json({
+      status: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -241,7 +330,7 @@ export const getSchedulePerEmployeeByDate = async (req, res) => {
     }
 
     const schedule = scheduleEntry.schedule.find(
-      (entry) => entry.date === date
+      (entry) => entry.date === date,
     );
 
     if (!schedule) {
@@ -252,18 +341,25 @@ export const getSchedulePerEmployeeByDate = async (req, res) => {
 
     res.status(200).json({ shiftType: schedule.shiftType });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error.message);
+    res.status(500).json({
+      status: true,
+      message: "Internal Server Error",
+    });
   }
 };
 
 export const getSchedulePerEmployee = async (req, res) => {
-  const employeeId = req.user.id; // Get employeeId from authenticated user
+  const employeeId = req.user.id;
 
   try {
     const scheduleEntry = await ScheduleEntry.findOne({ employeeId });
 
     if (!scheduleEntry) {
-      return res.status(404).json({ message: "Schedule entry not found" });
+      return res.status(404).json({
+        status: false,
+        message: "Schedule entry not found",
+      });
     }
 
     // Return the schedule data along with employeeName, teamLeader, and position
@@ -274,8 +370,16 @@ export const getSchedulePerEmployee = async (req, res) => {
       schedule: scheduleEntry.schedule,
     };
 
-    res.status(200).json(response);
+    res.status(200).json({
+      status: true,
+      message: "Fetch Employee Entry",
+      response,
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error.message);
+    res.status(500).json({
+      status: false,
+      message: "Internal Server Error",
+    });
   }
 };
