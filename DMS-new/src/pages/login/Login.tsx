@@ -141,27 +141,6 @@ const Login = () => {
             </h2>
           </div>
           
-          <div className="space-y-4">
-            <p className="text-xl text-blue-100/90 leading-relaxed">
-              Streamline your organization's discipline management with our comprehensive solution.
-            </p>
-            <div className="flex items-center justify-center space-x-6 pt-4">
-              <div className="text-center">
-                <div className="text-3xl font-bold">99%</div>
-                <div className="text-sm text-blue-100/80">Efficiency</div>
-              </div>
-              <div className="h-12 w-px bg-white/30"></div>
-              <div className="text-center">
-                <div className="text-3xl font-bold">24/7</div>
-                <div className="text-sm text-blue-100/80">Access</div>
-              </div>
-              <div className="h-12 w-px bg-white/30"></div>
-              <div className="text-center">
-                <div className="text-3xl font-bold">100%</div>
-                <div className="text-sm text-blue-100/80">Secure</div>
-              </div>
-            </div>
-          </div>
         </div>
         
         {/* Decorative elements */}

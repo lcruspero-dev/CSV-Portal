@@ -145,7 +145,7 @@ const deleteNte = asyncHandler(async (req, res) => {
     res.status(403);
     throw new Error("Not authorized to delete NTE");
   }
-
+  
   if (!mongoose.Types.ObjectId.isValid(id)) {
     res.status(400);
     throw new Error("Invalid NTE ID");
