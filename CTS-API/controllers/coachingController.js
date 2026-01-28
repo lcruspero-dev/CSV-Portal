@@ -8,218 +8,309 @@ const canUpdateCoaching = (user) => {
 
 // Get all NTEs
 export const getCoachings = async (req, res) => {
-
   try {
-      const coaching = await Coaching.find()
-    .populate("coaching.employeeId", "name email")
-    .sort({ createdAt: -1 });
+    const coaching = await Coaching.find()
+      .populate("coaching.employeeId", "name email")
+      .sort({ createdAt: -1 });
 
-  if (!coaching) {
-    res.status(404).json({
-      success: false,
-      message: "Coaching not found"
-    });
-  }
+    if (!coaching) {
+      return res .status(404).json({
+        success: false,
+        message: "Coaching not found",
+      });
+    }
 
-  res.status(200).json({
-    success: true,
-    message: "Fetch NTEs",
-    data: coaching,
-  });
-    
-  } catch (error) {
-
-    console.error("Fetch NTEs", error)
-    return res.status(500).json({
+    res.status(200).json({
       success: true,
-      message: "Internal Server Error"
+      message: "Fetch NTEs",
+      data: coaching,
     });
-    
-  }
 
+  } catch (error) {
+    console.error("Fetch NTEs", error);
+     res.status(500).json({
+      success: true,
+      message: "Internal Server Error",
+    });
+  }
 };
 
 // Get single NTE
 export const getCoaching = async (req, res) => {
+  try {
+    const { id } = req.params;
 
-  const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Coaching ID",
+      });
+    }
 
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    res.status(400);
-    throw new Error("Invalid Coaching ID");
+    const coaching = await Coaching.findById(id);
+    if (!coaching) {
+      return res.status(404).json({
+        success: false,
+        message: "Coaching not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Fetch Single NTE",
+      coaching,
+    });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
-
-  const coaching = await Coaching.findById(id);
-  if (!coaching) {
-    res.status(404);
-    throw new Error("Coaching not found");
-  }
-
-  res.status(200).json(coaching);
-
 };
 
 // Create NTE - Only admin/TL/TM
 export const createCoaching = async (req, res) => {
-  const createdBy = req.user.name;
-  const { coaching, status } = req.body;
+  try {
+    const createdBy = req.user.name;
+    const { coaching, status } = req.body;
 
-  if (!canUpdateCoaching(req.user)) {
-    res.status(403);
-    throw new Error("Not authorized to create NTE");
+    if (!canUpdateCoaching(req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to create NTE",
+      });
+    }
+
+    if (
+      !coaching ||
+      !coaching.employeeId ||
+      !coaching.name ||
+      !coaching.position ||
+      !coaching.dateIssued ||
+      !coaching.coachingObjectives ||
+      !coaching.employeeResponse ||
+      !status
+    ) {
+      return res.status(400).json({
+        success: false,
+        meesage: "Please provide all required Coaching fields",
+      });
+    }
+
+    const validStatuses = ["DRAFT", "PER", "PNOD", "PNODA", "FTHR"];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Status value",
+      });
+    }
+
+    const existingCoaching = await Coaching.findOne({
+      "coaching.employeeId": coaching.employeeId,
+      "coaching.dateIssued": coaching.dateIssued,
+      "coaching.coachingObjectives": coaching.coachingObjectives,
+      "coaching.employeeResponse": coaching.employeeResponse,
+    });
+
+    if (existingCoaching) {
+      return res.status(409).json({
+        success: false,
+        message: "An Coaching with the same details already exists",
+      });
+    }
+
+    // Create new NTE with status
+    const newCoaching = await Coaching.create({
+      coaching: {
+        ...coaching,
+        file: coaching.file || null,
+      },
+      status,
+      createdBy,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Successfully Created NTE",
+      newCoaching,
+    });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
-
-  if (
-    !coaching ||
-    !coaching.employeeId ||
-    !coaching.name ||
-    !coaching.position ||
-    !coaching.dateIssued ||
-    !coaching.coachingObjectives ||
-    !coaching.employeeResponse ||
-    !status
-  ) {
-    res.status(400);
-    throw new Error("Please provide all required Coaching fields");
-  }
-
-  const validStatuses = ["DRAFT", "PER", "PNOD", "PNODA", "FTHR"];
-  if (!validStatuses.includes(status)) {
-    res.status(400);
-    throw new Error("Invalid status value");
-  }
-
-  const existingCoaching = await Coaching.findOne({
-    "coaching.employeeId": coaching.employeeId,
-    "coaching.dateIssued": coaching.dateIssued,
-    "coaching.coachingObjectives": coaching.coachingObjectives,
-    "coaching.employeeResponse": coaching.employeeResponse,
-  });
-
-  if (existingCoaching) {
-    res.status(409);
-    throw new Error("An Coaching with the same details already exists");
-  }
-
-  // Create new NTE with status
-  const newCoaching = await Coaching.create({
-    coaching: {
-      ...coaching,
-      file: coaching.file || null, 
-    },
-    status,
-    createdBy,
-  });
-
-  res.status(201).json(newCoaching);
 };
 
 export const updateCoaching = async (req, res) => {
-  const { id } = req.params;
-  const { coachingObjectives, employeeResponse, ...updateFields } = req.body;
+  try {
+    const { id } = req.params;
+    const { coachingObjectives, employeeResponse, ...updateFields } = req.body;
 
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    res.status(400);
-    throw new Error("Invalid Coaching ID format");
-  }
-
-  const existingCoaching = await Coaching.findById(id);
-  
-  if (!existingCoaching) {
-    res.status(404);
-    throw new Error("Coaching record not found");
-  }
-
-  const updateData = {};
-
-  if (coachingObjectives !== undefined) {
-    updateData.coachingObjectives = coachingObjectives;
-  }
-
-  if (employeeResponse !== undefined) {
-    updateData.employeeResponse = employeeResponse;
-  }
-
-  if (updateFields.coaching) {
-    updateData.coaching = {
-      ...existingCoaching.coaching,
-      ...updateFields.coaching
-    };
-  }
-
-  const allowedFields = ['employeeFeedback', 'noticeOfDecision', 'status'];
-  allowedFields.forEach(field => {
-    if (updateFields[field] !== undefined) {
-      updateData[field] = updateFields[field];
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        status: false,
+        message: "Invalid Coaching ID format",
+      });
     }
-  });
 
-  if (updateData.status) {
-    const validStatuses = ['pending', 'in-progress', 'completed', 'cancelled'];
-    if (!validStatuses.includes(updateData.status)) {
-      res.status(400);
-      throw new Error(`Invalid status. Must be one of: ${validStatuses.join(', ')}`);
+    const existingCoaching = await Coaching.findById(id);
+
+    if (!existingCoaching) {
+      return res.status(404).json({
+        status: false,
+        message: "Coaching record not found",
+      });
     }
+
+    const updateData = {};
+
+    if (coachingObjectives !== undefined) {
+      updateData.coachingObjectives = coachingObjectives;
+    }
+
+    if (employeeResponse !== undefined) {
+      updateData.employeeResponse = employeeResponse;
+    }
+
+    if (updateFields.coaching) {
+      updateData.coaching = {
+        ...existingCoaching.coaching,
+        ...updateFields.coaching,
+      };
+    }
+
+    const allowedFields = ["employeeFeedback", "noticeOfDecision", "status"];
+    allowedFields.forEach((field) => {
+      if (updateFields[field] !== undefined) {
+        updateData[field] = updateFields[field];
+      }
+    });
+
+    if (updateData.status) {
+      const validStatuses = [
+        "pending",
+        "in-progress",
+        "completed",
+        "cancelled",
+      ];
+      if (!validStatuses.includes(updateData.status)) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid status. Must be one of: ${validStatuses.join(", ")}`,
+        });
+      }
+    }
+
+    Object.keys(updateData).forEach((key) => {
+      existingCoaching[key] = updateData[key];
+    });
+
+    const updatedCoaching = await existingCoaching.save();
+    res.status(200).json({
+      success: true,
+      message: "Coaching record updated successfully",
+      data: updatedCoaching,
+    });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
-
-  Object.keys(updateData).forEach(key => {
-    existingCoaching[key] = updateData[key];
-  });
-
-  const updatedCoaching = await existingCoaching.save();
-  res.status(200).json({
-    success: true,
-    message: "Coaching record updated successfully",
-    data: updatedCoaching
-  });
 };
 
 // Delete NTE - Only admin/TL/TM
 export const deleteCoaching = async (req, res) => {
-  const { id } = req.params;
+  try {
+    const { id } = req.params;
 
-  if (!canUpdateCoaching(req.user)) {
-    res.status(403);
-    throw new Error("Not authorized to delete Coaching");
+    if (!canUpdateCoaching(req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to delete Coaching",
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Coaching ID",
+      });
+    }
+
+    const coaching = await Coaching.findById(id);
+    if (!coaching) {
+      return res.status(404).json({
+        success: false,
+        message: "Coaching not found",
+      });
+    }
+
+    await coaching.deleteOne();
+    res.status(200).json({
+      success: true,
+      message: "Coaching deleted successfully",
+    });
+  } catch (error) {
+    console.error(error.message);
+    res.staus(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
-
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    res.status(400);
-    throw new Error("Invalid Coaching ID");
-  }
-
-  const coaching = await Coaching.findById(id);
-  if (!coaching) {
-    res.status(404);
-    throw new Error("Coaching not found");
-  }
-
-  await coaching.deleteOne();
-  res.status(200).json({ message: "Coaching deleted successfully" });
 };
 
 //get nte by status query param
 export const getCoachingByStatus = async (req, res) => {
-  const status = req.params.status;
-  const coachings = await Coaching.find({ status }).sort({ createdAt: -1 }); // newest first
-  res.status(200).json(coachings);
+  try {
+    const status = req.params.status;
+    const coachings = await Coaching.find({ status }).sort({ createdAt: -1 });
+    res.status(200).json({
+      success: true,
+      message: "Fetch nte by status",
+      coachings,
+    });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
 };
 
 export const getCoachingByUser = async (req, res) => {
-  const userId = req.user?._id?.toString();
+  try {
+    const userId = req.user?._id?.toString();
 
-  if (!userId) {
-    return res.status(401).json({ message: "User not authenticated" });
+    if (!userId) {
+      return res.status(401).json({
+        succses: false,
+        message: "User not authenticated",
+      });
+    }
+
+    const coachings = await Coaching.find({
+      "coaching.employeeId": userId,
+      status: { $ne: "DRAFT" },
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.status(200).json({
+      success: true,
+      message: "Fetch coaching by user",
+      coachings,
+    });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
-
-  const coachings = await Coaching.find({
-    "coaching.employeeId": userId,
-    status: { $ne: "DRAFT" },
-  })
-    .sort({ createdAt: -1 })
-    .lean();
-
-  res.status(200).json(coachings);
 };
-
-
