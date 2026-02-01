@@ -12,15 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import CreateMemo from "@/pages/memo/CreateMemo";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Eye,
-  FileText,
-  Calendar,
-  Heart,
-  Clover,
-} from "lucide-react";
+import { Eye, Calendar, Filter } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { formattedDate } from "../../API/helper";
@@ -31,12 +23,7 @@ export interface Memo {
   file: string;
   description: string;
   createdAt: string;
-  updatedAt: string;
-  acknowledgedby: {
-    userId: string | undefined;
-    _id: string;
-    name: string;
-  }[];
+  acknowledgedby: { userId: string | undefined; _id: string; name: string }[];
 }
 
 export interface User {
@@ -46,475 +33,246 @@ export interface User {
   email: string;
 }
 
+interface SummaryCardProps {
+  label: string;
+  value: number;
+  highlight?: boolean;
+  onClick?: () => void;
+}
+
+const SummaryCard: React.FC<SummaryCardProps> = ({ label, value, highlight, onClick }) => (
+  <div
+    onClick={onClick}
+    className={`p-4 rounded-lg shadow border text-center cursor-pointer ${
+      highlight ? "bg-yellow-50 border-yellow-300" : "bg-white border-gray-200"
+    } hover:shadow-md transition`}
+  >
+    <p className="text-sm font-medium text-gray-600">{label}</p>
+    <p className="text-xl font-bold text-gray-900 mt-1">{value}</p>
+  </div>
+);
+
+interface PaginationProps {
+  currentPage: number;
+  totalPages: number;
+  onChange: (page: number) => void;
+}
+
+const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onChange }) => {
+  const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
+
+  return (
+    <div className="flex justify-center items-center gap-2 py-4">
+      <Button
+        size="sm"
+        variant="outline"
+        disabled={currentPage === 1}
+        onClick={() => onChange(currentPage - 1)}
+      >
+        Previous
+      </Button>
+      {pageNumbers.map((page) => (
+        <Button
+          key={page}
+          size="sm"
+          variant={page === currentPage ? "default" : "outline"}
+          onClick={() => onChange(page)}
+        >
+          {page}
+        </Button>
+      ))}
+      <Button
+        size="sm"
+        variant="outline"
+        disabled={currentPage === totalPages}
+        onClick={() => onChange(currentPage + 1)}
+      >
+        Next
+      </Button>
+    </div>
+  );
+};
+
 function ViewMemo() {
   const [memos, setMemos] = useState<Memo[]>([]);
   const [filteredMemos, setFilteredMemos] = useState<Memo[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [totalPages, setTotalPages] = useState<number>(1);
-  const [showPendingOnly, setShowPendingOnly] = useState<boolean>(false);
-  const itemsPerPage = 8;
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showPendingOnly, setShowPendingOnly] = useState(false);
 
+  const itemsPerPage = 8;
+  const navigate = useNavigate();
   const userString = localStorage.getItem("user");
   const user: User | null = userString ? JSON.parse(userString) : null;
-  const navigate = useNavigate();
 
-  const getMemos = async () => {
+  const fetchMemos = async () => {
     try {
       const response = await TicketAPi.getAllMemos();
-      console.log(response.data);
       setMemos(response.data);
       setFilteredMemos(response.data);
-      setTotalPages(Math.ceil(response.data.length / itemsPerPage));
-    } catch (error) {
-      console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    getMemos();
+    fetchMemos();
   }, []);
 
-  // Update filtered memos and pagination when showPendingOnly changes
   useEffect(() => {
-    let filtered = memos;
+    let data = memos;
     if (showPendingOnly) {
-      filtered = memos.filter(
+      data = memos.filter(
         (memo) => !memo.acknowledgedby.some((ack) => ack.userId === user?._id)
       );
     }
-    setFilteredMemos(filtered);
-    setTotalPages(Math.ceil(filtered.length / itemsPerPage));
-    setCurrentPage(1); // Reset to first page when filter changes
+    setFilteredMemos(data);
+    setCurrentPage(1);
   }, [showPendingOnly, memos, user?._id]);
 
-  const getCurrentPageMemos = () => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return filteredMemos.slice(startIndex, endIndex);
-  };
+  const isAcknowledged = (memo: Memo) =>
+    memo.acknowledgedby.some((ack) => ack.userId === user?._id);
 
-  const handlePageChange = (pageNumber: number) => {
-    setCurrentPage(pageNumber);
-  };
+  const pendingCount = memos.filter((memo) => !isAcknowledged(memo)).length;
 
-  const handleShowPendingClick = () => {
-    setShowPendingOnly(true);
-  };
+  const paginatedMemos = filteredMemos.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
-  const handleShowAllClick = () => {
+  const clearFilter = () => {
     setShowPendingOnly(false);
   };
 
-  const getStatusColor = (memo: Memo) => {
-    const isAcknowledged = memo.acknowledgedby.some(
-      (ack) => ack.userId === user?._id
-    );
-    return isAcknowledged
-      ? "text-green-600 bg-green-50 border border-green-200"
-      : "text-amber-600 bg-amber-50 border border-amber-200";
-  };
-
-  const getStatusText = (memo: Memo) => {
-    const isAcknowledged = memo.acknowledgedby.some(
-      (ack) => ack.userId === user?._id
-    );
-    return isAcknowledged
-      ? "Acknowledged with Gratitude 🦃"
-      : "Awaiting Your Review";
-  };
-
-  const pendingCount = memos.filter(
-    (memo) => !memo.acknowledgedby.some((ack) => ack.userId === user?._id)
-  ).length;
-
-  if (loading) {
-    return <LoadingComponent />;
-  }
+  if (loading) return <LoadingComponent />;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 py-6 px-4 sm:px-6 lg:px-8">
+    <div className="bg-gradient-to-b from-gray-50 to-white px-6 py-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header Section */}
-        <div className="relative mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <BackButton />
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-gradient-to-r from-amber-600 to-orange-600 rounded-2xl shadow-lg">
-                  <FileText className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-2xl sm:text-3xl font-bold text-amber-900">
-                    Thanksgiving Memos
-                  </h1>
-                  <p className="text-amber-700 text-sm mt-1">
-                    Share gratitude and important announcements this season
-                  </p>
-                </div>
-              </div>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-10">
+          <div className="flex items-center gap-4">
+            <BackButton />
+            <div>
+              <h1 className="text-2xl font-semibold text-gray-900">
+                Company Memoranda
+              </h1>
+              <p className="text-sm text-gray-600">
+                Controlled internal communications
+              </p>
             </div>
-
-            {user?.isAdmin && (
-              <div className="sm:absolute sm:right-0 sm:top-0">
-                <CreateMemo setMemos={setMemos} setLoading={setLoading} />
-              </div>
-            )}
           </div>
+
+          {user?.isAdmin && <CreateMemo setMemos={setMemos} setLoading={setLoading} />}
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-amber-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-amber-600">
-                  Total Blessings
-                </p>
-                <p className="text-2xl font-bold text-amber-900 mt-1">
-                  {memos.length}
-                </p>
-              </div>
-              <div className="p-3 bg-amber-100 rounded-xl">
-                <FileText className="h-6 w-6 text-amber-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-green-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-green-600">
-                  Grateful Responses
-                </p>
-                <p className="text-2xl font-bold text-green-600 mt-1">
-                  {
-                    memos.filter((memo) =>
-                      memo.acknowledgedby.some(
-                        (ack) => ack.userId === user?._id
-                      )
-                    ).length
-                  }
-                </p>
-              </div>
-              <div className="p-3 bg-green-100 rounded-xl">
-                <Heart className="h-6 w-6 text-green-600" />
-              </div>
-            </div>
-          </div>
-
-          <div
-            className={`bg-white rounded-2xl p-6 shadow-lg border border-amber-200 cursor-pointer transition-all duration-200 hover:shadow-xl hover:border-amber-400 ${
-              showPendingOnly ? "ring-2 ring-amber-500 border-amber-500" : ""
-            }`}
-            onClick={handleShowPendingClick}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-amber-600">
-                  Awaiting Gratitude
-                </p>
-                <p className="text-2xl font-bold text-amber-600 mt-1">
-                  {pendingCount}
-                </p>
-                {pendingCount > 0 && (
-                  <p className="text-xs text-amber-600 mt-2 font-medium flex items-center gap-1">
-                    Click to share your gratitude
-                    <ChevronRight className="h-3 w-3" />
-                  </p>
-                )}
-              </div>
-              <div className="p-3 bg-amber-100 rounded-xl">
-                <Clover className="h-6 w-6 text-amber-600" />
-              </div>
-            </div>
-          </div>
+        {/* Summary */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <SummaryCard label="Total Memoranda" value={memos.length} />
+          <SummaryCard label="Acknowledged" value={memos.filter(isAcknowledged).length} />
+          <SummaryCard
+            label="Pending Acknowledgement"
+            value={pendingCount}
+            highlight
+            onClick={() => setShowPendingOnly(true)}
+          />
         </div>
 
-        {/* Filter Status */}
-        {showPendingOnly && (
-          <div className="mb-6 p-4 bg-amber-50 border border-amber-300 rounded-xl">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 bg-amber-500 rounded-full animate-pulse" />
-                <span className="text-amber-800 font-medium">
-                  🦃 Sharing gratitude for {pendingCount} memo
-                  {pendingCount !== 1 ? "s" : ""}
-                </span>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleShowAllClick}
-                className="text-amber-700 border-amber-400 hover:bg-amber-100"
-              >
-                Show All Blessings
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Memos Table */}
-        <div className="bg-white rounded-2xl shadow-lg border border-amber-200 overflow-hidden">
-          {/* Desktop Table */}
-          <div className="hidden lg:block">
-            <Table>
-              <TableHeader className="bg-gradient-to-r from-amber-600 to-orange-600">
-                <TableRow className="border-0 hover:bg-transparent">
-                  <TableHead className="text-white font-bold text-center py-4">
-                    <div className="flex items-center justify-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      Clover Date
-                    </div>
-                  </TableHead>
-                  <TableHead className="text-white font-bold text-center py-4">
-                    <div className="flex items-center justify-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      Message of Gratitude
-                    </div>
-                  </TableHead>
-                  <TableHead className="text-white font-bold text-center py-4">
-                    <div className="flex items-center justify-center gap-2">
-                      <Heart className="h-4 w-4" />
-                      Your Response
-                    </div>
-                  </TableHead>
-                  <TableHead className="text-white font-bold text-center py-4">
-                    Action
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {getCurrentPageMemos().map((memo, index) => (
-                  <TableRow
-                    key={memo._id}
-                    className={`border-b border-amber-100 transition-colors hover:bg-amber-50 ${
-                      index % 2 === 0 ? "bg-amber-25" : "bg-white"
-                    }`}
-                  >
-                    <TableCell className="py-4 text-center">
-                      <div className="flex flex-col items-center">
-                        <Calendar className="h-4 w-4 text-amber-500 mb-1" />
-                        <span className="text-sm font-medium text-amber-900">
-                          {formattedDate(memo.createdAt)}
+        {/* Table */}
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <Table>
+            <TableHeader className="bg-gray-100">
+              {showPendingOnly ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="p-0">
+                    <div className="flex items-center justify-between px-4 py-3 bg-yellow-50 border-b border-yellow-300">
+                      <div className="flex items-center gap-2 text-yellow-800">
+                        <Filter className="h-4 w-4" />
+                        <span className="text-sm font-medium">
+                          Showing memoranda pending your acknowledgement
                         </span>
                       </div>
-                    </TableCell>
-                    <TableCell className="py-4">
-                      <div className="text-center max-w-md mx-auto">
-                        <p className="font-medium text-amber-900 line-clamp-2">
-                          {memo.subject}
-                        </p>
-                        {memo.subject.length > 100 && (
-                          <p className="text-xs text-amber-600 mt-1">
-                            🍂 Click view to read full message of gratitude
-                          </p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-4 text-center">
-                      <div
-                        className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                          memo
-                        )}`}
-                      >
-                        {memo.acknowledgedby.some(
-                          (ack) => ack.userId === user?._id
-                        ) ? (
-                          <Heart className="h-3 w-3" />
-                        ) : (
-                          <div className="h-2 w-2 bg-amber-500 rounded-full animate-pulse" />
-                        )}
-                        {getStatusText(memo)}
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-4 text-center">
                       <Button
-                        onClick={() => navigate(`/memo/${memo._id}`)}
-                        className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 flex items-center gap-2 mx-auto shadow-lg hover:shadow-xl"
+                        variant="outline"
+                        size="sm"
+                        onClick={clearFilter}
+                        className="border-yellow-400 text-yellow-700 hover:bg-yellow-100"
                       >
-                        <Eye className="h-4 w-4" />
-                        Read with Gratitude
+                        Clear Filter
                       </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* Mobile Cards */}
-          <div className="lg:hidden p-4 space-y-4">
-            {getCurrentPageMemos().map((memo) => (
-              <div
-                key={memo._id}
-                className="bg-white border border-amber-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-200"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-amber-500" />
-                    <span className="text-sm font-medium text-amber-900">
-                      {formattedDate(memo.createdAt)}
-                    </span>
-                  </div>
-                  <div
-                    className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                      memo
-                    )}`}
-                  >
-                    {memo.acknowledgedby.some(
-                      (ack) => ack.userId === user?._id
-                    ) ? (
-                      <Heart className="h-3 w-3" />
-                    ) : (
-                      <div className="h-2 w-2 bg-amber-500 rounded-full animate-pulse" />
-                    )}
-                    {getStatusText(memo)}
-                  </div>
-                </div>
-
-                <div className="mb-4">
-                  <h3 className="font-semibold text-amber-900 text-sm mb-2">
-                    Message:
-                  </h3>
-                  <p className="text-amber-800 line-clamp-3 text-sm">
-                    {memo.subject}
-                  </p>
-                </div>
-
-                <Button
-                  onClick={() => navigate(`/memo/${memo._id}`)}
-                  className="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-medium py-2 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-lg"
-                >
-                  <Eye className="h-4 w-4" />
-                  Read with Gratitude
-                </Button>
-              </div>
-            ))}
-          </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <TableFooter className="bg-amber-50">
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : null}
               <TableRow>
-                <TableCell colSpan={4} className="px-6 py-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div className="text-sm text-amber-700 text-center sm:text-left">
-                      Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
-                      {Math.min(
-                        currentPage * itemsPerPage,
-                        filteredMemos.length
-                      )}{" "}
-                      of {filteredMemos.length} blessing
-                      {filteredMemos.length !== 1 ? "s" : ""}
-                      {showPendingOnly && " (Awaiting your gratitude)"}
-                    </div>
-
-                    <div className="flex items-center justify-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 1}
-                        className="flex items-center gap-1 border-amber-300 text-amber-700 hover:bg-amber-100"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                        <span className="hidden sm:block">Previous</span>
-                      </Button>
-
-                      <div className="flex items-center gap-1">
-                        {Array.from(
-                          { length: Math.min(totalPages, 5) },
-                          (_, i) => {
-                            let pageNum;
-                            if (totalPages <= 5) {
-                              pageNum = i + 1;
-                            } else if (currentPage <= 3) {
-                              pageNum = i + 1;
-                            } else if (currentPage >= totalPages - 2) {
-                              pageNum = totalPages - 4 + i;
-                            } else {
-                              pageNum = currentPage - 2 + i;
-                            }
-
-                            return (
-                              <Button
-                                key={pageNum}
-                                variant={
-                                  pageNum === currentPage
-                                    ? "default"
-                                    : "outline"
-                                }
-                                size="sm"
-                                onClick={() => handlePageChange(pageNum)}
-                                className={`w-8 h-8 p-0 text-xs ${
-                                  pageNum === currentPage
-                                    ? "bg-amber-600 hover:bg-amber-700"
-                                    : "border-amber-300 text-amber-700 hover:bg-amber-100"
-                                }`}
-                              >
-                                {pageNum}
-                              </Button>
-                            );
-                          }
-                        )}
-                      </div>
-
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                        className="flex items-center gap-1 border-amber-300 text-amber-700 hover:bg-amber-100"
-                      >
-                        <span className="hidden sm:block">Next</span>
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </TableCell>
+                <TableHead>Date Issued</TableHead>
+                <TableHead>Subject</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-center">Action</TableHead>
               </TableRow>
-            </TableFooter>
-          )}
+            </TableHeader>
 
-          {/* Empty State */}
+            <TableBody>
+              {paginatedMemos.map((memo) => (
+                <TableRow key={memo._id}>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-gray-400" />
+                      {formattedDate(memo.createdAt)}
+                    </div>
+                  </TableCell>
+
+                  <TableCell className="font-medium text-gray-900">{memo.subject}</TableCell>
+
+                  <TableCell>
+                    <span
+                      className={`text-xs font-medium px-2 py-1 rounded ${
+                        isAcknowledged(memo)
+                          ? "bg-green-100 text-green-700"
+                          : "bg-yellow-100 text-yellow-800"
+                      }`}
+                    >
+                      {isAcknowledged(memo) ? "Acknowledged" : "Pending Acknowledgement"}
+                    </span>
+                  </TableCell>
+
+                  <TableCell className="text-center">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => navigate(`/memo/${memo._id}`)}
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      View Document
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+
+            {filteredMemos.length > itemsPerPage && (
+              <TableFooter>
+                <TableRow>
+                  <TableCell colSpan={4}>
+                    <Pagination
+                      currentPage={currentPage}
+                      totalPages={Math.ceil(filteredMemos.length / itemsPerPage)}
+                      onChange={setCurrentPage}
+                    />
+                  </TableCell>
+                </TableRow>
+              </TableFooter>
+            )}
+          </Table>
+
           {filteredMemos.length === 0 && (
-            <div className="text-center py-12">
-              <div className="text-4xl mb-4">🦃</div>
-              <FileText className="h-16 w-16 text-amber-300 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-amber-900 mb-2">
-                {showPendingOnly
-                  ? "All caught up with gratitude!"
-                  : "No messages of gratitude yet"}
-              </h3>
-              <p className="text-amber-700 max-w-sm mx-auto">
-                {showPendingOnly
-                  ? "You've acknowledged all memos with gratitude. What a thankful heart!"
-                  : "There are no Thanksgiving memos available at the moment. Check back later for messages of gratitude."}
-              </p>
-              {showPendingOnly && (
-                <Button
-                  onClick={handleShowAllClick}
-                  className="mt-4 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700"
-                >
-                  View All Blessings
-                </Button>
-              )}
+            <div className="text-center py-10 text-gray-600">
+              {showPendingOnly 
+                ? "No memoranda pending your acknowledgement."
+                : "No memoranda available."}
             </div>
           )}
-        </div>
-
-        {/* Thanksgiving Footer */}
-        <div className="mt-8 text-center">
-          <div className="text-amber-600 text-sm flex items-center justify-center gap-2">
-            <span>🦃</span>
-            <span>
-              Wishing you a season filled with gratitude and blessings
-            </span>
-            <span>🍂</span>
-          </div>
+          
         </div>
       </div>
     </div>

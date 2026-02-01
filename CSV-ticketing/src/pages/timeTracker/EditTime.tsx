@@ -2,7 +2,13 @@
 import { TimeRecordAPI } from "@/API/endpoint";
 import BackButton from "@/components/kit/BackButton";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogClose,
@@ -29,12 +35,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
-import { 
-  EyeIcon, 
-  EyeOffIcon, 
-  Pencil, 
-  Search, 
-  Trash2, 
+import {
+  EyeIcon,
+  EyeOffIcon,
+  Pencil,
+  Search,
+  Trash2,
   Clock,
   Calendar,
   User,
@@ -43,7 +49,8 @@ import {
   RefreshCw,
   AlertTriangle,
   CheckCircle,
-  Leaf,
+  Key,
+  Edit3,
 } from "lucide-react";
 import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -136,7 +143,8 @@ const calculateTotalHours = (
       }
       const totalBreakSeconds = breakEndSeconds - breakStartSeconds;
       breakTimeSeconds = totalBreakSeconds;
-      breakDeductionSeconds = totalBreakSeconds > 900 ? totalBreakSeconds - 900 : 0;
+      breakDeductionSeconds =
+        totalBreakSeconds > 900 ? totalBreakSeconds - 900 : 0;
     }
   }
 
@@ -161,14 +169,17 @@ const calculateTotalHours = (
       if (secondBreakEndSeconds < secondBreakStartSeconds) {
         secondBreakEndSeconds += 24 * 3600;
       }
-      const totalSecondBreakSeconds = secondBreakEndSeconds - secondBreakStartSeconds;
+      const totalSecondBreakSeconds =
+        secondBreakEndSeconds - secondBreakStartSeconds;
       secondBreakTimeSeconds = totalSecondBreakSeconds;
-      secondBreakDeductionSeconds = totalSecondBreakSeconds > 900 ? totalSecondBreakSeconds - 900 : 0;
+      secondBreakDeductionSeconds =
+        totalSecondBreakSeconds > 900 ? totalSecondBreakSeconds - 900 : 0;
     }
   }
 
   const totalWorkSeconds = outTotalSeconds - inTotalSeconds;
-  const totalDeductionSeconds = breakDeductionSeconds + lunchDeductionSeconds + secondBreakDeductionSeconds;
+  const totalDeductionSeconds =
+    breakDeductionSeconds + lunchDeductionSeconds + secondBreakDeductionSeconds;
   const netWorkSeconds = Math.max(0, totalWorkSeconds - totalDeductionSeconds);
 
   const totalHours = (netWorkSeconds / 3600).toFixed(2);
@@ -202,11 +213,11 @@ const formatHoursToMinutes = (hoursString: string): string => {
 };
 
 const employeeGroupOptions = [
-  { label: "All Family Members", value: "csv-all" },
-  { label: "Leaf Shift 1", value: "csv-shift1" },
-  { label: "Leaf Shift 2", value: "csv-shift2" },
-  { label: "Leaf Shift 3", value: "csv-shift3" },
-  { label: "Family Staff", value: "csv-staff" },
+  { label: "All Employees", value: "csv-all" },
+  { label: "Morning Shift", value: "csv-shift1" },
+  { label: "Mid Shift", value: "csv-shift2" },
+  { label: "Night Shift", value: "csv-shift3" },
+  { label: "Staff", value: "csv-staff" },
   { label: "Search by Name", value: "search-by-name" },
 ];
 
@@ -222,15 +233,15 @@ const AdminTimeRecordEdit: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  // Thanksgiving-themed toast
-  const showThanksgivingToast = (title: string, description: string, variant: "default" | "destructive" = "default") => {
+  const showToast = (
+    title: string,
+    description: string,
+    variant: "default" | "destructive" = "default"
+  ) => {
     toast({
       title,
       description,
       variant,
-      className: variant === "default" 
-        ? "bg-gradient-to-r from-amber-600 to-orange-600 border border-amber-400 text-white"
-        : "bg-red-600 border border-red-400 text-white"
     });
   };
 
@@ -241,7 +252,7 @@ const AdminTimeRecordEdit: React.FC = () => {
 
   const validateSecretKey = () => {
     if (!secretKey) {
-      setSecretKeyError("Leaf key is required");
+      setSecretKeyError("Private key is required");
       return false;
     }
     setSecretKeyError("");
@@ -250,18 +261,14 @@ const AdminTimeRecordEdit: React.FC = () => {
 
   const handleSearch = async () => {
     if (!searchDate) {
-      showThanksgivingToast(
-        "Validation Error",
-        "Please select a Leaf date",
-        "destructive"
-      );
+      showToast("Validation Error", "Please select a date", "destructive");
       return;
     }
 
     if (searchType === "search-by-name" && !searchName) {
-      showThanksgivingToast(
+      showToast(
         "Validation Error",
-        "Please enter a family member name",
+        "Please enter an employee name",
         "destructive"
       );
       return;
@@ -285,23 +292,16 @@ const AdminTimeRecordEdit: React.FC = () => {
       setTimeRecords(response.data);
 
       if (response.data.length === 0) {
-        showThanksgivingToast(
+        showToast(
           "No Records Found",
-          "No Leaf time records found for the given criteria"
+          "No time records found for the given criteria"
         );
       } else {
-        showThanksgivingToast(
-          "Leaf Search Complete! 🦃",
-          `Found ${response.data.length} grateful record(s)`
-        );
+        showToast("Search Complete", `Found ${response.data.length} record(s)`);
       }
     } catch (error) {
       console.error("Search failed", error);
-      showThanksgivingToast(
-        "Search Error",
-        "Failed to fetch Leaf time records",
-        "destructive"
-      );
+      showToast("Search Error", "Failed to fetch time records", "destructive");
     } finally {
       setIsLoading(false);
     }
@@ -354,20 +354,13 @@ const AdminTimeRecordEdit: React.FC = () => {
         )
       );
 
-      showThanksgivingToast(
-        "Success! 🍂",
-        "Leaf time record updated with gratitude"
-      );
+      showToast("Success", "Time record updated successfully");
 
       setEditingRecord(null);
       setSecretKey("");
     } catch (error) {
       console.error("Update failed", error);
-      showThanksgivingToast(
-        "Update Error",
-        "Failed to update Leaf time record",
-        "destructive"
-      );
+      showToast("Update Error", "Failed to update time record", "destructive");
     } finally {
       setIsLoading(false);
     }
@@ -378,17 +371,10 @@ const AdminTimeRecordEdit: React.FC = () => {
       await TimeRecordAPI.deleteTimeRecord(_id);
       setTimeRecords((prev) => prev.filter((record) => record._id !== _id));
 
-      showThanksgivingToast(
-        "Record Cleared! 🍁",
-        "Leaf time record removed with gratitude"
-      );
+      showToast("Record Deleted", "Time record removed successfully");
     } catch (error) {
       console.error("Delete failed", error);
-      showThanksgivingToast(
-        "Delete Error",
-        "Failed to clear Leaf time record",
-        "destructive"
-      );
+      showToast("Delete Error", "Failed to delete time record", "destructive");
     }
   };
 
@@ -419,9 +405,11 @@ const AdminTimeRecordEdit: React.FC = () => {
 
   const getHoursColor = (hours: string) => {
     const numHours = parseFloat(hours);
-    if (numHours >= 8) return "text-green-600 bg-green-50 border border-green-200";
-    if (numHours >= 6) return "text-amber-600 bg-amber-50 border border-amber-200";
-    return "text-red-600 bg-red-50 border border-red-200";
+    if (numHours >= 8)
+      return "bg-green-100 text-green-800 border border-green-200";
+    if (numHours >= 6)
+      return "bg-amber-100 text-amber-800 border border-amber-200";
+    return "bg-red-100 text-red-800 border border-red-200";
   };
 
   const clearSearch = () => {
@@ -431,55 +419,54 @@ const AdminTimeRecordEdit: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100/30 py-6">
-      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 py-6 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
           <div className="flex items-center gap-4">
             <BackButton />
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
-                🦃 Leaf Time Records
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+                Edit Time Records
               </h1>
-              <p className="text-amber-700 mt-2">
-                Manage and edit family member Leaf time with gratitude
+              <p className="text-gray-600 mt-1">
+                Manage and edit employee time records
               </p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-3">
-            <Button variant="outline" className="flex items-center gap-2 border-amber-300 text-amber-700 hover:bg-amber-100">
+            <Button variant="outline" className="flex items-center gap-2">
               <Download className="h-4 w-4" />
-              Export Leaf
+              Export
             </Button>
           </div>
         </div>
 
         {/* Search Section */}
-        <Card className="mb-6 shadow-sm border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50">
+        <Card className="border border-gray-200">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-xl text-amber-800">
-              <Filter className="h-5 w-5 text-amber-600" />
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5 text-gray-600" />
               Search Records
             </CardTitle>
-            <CardDescription className="text-amber-600">
-              Find time records by family member or Leaf group
+            <CardDescription>
+              Find time records by employee name or group
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
               <div className="lg:col-span-3">
-                <Label className="flex items-center gap-2 mb-2 text-amber-700">
-                  <Leaf className="h-4 w-4 text-amber-600" />
+                <Label className="text-sm font-medium text-gray-700 mb-2 block">
                   Search Type
                 </Label>
                 <Select onValueChange={setSearchType} value={searchType}>
-                  <SelectTrigger className="border-amber-300 bg-white">
-                    <SelectValue placeholder="Select Leaf type" />
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select search type" />
                   </SelectTrigger>
-                  <SelectContent className="bg-amber-50 border-amber-300">
+                  <SelectContent>
                     {employeeGroupOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value} className="hover:bg-amber-200">
+                      <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>
                     ))}
@@ -489,49 +476,45 @@ const AdminTimeRecordEdit: React.FC = () => {
 
               {searchType === "search-by-name" && (
                 <div className="lg:col-span-3">
-                  <Label className="flex items-center gap-2 mb-2 text-amber-700">
-                    <User className="h-4 w-4 text-amber-600" />
-                    Family Member Name
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Employee Name
                   </Label>
                   <Input
-                    placeholder="Enter family member name"
+                    placeholder="Enter employee name"
                     value={searchName}
                     onChange={(e) => setSearchName(e.target.value)}
-                    className="border-amber-300 bg-white"
                   />
                 </div>
               )}
 
               <div className="lg:col-span-3">
-                <Label className="flex items-center gap-2 mb-2 text-amber-700">
-                  <Calendar className="h-4 w-4 text-amber-600" />
+                <Label className="text-sm font-medium text-gray-700 mb-2 block">
                   Date
                 </Label>
                 <Input
                   type="date"
                   value={searchDate}
                   onChange={(e) => setSearchDate(e.target.value)}
-                  className="border-amber-300 bg-white"
                 />
               </div>
 
               <div className="lg:col-span-3 flex items-end gap-2">
-                <Button 
-                  onClick={handleSearch} 
+                <Button
+                  onClick={handleSearch}
                   disabled={isLoading}
-                  className="flex items-center gap-2 flex-1 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white border-amber-400"
+                  className="flex items-center gap-2 flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
                 >
                   {isLoading ? (
                     <RefreshCw className="h-4 w-4 animate-spin" />
                   ) : (
                     <Search className="h-4 w-4" />
                   )}
-                  {isLoading ? "Leafing..." : "Search Records"}
+                  {isLoading ? "Searching..." : "Search Records"}
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={clearSearch}
-                  className="flex-1 border-amber-300 text-amber-700 hover:bg-amber-100"
+                  className="flex-1"
                 >
                   Clear
                 </Button>
@@ -542,256 +525,315 @@ const AdminTimeRecordEdit: React.FC = () => {
 
         {/* Edit Form */}
         {editingRecord && (
-          <Card className="mb-6 shadow-sm border-2 border-amber-200 border-l-4 border-l-amber-500 bg-gradient-to-br from-amber-50 to-orange-50">
+          <Card className="border border-gray-200">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-xl text-amber-800">
-                <Pencil className="h-5 w-5 text-amber-600" />
-                Edit  Record
-                <Badge variant="secondary" className="ml-2 bg-amber-100 text-amber-800 border-amber-300">
+              <CardTitle className="flex items-center gap-2">
+                <Edit3 className="h-5 w-5 text-purple-600" />
+                Edit Employee Record
+                <Badge
+                  variant="secondary"
+                  className="ml-2 bg-purple-100 text-purple-800 border border-purple-200"
+                >
                   {editingRecord.employeeName}
                 </Badge>
               </CardTitle>
-              <CardDescription className="text-amber-600">
-                Update the  time record details below with gratitude
+              <CardDescription>
+                Update the employee time record details below
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <div className="space-y-6">
                 {/* Basic Information */}
-                <div className="space-y-3">
-                  <Label className="text-amber-700"> Date</Label>
-                  <Input
-                    value={editingRecord.date}
-                    onChange={(e) =>
-                      handleTimeInputChange("date", e.target.value, editingRecord)
-                    }
-                    className="border-amber-300 bg-white"
-                  />
-                </div>
-                <div className="space-y-3">
-                  <Label className="text-amber-700"> Shift</Label>
-                  <Input
-                    value={editingRecord.shift || ""}
-                    onChange={(e) =>
-                      handleTimeInputChange("shift", e.target.value, editingRecord)
-                    }
-                    className="border-amber-300 bg-white"
-                  />
-                </div>
-                <div className="space-y-3">
-                  <Label className="text-amber-700">Time In</Label>
-                  <Input
-                    value={editingRecord.timeIn || ""}
-                    onChange={(e) =>
-                      handleTimeInputChange("timeIn", e.target.value, editingRecord)
-                    }
-                    className="border-amber-300 bg-white"
-                  />
-                </div>
-                <div className="space-y-3">
-                  <Label className="text-amber-700">Time Out</Label>
-                  <Input
-                    value={editingRecord.timeOut || ""}
-                    onChange={(e) =>
-                      handleTimeInputChange("timeOut", e.target.value, editingRecord)
-                    }
-                    className="border-amber-300 bg-white"
-                  />
-                </div>
-              </div>
-
-              {/* Break Times */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <div className="space-y-3">
-                  <Label className="text-amber-700">Break Start</Label>
-                  <Input
-                    value={editingRecord.breakStart || ""}
-                    onChange={(e) =>
-                      handleTimeInputChange("breakStart", e.target.value, editingRecord)
-                    }
-                    className="border-amber-300 bg-white"
-                  />
-                </div>
-                <div className="space-y-3">
-                  <Label className="text-amber-700">Break End</Label>
-                  <Input
-                    value={editingRecord.breakEnd || ""}
-                    onChange={(e) =>
-                      handleTimeInputChange("breakEnd", e.target.value, editingRecord)
-                    }
-                    className="border-amber-300 bg-white"
-                  />
-                </div>
-                <div className="space-y-3">
-                  <Label className="text-amber-700"> Start</Label>
-                  <Input
-                    value={editingRecord.lunchStart || ""}
-                    onChange={(e) =>
-                      handleTimeInputChange("lunchStart", e.target.value, editingRecord)
-                    }
-                    className="border-amber-300 bg-white"
-                  />
-                </div>
-                <div className="space-y-3">
-                  <Label className="text-amber-700"> End</Label>
-                  <Input
-                    value={editingRecord.lunchEnd || ""}
-                    onChange={(e) =>
-                      handleTimeInputChange("lunchEnd", e.target.value, editingRecord)
-                    }
-                    className="border-amber-300 bg-white"
-                  />
-                </div>
-              </div>
-
-              {/* Second Break Times */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <div className="space-y-3">
-                  <Label className="text-amber-700">2nd Break Start</Label>
-                  <Input
-                    value={editingRecord.secondBreakStart || ""}
-                    onChange={(e) =>
-                      handleTimeInputChange("secondBreakStart", e.target.value, editingRecord)
-                    }
-                    className="border-amber-300 bg-white"
-                  />
-                </div>
-                <div className="space-y-3">
-                  <Label className="text-amber-700">2nd Break End</Label>
-                  <Input
-                    value={editingRecord.secondBreakEnd || ""}
-                    onChange={(e) =>
-                      handleTimeInputChange("secondBreakEnd", e.target.value, editingRecord)
-                    }
-                    className="border-amber-300 bg-white"
-                  />
-                </div>
-                <div className="space-y-3">
-                  <Label className="text-amber-700">Grateful Notes</Label>
-                  <Input
-                    value={editingRecord.notes || ""}
-                    onChange={(e) =>
-                      handleTimeInputChange("notes", e.target.value, editingRecord)
-                    }
-                    className="border-amber-300 bg-white"
-                    placeholder="Add grateful notes..."
-                  />
-                </div>
-              </div>
-
-              {/* Calculated Totals */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 bg-amber-100 rounded-lg border border-amber-300">
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-amber-800">Total Hours</Label>
-                  <div className="flex items-center gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label>Date</Label>
                     <Input
-                      value={editingRecord.totalHours}
-                      readOnly
-                      className={`font-semibold border-amber-300 ${getHoursColor(editingRecord.totalHours)}`}
+                      value={editingRecord.date}
+                      onChange={(e) =>
+                        handleTimeInputChange(
+                          "date",
+                          e.target.value,
+                          editingRecord
+                        )
+                      }
                     />
-                    <span className="text-xs text-amber-600">
-                      {formatHoursToMinutes(editingRecord.totalHours)}
-                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Shift</Label>
+                    <Input
+                      value={editingRecord.shift || ""}
+                      onChange={(e) =>
+                        handleTimeInputChange(
+                          "shift",
+                          e.target.value,
+                          editingRecord
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Time In</Label>
+                    <Input
+                      value={editingRecord.timeIn || ""}
+                      onChange={(e) =>
+                        handleTimeInputChange(
+                          "timeIn",
+                          e.target.value,
+                          editingRecord
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Time Out</Label>
+                    <Input
+                      value={editingRecord.timeOut || ""}
+                      onChange={(e) =>
+                        handleTimeInputChange(
+                          "timeOut",
+                          e.target.value,
+                          editingRecord
+                        )
+                      }
+                    />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-amber-800">Break Time</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      value={editingRecord.totalBreakTime || "0.00"}
-                      readOnly
-                      className="border-amber-300"
-                    />
-                    <span className="text-xs text-amber-600">
-                      {formatHoursToMinutes(editingRecord.totalBreakTime || "0.00")}
-                    </span>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-amber-800">Time</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      value={editingRecord.totalLunchTime || "0.00"}
-                      readOnly
-                      className="border-amber-300"
-                    />
-                    <span className="text-xs text-amber-600">
-                      {formatHoursToMinutes(editingRecord.totalLunchTime || "0.00")}
-                    </span>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-amber-800">2nd Break</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      value={editingRecord.totalSecondBreakTime || "0.00"}
-                      readOnly
-                      className="border-amber-300"
-                    />
-                    <span className="text-xs text-amber-600">
-                      {formatHoursToMinutes(editingRecord.totalSecondBreakTime || "0.00")}
-                    </span>
-                  </div>
-                </div>
-              </div>
 
-              {/* Security Section */}
-              <div className="border-t border-amber-300 pt-4">
-                <Label className="flex items-center gap-2 mb-3 text-sm font-medium text-amber-800">
-                  <AlertTriangle className="h-4 w-4 text-amber-600" />
-                   Verification
-                </Label>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  <div className="relative">
-                    <Label className="text-amber-700">Key</Label>
+                {/* Break Times */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label>Break Start</Label>
                     <Input
-                      type={showSecretKey ? "text" : "password"}
-                      value={secretKey}
-                      onChange={(e) => setSecretKey(e.target.value)}
-                      className={`border-amber-300 bg-white ${secretKeyError ? "border-red-500" : ""}`}
-                      placeholder="Enter  key"
+                      value={editingRecord.breakStart || ""}
+                      onChange={(e) =>
+                        handleTimeInputChange(
+                          "breakStart",
+                          e.target.value,
+                          editingRecord
+                        )
+                      }
                     />
-                    <button
-                      type="button"
-                      onClick={toggleSecretKeyVisibility}
-                      className="absolute right-3 top-8 text-amber-500 hover:text-amber-700"
-                    >
-                      {showSecretKey ? (
-                        <EyeOffIcon size={18} />
-                      ) : (
-                        <EyeIcon size={18} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Break End</Label>
+                    <Input
+                      value={editingRecord.breakEnd || ""}
+                      onChange={(e) =>
+                        handleTimeInputChange(
+                          "breakEnd",
+                          e.target.value,
+                          editingRecord
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Lunch Start</Label>
+                    <Input
+                      value={editingRecord.lunchStart || ""}
+                      onChange={(e) =>
+                        handleTimeInputChange(
+                          "lunchStart",
+                          e.target.value,
+                          editingRecord
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Lunch End</Label>
+                    <Input
+                      value={editingRecord.lunchEnd || ""}
+                      onChange={(e) =>
+                        handleTimeInputChange(
+                          "lunchEnd",
+                          e.target.value,
+                          editingRecord
+                        )
+                      }
+                    />
+                  </div>
+                </div>
+
+                {/* Second Break Times */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>2nd Break Start</Label>
+                    <Input
+                      value={editingRecord.secondBreakStart || ""}
+                      onChange={(e) =>
+                        handleTimeInputChange(
+                          "secondBreakStart",
+                          e.target.value,
+                          editingRecord
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>2nd Break End</Label>
+                    <Input
+                      value={editingRecord.secondBreakEnd || ""}
+                      onChange={(e) =>
+                        handleTimeInputChange(
+                          "secondBreakEnd",
+                          e.target.value,
+                          editingRecord
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Notes</Label>
+                    <Input
+                      value={editingRecord.notes || ""}
+                      onChange={(e) =>
+                        handleTimeInputChange(
+                          "notes",
+                          e.target.value,
+                          editingRecord
+                        )
+                      }
+                      placeholder="Add notes..."
+                    />
+                  </div>
+                </div>
+
+                {/* Calculated Totals */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-700">
+                      Total Hours
+                    </Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={editingRecord.totalHours}
+                        readOnly
+                        className={`font-semibold ${getHoursColor(
+                          editingRecord.totalHours
+                        )}`}
+                      />
+                      <span className="text-xs text-gray-600">
+                        {formatHoursToMinutes(editingRecord.totalHours)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-700">
+                      Break Time
+                    </Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={editingRecord.totalBreakTime || "0.00"}
+                        readOnly
+                        className="bg-gray-50"
+                      />
+                      <span className="text-xs text-gray-600">
+                        {formatHoursToMinutes(
+                          editingRecord.totalBreakTime || "0.00"
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-700">
+                      Lunch Time
+                    </Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={editingRecord.totalLunchTime || "0.00"}
+                        readOnly
+                        className="bg-gray-50"
+                      />
+                      <span className="text-xs text-gray-600">
+                        {formatHoursToMinutes(
+                          editingRecord.totalLunchTime || "0.00"
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-700">
+                      2nd Break
+                    </Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={editingRecord.totalSecondBreakTime || "0.00"}
+                        readOnly
+                        className="bg-gray-50"
+                      />
+                      <span className="text-xs text-gray-600">
+                        {formatHoursToMinutes(
+                          editingRecord.totalSecondBreakTime || "0.00"
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Security Section */}
+                <div className="border-t border-gray-200 pt-4">
+                  <Label className="flex items-center gap-2 mb-3 text-sm font-medium text-gray-700">
+                    <Key className="h-4 w-4 text-gray-600" />
+                    Security Verification
+                  </Label>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Private Key</Label>
+                      <div className="relative">
+                        <Input
+                          type={showSecretKey ? "text" : "password"}
+                          value={secretKey}
+                          onChange={(e) => setSecretKey(e.target.value)}
+                          className={`pr-10 ${
+                            secretKeyError ? "border-red-500" : ""
+                          }`}
+                          placeholder="Enter private key"
+                        />
+                        <button
+                          type="button"
+                          onClick={toggleSecretKeyVisibility}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                          {showSecretKey ? (
+                            <EyeOffIcon size={18} />
+                          ) : (
+                            <EyeIcon size={18} />
+                          )}
+                        </button>
+                      </div>
+                      {secretKeyError && (
+                        <p className="text-red-500 text-sm flex items-center">
+                          <AlertTriangle className="h-3 w-3 mr-1" />
+                          {secretKeyError}
+                        </p>
                       )}
-                    </button>
-                    {secretKeyError && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {secretKeyError}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-end gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setEditingRecord(null);
-                        setSecretKey("");
-                        setSecretKeyError("");
-                      }}
-                      className="flex-1 border-amber-300 text-amber-700 hover:bg-amber-100"
-                    >
-                      Cancel
-                    </Button>
-                    <Button 
-                      onClick={handleUpdate} 
-                      disabled={isLoading}
-                      className="flex-1 flex items-center gap-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white border-amber-400"
-                    >
-                      {isLoading ? (
-                        <RefreshCw className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <CheckCircle className="h-4 w-4" />
-                      )}
-                      {isLoading ? "Updating..." : "Update with Gratitude"}
-                    </Button>
+                    </div>
+                    <div className="flex items-end gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setEditingRecord(null);
+                          setSecretKey("");
+                          setSecretKeyError("");
+                        }}
+                        className="flex-1"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleUpdate}
+                        disabled={isLoading}
+                        className="flex-1 flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
+                      >
+                        {isLoading ? (
+                          <RefreshCw className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <CheckCircle className="h-4 w-4" />
+                        )}
+                        {isLoading ? "Updating..." : "Update Record"}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -801,71 +843,79 @@ const AdminTimeRecordEdit: React.FC = () => {
 
         {/* Results Table */}
         {timeRecords.length > 0 && (
-          <Card className="shadow-sm border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50">
+          <Card className="border border-gray-200">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-xl text-amber-800">
-                <Clock className="h-5 w-5 text-amber-600" />
-                Leaf Time Records
-                <Badge variant="secondary" className="ml-2 bg-amber-100 text-amber-800 border-amber-300">
-                  {timeRecords.length} grateful records
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-gray-600" />
+                Employee Time Records
+                <Badge variant="secondary" className="ml-2">
+                  {timeRecords.length} records
                 </Badge>
               </CardTitle>
-              <CardDescription className="text-amber-600">
-                Found {timeRecords.length} Leaf time record(s) for the selected criteria
+              <CardDescription>
+                Found {timeRecords.length} time record(s) for the selected
+                criteria
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <Table>
-                  <TableHeader className="bg-amber-100">
+                  <TableHeader className="bg-gray-50">
                     <TableRow>
-                      <TableHead className="font-semibold text-amber-800">Family Member</TableHead>
-                      <TableHead className="font-semibold text-amber-800">Date</TableHead>
-                      <TableHead className="font-semibold text-amber-800">Time In</TableHead>
-                      <TableHead className="font-semibold text-amber-800">Time Out</TableHead>
-                      <TableHead className="font-semibold text-amber-800">Total Hours</TableHead>
-                      <TableHead className="font-semibold text-amber-800">Break</TableHead>
-                      <TableHead className="font-semibold text-amber-800">Feast</TableHead>
-                      <TableHead className="font-semibold text-amber-800">2nd Break</TableHead>
-                      <TableHead className="font-semibold text-amber-800">Shift</TableHead>
-                      <TableHead className="font-semibold text-amber-800">Grateful Notes</TableHead>
-                      <TableHead className="font-semibold text-amber-800 text-right">Actions</TableHead>
+                      <TableHead>Employee</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Time In</TableHead>
+                      <TableHead>Time Out</TableHead>
+                      <TableHead>Total Hours</TableHead>
+                      <TableHead>Break</TableHead>
+                      <TableHead>Lunch</TableHead>
+                      <TableHead>2nd Break</TableHead>
+                      <TableHead>Shift</TableHead>
+                      <TableHead>Notes</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {timeRecords.map((record) => (
-                      <TableRow key={record._id} className="hover:bg-amber-50/50 border-amber-200">
+                      <TableRow key={record._id} className="hover:bg-gray-50">
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
-                            <User className="h-4 w-4 text-amber-500" />
+                            <User className="h-4 w-4 text-gray-500" />
                             {record.employeeName}
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-amber-500" />
+                            <Calendar className="h-4 w-4 text-gray-500" />
                             {record.date}
                           </div>
                         </TableCell>
-                        <TableCell className="text-amber-700">{record.timeIn || "-"}</TableCell>
-                        <TableCell className="text-amber-700">{record.timeOut || "-"}</TableCell>
+                        <TableCell>{record.timeIn || "-"}</TableCell>
+                        <TableCell>{record.timeOut || "-"}</TableCell>
                         <TableCell>
                           <Badge className={getHoursColor(record.totalHours)}>
                             {record.totalHours}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-amber-700">{record.totalBreakTime || "0.00"}</TableCell>
-                        <TableCell className="text-amber-700">{record.totalLunchTime || "0.00"}</TableCell>
-                        <TableCell className="text-amber-700">{record.totalSecondBreakTime || "0.00"}</TableCell>
+                        <TableCell>{record.totalBreakTime || "0.00"}</TableCell>
+                        <TableCell>{record.totalLunchTime || "0.00"}</TableCell>
+                        <TableCell>
+                          {record.totalSecondBreakTime || "0.00"}
+                        </TableCell>
                         <TableCell>
                           {record.shift ? (
-                            <Badge variant="outline" className="border-amber-300 text-amber-700">{record.shift}</Badge>
+                            <Badge
+                              variant="outline"
+                              className="border-gray-300"
+                            >
+                              {record.shift}
+                            </Badge>
                           ) : (
                             "-"
                           )}
                         </TableCell>
-                        <TableCell className="max-w-xs truncate text-amber-700">
-                          {record.notes || "🦃"}
+                        <TableCell className="max-w-xs truncate">
+                          {record.notes || ""}
                         </TableCell>
                         <TableCell>
                           <div className="flex justify-end gap-2">
@@ -873,33 +923,38 @@ const AdminTimeRecordEdit: React.FC = () => {
                               variant="outline"
                               size="sm"
                               onClick={() => handleEdit(record)}
-                              className="flex items-center gap-1 border-amber-300 text-amber-700 hover:bg-amber-100"
+                              className="flex items-center gap-1"
                             >
                               <Pencil size={14} />
                               Edit
                             </Button>
                             <Dialog>
                               <DialogTrigger asChild>
-                                <Button variant="destructive" size="sm" className="flex items-center gap-1">
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  className="flex items-center gap-1"
+                                >
                                   <Trash2 size={14} />
-                                  Clear
+                                  Delete
                                 </Button>
                               </DialogTrigger>
-                              <DialogContent className="bg-gradient-to-br from-amber-50 to-orange-100 border-2 border-amber-300">
+                              <DialogContent>
                                 <DialogHeader>
-                                  <DialogTitle className="flex items-center gap-2 text-amber-800">
-                                    <AlertTriangle className="h-5 w-5 text-amber-600" />
-                                    Confirm Leaf Clearance
+                                  <DialogTitle className="flex items-center gap-2">
+                                    <AlertTriangle className="h-5 w-5 text-gray-600" />
+                                    Confirm Record Deletion
                                   </DialogTitle>
                                 </DialogHeader>
-                                <p className="text-amber-700">
-                                  Are you sure you want to clear the Leaf time record for{" "}
-                                  <strong>{record.employeeName}</strong> on {record.date}?
-                                  This action cannot be undone.
+                                <p className="text-gray-700">
+                                  Are you sure you want to delete the time
+                                  record for{" "}
+                                  <strong>{record.employeeName}</strong> on{" "}
+                                  {record.date}? This action cannot be undone.
                                 </p>
                                 <div className="flex justify-end gap-3">
                                   <DialogClose asChild>
-                                    <Button variant="outline" className="border-amber-300 text-amber-700">Cancel</Button>
+                                    <Button variant="outline">Cancel</Button>
                                   </DialogClose>
                                   <Button
                                     variant="destructive"
@@ -907,7 +962,7 @@ const AdminTimeRecordEdit: React.FC = () => {
                                     className="flex items-center gap-2"
                                   >
                                     <Trash2 size={14} />
-                                    Clear Record
+                                    Delete Record
                                   </Button>
                                 </div>
                               </DialogContent>

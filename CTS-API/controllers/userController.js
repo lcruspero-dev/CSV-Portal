@@ -256,6 +256,57 @@ const updateLoginLimit = asyncHandler(async (req, res) => {
   res.status(200).json({ message: "Login limit updated successfully" });
 });
 
+const addUser = asyncHandler(async (req, res) => {
+  const { 
+    name, 
+    email, 
+    password, 
+    isAdmin, 
+    role 
+  } = req.body;
+
+  // Validation
+  if (!name || !email || !password) {
+    res.status(400);
+    throw new Error("Please provide all required fields");
+  }
+
+  // Check if user already exists
+  const userExists = await User.findOne({ email });
+  if (userExists) {
+    res.status(400);
+    throw new Error("User already exists");
+  }
+
+  // Hash password
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
+
+  // Create new user
+  const user = await User.create({
+    name,
+    email,
+    password: hashedPassword,
+    isAdmin: isAdmin || false,
+    role: role || "user",
+    status: "active",
+    loginLimit: 0,
+  });
+
+  res.status(201).json({
+    message: "User created successfully",
+    user: {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      isAdmin: user.isAdmin,
+      role: user.role,
+      status: user.status,
+      loginLimit: user.loginLimit,
+    },
+  });
+});
+
 module.exports = {
   registerUser,
   loginUser,
@@ -267,4 +318,5 @@ module.exports = {
   setUserToActive,
   changePassword,
   updateLoginLimit,
+  addUser
 };

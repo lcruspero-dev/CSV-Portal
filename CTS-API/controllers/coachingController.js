@@ -7,16 +7,10 @@ const canUpdateCoaching = (user) => {
   return user.isAdmin || user.role === "TL" || user.role === "TM";
 };
 
-const canUpdateFeedbackAndDecision = (user, nte) => {
-  return (
-    canUpdateCoaching(user) || nte.nte.employeeId.toString() === user._id.toString()
-  );
-};
-
 // Get all NTEs
 const getCoachings = asyncHandler(async (req, res) => {
   const coaching = await Coaching.find()
-    .populate("nte.employeeId", "name email")
+    .populate("coaching.employeeId", "name email")
     .sort({ createdAt: -1 });
 
   if (!coaching) {
@@ -28,20 +22,22 @@ const getCoachings = asyncHandler(async (req, res) => {
 
 // Get single NTE
 const getCoaching = asyncHandler(async (req, res) => {
+
   const { id } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     res.status(400);
-    throw new Error("Invalid NTE ID");
+    throw new Error("Invalid Coaching ID");
   }
 
   const coaching = await Coaching.findById(id);
   if (!coaching) {
     res.status(404);
-    throw new Error("NTE not found");
+    throw new Error("Coaching not found");
   }
 
   res.status(200).json(coaching);
+
 });
 
 // Create NTE - Only admin/TL/TM
@@ -49,53 +45,48 @@ const createCoaching = asyncHandler(async (req, res) => {
   const createdBy = req.user.name;
   const { coaching, status } = req.body;
 
-  // Check authorization
   if (!canUpdateCoaching(req.user)) {
     res.status(403);
     throw new Error("Not authorized to create NTE");
   }
 
-  // Validate required fields
   if (
     !coaching ||
     !coaching.employeeId ||
     !coaching.name ||
     !coaching.position ||
     !coaching.dateIssued ||
-    !coaching.issuedBy ||
-    !coaching.offenseType ||
-    !coaching.offenseDescription ||
+    !coaching.coachingObjectives ||
+    !coaching.employeeResponse ||
     !status
   ) {
     res.status(400);
-    throw new Error("Please provide all required NTE fields");
+    throw new Error("Please provide all required Coaching fields");
   }
 
-  // Validate status
   const validStatuses = ["DRAFT", "PER", "PNOD", "PNODA", "FTHR"];
   if (!validStatuses.includes(status)) {
     res.status(400);
     throw new Error("Invalid status value");
   }
 
-  // Check for existing NTE
   const existingCoaching = await Coaching.findOne({
     "coaching.employeeId": coaching.employeeId,
     "coaching.dateIssued": coaching.dateIssued,
-    "coaching.offenseType": coaching.offenseType,
-    "coaching.offenseDescription": coaching.offenseDescription,
+    "coaching.coachingObjectives": coaching.coachingObjectives,
+    "coaching.employeeResponse": coaching.employeeResponse,
   });
 
   if (existingCoaching) {
     res.status(409);
-    throw new Error("An NTE with the same details already exists");
+    throw new Error("An Coaching with the same details already exists");
   }
 
   // Create new NTE with status
   const newCoaching = await Coaching.create({
     coaching: {
       ...coaching,
-      file: coaching.file || null, // Make file field optional
+      file: coaching.file || null, 
     },
     status,
     createdBy,
@@ -104,44 +95,64 @@ const createCoaching = asyncHandler(async (req, res) => {
   res.status(201).json(newCoaching);
 });
 
-// Update NTE sections
 const updateCoaching = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { coaching, employeeFeedback, noticeOfDecision, status } = req.body;
+  const { coachingObjectives, employeeResponse, ...updateFields } = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     res.status(400);
-    throw new Error("Invalid Coaching ID");
+    throw new Error("Invalid Coaching ID format");
   }
 
   const existingCoaching = await Coaching.findById(id);
-
+  
   if (!existingCoaching) {
     res.status(404);
-    throw new Error("NTE not found");
+    throw new Error("Coaching record not found");
   }
 
-  let updateData = {};
+  const updateData = {};
 
-  // Handle NTE section update
-  if (coaching) {
-    updateData.coaching = { ...existingCoaching.coaching, ...coaching };
+  if (coachingObjectives !== undefined) {
+    updateData.coachingObjectives = coachingObjectives;
   }
 
-  // Handle Employee Feedback and Notice of Decision updates
-  if (employeeFeedback) updateData.employeeFeedback = employeeFeedback;
-  if (noticeOfDecision) updateData.noticeOfDecision = noticeOfDecision;
-
-  // Allow status update
-  if (status) {
-    updateData.status = status;
+  if (employeeResponse !== undefined) {
+    updateData.employeeResponse = employeeResponse;
   }
 
-  // Update `updatedAt` automatically via timestamps option
-  existingCoaching.set(updateData);
-  const updatedCoaching = await existingCoaching.save(); // Ensures __v is incremented
+  if (updateFields.coaching) {
+    updateData.coaching = {
+      ...existingCoaching.coaching,
+      ...updateFields.coaching
+    };
+  }
 
-  res.status(200).json(updatedCoaching);
+  const allowedFields = ['employeeFeedback', 'noticeOfDecision', 'status'];
+  allowedFields.forEach(field => {
+    if (updateFields[field] !== undefined) {
+      updateData[field] = updateFields[field];
+    }
+  });
+
+  if (updateData.status) {
+    const validStatuses = ['pending', 'in-progress', 'completed', 'cancelled'];
+    if (!validStatuses.includes(updateData.status)) {
+      res.status(400);
+      throw new Error(`Invalid status. Must be one of: ${validStatuses.join(', ')}`);
+    }
+  }
+
+  Object.keys(updateData).forEach(key => {
+    existingCoaching[key] = updateData[key];
+  });
+
+  const updatedCoaching = await existingCoaching.save();
+  res.status(200).json({
+    success: true,
+    message: "Coaching record updated successfully",
+    data: updatedCoaching
+  });
 });
 
 // Delete NTE - Only admin/TL/TM
@@ -182,7 +193,6 @@ const getCoachingByUser = asyncHandler(async (req, res) => {
     return res.status(401).json({ message: "User not authenticated" });
   }
 
-  // Update the query to match employeeId inside the nte object
   const coachings = await Coaching.find({
     "coaching.employeeId": userId,
     status: { $ne: "DRAFT" },

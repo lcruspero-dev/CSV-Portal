@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+ 
 import * as React from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { DayPicker } from "react-day-picker"
@@ -54,7 +54,7 @@ function Calendar({
       }}
       components={{
         IconLeft: () => <ChevronLeft className="h-4 w-4" />,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+         
         IconRight: () => <ChevronRight className="h-4 w-4" />,
       }}
       {...props}

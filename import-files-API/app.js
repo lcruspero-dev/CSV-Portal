@@ -24,6 +24,7 @@ const avatarDir = path.join(__dirname, "avatar");
     fs.mkdirSync(dir, { recursive: true });
   }
 });
+
 // Function to generate a unique filename
 function getUniqueFilename(filePath) {
   let newPath = filePath;

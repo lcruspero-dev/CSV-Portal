@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable prefer-const */
 import { ScheduleAndAttendanceAPI, timer } from "@/API/endpoint";
 import BackButton from "@/components/kit/BackButton";
@@ -30,16 +32,16 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import {
   Filter,
-  Heart,
-  Clover,
-  PieChart,
-  Leaf,
-  Cannabis ,
-  LeafyGreen
+  Clock,
+  Home,
+  Coffee,
+  Utensils,
+  AlertCircle,
+  Calendar,
+  RefreshCw,
+  TrendingUp,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import Background from "../../assets/bg.jpg"
-
 
 interface AttendanceEntry {
   id: string;
@@ -64,11 +66,6 @@ interface AttendanceEntry {
   totalLunchTime?: number;
   dateLunchStart?: string;
   dateLunchEnd?: string;
-  bioBreakStart?: string;
-  bioBreakEnd?: string;
-  totalBioBreakTime?: number;
-  dateBioBreakStart?: string;
-  dateBioBreakEnd?: string;
   loginLimit?: number;
   overbreak?: number;
   overlunch?: number;
@@ -84,16 +81,16 @@ interface CurrentTimeResponse {
 
 interface AlertState {
   show: boolean;
-  type: "break1" | "break2" | "lunch" | "bioBreak" | null;
+  type: "break1" | "break2" | "lunch" | null;
   message: string;
 }
 
-type CutoffPeriod = "1-15" | "16-31"; 
+type CutoffPeriod = "1-15" | "16-31";
 
-// Thanksgiving-themed loading spinner
-const ThanksgivingSpinner = () => (
+// Loading spinner
+const LoadingSpinner = () => (
   <div className="flex items-center justify-center">
-    <Clover className="animate-pulse h-6 w-6 text-amber-600" />
+    <div className="h-6 w-6 border-2 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
   </div>
 );
 
@@ -122,7 +119,17 @@ export const AttendanceTracker: React.FC = () => {
     type: null,
     message: "",
   });
-  const [selectedCutoff, setSelectedCutoff] = useState<CutoffPeriod>("1-15");
+
+  // Updated state initialization for automatic date/cutoff selection
+  const getCurrentCutoff = (): CutoffPeriod => {
+    const today = new Date();
+    const day = today.getDate();
+    return day <= 15 ? "1-15" : "16-31";
+  };
+
+  const [selectedCutoff, setSelectedCutoff] = useState<CutoffPeriod>(
+    getCurrentCutoff()
+  );
   const [selectedMonth, setSelectedMonth] = useState<number>(
     new Date().getMonth()
   );
@@ -135,7 +142,6 @@ export const AttendanceTracker: React.FC = () => {
     break1: false,
     break2: false,
     lunch: false,
-    bioBreak: false
   });
 
   // Loading states
@@ -146,52 +152,62 @@ export const AttendanceTracker: React.FC = () => {
   const [isLoadingBreakEnd, setIsLoadingBreakEnd] = useState(false);
   const [isLoadingLunchStart, setIsLoadingLunchStart] = useState(false);
   const [isLoadingLunchEnd, setIsLoadingLunchEnd] = useState(false);
-  const [isLoadingBioBreakStart, setIsLoadingBioBreakStart] = useState(false);
-  const [isLoadingBioBreakEnd, setIsLoadingBioBreakEnd] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
   const { toast } = useToast();
 
-  // Thanksgiving-themed toast
-  const showThanksgivingToast = (title: string, description: string, variant: "default" | "destructive" = "default") => {
+  // Toast function
+  const showToast = (
+    title: string,
+    description: string,
+    variant: "default" | "destructive" = "default"
+  ) => {
     toast({
       title,
       description,
       variant,
-      className: variant === "default" 
-        ? "bg-gradient-to-r from-amber-600 to-orange-600 border border-amber-400 text-white"
-        : "bg-red-600 border border-red-400 text-white"
     });
   };
 
+  // Function to set current date filters based on server time
+  const setCurrentDateFilters = (serverDate?: string) => {
+    const dateToUse = serverDate ? new Date(serverDate) : new Date();
+    const day = dateToUse.getDate();
+    const month = dateToUse.getMonth();
+    const year = dateToUse.getFullYear();
+
+    // Set cutoff based on current day
+    const cutoff: CutoffPeriod = day <= 15 ? "1-15" : "16-31";
+    setSelectedCutoff(cutoff);
+    setSelectedMonth(month);
+    setSelectedYear(year);
+  };
+
   // Time formatting functions
-const formatTimeTo12Hour = (timeString: string): string => {
-  if (!timeString) return '';
-  
-  try {
-    // If it already has AM/PM, return as is
-    const upperTime = timeString.toUpperCase();
-    if (upperTime.includes('AM') || upperTime.includes('PM')) {
+  const formatTimeTo12Hour = (timeString: string): string => {
+    if (!timeString) return "";
+
+    try {
+      const upperTime = timeString.toUpperCase();
+      if (upperTime.includes("AM") || upperTime.includes("PM")) {
+        return timeString;
+      }
+
+      const timeParts = timeString.split(":");
+      let hourNum = parseInt(timeParts[0], 10);
+      const minuteNum = timeParts[1] ? parseInt(timeParts[1], 10) : 0;
+
+      if (isNaN(hourNum) || isNaN(minuteNum)) return timeString;
+
+      const period = hourNum >= 12 ? "PM" : "AM";
+      hourNum = hourNum % 12 || 12;
+
+      return `${hourNum}:${minuteNum.toString().padStart(2, "0")} ${period}`;
+    } catch (error) {
+      console.error("Error formatting time:", error, "Input:", timeString);
       return timeString;
     }
-    
-    // Extract hours and minutes
-    const timeParts = timeString.split(':');
-    let hourNum = parseInt(timeParts[0], 10);
-    const minuteNum = timeParts[1] ? parseInt(timeParts[1], 10) : 0;
-    
-    if (isNaN(hourNum) || isNaN(minuteNum)) return timeString;
-    
-    // Determine AM/PM and convert to 12-hour format
-    const period = hourNum >= 12 ? 'PM' : 'AM';
-    hourNum = hourNum % 12 || 12; // Convert 0, 13-23 to 12, 1-11
-    
-    return `${hourNum}:${minuteNum.toString().padStart(2, '0')} ${period}`;
-  } catch (error) {
-    console.error('Error formatting time:', error, 'Input:', timeString);
-    return timeString;
-  }
-};
+  };
 
   const formatTime = (timeString: string): string => {
     return formatTimeTo12Hour(timeString);
@@ -199,7 +215,6 @@ const formatTimeTo12Hour = (timeString: string): string => {
 
   // Format hours to "X hours, Y minutes" format
   const formatHoursToHoursMinutes = (hoursString: string): string => {
-    // Handle null/undefined/empty values
     if (!hoursString || hoursString === "0" || hoursString === "0.00") {
       return "-";
     }
@@ -241,20 +256,22 @@ const formatTimeTo12Hour = (timeString: string): string => {
   };
 
   // Calculate overbreak time
-  const calculateOverbreak = (breakTime: number, allowedBreakTime: number): number => {
+  const calculateOverbreak = (
+    breakTime: number,
+    allowedBreakTime: number
+  ): number => {
     if (!breakTime || breakTime <= allowedBreakTime) return 0;
-    return Math.round((breakTime - allowedBreakTime) * 60); // Return in minutes
+    return Math.round((breakTime - allowedBreakTime) * 60);
   };
 
   // Alert timeout reference
   const alertTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
-  const showAlert = (type: "break1" | "break2" | "lunch" | "bioBreak") => {
+  const showAlert = (type: "break1" | "break2" | "lunch") => {
     const messages = {
-      break1: "🦃 Break 1 will end in 1 minute! Time to return with gratitude!",
-      break2: "🍂 Break 2 will end in 1 minute! The awaits your return!",
-      lunch: "🥧 Lunch break will end in 1 minute! Finish your feast!",
-      bioBreak: "🚽 Bio Break will end in 1 minute! Don't linger too long!"
+      break1: "Break 1 will end in 1 minute! Time to return to work.",
+      break2: "Break 2 will end in 1 minute! Time to return to work.",
+      lunch: "Lunch break will end in 1 minute! Time to return to work.",
     };
 
     setAlert({
@@ -263,13 +280,11 @@ const formatTimeTo12Hour = (timeString: string): string => {
       message: messages[type],
     });
 
-    // Mark this alert as shown
-    setAlertShown(prev => ({
+    setAlertShown((prev) => ({
       ...prev,
-      [type]: true
+      [type]: true,
     }));
 
-    // Auto-hide alert after 10 seconds
     if (alertTimeoutRef.current) {
       clearTimeout(alertTimeoutRef.current);
     }
@@ -289,18 +304,19 @@ const formatTimeTo12Hour = (timeString: string): string => {
   // Reset alert tracking when breaks/lunch end
   useEffect(() => {
     if (currentEntry.breakEnd) {
-      setAlertShown(prev => ({ ...prev, break1: false }));
+      setAlertShown((prev) => ({ ...prev, break1: false }));
     }
     if (currentEntry.secondBreakEnd) {
-      setAlertShown(prev => ({ ...prev, break2: false }));
+      setAlertShown((prev) => ({ ...prev, break2: false }));
     }
     if (currentEntry.lunchEnd) {
-      setAlertShown(prev => ({ ...prev, lunch: false }));
+      setAlertShown((prev) => ({ ...prev, lunch: false }));
     }
-    if (currentEntry.bioBreakEnd) {
-      setAlertShown(prev => ({ ...prev, bioBreak: false }));
-    }
-  }, [currentEntry.breakEnd, currentEntry.secondBreakEnd, currentEntry.lunchEnd, currentEntry.bioBreakEnd]);
+  }, [
+    currentEntry.breakEnd,
+    currentEntry.secondBreakEnd,
+    currentEntry.lunchEnd,
+  ]);
 
   // Format current date for display
   const formatCurrentDate = (dateString: string): string => {
@@ -352,16 +368,13 @@ const formatTimeTo12Hour = (timeString: string): string => {
       const entryYear = entryDate.getFullYear();
       const day = entryDate.getDate();
 
-      // First filter by month and year
       if (entryMonth !== month || entryYear !== year) {
         return false;
       }
 
-      // Then filter by cutoff period
       if (cutoff === "1-15") {
         return day >= 1 && day <= 15;
       } else {
-        // '16-31'
         return day >= 16;
       }
     });
@@ -383,7 +396,6 @@ const formatTimeTo12Hour = (timeString: string): string => {
     if (!isTimeIn) return;
 
     const checkForAlerts = () => {
-      // Break 1: 15 minutes = 900 seconds, alert at 840 seconds (14 minutes - 1 minute before)
       if (
         currentEntry.breakStart &&
         !currentEntry.breakEnd &&
@@ -392,9 +404,7 @@ const formatTimeTo12Hour = (timeString: string): string => {
         !alertShown.break1
       ) {
         showAlert("break1");
-      }
-      // Break 2: 15 minutes = 900 seconds, alert at 840 seconds (14 minutes - 1 minute before)
-      else if (
+      } else if (
         currentEntry.secondBreakStart &&
         !currentEntry.secondBreakEnd &&
         elapsedTime >= 840 &&
@@ -402,9 +412,7 @@ const formatTimeTo12Hour = (timeString: string): string => {
         !alertShown.break2
       ) {
         showAlert("break2");
-      }
-      // Lunch: 60 minutes = 3600 seconds, alert at 3540 seconds (59 minutes - 1 minute before)
-      else if (
+      } else if (
         currentEntry.lunchStart &&
         !currentEntry.lunchEnd &&
         elapsedTime >= 3540 &&
@@ -412,16 +420,6 @@ const formatTimeTo12Hour = (timeString: string): string => {
         !alertShown.lunch
       ) {
         showAlert("lunch");
-      }
-      // Bio Break: 5 minutes = 300 seconds, alert at 240 seconds (4 minutes - 1 minute before)
-      else if (
-        currentEntry.bioBreakStart &&
-        !currentEntry.bioBreakEnd &&
-        elapsedTime >= 240 &&
-        elapsedTime < 300 &&
-        !alertShown.bioBreak
-      ) {
-        showAlert("bioBreak");
       }
     };
 
@@ -441,25 +439,30 @@ const formatTimeTo12Hour = (timeString: string): string => {
     setIsLoadingHistory(true);
     try {
       const response = await timer.getAttendanceEntries();
-      // Calculate overbreak for each entry - use backend values if available, otherwise calculate
-      const entriesWithOverbreak = response.data.map((entry: AttendanceEntry) => ({
-        ...entry,
-        overbreak1: entry.overbreak1 || calculateOverbreak(entry.totalBreakTime || 0, 0.25), // 15 minutes for break 1
-        overbreak2: entry.overbreak2 || calculateOverbreak(entry.totalSecondBreakTime || 0, 0.25), // 15 minutes for break 2
-        overlunch: entry.overLunch || calculateOverbreak(entry.totalLunchTime || 0, 1) // 60 minutes lunch time allowed
-      }));
+      const entriesWithOverbreak = response.data.map(
+        (entry: AttendanceEntry) => ({
+          ...entry,
+          overbreak1:
+            entry.overbreak1 ||
+            calculateOverbreak(entry.totalBreakTime || 0, 0.25),
+          overbreak2:
+            entry.overbreak2 ||
+            calculateOverbreak(entry.totalSecondBreakTime || 0, 0.25),
+          overlunch:
+            entry.overLunch || calculateOverbreak(entry.totalLunchTime || 0, 1),
+        })
+      );
       setAttendanceEntries(entriesWithOverbreak);
     } catch (error) {
       console.error("Error getting attendance entries:", error);
-      // Check if the error message is "Employee time not found" and prevent showing the toast
       if (typeof error === "object" && error !== null && "message" in error) {
         if (
           (error as { message: string }).message === "Employee time not found"
         ) {
-          return; // Don't show the toast for this specific error
+          return;
         }
       }
-      showThanksgivingToast(
+      showToast(
         "Error",
         "Failed to load attendance history. Please try refreshing.",
         "destructive"
@@ -489,13 +492,16 @@ const formatTimeTo12Hour = (timeString: string): string => {
       setIsLoadingInitial(true);
       try {
         const currentTimeData = await getCurrentTimeFromAPI();
+
+        // Set current date filters based on server time
+        setCurrentDateFilters(currentTimeData.date);
+
         const employeeId = JSON.parse(localStorage.getItem("user")!)._id;
         const shift = await fetchShiftSchedule(
           currentTimeData.date,
           employeeId
         );
 
-        // Set the shift automatically
         if (shift) {
           setCurrentEntry((prev) => ({ ...prev, shift }));
         }
@@ -509,7 +515,6 @@ const formatTimeTo12Hour = (timeString: string): string => {
     };
 
     initializeData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -529,7 +534,6 @@ const formatTimeTo12Hour = (timeString: string): string => {
     const isOnSecondBreak =
       currentEntry.secondBreakStart && !currentEntry.secondBreakEnd;
     const isOnLunch = currentEntry.lunchStart && !currentEntry.lunchEnd;
-    const isOnBioBreak = currentEntry.bioBreakStart && !currentEntry.bioBreakEnd;
 
     intervalId = setInterval(() => {
       const currentTime = Date.now() + timeOffset;
@@ -556,19 +560,11 @@ const formatTimeTo12Hour = (timeString: string): string => {
           }`
         ).getTime();
         diffMs = currentTime - lunchStartTime;
-      } else if (isOnBioBreak) {
-        const bioBreakStartTime = new Date(
-          `${currentEntry.dateBioBreakStart || currentEntry.date} ${
-            currentEntry.bioBreakStart
-          }`
-        ).getTime();
-        diffMs = currentTime - bioBreakStartTime;
       } else {
         const timeInDate = new Date(
           `${currentEntry.date} ${currentEntry.timeIn}`
         ).getTime();
 
-        // Only deduct lunch time from total hours
         let totalLunchMs = 0;
         if (currentEntry.lunchStart && currentEntry.lunchEnd) {
           const lunchStart = new Date(
@@ -589,7 +585,6 @@ const formatTimeTo12Hour = (timeString: string): string => {
           totalLunchMs = lunchEnd.getTime() - lunchStart.getTime();
         }
 
-        // Total elapsed time = current time - time in - lunch time
         diffMs = currentTime - timeInDate - totalLunchMs;
       }
 
@@ -614,7 +609,7 @@ const formatTimeTo12Hour = (timeString: string): string => {
   const getCurrentTime = async () => {
     try {
       const response = await timer.getCurrentTimeIn();
-      const currentTimeData = response.data[0]; // Check if this exists
+      const currentTimeData = response.data[0];
 
       if (currentTimeData) {
         if (currentTimeData.timeOut) {
@@ -625,7 +620,7 @@ const formatTimeTo12Hour = (timeString: string): string => {
         setCurrentEntry(currentTimeData);
       } else {
         console.warn("No current time data found.");
-        setIsTimeIn(false); // Default to not timed in if no data exists
+        setIsTimeIn(false);
       }
     } catch (error) {
       console.error("Error getting current time:", error);
@@ -635,7 +630,6 @@ const formatTimeTo12Hour = (timeString: string): string => {
   const handleTimeIn = async () => {
     setIsLoadingTimeIn(true);
     try {
-      // Get user data from local storage
       const userString = localStorage.getItem("user");
       if (!userString) {
         throw new Error("User data not found in local storage");
@@ -659,33 +653,20 @@ const formatTimeTo12Hour = (timeString: string): string => {
       getAttendance();
       setIsTimeIn(true);
       setElapsedTime(0);
-      showThanksgivingToast(
-        "🦃 Welcome with Gratitude!",
-        "You've joined the workplace!"
-      );
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      showToast("Time In Recorded", "You have successfully clocked in.");
     } catch (error: any) {
       console.error("Error logging time:", error);
-      let errorMessage = "A seasonal error occurred while logging time";
+      let errorMessage = "An error occurred while logging time";
 
-      // Handle API error responses (409 Conflict)
       if (error.response?.status === 409 && error.response?.data?.message) {
         errorMessage = error.response.data.message;
-      }
-      // Handle local storage error
-      else if (error.message === "User data not found in local storage") {
+      } else if (error.message === "User data not found in local storage") {
         errorMessage = "User data not found in the storage";
-      }
-      // Handle network errors or other API errors
-      else if (error.message) {
+      } else if (error.message) {
         errorMessage = error.message;
       }
 
-      showThanksgivingToast(
-        "🍂 Error",
-        errorMessage,
-        "destructive"
-      );
+      showToast("Error", errorMessage, "destructive");
     } finally {
       setIsLoadingTimeIn(false);
     }
@@ -703,7 +684,6 @@ const formatTimeTo12Hour = (timeString: string): string => {
         `${currentTimeData.date} ${currentTimeData.time}`
       );
 
-      // Calculate lunch duration in milliseconds
       let totalLunchMs = 0;
       if (currentEntry.lunchStart && currentEntry.lunchEnd) {
         const lunchStart = new Date(
@@ -720,7 +700,6 @@ const formatTimeTo12Hour = (timeString: string): string => {
         totalLunchMs = lunchEnd.getTime() - lunchStart.getTime();
       }
 
-      // Total hours = (time out - time in) - lunch time
       const diffMs =
         timeOutDate.getTime() - timeInDate.getTime() - totalLunchMs;
       const totalHours = diffMs / (1000 * 60 * 60);
@@ -738,19 +717,19 @@ const formatTimeTo12Hour = (timeString: string): string => {
       setIsTimeIn(false);
       setDialogOpen(false);
       setElapsedTime(0);
-      hideAlert(); // Hide any active alerts when timing out
-      // Reset all alert tracking
-      setAlertShown({ break1: false, break2: false, lunch: false, bioBreak: false });
+      hideAlert();
+      setAlertShown({
+        break1: false,
+        break2: false,
+        lunch: false,
+      });
 
-      showThanksgivingToast(
-        "🍁 Complete!",
-        "You've completed your work with gratitude!"
-      );
+      showToast("Time Out Recorded", "You have successfully clocked out.");
     } catch (error) {
       console.error("Error logging timeout:", error);
-      showThanksgivingToast(
-        "🍂 Error",
-        "Failed to complete ! Please try again. If the issue persists, contact the support.",
+      showToast(
+        "Error",
+        "Failed to complete time out. Please try again. If the issue persists, contact IT Support.",
         "destructive"
       );
     } finally {
@@ -772,17 +751,14 @@ const formatTimeTo12Hour = (timeString: string): string => {
       const response = await timer.updateBreakStart(updatedEntry);
       setCurrentEntry(response.data);
       setElapsedTime(0);
-      hideAlert(); // Hide any previous alerts
-      setAlertShown(prev => ({ ...prev, break1: false })); // Reset break1 alert tracking
-      showThanksgivingToast(
-        "🦃 Break Started!",
-        "Time for a grateful break! 15 minutes of relaxation."
-      );
+      hideAlert();
+      setAlertShown((prev) => ({ ...prev, break1: false }));
+      showToast("Break Started", "Break 1 has started. 15 minutes allocated.");
     } catch (error) {
       console.error("Error starting break:", error);
-      showThanksgivingToast(
-        "🍂 Error",
-        "Failed to start break. Please try again. If the issue persists, contact the support.",
+      showToast(
+        "Error",
+        "Failed to start break. Please try again.",
         "destructive"
       );
     } finally {
@@ -795,7 +771,6 @@ const formatTimeTo12Hour = (timeString: string): string => {
     try {
       const currentTimeData = await getCurrentTimeFromAPI();
 
-      // Create date objects for break start and end
       const breakStart = new Date(
         `${currentEntry.dateBreakStart} ${currentEntry.breakStart}`
       );
@@ -803,15 +778,11 @@ const formatTimeTo12Hour = (timeString: string): string => {
         `${currentTimeData.date} ${currentTimeData.time}`
       );
 
-      // Adjust break end date if it's the next day
       if (breakEnd < breakStart) {
         breakEnd.setDate(breakEnd.getDate() + 1);
       }
 
-      // Calculate the new break duration in milliseconds
       const breakDurationMs = breakEnd.getTime() - breakStart.getTime();
-
-      // Convert break duration to hours and add to any existing break time
       const newBreakTimeHours = breakDurationMs / (1000 * 60 * 60);
       const totalBreakTimeHours =
         (currentEntry.totalBreakTime || 0) + newBreakTimeHours;
@@ -825,17 +796,14 @@ const formatTimeTo12Hour = (timeString: string): string => {
 
       const response = await timer.updateBreakEnd(updatedEntry);
       setCurrentEntry(response.data);
-      hideAlert(); // Hide alert when break ends
-      setAlertShown(prev => ({ ...prev, break1: false })); // Reset break1 alert tracking
-      showThanksgivingToast(
-        "🍂 Break Ended!",
-        "Back to work!"
-      );
+      hideAlert();
+      setAlertShown((prev) => ({ ...prev, break1: false }));
+      showToast("Break Ended", "Break 1 has ended. Back to work!");
     } catch (error) {
       console.error("Error ending break:", error);
-      showThanksgivingToast(
-        "🍂 Error",
-        "Failed to log end break. Please try again.",
+      showToast(
+        "Error",
+        "Failed to end break. Please try again.",
         "destructive"
       );
     } finally {
@@ -857,17 +825,17 @@ const formatTimeTo12Hour = (timeString: string): string => {
       const response = await timer.updateLunchStart(updatedEntry);
       setCurrentEntry(response.data);
       setElapsedTime(0);
-      hideAlert(); // Hide any previous alerts
-      setAlertShown(prev => ({ ...prev, lunch: false })); // Reset lunch alert tracking
-      showThanksgivingToast(
-        "🥧 Lunch Started!",
-        "Time for a feast! 60 minutes of grateful dining."
+      hideAlert();
+      setAlertShown((prev) => ({ ...prev, lunch: false }));
+      showToast(
+        "Lunch Started",
+        "Lunch break has started. 60 minutes allocated."
       );
     } catch (error) {
       console.error("Error starting lunch:", error);
-      showThanksgivingToast(
-        "🍂 Error",
-        "Failed to start lunch. Please try again. If the issue persists, contact the support.",
+      showToast(
+        "Error",
+        "Failed to start lunch. Please try again.",
         "destructive"
       );
     } finally {
@@ -880,7 +848,6 @@ const formatTimeTo12Hour = (timeString: string): string => {
     try {
       const currentTimeData = await getCurrentTimeFromAPI();
 
-      // Create date objects for lunch start and end
       const lunchStart = new Date(
         `${currentEntry.dateLunchStart} ${currentEntry.lunchStart}`
       );
@@ -888,15 +855,11 @@ const formatTimeTo12Hour = (timeString: string): string => {
         `${currentTimeData.date} ${currentTimeData.time}`
       );
 
-      // Adjust lunch end date if it's the next day
       if (lunchEnd < lunchStart) {
         lunchEnd.setDate(lunchEnd.getDate() + 1);
       }
 
-      // Calculate the new lunch duration in milliseconds
       const lunchDurationMs = lunchEnd.getTime() - lunchStart.getTime();
-
-      // Convert lunch duration to hours and add to any existing lunch time
       const newLunchTimeHours = lunchDurationMs / (1000 * 60 * 60);
       const totalLunchTimeHours =
         (currentEntry.totalLunchTime || 0) + newLunchTimeHours;
@@ -910,168 +873,18 @@ const formatTimeTo12Hour = (timeString: string): string => {
 
       const response = await timer.updateLunchEnd(updatedEntry);
       setCurrentEntry(response.data);
-      hideAlert(); // Hide alert when lunch ends
-      setAlertShown(prev => ({ ...prev, lunch: false })); // Reset lunch alert tracking
-      showThanksgivingToast(
-        "🍁 Lunch Ended!",
-        "Back to the workplace!"
-      );
+      hideAlert();
+      setAlertShown((prev) => ({ ...prev, lunch: false }));
+      showToast("Lunch Ended", "Lunch break has ended. Back to work!");
     } catch (error) {
       console.error("Error ending lunch:", error);
-      showThanksgivingToast(
-        "🍂 Error",
-        "Failed to log end lunch. Please try again.",
+      showToast(
+        "Error",
+        "Failed to end lunch. Please try again.",
         "destructive"
       );
     } finally {
       setIsLoadingLunchEnd(false);
-    }
-  };
-
-  const handleBioBreakStart = async () => {
-    setIsLoadingBioBreakStart(true);
-    try {
-      const currentTimeData = await getCurrentTimeFromAPI();
-
-      const updatedEntry = {
-        ...currentEntry,
-        bioBreakStart: currentTimeData.time,
-        dateBioBreakStart: currentTimeData.date,
-      };
-
-      // Use the existing break start endpoint but mark it as bio break
-      const response = await timer.updateBreakStart({
-        ...updatedEntry,
-        isBioBreak: true // Add a flag to distinguish bio breaks
-      });
-      
-      setCurrentEntry({
-        ...response.data,
-        bioBreakStart: currentTimeData.time,
-        dateBioBreakStart: currentTimeData.date,
-      });
-      
-      setElapsedTime(0);
-      hideAlert();
-      setAlertShown(prev => ({ ...prev, bioBreak: false }));
-      showThanksgivingToast(
-        "🚽 Bio Break Started!",
-        "Quick bio break! 5 minutes maximum."
-      );
-    } catch (error) {
-      console.error("Error starting bio break:", error);
-      showThanksgivingToast(
-        "🍂 Error",
-        "Failed to start bio break. Please try again.",
-        "destructive"
-      );
-    } finally {
-      setIsLoadingBioBreakStart(false);
-    }
-  };
-
-  const handleBioBreakEnd = async () => {
-    setIsLoadingBioBreakEnd(true);
-    try {
-      const currentTimeData = await getCurrentTimeFromAPI();
-
-      // Create date objects for bio break start and end
-      const bioBreakStart = new Date(
-        `${currentEntry.dateBioBreakStart} ${currentEntry.bioBreakStart}`
-      );
-      const bioBreakEnd = new Date(
-        `${currentTimeData.date} ${currentTimeData.time}`
-      );
-
-      // Adjust bio break end date if it's the next day
-      if (bioBreakEnd < bioBreakStart) {
-        bioBreakEnd.setDate(bioBreakEnd.getDate() + 1);
-      }
-
-      // Calculate the bio break duration in milliseconds
-      const bioBreakDurationMs = bioBreakEnd.getTime() - bioBreakStart.getTime();
-      const bioBreakTimeHours = bioBreakDurationMs / (1000 * 60 * 60);
-      const bioBreakTimeMinutes = Math.round(bioBreakTimeHours * 60);
-
-      // Determine which break to deduct from
-      let updatedEntry = { ...currentEntry };
-      let deductionMessage = "";
-      
-      // Check if break 1 is available (not started or started but not ended)
-      if (!currentEntry.breakStart || (currentEntry.breakStart && !currentEntry.breakEnd)) {
-        // Deduct from break 1
-        const currentBreakTime = currentEntry.totalBreakTime || 0;
-        const newBreakTime = Math.max(0, currentBreakTime - bioBreakTimeHours);
-        
-        updatedEntry = {
-          ...currentEntry,
-          bioBreakEnd: currentTimeData.time,
-          dateBioBreakEnd: currentTimeData.date,
-          totalBioBreakTime: Number(bioBreakTimeHours.toFixed(2)),
-          totalBreakTime: Number(newBreakTime.toFixed(2)),
-        };
-        
-        deductionMessage = `Bio break time (${bioBreakTimeMinutes} minutes) deducted from Break 1. Remaining Break 1 time: ${formatMinutesToHoursMinutes(Math.round(newBreakTime * 60))}`;
-      }
-      // If break 1 is used, check break 2
-      else if (!currentEntry.secondBreakStart || (currentEntry.secondBreakStart && !currentEntry.secondBreakEnd)) {
-        // Deduct from break 2
-        const currentSecondBreakTime = currentEntry.totalSecondBreakTime || 0;
-        const newSecondBreakTime = Math.max(0, currentSecondBreakTime - bioBreakTimeHours);
-        
-        updatedEntry = {
-          ...currentEntry,
-          bioBreakEnd: currentTimeData.time,
-          dateBioBreakEnd: currentTimeData.date,
-          totalBioBreakTime: Number(bioBreakTimeHours.toFixed(2)),
-          totalSecondBreakTime: Number(newSecondBreakTime.toFixed(2)),
-        };
-        
-        deductionMessage = `Bio break time (${bioBreakTimeMinutes} minutes) deducted from Break 2. Remaining Break 2 time: ${formatMinutesToHoursMinutes(Math.round(newSecondBreakTime * 60))}`;
-      }
-      // If both breaks are used, just record the bio break without deduction
-      else {
-        updatedEntry = {
-          ...currentEntry,
-          bioBreakEnd: currentTimeData.time,
-          dateBioBreakEnd: currentTimeData.date,
-          totalBioBreakTime: Number(bioBreakTimeHours.toFixed(2)),
-        };
-        
-        deductionMessage = `Bio break recorded (${bioBreakTimeMinutes} minutes). Both regular breaks already used.`;
-      }
-
-      // Use the existing break end endpoint but mark it as bio break
-      const response = await timer.updateBreakEnd({
-        ...updatedEntry,
-        isBioBreak: true, // Add a flag to distinguish bio breaks
-        bioBreakDuration: bioBreakTimeMinutes       
-      });
-      
-      setCurrentEntry({
-        ...response.data,
-        bioBreakEnd: currentTimeData.time,
-        dateBioBreakEnd: currentTimeData.date,
-        totalBioBreakTime: updatedEntry.totalBioBreakTime,
-        totalBreakTime: updatedEntry.totalBreakTime,
-        totalSecondBreakTime: updatedEntry.totalSecondBreakTime,
-      });
-      
-      hideAlert();
-      setAlertShown(prev => ({ ...prev, bioBreak: false }));
-      showThanksgivingToast(
-        "🚽 Bio Break Ended!",
-        deductionMessage
-      );
-    } catch (error) {
-      console.error("Error ending bio break:", error);
-      showThanksgivingToast(
-        "🍂 Error",
-        "Failed to log end bio break. Please try again.",
-        "destructive"
-      );
-    } finally {
-      setIsLoadingBioBreakEnd(false);
     }
   };
 
@@ -1089,13 +902,13 @@ const formatTimeTo12Hour = (timeString: string): string => {
 
   const fetchShiftSchedule = async (date: string, employeeId: string) => {
     try {
-      const formattedDate = formatDate(date); // Format the date if needed
+      const formattedDate = formatDate(date);
       const response =
         await ScheduleAndAttendanceAPI.getSchedulePerEmployeeByDate(
           employeeId,
           formattedDate
         );
-      return response.data.shiftType; // Assuming the API returns `shiftType`
+      return response.data.shiftType;
     } catch (error) {
       console.error("Error fetching shift schedule:", error);
       return null;
@@ -1107,50 +920,38 @@ const formatTimeTo12Hour = (timeString: string): string => {
       case "startBreak":
         setIsLoadingBreakStart(true);
         await handleBreakStart();
-        setSelectedAction("endBreak");
+        setSelectedAction(null);
         setIsLoadingBreakStart(false);
         break;
       case "endBreak":
         setIsLoadingBreakEnd(true);
         await handleBreakEnd();
-        setSelectedAction(null); // Reset the selected action
+        setSelectedAction(null);
         setIsLoadingBreakEnd(false);
         break;
       case "startSecondBreak":
         setIsLoadingSecondBreakStart(true);
         await handleSecondBreakStart();
-        setSelectedAction("endSecondBreak");
+        setSelectedAction(null);
         setIsLoadingSecondBreakStart(false);
         break;
       case "endSecondBreak":
         setIsLoadingSecondBreakEnd(true);
         await handleSecondBreakEnd();
-        setSelectedAction(null); // Reset the selected action
+        setSelectedAction(null);
         setIsLoadingSecondBreakEnd(false);
         break;
       case "startLunch":
         setIsLoadingLunchStart(true);
         await handleLunchStart();
-        setSelectedAction("endLunch");
+        setSelectedAction(null);
         setIsLoadingLunchStart(false);
         break;
       case "endLunch":
         setIsLoadingLunchEnd(true);
         await handleLunchEnd();
-        setSelectedAction(null); // Reset the selected action
+        setSelectedAction(null);
         setIsLoadingLunchEnd(false);
-        break;
-      case "startBioBreak":
-        setIsLoadingBioBreakStart(true);
-        await handleBioBreakStart();
-        setSelectedAction("endBioBreak");
-        setIsLoadingBioBreakStart(false);
-        break;
-      case "endBioBreak":
-        setIsLoadingBioBreakEnd(true);
-        await handleBioBreakEnd();
-        setSelectedAction(null); // Reset the selected action
-        setIsLoadingBioBreakEnd(false);
         break;
       case "timeOut":
         setDialogOpen(true);
@@ -1173,17 +974,17 @@ const formatTimeTo12Hour = (timeString: string): string => {
 
       const response = await timer.updateSecondBreakStart(updatedEntry);
       setCurrentEntry(response.data);
-      setElapsedTime(0); // Reset elapsed time when starting second break
-      hideAlert(); // Hide any previous alerts
-      setAlertShown(prev => ({ ...prev, break2: false })); // Reset break2 alert tracking
-      showThanksgivingToast(
-        "🍂 Break 2 Started!",
-        "Second break! 15 more minutes of grateful relaxation."
+      setElapsedTime(0);
+      hideAlert();
+      setAlertShown((prev) => ({ ...prev, break2: false }));
+      showToast(
+        "Break 2 Started",
+        "Break 2 has started. 15 minutes allocated."
       );
     } catch (error) {
       console.error("Error starting break 2:", error);
-      showThanksgivingToast(
-        "🍂 Error",
+      showToast(
+        "Error",
         "Failed to start second break. Please try again.",
         "destructive"
       );
@@ -1227,18 +1028,14 @@ const formatTimeTo12Hour = (timeString: string): string => {
 
       const response = await timer.updateSecondBreakEnd(updatedEntry);
       setCurrentEntry(response.data);
-      setSelectedAction(null); // Reset the selected action after second break ends
-      hideAlert(); // Hide alert when second break ends
-      setAlertShown(prev => ({ ...prev, break2: false })); // Reset break2 alert tracking
-      showThanksgivingToast(
-        "🍁 Break 2 Ended!",
-        "Back to work once more!"
-      );
+      hideAlert();
+      setAlertShown((prev) => ({ ...prev, break2: false }));
+      showToast("Break 2 Ended", "Break 2 has ended. Back to work!");
     } catch (error) {
       console.error("Error ending break 2:", error);
-      showThanksgivingToast(
-        "🍂 Error",
-        "Failed to end secondbreak. Please try again.",
+      showToast(
+        "Error",
+        "Failed to end second break. Please try again.",
         "destructive"
       );
     } finally {
@@ -1249,53 +1046,34 @@ const formatTimeTo12Hour = (timeString: string): string => {
   const getAvailableActions = () => {
     const actions = [];
 
-    // Check if the user is currently on a break and breakEnd is not set
     if (currentEntry.breakStart && !currentEntry.breakEnd) {
-      actions.push({ value: "endBreak", label: "🦃 End Break 1" });
-    }
-    // Check if the user is currently on a second break and secondBreakEnd is not set
-    else if (currentEntry.secondBreakStart && !currentEntry.secondBreakEnd) {
-      actions.push({ value: "endSecondBreak", label: "🍂 End Break 2" });
-    }
-    // Check if the user is currently on lunch and lunchEnd is not set
-    else if (currentEntry.lunchStart && !currentEntry.lunchEnd) {
-      actions.push({ value: "endLunch", label: "🥧 End Lunch" });
-    }
-    // Check if the user is currently on bio break and bioBreakEnd is not set
-    else if (currentEntry.bioBreakStart && !currentEntry.bioBreakEnd) {
-      actions.push({ value: "endBioBreak", label: "🚽 End Bio Break" });
-    }
-    // If not on any break or lunch, show available actions
-    else {
-      // Only show "Start Break" if break hasn't started or hasn't ended
-      if (!currentEntry.breakStart || !currentEntry.breakEnd) {
-        actions.push({ value: "startBreak", label: "🦃 Break 1" });
+      actions.push({ value: "endBreak", label: "End Break 1" });
+    } else if (currentEntry.secondBreakStart && !currentEntry.secondBreakEnd) {
+      actions.push({ value: "endSecondBreak", label: "End Break 2" });
+    } else if (currentEntry.lunchStart && !currentEntry.lunchEnd) {
+      actions.push({ value: "endLunch", label: "End Lunch" });
+    } else {
+      if (!currentEntry.breakStart) {
+        actions.push({ value: "startBreak", label: "Start Break 1" });
       }
 
-      // Only show "Start Second Break" if first break has ended and second break hasn't started or hasn't ended
       if (
+        currentEntry.breakStart &&
         currentEntry.breakEnd &&
-        (!currentEntry.secondBreakStart || !currentEntry.secondBreakEnd)
+        !currentEntry.secondBreakStart
       ) {
         actions.push({
           value: "startSecondBreak",
-          label: "🍂 Break 2",
+          label: "Start Break 2",
         });
       }
 
-      // Only show "Start Lunch" if lunch hasn't started or hasn't ended
-      if (!currentEntry.lunchStart || !currentEntry.lunchEnd) {
-        actions.push({ value: "startLunch", label: "🥧 Lunch" });
+      if (!currentEntry.lunchStart) {
+        actions.push({ value: "startLunch", label: "Start Lunch" });
       }
 
-      // Always show "Start Bio Break" if the user is timed in
       if (isTimeIn) {
-        actions.push({ value: "startBioBreak", label: "🚽 Bio Break" });
-      }
-
-      // Always show "Time Out" if the user is timed in
-      if (isTimeIn) {
-        actions.push({ value: "timeOut", label: "🍁 Log Out" });
+        actions.push({ value: "timeOut", label: "Time Out" });
       }
     }
 
@@ -1305,163 +1083,168 @@ const formatTimeTo12Hour = (timeString: string): string => {
   if (isLoadingInitial) {
     return (
       <div className="flex justify-center items-start w-full pt-4">
-        <div className="bg-gradient-to-br from-amber-50 to-orange-100 rounded-lg p-8 border border-amber-300">
-          <ThanksgivingSpinner />
-          <p className="text-amber-700 mt-4 text-center">Loading time tracker...</p>
+        <div className="bg-gray-50 rounded-lg p-8 border border-gray-200">
+          <LoadingSpinner />
+          <p className="text-gray-700 mt-4 text-center">
+            Loading time tracker...
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <section className="min-h-screen py-4 sm:py-6 lg:py-8 px-3 sm:px-4 lg:px-6 xl:px-8 relative overflow-hidden bg-gradient-to-br from-amber-50 via-orange-50 to-brown-50" 
-    style={{
-      backgroundImage: `url(${Background})`
-    }}
-    >
-    <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6 py-4">
-      {/* Thanksgiving Alert Dialog */}
-      {alert.show && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-amber-50 bg-opacity-70">
-          <div className="bg-gradient-to-br from-amber-50 to-orange-100 rounded-lg shadow-2xl p-6 max-w-md mx-4 animate-in zoom-in-95 border-2 border-amber-400">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex-shrink-0">
-                <Leaf className="h-8 w-8 text-amber-600 animate-pulse" />
+    <div className="bg-gradient-to-b from-gray-50 to-white py-6 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Alert Dialog */}
+        {alert.show && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/20 backdrop-blur-sm">
+            <div className="bg-white rounded-lg shadow-xl p-6 max-w-md mx-4 animate-in zoom-in-95 border border-gray-200">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex-shrink-0">
+                  <AlertCircle className="h-8 w-8 text-amber-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Time Alert
+                </h3>
               </div>
-              <h3 className="text-xl font-semibold text-amber-800 font-serif">
-                🦃 Alert!
-              </h3>
+              <p className="text-gray-700 mb-6">{alert.message}</p>
+              <div className="flex justify-end">
+                <Button
+                  onClick={hideAlert}
+                  className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
+                >
+                  Got it!
+                </Button>
+              </div>
             </div>
-            <p className="text-lg text-amber-700 mb-6 text-center font-medium">
-              {alert.message}
+          </div>
+        )}
+
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+              Time Tracker
+            </h1>
+            <p className="text-gray-600 mt-1">
+              Track your work hours, breaks, and attendance
             </p>
-            <div className="flex justify-end">
-              <Button
-                onClick={hideAlert}
-                className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white px-6 py-2 border border-amber-400 font-bold"
-                size="lg"
-              >
-                Got it! 🍂
-              </Button>
-            </div>
           </div>
-        </div>
-      )}
-
-      <Card className="w-full bg-gradient-to-br from-amber-50 via-orange-50 to-orange-100 border-2 border-amber-400 shadow-2xl">
-        <CardHeader className="relative pb-4 sm:pb-6">
-          {/* Thanksgiving decorations */}
-          <div className="absolute top-2 left-2 flex gap-1">
-            <Clover className="h-4 w-4 text-amber-600 animate-pulse" />
-            <PieChart className="h-4 w-4 text-amber-500" />
-          </div>
-          
-          {/* Mobile: Button below title, Desktop: Button top right */}
-          <div className="block sm:absolute sm:right-6 sm:top-6 mt-4 sm:mt-0">
+          <div className="flex items-center gap-3">
             <ViewScheduleButton />
-          </div>
-          <CardTitle className="flex items-center justify-center text-lg sm:text-xl lg:text-2xl flex-col sm:flex-row gap-2 text-amber-800 font-serif">
-            <Heart className="h-5 w-5 sm:h-6 sm:w-6 text-amber-600" />
-             Time Tracker 
-          </CardTitle>
-        </CardHeader>
-
-        {/* Current Date Display */}
-        <div className="text-center">
-          <p className="text-xl sm:text-3xl font-bold text-amber-700 font-serif drop-shadow-lg">
-            {currentFormattedDate || "Loading Clover date..."}
-          </p>
-        </div>
-
-        <CardContent className="p-4 sm:p-6">
-          {/* Back Button - Responsive positioning */}
-          <div className="absolute left-2 sm:left-4 top-24 sm:top-28 text-xs">
             <BackButton />
           </div>
+        </div>
 
-          <div className="flex flex-col space-y-4 sm:space-y-6">
-            {/* Timer Display div */}
-            <div className="flex flex-col items-center space-y-4 sm:space-y-6">
-              {currentEntry.breakStart && !currentEntry.breakEnd ? (
-                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-amber-600 text-center font-mono bg-white bg-opacity-80 p-4 rounded-lg border border-amber-500">
-                  <p className="text-sm sm:text-base text-amber-700 tracking-wide mb-2">
-                    🦃 BREAK 1 - 15 Minutes of Gratitude
-                  </p>
-                  {formatElapsedTime(elapsedTime)}
-                </div>
-              ) : currentEntry.secondBreakStart &&
-                !currentEntry.secondBreakEnd ? (
-                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-amber-600 text-center font-mono bg-white bg-opacity-80 p-4 rounded-lg border border-amber-500">
-                  <p className="text-sm sm:text-base text-amber-700 tracking-wide mb-2">
-                    🍂 BREAK 2 - 15 Grateful Minutes
-                  </p>
-                  {formatElapsedTime(elapsedTime)}
-                </div>
-              ) : currentEntry.lunchStart && !currentEntry.lunchEnd ? (
-                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-amber-600 text-center font-mono bg-white bg-opacity-80 p-4 rounded-lg border border-amber-500">
-                  <p className="text-sm sm:text-base text-amber-700 tracking-wide mb-2">
-                    🥧 LUNCH - 60 Minutes of Feasting
-                  </p>
-                  {formatElapsedTime(elapsedTime)}
-                </div>
-              ) : currentEntry.bioBreakStart && !currentEntry.bioBreakEnd ? (
-                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-blue-600 text-center font-mono bg-white bg-opacity-80 p-4 rounded-lg border border-blue-500">
-                  <p className="text-sm sm:text-base text-blue-700 tracking-wide mb-2">
-                    🚽 BIO BREAK - 5 Minutes Maximum
-                  </p>
-                  {formatElapsedTime(elapsedTime)}
-                </div>
-              ) : (
+        {/* Current Date Display */}
+        <Card className="border border-gray-200">
+          <CardContent className="p-6">
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Calendar className="h-5 w-5 text-purple-600" />
+                <p className="text-lg font-medium text-gray-900">
+                  {currentFormattedDate || "Loading date..."}
+                </p>
+              </div>
+              <p className="text-gray-600">
+                Server time: {currentServerTime.time}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Timer and Controls Section */}
+        <Card className="border border-gray-200">
+          <CardContent className="p-6">
+            <div className="flex flex-col items-center space-y-6">
+              {/* Timer Display */}
+              <div className={`text-center ${!isTimeIn ? "opacity-50" : ""}`}>
+                <p className="text-sm font-medium text-gray-600 mb-2">
+                  {currentEntry.breakStart && !currentEntry.breakEnd
+                    ? "Break 1 Timer"
+                    : currentEntry.secondBreakStart &&
+                      !currentEntry.secondBreakEnd
+                    ? "Break 2 Timer"
+                    : currentEntry.lunchStart && !currentEntry.lunchEnd
+                    ? "Lunch Timer"
+                    : "Work Timer"}
+                </p>
                 <div
-                  className={`mb-2 text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tighter text-center text-green-600 font-mono bg-white bg-opacity-80 p-4 rounded-lg border border-green-500 ${
-                    isTimeIn ? "" : "hidden"
-                  }`}
+                  className={`
+                  text-3xl md:text-4xl lg:text-5xl font-bold tracking-tighter font-mono
+                  ${
+                    currentEntry.breakStart && !currentEntry.breakEnd
+                      ? "text-blue-600"
+                      : ""
+                  }
+                  ${
+                    currentEntry.secondBreakStart &&
+                    !currentEntry.secondBreakEnd
+                      ? "text-indigo-600"
+                      : ""
+                  }
+                  ${
+                    currentEntry.lunchStart && !currentEntry.lunchEnd
+                      ? "text-purple-600"
+                      : ""
+                  }
+                  ${
+                    !currentEntry.breakStart &&
+                    !currentEntry.lunchStart &&
+                    !currentEntry.secondBreakStart
+                      ? "text-gray-900"
+                      : ""
+                  }
+                `}
                 >
-                  <p className="text-sm sm:text-base text-green-700 tracking-wide mb-2">
-                    🍁 WORK TIME
-                  </p>
                   {formatElapsedTime(elapsedTime)}
                 </div>
-              )}
+              </div>
 
-              {/* Action Buttons div */}
-              <div className="flex flex-col sm:flex-row justify-center items-center gap-3 w-full max-w-md mx-auto">
+              {/* Action Controls */}
+              <div className="flex flex-col sm:flex-row justify-center items-center gap-3 w-full max-w-lg mx-auto">
                 {!isTimeIn ? (
                   <Button
                     onClick={handleTimeIn}
-                    className="flex items-center w-full sm:w-auto min-w-[120px] bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white border border-amber-400 font-bold shadow-lg"
+                    className="w-full sm:w-auto min-w-[140px] bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
                     disabled={isLoadingTimeIn}
-                    size="sm"
+                    size="lg"
                   >
                     {isLoadingTimeIn ? (
-                      <ThanksgivingSpinner />
+                      <LoadingSpinner />
                     ) : (
-                      <Heart className="mr-2 h-4 w-4" />
+                      <>
+                        <Home className="mr-2 h-5 w-5" />
+                        Time In
+                      </>
                     )}
-                    Join Workplace
                   </Button>
                 ) : (
-                  <>
+                  <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
+
                     <Select
                       value={selectedAction || undefined}
                       onValueChange={handleActionChange}
                     >
-                      <SelectTrigger className="w-full sm:w-48 text-sm bg-white border-amber-400 text-amber-800">
-                        <SelectValue placeholder="Select Grateful Action" />
+                      <SelectTrigger className="w-full sm:w-56">
+                        <SelectValue placeholder="Select Action" />
                       </SelectTrigger>
-                      <SelectContent className="bg-amber-50 border-amber-400 text-amber-800">
+
+                      <SelectContent>
                         {getAvailableActions().map((action) => (
-                          <SelectItem key={action.value} value={action.value} className="hover:bg-amber-200">
+                          <SelectItem key={action.value} value={action.value}>
                             {action.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
+
                     </Select>
 
                     {selectedAction && (
                       <Button
                         onClick={handleConfirmAction}
-                        className="flex items-center text-sm w-full sm:w-auto min-w-[100px] bg-gradient-to-r from-green-600 to-amber-600 hover:from-green-700 hover:to-amber-700 text-white border border-green-400"
+                        className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
                         disabled={
                           isLoadingBreakStart ||
                           isLoadingBreakEnd ||
@@ -1469,496 +1252,394 @@ const formatTimeTo12Hour = (timeString: string): string => {
                           isLoadingSecondBreakEnd ||
                           isLoadingLunchStart ||
                           isLoadingLunchEnd ||
-                          isLoadingBioBreakStart ||
-                          isLoadingBioBreakEnd ||
                           isLoadingTimeOut
                         }
-                        size="sm"
                       >
-                        Share Gratitude
+                        Confirm
                       </Button>
                     )}
-
-                    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                      <DialogContent className="sm:max-w-md bg-gradient-to-br from-amber-50 to-orange-100 border-2 border-amber-400">
-                        <DialogHeader>
-                          <DialogTitle className="text-lg text-amber-700 font-serif">
-                            🍁 Complete Your Day
-                          </DialogTitle>
-                        </DialogHeader>
-                        <div className="grid gap-4 py-4">
-                          <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-                            <Label htmlFor="notes" className="sm:text-right text-amber-700">
-                              Grateful Notes (Optional)
-                            </Label>
-                            <Input
-                              id="notes"
-                              className="col-span-1 sm:col-span-3 bg-white border-amber-400 text-amber-800"
-                              placeholder="Add any grateful notes about your work day..."
-                            />
-                          </div>
-                          <div className="flex justify-end">
-                            <Button
-                              onClick={() => {
-                                const notesInput = document.getElementById(
-                                  "notes"
-                                ) as HTMLInputElement;
-                                handleTimeOut({
-                                  notes: notesInput?.value,
-                                });
-                              }}
-                              disabled={isLoadingTimeOut}
-                              size="sm"
-                              className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white border border-amber-400"
-                            >
-                              {isLoadingTimeOut ? <ThanksgivingSpinner /> : null}
-                              🍁 Complete
-                            </Button>
-                          </div>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                  </>
+                  </div>
                 )}
               </div>
 
-              {/* Current Session Info */}
+              {/* Time Out Dialog */}
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Complete Your Work Day</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="notes">Notes (Optional)</Label>
+                      <Input
+                        id="notes"
+                        placeholder="Add any notes about your work day..."
+                      />
+                    </div>
+                    <div className="flex justify-end gap-3">
+                      <Button
+                        variant="outline"
+                        onClick={() => setDialogOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          const notesInput = document.getElementById(
+                            "notes"
+                          ) as HTMLInputElement;
+                          handleTimeOut({
+                            notes: notesInput?.value,
+                          });
+                        }}
+                        disabled={isLoadingTimeOut}
+                        className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
+                      >
+                        {isLoadingTimeOut ? <LoadingSpinner /> : "Complete Day"}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              {/* Current Session Summary */}
               {isTimeIn && (
-                <div className="w-full max-w-2xl mx-auto">
-                  <p className="font-semibold text-sm sm:text-base mb-3 text-center text-amber-700 font-serif">
-                    🍂 Current Session
+                <div className="w-full max-w-4xl mx-auto mt-6">
+                  <p className="font-semibold text-gray-700 mb-4 text-center">
+                    Current Session
                   </p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {/* Time In Card */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {currentEntry.timeIn && (
-                      <div className="bg-gradient-to-br from-green-100 to-green-200 rounded-lg p-3 border border-green-400 shadow-lg">
-                        <div className="flex items-center gap-2">
-                          <Heart className="h-4 w-4 text-green-600" />
-                          <span className="text-xs font-medium text-green-700">
-                            🦃 Entry Time
-                          </span>
-                        </div>
-                        <p className="text-sm font-semibold mt-1 text-green-900">
-                          {formatTime(currentEntry.timeIn)}
-                        </p>
-                      </div>
+                      <Card className="border border-gray-200">
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Clock className="h-4 w-4 text-purple-600" />
+                            <span className="text-sm font-medium text-gray-700">
+                              Time In
+                            </span>
+                          </div>
+                          <p className="text-lg font-semibold text-gray-900">
+                            {formatTime(currentEntry.timeIn)}
+                          </p>
+                        </CardContent>
+                      </Card>
                     )}
 
-                    {/* Shift Card */}
                     {currentEntry.shift && (
-                      <div className="bg-gradient-to-br from-amber-100 to-amber-200 rounded-lg p-3 border border-amber-400 shadow-lg">
-                        <div className="flex items-center gap-2">
-                          <Clover className="h-4 w-4 text-amber-600" />
-                          <span className="text-xs font-medium text-amber-700">
-                            🍂  Shift
-                          </span>
-                        </div>
-                        <p className="text-sm font-semibold mt-1 text-amber-900">
-                          {currentEntry.shift}
-                        </p>
-                      </div>
+                      <Card className="border border-gray-200">
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <TrendingUp className="h-4 w-4 text-blue-600" />
+                            <span className="text-sm font-medium text-gray-700">
+                              Shift
+                            </span>
+                          </div>
+                          <p className="text-lg font-semibold text-gray-900">
+                            {currentEntry.shift}
+                          </p>
+                        </CardContent>
+                      </Card>
                     )}
 
-                    {/* Break Times */}
                     {currentEntry.breakStart && (
-                      <div className="bg-gradient-to-br from-orange-100 to-orange-200 rounded-lg p-3 border border-orange-400 shadow-lg">
-                        <div className="flex items-center gap-2">
-                          <Leaf className="h-4 w-4 text-orange-600" />
-                          <span className="text-xs font-medium text-orange-700">
-                            🦃 Break 1
-                          </span>
-                        </div>
-                        <div className="space-y-1 mt-1">
-                          <p className="text-xs text-orange-700">
-                            <span className="font-medium">Start:</span>{" "}
-                            {formatTime(currentEntry.breakStart)}
-                          </p>
-                          {currentEntry.breakEnd && (
-                            <p className="text-xs text-orange-700">
-                              <span className="font-medium">End:</span>{" "}
-                              {formatTime(currentEntry.breakEnd)}
+                      <Card className="border border-gray-200">
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Coffee className="h-4 w-4 text-green-600" />
+                            <span className="text-sm font-medium text-gray-700">
+                              Break 1
+                            </span>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-sm text-gray-600">
+                              Start: {formatTime(currentEntry.breakStart)}
                             </p>
-                          )}
-                          {currentEntry.totalBreakTime !== undefined &&
-                            currentEntry.totalBreakTime !== null && (
-                              <p className="text-xs font-semibold text-orange-900">
-                                Total: {formatMinutesToHoursMinutes(Math.round(currentEntry.totalBreakTime * 60))}
+                            {currentEntry.breakEnd && (
+                              <p className="text-sm text-gray-600">
+                                End: {formatTime(currentEntry.breakEnd)}
                               </p>
                             )}
-                          {/* Overbreak for Break 1 - Show if this specific break exceeded 15 minutes */}
-                          {currentEntry.totalBreakTime && currentEntry.totalBreakTime > 0.25 && (
-                            <p className="text-xs font-semibold text-red-600">
-                              🍂 Overbreak: {calculateOverbreak(currentEntry.totalBreakTime, 0.25)} minutes
-                            </p>
-                          )}
-                        </div>
-                      </div>
+                            {currentEntry.totalBreakTime !== undefined && (
+                              <p className="text-sm font-medium text-gray-900">
+                                Total:{" "}
+                                {formatMinutesToHoursMinutes(
+                                  Math.round(currentEntry.totalBreakTime * 60)
+                                )}
+                              </p>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
                     )}
 
-                    {/* Second Break Times */}
                     {currentEntry.secondBreakStart && (
-                      <div className="bg-gradient-to-br from-amber-100 to-amber-200 rounded-lg p-3 border border-amber-400 shadow-lg">
-                        <div className="flex items-center gap-2">
-                          <Cannabis  className="h-4 w-4 text-amber-600" />
-                          <span className="text-xs font-medium text-amber-700">
-                            🍂 Break 2
-                          </span>
-                        </div>
-                        <div className="space-y-1 mt-1">
-                          <p className="text-xs text-amber-700">
-                            <span className="font-medium">Start:</span>{" "}
-                            {formatTime(currentEntry.secondBreakStart)}
-                          </p>
-                          {currentEntry.secondBreakEnd && (
-                            <p className="text-xs text-amber-700">
-                              <span className="font-medium">End:</span>{" "}
-                              {formatTime(currentEntry.secondBreakEnd)}
+                      <Card className="border border-gray-200">
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Coffee className="h-4 w-4 text-indigo-600" />
+                            <span className="text-sm font-medium text-gray-700">
+                              Break 2
+                            </span>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-sm text-gray-600">
+                              Start: {formatTime(currentEntry.secondBreakStart)}
                             </p>
-                          )}
-                          {currentEntry.totalSecondBreakTime !== undefined &&
-                            currentEntry.totalSecondBreakTime !== null && (
-                              <p className="text-xs font-semibold text-amber-900">
-                                Total: {formatMinutesToHoursMinutes(Math.round(currentEntry.totalSecondBreakTime * 60))}
+                            {currentEntry.secondBreakEnd && (
+                              <p className="text-sm text-gray-600">
+                                End: {formatTime(currentEntry.secondBreakEnd)}
                               </p>
                             )}
-                          {/* Overbreak for Break 2 - Show if this specific break exceeded 15 minutes */}
-                          {currentEntry.totalSecondBreakTime && currentEntry.totalSecondBreakTime > 0.25 && (
-                            <p className="text-xs font-semibold text-red-600">
-                              🍂 Overbreak: {calculateOverbreak(currentEntry.totalSecondBreakTime, 0.25)} minutes
-                            </p>
-                          )}
-                        </div>
-                      </div>
+                            {currentEntry.totalSecondBreakTime !==
+                              undefined && (
+                              <p className="text-sm font-medium text-gray-900">
+                                Total:{" "}
+                                {formatMinutesToHoursMinutes(
+                                  Math.round(
+                                    currentEntry.totalSecondBreakTime * 60
+                                  )
+                                )}
+                              </p>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
                     )}
 
-                    {/* Lunch Times */}
                     {currentEntry.lunchStart && (
-                      <div className="bg-gradient-to-br from-red-100 to-red-200 rounded-lg p-3 border border-red-400 shadow-lg">
-                        <div className="flex items-center gap-2">
-                          <PieChart className="h-4 w-4 text-red-600" />
-                          <span className="text-xs font-medium text-red-700">
-                            🥧 Feast
-                          </span>
-                        </div>
-                        <div className="space-y-1 mt-1">
-                          <p className="text-xs text-red-700">
-                            <span className="font-medium">Start:</span>{" "}
-                            {formatTime(currentEntry.lunchStart)}
-                          </p>
-                          {currentEntry.lunchEnd && (
-                            <p className="text-xs text-red-700">
-                              <span className="font-medium">End:</span>{" "}
-                              {formatTime(currentEntry.lunchEnd)}
+                      <Card className="border border-gray-200">
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Utensils className="h-4 w-4 text-amber-600" />
+                            <span className="text-sm font-medium text-gray-700">
+                              Lunch
+                            </span>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-sm text-gray-600">
+                              Start: {formatTime(currentEntry.lunchStart)}
                             </p>
-                          )}
-                          {currentEntry.totalLunchTime !== undefined &&
-                            currentEntry.totalLunchTime !== null && (
-                              <p className="text-xs font-semibold text-red-900">
-                                Total: {formatMinutesToHoursMinutes(Math.round(currentEntry.totalLunchTime * 60))}
+                            {currentEntry.lunchEnd && (
+                              <p className="text-sm text-gray-600">
+                                End: {formatTime(currentEntry.lunchEnd)}
                               </p>
                             )}
-                          {/* Overbreak for Lunch - Show if lunch exceeded 60 minutes */}
-                          {currentEntry.totalLunchTime && currentEntry.totalLunchTime > 1 && (
-                            <p className="text-xs font-semibold text-red-600">
-                              🍂 Overlunch: {calculateOverbreak(currentEntry.totalLunchTime, 1)} minutes
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Bio Break Times */}
-                    {currentEntry.bioBreakStart && (
-                      <div className="bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg p-3 border border-blue-400 shadow-lg">
-                        <div className="flex items-center gap-2">
-                          <LeafyGreen className="h-4 w-4 text-blue-600" />
-                          <span className="text-xs font-medium text-blue-700">
-                            🚽 Bio Break
-                          </span>
-                        </div>
-                        <div className="space-y-1 mt-1">
-                          <p className="text-xs text-blue-700">
-                            <span className="font-medium">Start:</span>{" "}
-                            {formatTime(currentEntry.bioBreakStart)}
-                          </p>
-                          {currentEntry.bioBreakEnd && (
-                            <p className="text-xs text-blue-700">
-                              <span className="font-medium">End:</span>{" "}
-                              {formatTime(currentEntry.bioBreakEnd)}
-                            </p>
-                          )}
-                          {currentEntry.totalBioBreakTime !== undefined &&
-                            currentEntry.totalBioBreakTime !== null && (
-                              <p className="text-xs font-semibold text-blue-900">
-                                Total: {formatMinutesToHoursMinutes(Math.round(currentEntry.totalBioBreakTime * 60))}
+                            {currentEntry.totalLunchTime !== undefined && (
+                              <p className="text-sm font-medium text-gray-900">
+                                Total:{" "}
+                                {formatMinutesToHoursMinutes(
+                                  Math.round(currentEntry.totalLunchTime * 60)
+                                )}
                               </p>
                             )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Total Overbreak Card - This shows the combined overbreak from both breaks */}
-                    {currentEntry.overbreak && currentEntry.overbreak > 0 && (
-                      <div className="bg-gradient-to-br from-red-100 to-red-200 rounded-lg p-3 border border-red-400 shadow-lg">
-                        <div className="flex items-center gap-2">
-                          <Leaf className="h-4 w-4 text-red-600" />
-                          <span className="text-xs font-medium text-red-700">
-                            🍂 Total Overbreak
-                          </span>
-                        </div>
-                        <div className="space-y-1 mt-1">
-                          <p className="text-xs font-semibold text-red-900">
-                            {currentEntry.overbreak} minutes
-                          </p>
-                          <p className="text-xs text-red-700">
-                            Combined break time exceeded 30 minutes
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Overlunch Card - This shows lunch-specific overbreak */}
-                    {currentEntry.overlunch && currentEntry.overlunch > 0 && (
-                      <div className="bg-gradient-to-br from-red-100 to-red-200 rounded-lg p-3 border border-red-400 shadow-lg">
-                        <div className="flex items-center gap-2">
-                          <Leaf className="h-4 w-4 text-red-600" />
-                          <span className="text-xs font-medium text-red-700">
-                            🍂 Lunch Overbreak
-                          </span>
-                        </div>
-                        <div className="space-y-1 mt-1">
-                          <p className="text-xs font-semibold text-red-900">
-                            {currentEntry.overlunch} minutes
-                          </p>
-                          <p className="text-xs text-red-700">
-                            Lunch time exceeded 60 minutes
-                          </p>
-                        </div>
-                      </div>
+                          </div>
+                        </CardContent>
+                      </Card>
                     )}
                   </div>
                 </div>
               )}
             </div>
+          </CardContent>
+        </Card>
 
-            {/* History Table div */}
-            <Card className="w-full bg-gradient-to-br from-amber-50 to-orange-100 border-2 border-amber-400">
-              <CardHeader className="p-4 sm:p-6">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <CardTitle className="text-lg sm:text-xl text-amber-700 font-serif">
-                    🍂  Time Records
-                  </CardTitle>
+        {/* Attendance History Section */}
+        <Card className="border border-gray-200">
+          <CardHeader>
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <CardTitle className="text-lg font-semibold text-gray-900">
+                Attendance History
+              </CardTitle>
 
-                  {/* Month, Year, and Cut-off Filters */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                    {/* Year Selector */}
-                    <Select
-                      value={selectedYear.toString()}
-                      onValueChange={(value) =>
-                        setSelectedYear(parseInt(value))
-                      }
-                    >
-                      <SelectTrigger className="w-24 text-sm bg-white border-amber-400 text-amber-800">
-                        <SelectValue placeholder="Year" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-amber-50 border-amber-400 text-amber-800">
-                        {years.map((year) => (
-                          <SelectItem key={year} value={year.toString()}>
-                            {year}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-
-                    {/* Month Selector */}
-                    <div className="flex items-center gap-2">
-                      <Clover className="h-4 w-4 text-amber-600" />
-                      <Select
-                        value={selectedMonth.toString()}
-                        onValueChange={(value) =>
-                          setSelectedMonth(parseInt(value))
-                        }
-                      >
-                        <SelectTrigger className="w-32 text-sm bg-white border-amber-400 text-amber-800">
-                          <SelectValue placeholder="Month" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-amber-50 border-amber-400 text-amber-800">
-                          {months.map((month) => (
-                            <SelectItem
-                              key={month.value}
-                              value={month.value.toString()}
-                            >
-                              {month.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Cut-off Filter */}
-                    <div className="flex items-center gap-2">
-                      <Filter className="h-4 w-4 text-amber-600" />
-                      <Select
-                        value={selectedCutoff}
-                        onValueChange={(value: CutoffPeriod) =>
-                          setSelectedCutoff(value)
-                        }
-                      >
-                        <SelectTrigger className="w-32 text-sm bg-white border-amber-400 text-amber-800">
-                          <SelectValue placeholder="Cut-off" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-amber-50 border-amber-400 text-amber-800">
-                          <SelectItem value="1-15">1-15</SelectItem>
-                          <SelectItem value="16-31">16-31</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-gray-500" />
+                  <Select
+                    value={selectedYear.toString()}
+                    onValueChange={(value) => setSelectedYear(parseInt(value))}
+                  >
+                    <SelectTrigger className="w-28">
+                      <SelectValue placeholder="Year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {years.map((year) => (
+                        <SelectItem key={year} value={year.toString()}>
+                          {year}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              </CardHeader>
-              <CardContent className="p-0 sm:p-6">
-                {isLoadingHistory ? (
-                  <div className="flex justify-center py-8">
-                    <ThanksgivingSpinner />
+
+                <Select
+                  value={selectedMonth.toString()}
+                  onValueChange={(value) => setSelectedMonth(parseInt(value))}
+                >
+                  <SelectTrigger className="w-36">
+                    <SelectValue placeholder="Month" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {months.map((month) => (
+                      <SelectItem
+                        key={month.value}
+                        value={month.value.toString()}
+                      >
+                        {month.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={selectedCutoff}
+                  onValueChange={(value: CutoffPeriod) =>
+                    setSelectedCutoff(value)
+                  }
+                >
+                  <SelectTrigger className="w-36">
+                    <SelectValue placeholder="Cut-off Period" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1-15">1st - 15th</SelectItem>
+                    <SelectItem value="16-31">16th - 31st</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={getAttendance}
+                  disabled={isLoadingHistory}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Refresh
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent>
+            {isLoadingHistory ? (
+              <div className="flex justify-center py-8">
+                <LoadingSpinner />
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="min-w-[100px]">Date</TableHead>
+                      <TableHead className="min-w-[100px]">Time In</TableHead>
+                      <TableHead className="min-w-[100px]">Time Out</TableHead>
+                      <TableHead className="min-w-[100px]">
+                        Total Hours
+                      </TableHead>
+                      <TableHead className="min-w-[100px]">Break 1</TableHead>
+                      <TableHead className="min-w-[100px]">Lunch</TableHead>
+                      <TableHead className="min-w-[100px]">Break 2</TableHead>
+                      <TableHead className="min-w-[100px]">
+                        Overbreak 1
+                      </TableHead>
+                      <TableHead className="min-w-[100px]">
+                        Overbreak 2
+                      </TableHead>
+                      <TableHead className="min-w-[100px]">Overlunch</TableHead>
+                      <TableHead className="min-w-[150px]">Notes</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredEntries.length > 0 ? (
+                      filteredEntries.map((entry, index) => (
+                        <TableRow key={entry.id || `entry-${index}`}>
+                          <TableCell className="font-medium">
+                            {entry.date}
+                          </TableCell>
+                          <TableCell>{formatTime(entry.timeIn)}</TableCell>
+                          <TableCell>
+                            {entry.timeOut
+                              ? formatTime(entry.timeOut)
+                              : "In Progress"}
+                          </TableCell>
+                          <TableCell>
+                            {formatHoursToHoursMinutes(
+                              String(entry.totalHours || "")
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {formatHoursToHoursMinutes(
+                              String(entry.totalBreakTime || "")
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {formatHoursToHoursMinutes(
+                              String(entry.totalLunchTime || "")
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {formatHoursToHoursMinutes(
+                              String(entry.totalSecondBreakTime || "")
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {entry.overbreak1 && entry.overbreak1 > 0
+                              ? `${entry.overbreak1} minutes`
+                              : "-"}
+                          </TableCell>
+                          <TableCell>
+                            {entry.overbreak2 && entry.overbreak2 > 0
+                              ? `${entry.overbreak2} minutes`
+                              : "-"}
+                          </TableCell>
+                          <TableCell>
+                            {entry.overlunch && entry.overlunch > 0
+                              ? `${entry.overlunch} minutes`
+                              : "-"}
+                          </TableCell>
+                          <TableCell>
+                            <div
+                              className="truncate max-w-[200px]"
+                              title={entry.notes || ""}
+                            >
+                              {entry.notes || "-"}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={11} className="text-center py-8">
+                          <div className="flex flex-col items-center gap-2">
+                            <Clock className="h-12 w-12 text-gray-400" />
+                            <p className="text-gray-600 font-medium">
+                              No records found
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {
+                                months.find((m) => m.value === selectedMonth)
+                                  ?.label
+                              }{" "}
+                              {selectedYear} ({selectedCutoff} cut-off)
+                            </p>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+
+                {filteredEntries.length > 0 && (
+                  <div className="mt-4 text-sm text-gray-600">
+                    Showing {filteredEntries.length} record(s) for{" "}
+                    {months.find((m) => m.value === selectedMonth)?.label}{" "}
+                    {selectedYear} ({selectedCutoff} cut-off)
                   </div>
-                ) : (
-                  <>
-                    <div className="overflow-x-auto">
-                      <Table className="">
-                        <TableHeader>
-                          <TableRow className="bg-amber-100 hover:bg-amber-200">
-                            <TableHead className="min-w-[90px] text-amber-700">Date</TableHead>
-                            <TableHead className="min-w-[90px] text-amber-700">
-                              Log In
-                            </TableHead>
-                            <TableHead className="min-w-[90px] text-amber-700">
-                              Log Out
-                            </TableHead>
-                            <TableHead className="min-w-[90px] text-amber-700">
-                              Total Hours
-                            </TableHead>
-                            <TableHead className="min-w-[90px] text-amber-700">
-                              Break 1
-                            </TableHead>
-                            <TableHead className="min-w-[90px] text-amber-700">
-                              Lunch
-                            </TableHead>
-                            <TableHead className="min-w-[90px] text-amber-700">
-                              Break 2
-                            </TableHead>
-                            <TableHead className="min-w-[90px] text-amber-700">
-                              Bio Break
-                            </TableHead>
-                            <TableHead className="min-w-[90px] text-amber-700">
-                              Overbreak 1
-                            </TableHead>
-                            <TableHead className="min-w-[90px] text-amber-700">
-                              Overbreak 2
-                            </TableHead>
-                            <TableHead className="min-w-[90px] text-amber-700">
-                              Overlunch
-                            </TableHead>
-                            <TableHead className="min-w-[90px] text-amber-700">
-                              Notes
-                            </TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filteredEntries.length > 0 ? (
-                            filteredEntries.map((entry, index) => (
-                              <TableRow key={entry.id || `entry-${index}`} className="border-amber-300 hover:bg-amber-50">
-                                <TableCell className="py-2 text-amber-800">{entry.date}</TableCell>
-                                <TableCell className="py-2 text-green-700">
-                                  {formatTime(entry.timeIn)}
-                                </TableCell>
-                                <TableCell className="py-2 text-red-700">
-                                  {entry.timeOut ? formatTime(entry.timeOut) : "🍂 In Progress"}
-                                </TableCell>
-                                <TableCell className="py-2 text-amber-800">
-                                  {formatHoursToHoursMinutes(
-                                    String(entry.totalHours || "")
-                                  )}
-                                </TableCell>
-                                <TableCell className="py-2 text-orange-700">
-                                  {formatHoursToHoursMinutes(
-                                    String(entry.totalBreakTime || "")
-                                  )}
-                                </TableCell>
-                                <TableCell className="py-2 text-red-700">
-                                  {formatHoursToHoursMinutes(
-                                    String(entry.totalLunchTime || "")
-                                  )}
-                                </TableCell>
-                                <TableCell className="py-2 text-amber-700">
-                                  {formatHoursToHoursMinutes(
-                                    String(entry.totalSecondBreakTime || "")
-                                  )}
-                                </TableCell>
-                                <TableCell className="py-2 text-blue-700">
-                                  {formatHoursToHoursMinutes(
-                                    String(entry.totalBioBreakTime || "")
-                                  )}
-                                </TableCell>
-                                <TableCell className="py-2 text-red-700">
-                                  {entry.overbreak1 && entry.overbreak1 > 0 
-                                    ? `${entry.overbreak1} minutes` 
-                                    : "-"}
-                                </TableCell>
-                                <TableCell className="py-2 text-red-700">
-                                  {entry.overbreak2 && entry.overbreak2 > 0 
-                                    ? `${entry.overbreak2} minutes` 
-                                    : "-"}
-                                </TableCell>
-                                <TableCell className="py-2 text-red-700">
-                                  {entry.overlunch && entry.overlunch > 0 
-                                    ? `${entry.overlunch} minutes` 
-                                    : "-"}
-                                </TableCell>
-                                <TableCell className="py-2 text-amber-700">
-                                  <div
-                                    className="truncate max-w-[80px] sm:max-w-[100px] lg:max-w-[150px] text-ellipsis overflow-hidden"
-                                    title={entry.notes || ""}
-                                  >
-                                    {entry.notes || "🦃"}
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            ))
-                          ) : (
-                            <TableRow>
-                              <TableCell
-                                colSpan={13} // Updated from 12 to 13
-                                className="text-center py-4 text-amber-600"
-                              >
-                                🍂 No records found for{" "}
-                                {
-                                  months.find((m) => m.value === selectedMonth)
-                                    ?.label
-                                }{" "}
-                                {selectedYear} ({selectedCutoff} cut-off)
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
-                    </div>
-
-                    {/* Records Count */}
-                    <div className="mt-4 text-sm text-amber-600">
-                      🦃 Showing {filteredEntries.length} record(s) for{" "}
-                      {months.find((m) => m.value === selectedMonth)?.label}{ " "}
-                      {selectedYear} ({selectedCutoff} cut-off)
-                    </div>
-                  </>
                 )}
-              </CardContent>
-            </Card>
-          </div>
-        </CardContent>
-      </Card>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
-    </section>
-
   );
 };
 

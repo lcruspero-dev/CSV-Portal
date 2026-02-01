@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -100,7 +101,6 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
     const fetchUsers = async () => {
       try {
         const res = await UserProfileAPI.getAllUsers();
-        // Ensure we have an array and handle potential nested data structure
         const usersData = Array.isArray(res.data)
           ? res.data
           : Array.isArray(res.data?.users)
@@ -302,6 +302,11 @@ const PayrollModal = ({ onAdd }: { onAdd: (p: Payroll) => void }) => {
                 </Badge>
               )}
             </DialogTitle>
+            {/* ADD THIS DialogDescription */}
+            <DialogDescription>
+              Create a new payroll record. Select an employee and fill in the
+              payroll details.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const nteController = require("../controllers/nteController");
-const { protect, verifyAdmin } = require("../middleware/authMiddleware");
+const { protect } = require("../middleware/authMiddleware");
 
 // Role verification middleware for TL/TM/Admin
 const verifyTeamRole = (req, res, next) => {

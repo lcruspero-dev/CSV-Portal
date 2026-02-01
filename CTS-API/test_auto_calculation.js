@@ -1,9 +1,8 @@
-// Test script for payroll auto-calculation functionality
 const mongoose = require('mongoose');
 const { autoUpdatePayrollFromTimeTracker } = require('./controllers/payrollController');
 
 // Test data setup
-const testUserId = '507f1f77bcf86cd799439011'; // Replace with actual user ID
+const testUserId = '507f1f77bcf86cd799439011'; 
 const testStartDate = '01/01/2024';
 const testEndDate = '31/01/2024';
 
@@ -29,15 +28,14 @@ async function testAutoCalculation() {
             absentDays: result.workDays?.absentDays
         });
         
-        console.log('✅ Auto-calculation test completed successfully!');
+        console.log('Auto-calculation test completed successfully!');
         
     } catch (error) {
-        console.error('❌ Auto-calculation test failed:', error.message);
+        console.error('Auto-calculation test failed:', error.message);
     } finally {
         await mongoose.disconnect();
         console.log('Disconnected from MongoDB');
     }
 }
 
-// Run the test
 testAutoCalculation();

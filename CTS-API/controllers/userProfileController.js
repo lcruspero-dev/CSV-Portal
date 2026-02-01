@@ -51,21 +51,21 @@ const getUserProfile = async (req, res) => {
 };
 
 // Update User Profile
-const updateUserProfile = async (req, res) => {
-  try {
-    const updatedProfile = await UserProfile.findOneAndUpdate(
-      { userId: req.user.id },
-      { $set: req.body },
-      { new: true, runValidators: true }
-    );
-    if (!updatedProfile) {
-      return res.status(404).json({ message: "User profile not found" });
+  const updateUserProfile = async (req, res) => {
+    try {
+      const updatedProfile = await UserProfile.findOneAndUpdate(
+        { userId: req.user.id },
+        { $set: req.body },
+        { new: true, runValidators: true }
+      );
+      if (!updatedProfile) {
+        return res.status(404).json({ message: "User profile not found" });
+      }
+      res.status(200).json(updatedProfile);
+    } catch (error) {
+      res.status(500).json({ message: "Error updating user profile", error });
     }
-    res.status(200).json(updatedProfile);
-  } catch (error) {
-    res.status(500).json({ message: "Error updating user profile", error });
-  }
-};
+  };
 
 // Delete User Profile
 const deleteUserProfile = async (req, res) => {

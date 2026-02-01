@@ -55,7 +55,7 @@ export const ViewScheduleButton: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [today, setToday] = useState(new Date()); // Store today's date separately
   const [scheduleData, setScheduleData] = useState<EmployeeSchedule | null>(
-    null
+    null,
   );
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingServerTime, setIsFetchingServerTime] = useState(false);
@@ -89,9 +89,8 @@ export const ViewScheduleButton: React.FC = () => {
       setCurrentDate(serverDate);
 
       const employeeId = JSON.parse(localStorage.getItem("user")!)._id;
-      const response = await ScheduleAndAttendanceAPI.getSchedulePerEmployee(
-        employeeId
-      );
+      const response =
+        await ScheduleAndAttendanceAPI.getSchedulePerEmployee(employeeId);
       setScheduleData(response.data);
     } catch (error) {
       console.error("Error:", error);
@@ -264,16 +263,17 @@ export const ViewScheduleButton: React.FC = () => {
                               {schedule?.shiftType === "restday"
                                 ? "Rest Day"
                                 : schedule?.shiftType === "paidTimeOff"
-                                ? "PTO"
-                                : schedule?.shiftType === "plannedLeave"
-                                ? "Leave"
-                                : schedule?.shiftType === "shift1"
-                                ? "Shift 1"
-                                : schedule?.shiftType === "shift2"
-                                ? "Shift 2"
-                                : schedule?.shiftType === "shift3"
-                                ? "Shift 3"
-                                : schedule?.shiftType || "No schedule"}
+                                  ? "PTO"
+                                  : schedule?.shiftType === "plannedLeave"
+                                    ? "Leave"
+                                    : schedule?.shiftType === "shift1"
+                                      ? "Shift 1"
+                                      : schedule?.shiftType === "shift2"
+                                        ? "Shift 2"
+                                        : schedule?.shiftType === "shift3"
+                                          ? "Shift 3"
+                                          : schedule?.shiftType ||
+                                            "No schedule"}
                             </TableCell>
 
                             <TableCell>
@@ -353,14 +353,14 @@ export const ViewScheduleButton: React.FC = () => {
                         >
                           {day}
                         </div>
-                      )
+                      ),
                     )}
 
                     {Array.from({
                       length: new Date(
                         currentDate.getFullYear(),
                         currentDate.getMonth(),
-                        1
+                        1,
                       ).getDay(),
                     }).map((_, index) => (
                       <div key={`empty-${index}`} className="h-32"></div>
@@ -370,14 +370,14 @@ export const ViewScheduleButton: React.FC = () => {
                       length: new Date(
                         currentDate.getFullYear(),
                         currentDate.getMonth() + 1,
-                        0
+                        0,
                       ).getDate(),
                     }).map((_, index) => {
                       const day = index + 1;
                       const date = new Date(
                         currentDate.getFullYear(),
                         currentDate.getMonth(),
-                        day
+                        day,
                       );
                       const schedule = getScheduleForDate(date);
                       const isToday = isSameDay(date, today);
@@ -398,16 +398,16 @@ export const ViewScheduleButton: React.FC = () => {
                                 {schedule.shiftType === "restday"
                                   ? "Rest Day"
                                   : schedule.shiftType === "paidTimeOff"
-                                  ? "PTO"
-                                  : schedule.shiftType === "plannedLeave"
-                                  ? "Leave"
-                                  : schedule.shiftType === "shift1"
-                                  ? "Shift 1"
-                                  : schedule.shiftType === "shift2"
-                                  ? "Shift 2"
-                                  : schedule.shiftType === "shift3"
-                                  ? "Shift 3"
-                                  : schedule.shiftType}
+                                    ? "PTO"
+                                    : schedule.shiftType === "plannedLeave"
+                                      ? "Leave"
+                                      : schedule.shiftType === "shift1"
+                                        ? "Shift 1"
+                                        : schedule.shiftType === "shift2"
+                                          ? "Shift 2"
+                                          : schedule.shiftType === "shift3"
+                                            ? "Shift 3"
+                                            : schedule.shiftType}
                               </div>
                               <div>
                                 {formatTimeToAMPM(schedule.startTime)} -{" "}

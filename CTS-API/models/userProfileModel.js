@@ -127,9 +127,6 @@ const userProfileSchema = mongoose.Schema(
     presentProvince: {
       type: String,
     },
-    presentProvince: {
-      type: String,
-    },
     homeHouseNo: {
       type: String,
     },

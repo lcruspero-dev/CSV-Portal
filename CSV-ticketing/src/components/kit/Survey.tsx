@@ -40,25 +40,27 @@ const SurveyModal: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchSurveys = async () => {
-      try {
-        const response = await SurveyAPI.getAllActiveSurveys();
+useEffect(() => {
+  const fetchSurveys = async () => {
+    try {
+      const response = await SurveyAPI.getAllActiveSurveys();
 
-        if (response.data?.data && response.data.data.length > 0) {
-          setCurrentSurvey(response.data.data[0]);
-          setIsOpen(true); // Open the dialog when we have a survey
-        } else {
-          console.log("No surveys found in response");
-        }
-      } catch (error) {
-        console.error("Error fetching surveys:", error);
-        setError("Failed to load survey");
+      if (response.data?.data && response.data.data.length > 0) {
+        setCurrentSurvey(response.data.data[0]);
+        setIsOpen(true); // Open the dialog
+      } else {
+        console.log("No active surveys found");
+        setCurrentSurvey(null);
+        setIsOpen(false); // Don't open the modal
       }
-    };
+    } catch (err) {
+      console.error("Error fetching surveys:", err);
+      setError("Failed to load survey");
+    }
+  };
 
-    fetchSurveys();
-  }, []);
+  fetchSurveys();
+}, []);
 
   const handleSubmit = async () => {
     if (!currentSurvey) {

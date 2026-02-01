@@ -7,12 +7,6 @@ const canUpdateNte = (user) => {
   return user.isAdmin || user.role === "TL" || user.role === "TM";
 };
 
-const canUpdateFeedbackAndDecision = (user, nte) => {
-  return (
-    canUpdateNte(user) || nte.nte.employeeId.toString() === user._id.toString()
-  );
-};
-
 // Get all NTEs
 const getNtes = asyncHandler(async (req, res) => {
   const ntes = await Nte.find()
