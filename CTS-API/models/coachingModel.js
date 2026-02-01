@@ -44,58 +44,7 @@ const coachingSchema = new Schema({
     },
   },
 
-   employeeFeedback: {
-    name: {
-      type: String,
-    },
-    position: {
-      type: String,
-    },
-    responseDate: {
-      type: String,
-    },
-    responseDetail: {
-      type: String,
-    },
-    employeeSignatureDate: {
-      type: String,
-    },
-  },
-
-  noticeOfDecision: {
-    name: {
-      type: String,
-    },
-    position: {
-      type: String,
-    },
-    nteIssuanceDate: {
-      type: String,
-    },
-    writtenExplanationReceiptDate: {
-      type: String,
-    },
-    offenseType: {
-      type: String,
-    },
-    offenseDescription: {
-      type: String,
-    },
-    findings: {
-      type: String,
-    },
-    decision: {
-      type: String,
-    },
-    employeeSignatureDate: {
-      type: String,
-    },
-    authorizedSignatureDate: {
-      type: String,
-    },
-  },
-
-   status: {
+  status: {
     type: String,
     enum: ["DRAFT", "PER", "PNOD", "PNODA", "FTHR"],
   },
@@ -110,7 +59,6 @@ const coachingSchema = new Schema({
     type: Date,
     default: Date.now,
   },
-
 });
 
 coachingSchema("save", function (next) {
