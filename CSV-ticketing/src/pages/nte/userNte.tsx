@@ -170,7 +170,7 @@ const NteSummaryTable: React.FC = () => {
 
   const getStatusInfo = (
     status: NteData["status"],
-    item?: NteData
+    item?: NteData,
   ): {
     color: string;
     text: string;
@@ -225,7 +225,7 @@ const NteSummaryTable: React.FC = () => {
 
   const getStatusDescription = (
     status: NteData["status"],
-    item?: NteData
+    item?: NteData,
   ): string => {
     const statusText: Record<NteData["status"], string> = {
       PER:
@@ -241,7 +241,7 @@ const NteSummaryTable: React.FC = () => {
 
   const truncateText = (
     text: string | undefined,
-    limit: number
+    limit: number,
   ): { text: string; isTruncated: boolean } => {
     if (!text) return { text: "-", isTruncated: false };
     if (text.length <= limit) return { text, isTruncated: false };
@@ -281,7 +281,7 @@ const NteSummaryTable: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-6 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+        <nav className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
             <BackButton />
             <div>
@@ -293,9 +293,13 @@ const NteSummaryTable: React.FC = () => {
               </p>
             </div>
           </div>
-        </div>
+        </nav>
 
-        <Tabs defaultValue="all" className="space-y-6" onValueChange={setActiveTab}>
+        <Tabs
+          defaultValue="all"
+          className="space-y-6"
+          onValueChange={setActiveTab}
+        >
           <TabsList className="grid grid-cols-3 w-full max-w-md">
             <TabsTrigger value="all">
               <FileText className="h-4 w-4 mr-2" />
@@ -341,7 +345,9 @@ const NteSummaryTable: React.FC = () => {
                     <div className="p-4 bg-gray-100 rounded-full mb-4">
                       <FileText className="h-8 w-8 text-gray-400" />
                     </div>
-                    <p className="text-gray-700 mb-2 font-medium">No notices found</p>
+                    <p className="text-gray-700 mb-2 font-medium">
+                      No notices found
+                    </p>
                     <p className="text-gray-500 text-sm">
                       You have no pending notices at the moment.
                     </p>
@@ -355,11 +361,14 @@ const NteSummaryTable: React.FC = () => {
                     const statusInfo = getStatusInfo(item.status, item);
                     const offenseDesc = truncateText(
                       item.nte.offenseDescription,
-                      100
+                      100,
                     );
                     const feedbackDetail = item.employeeFeedback
                       ? truncateText(item.employeeFeedback.responseDetail, 100)
-                      : { text: "No response submitted yet", isTruncated: false };
+                      : {
+                          text: "No response submitted yet",
+                          isTruncated: false,
+                        };
                     const decisionText = item.noticeOfDecision
                       ? truncateText(item.noticeOfDecision.decision, 100)
                       : { text: "Decision pending review", isTruncated: false };
@@ -473,7 +482,7 @@ const NteSummaryTable: React.FC = () => {
                                         <Calendar className="h-3 w-3 mr-1" />
                                         Responded on{" "}
                                         {formatDate(
-                                          item.employeeFeedback.responseDate
+                                          item.employeeFeedback.responseDate,
                                         )}
                                       </p>
                                       <p className="text-gray-700 mt-1">
@@ -515,7 +524,7 @@ const NteSummaryTable: React.FC = () => {
                                         <Calendar className="h-3 w-3 mr-1" />
                                         Decision date:{" "}
                                         {formatDate(
-                                          item.noticeOfDecision.nteIssuanceDate
+                                          item.noticeOfDecision.nteIssuanceDate,
                                         )}
                                       </p>
                                       <p className="text-gray-700 mt-1">

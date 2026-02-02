@@ -38,6 +38,10 @@ import ProtectedRoute2 from "./utils/protectedRoutes";
 import Payroll from "./pages/payroll/payroll";
 import PayslipPage from "./pages/payslip/PayslipPage";
 import ApiDocumentation from "./pages/apiDocumentation";
+import Help from './pages/quickLinks/help';
+import Feedback from "./pages/quickLinks/feedback";
+import Manual from "./pages/quickLinks/manual";
+
 function App() {
   return (
     <AuthProvider>
@@ -80,6 +84,9 @@ function App() {
             <Route path="/createsurvey" element={<CreateSurvey />} />
             <Route path="/exportmemo" element={<ExportMemoData />} />
             <Route path="/nte" element={<UserNte />} />
+            <Route path="/help" element={<Help />} />
+            <Route path="/manual" element={<Manual />} />
+            <Route path="/feedback" element={<Feedback />} />
             <Route
               path="/profile/change-password"
               element={<ChangePassword />}
