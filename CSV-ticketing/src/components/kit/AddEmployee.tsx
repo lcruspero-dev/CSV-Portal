@@ -44,7 +44,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
-    null
+    null,
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [teamLeaders, setTeamLeaders] = useState<TeamLeader[]>([]);
@@ -62,7 +62,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({
         try {
           const response = await UserAPI.searchUser(searchQuery);
           const filteredEmployees = response.data.filter(
-            (emp: { status: string }) => emp.status !== "inactive"
+            (emp: { status: string }) => emp.status !== "inactive",
           );
           setEmployees(filteredEmployees);
         } catch (error) {
@@ -282,9 +282,19 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({
                         <SelectItem value="Human Resources">
                           Human Resources
                         </SelectItem>
-                        <SelectItem value="IT Specialist">
-                          IT Specialist
+                        <SelectItem value="IT Support Specialist">
+                          IT Support Specialist
                         </SelectItem>
+                        <SelectItem value="Software Engineer">
+                          Software Engineer
+                        </SelectItem>
+                         <SelectItem value="QA/Trainer">
+                          QA/Trainer
+                        </SelectItem>
+                        <SelectItem value="QA Specialist">
+                          QA Specialist
+                        </SelectItem>
+                        <SelectItem value="CEO">CEO</SelectItem>
                         <SelectItem value="Team Manager">
                           Team Manager
                         </SelectItem>
@@ -297,6 +307,12 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({
                         </SelectItem>
                         <SelectItem value="Operation Manager">
                           Operation Manager
+                        </SelectItem>
+                        <SelectItem value="Site Director">
+                          Site Director
+                        </SelectItem>
+                        <SelectItem value="Administrative Assistant">
+                          Administrative Assistant
                         </SelectItem>
                       </SelectContent>
                     </Select>

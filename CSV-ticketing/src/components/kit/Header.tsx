@@ -20,6 +20,7 @@ import {
   User,
   UserCog,
   Receipt,
+  Ticket
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -201,6 +202,13 @@ const Header: React.FC = () => {
                             label: "Export Time",
                             path: "/exporttimetracker",
                           },
+                            (user.isAdmin || 
+                            ["TM", "TL"].includes(user.role)) && {
+                              icon: Ticket,
+                              label: "Ticket Management",
+                              path: "/all-tickets"
+                            }
+                          ,
                         ]
                           .filter(Boolean)
                           .map((item: any, index) => (
