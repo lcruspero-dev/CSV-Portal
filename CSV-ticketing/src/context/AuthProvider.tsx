@@ -1,4 +1,10 @@
-import React, { createContext, ReactNode, useEffect, useState } from "react";
+import React, { 
+  createContext, 
+  ReactNode, 
+  useEffect, 
+  useState 
+} from "react";
+import { useNavigate } from 'react-router-dom'
 
 interface isAuthenticated {
   isAuthenticated: boolean;
@@ -24,6 +30,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isAuthenticated: false,
     isAdmin: false,
   });
+  const navigate = useNavigate();
 
   // Check token expiry on mount and every minute
   useEffect(() => {
@@ -64,7 +71,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("user");
     localStorage.removeItem("viewAsUser");
-    window.location.href = "/sign-in"; // Redirect to login
+    navigate("/sign-in"); // Redirect to login
   };
 
   return (

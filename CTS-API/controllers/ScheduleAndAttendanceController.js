@@ -148,7 +148,9 @@ export const updateScheduleEntry = async (req, res) => {
 // this will remove the employee from the list
 export const updateTeamLeaderToInactive = async (req, res) => {
   try {
+    
     const scheduleEntry = await ScheduleEntry.findById(req.params.id);
+
     if (!scheduleEntry) {
       return res.status(404).json({
         status: false,
@@ -164,6 +166,7 @@ export const updateTeamLeaderToInactive = async (req, res) => {
       message: "User set to Inactive",
       scheduleEntry,
     });
+
   } catch (error) {
     console.error(error.message);
     res.status(500).json({
@@ -314,7 +317,11 @@ export const checkExistingEntry = async (req, res) => {
       res.status(200).json({ exists: false });
     }
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error(error.message);
+    res.status(500).json({
+      status: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -326,7 +333,10 @@ export const getSchedulePerEmployeeByDate = async (req, res) => {
     const scheduleEntry = await ScheduleEntry.findOne({ employeeId });
 
     if (!scheduleEntry) {
-      return res.status(404).json({ message: "Schedule entry not found" });
+      return res.status(404).json({
+        status: false,
+        message: "Schedule entry not found",
+      });
     }
 
     const schedule = scheduleEntry.schedule.find(
@@ -334,12 +344,18 @@ export const getSchedulePerEmployeeByDate = async (req, res) => {
     );
 
     if (!schedule) {
-      return res
-        .status(404)
-        .json({ message: "Schedule for the specified date not found" });
+      return res.status(404).json({
+        status: false,
+        message: "Schedule for the specified date not found",
+      });
     }
 
-    res.status(200).json({ shiftType: schedule.shiftType });
+    res.status(200).json({ 
+      status: true,
+      message: "Fetch employee schedule by data",
+      shiftType: schedule.shiftType 
+    });
+
   } catch (error) {
     console.error(error.message);
     res.status(500).json({

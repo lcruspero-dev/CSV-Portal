@@ -3,17 +3,25 @@ import mongoose from "mongoose";
 import { autoUpdatePayrollFromTimeTracker } from "./payrollController";
 
 // Helper function to trigger payroll update
-const triggerPayrollUpdate = async (employeeId, date) => {
+const triggerPayrollUpdate = async (employeeId, date, req, res) => {
   try {
     // Calculate date range for the current month
     const currentDate = new Date(date);
-    const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-    const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+    const startOfMonth = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth(),
+      1,
+    );
+    const endOfMonth = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth() + 1,
+      0,
+    );
 
     // Format dates as strings (MM/DD/YYYY)
     const formatDate = (date) => {
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
       const year = date.getFullYear();
       return `${month}/${day}/${year}`;
     };
@@ -23,52 +31,72 @@ const triggerPayrollUpdate = async (employeeId, date) => {
 
     // Auto-update payroll
     await autoUpdatePayrollFromTimeTracker(employeeId, startDate, endDate);
+
+    res.status(200).json({
+      status: true,
+      message: "Trigger payroll update",
+      data: [
+        employeeId,
+        startDate,
+        endDate
+      ]
+    });
+
   } catch (error) {
-    console.error('Error triggering payroll update:', error);
+
+    console.error(error.message);
+    res.status(500).json({
+      status: false,
+      message: "Internal Server Error"
+    });
+
   }
 };
 
 // Helper function to calculate which break to deduct time from
 const calculateBreakDeduction = (employeeTime, bioBreakDuration) => {
   const deductionAmount = bioBreakDuration || 15; // Default to 15 minutes if not provided
-  
+
   // Check break usage and available time in order of priority
   const breakUsage = {
     break1: {
       used: employeeTime.breakStart && employeeTime.breakEnd,
       availableTime: employeeTime.totalBreakTime || 15, // Default break time
       currentTime: employeeTime.totalBreakTime || 0,
-      type: 'break1'
+      type: "break1",
     },
     break2: {
       used: employeeTime.secondBreakStart && employeeTime.secondBreakEnd,
       availableTime: employeeTime.totalSecondBreakTime || 15, // Default break time
       currentTime: employeeTime.totalSecondBreakTime || 0,
-      type: 'break2'
+      type: "break2",
     },
     lunch: {
       used: employeeTime.lunchStart && employeeTime.lunchEnd,
       availableTime: employeeTime.totalLunchTime || 30, // Default lunch time
       currentTime: employeeTime.totalLunchTime || 0,
-      type: 'lunch'
-    }
+      type: "lunch",
+    },
   };
 
   // Priority order: break1 -> break2 -> lunch
-  const priorityOrder = ['break1', 'break2', 'lunch'];
-  
+  const priorityOrder = ["break1", "break2", "lunch"];
+
   for (const breakType of priorityOrder) {
     const breakInfo = breakUsage[breakType];
-    
+
     // If this break is NOT used, deduct from it
     if (!breakInfo.used) {
-      const newBreakTime = Math.max(0, breakInfo.availableTime - deductionAmount);
-      
+      const newBreakTime = Math.max(
+        0,
+        breakInfo.availableTime - deductionAmount,
+      );
+
       return {
         deductedFrom: breakType,
         deductionAmount: deductionAmount,
         newBreakTime: newBreakTime,
-        originalBreakTime: breakInfo.availableTime
+        originalBreakTime: breakInfo.availableTime,
       };
     }
   }
@@ -76,23 +104,34 @@ const calculateBreakDeduction = (employeeTime, bioBreakDuration) => {
   // If all breaks are used, deduct from lunch by default (as it typically has the most time)
   const lunchInfo = breakUsage.lunch;
   const newLunchTime = Math.max(0, lunchInfo.availableTime - deductionAmount);
-  
+
   return {
-    deductedFrom: 'lunch',
+    deductedFrom: "lunch",
     deductionAmount: deductionAmount,
     newBreakTime: newLunchTime,
     originalBreakTime: lunchInfo.availableTime,
-    note: "All breaks were used, deducted from lunch"
+    note: "All breaks were used, deducted from lunch",
   };
+
+    
+    
 };
 
 export const getEmployeeTimes = async (_req, res) => {
   try {
     const employeeTimes = await EmployeeTime.find();
-    res.status(200).json(employeeTimes);
+
+    res.status(200).json({
+      status: true,
+      message: "Fetch Employees times",
+      employeeTimes,
+    });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: error.message });
+    console.log(error.meesage);
+    res.status(500).json({
+      status: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -108,12 +147,14 @@ export const createEmployeeTimeIn = async (req, res) => {
     // If loginLimit is 1, allow only one record
     if (req.body.loginLimit === 1 && existingRecordsCount >= 1) {
       return res.status(409).json({
+        status: false,
         message: "Duplicate entry: Time-in already recorded for this date.",
       });
     }
     // If loginLimit is 2, allow up to two records
     else if (req.body.loginLimit === 2 && existingRecordsCount >= 2) {
       return res.status(409).json({
+        status: false,
         message: "Maximum 2 time-ins allowed for this date and shift.",
       });
     }
@@ -127,24 +168,46 @@ export const createEmployeeTimeIn = async (req, res) => {
       shift: req.body.shift,
     });
 
-    return res.status(201).json(newEmployeeTime);
+    return res.status(201).json({
+      status: true,
+      message: "Successfully Added Employee Time",
+      newEmployeeTime,
+    });
+
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    console.error(error.message);
+    return res.status(500).json({
+      status: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
 export const createEmployeeTimeOut = async (req, res) => {
   try {
+
     const employeeTime = await EmployeeTime.findById(req.params.id);
     if (!employeeTime) {
-      return res.status(404).json({ message: "Employee time not found" });
+      return res.status(404).json({
+        status: false,
+        message: "Employee time not found",
+      });
     }
+
     employeeTime.timeOut = req.body.timeOut;
     await employeeTime.save();
-    res.status(200).json(employeeTime);
+
+    res.status(200).json({
+      status: true,
+      message: "Create employee timeout",
+      employeeTime,
+    });
   } catch (error) {
-    console.error("Error saving employee time:", error.message);
-    res.status(500).json({ message: error.message });
+    console.error(error.message);
+    res.status(500).json({
+      status: false,
+      message: "Error saving employee time",
+    });
   }
 };
 
@@ -183,12 +246,18 @@ export const updateEmployeeTime = async (req, res) => {
 
     // Validate secret key from environment variable
     if (secretKey !== process.env.UPDATE_SECRET_KEY) {
-      return res.status(400).json({ message: "Invalid secret key" });
+      return res.status(400).json({
+        status: false,
+        message: "Invalid secret key",
+      });
     }
 
     const employeeTime = await EmployeeTime.findById(req.params.id);
     if (!employeeTime) {
-      return res.status(404).json({ message: "Employee time not found" });
+      return res.status(404).json({
+        status: false,
+        message: "Employee time not found",
+      });
     }
 
     // Update employee time fields
@@ -221,10 +290,17 @@ export const updateEmployeeTime = async (req, res) => {
     employeeTime.bioBreakDeductionAmount = bioBreakDeductionAmount;
 
     const updatedEmployeeTime = await employeeTime.save();
-    res.status(200).json(updatedEmployeeTime);
+    res.status(200).json({
+      status: true,
+      message: "Time updated successfully",
+      updatedEmployeeTime,
+    });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: error.message });
+    console.log(error.message);
+    res.status(500).json({
+      status: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -232,29 +308,52 @@ export const deleteEmployeeTime = async (req, res) => {
   try {
     const employeeTime = await EmployeeTime.findById(req.params.id);
     if (!employeeTime) {
-      return res.status(404).json({ message: "Employee time not found" });
+      return res.status(404).json({
+        status: false,
+        message: "Employee time not found",
+      });
     }
     await employeeTime.deleteOne();
-    res.status(200).json({ message: "Employee time deleted" });
+    res.status(200).json({
+      status: true,
+      message: "Employee time deleted",
+      employeeTime,
+    });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: error.message });
+    console.log(error.message);
+    res.status(500).json({
+      status: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
 export const getEmployeeTimeByEmployeeId = async (req, res) => {
   try {
+
     const employeeTime = await EmployeeTime.find({
       employeeId: req.user._id,
     }).sort({ createdAt: -1 }); // Sort by createdAt in descending order
 
     if (!employeeTime || employeeTime.length === 0) {
-      return res.status(404).json({ message: "Employee time not found" });
+      return res.status(404).json({
+        status: false,
+        message: "Employee time not found",
+      });
     }
-    res.status(200).json(employeeTime);
+
+    res.status(200).json({
+      status: true,
+      message: "Fetch Employee Time By id",
+    });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: error.message });
+
+    console.log(error.message);
+    res.status(500).json({
+      status: false,
+      message: "Internal Server Error",
+    });
+    
   }
 };
 
@@ -276,11 +375,14 @@ export const updateEmployeeTimeOut = async (req, res) => {
         timeOut: null, // Ensure we only update records where timeOut is null
       },
       updateFields,
-      { new: true } // Return the updated document
+      { new: true }, // Return the updated document
     );
 
     if (!employeeTime) {
-      return res.status(404).json({ message: "Employee time not found" });
+      return res.status(404).json({
+        status: false,
+        message: "Employee time not found",
+      });
     }
 
     // Trigger payroll update when time out is recorded
@@ -288,10 +390,17 @@ export const updateEmployeeTimeOut = async (req, res) => {
       await triggerPayrollUpdate(req.user._id, employeeTime.date);
     }
 
-    res.status(200).json(employeeTime);
+    res.status(200).json({
+      status: true,
+      message: "Update employee time out",
+      employeeTime,
+    });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: error.message });
+    console.log(error.message);
+    res.status(500).json({
+      status: false,
+      message: error.message,
+    });
   }
 };
 
@@ -301,13 +410,25 @@ export const getEmployeeTimeWithNullTimeOut = async (req, res) => {
       employeeId: req.user._id,
       timeOut: null,
     });
+
     if (!employeeTime) {
-      return res.status(404).json({ message: "Employee time not found" });
+      return res.status(404).json({
+        status: false,
+        message: "Employee time not found",
+      });
     }
-    res.status(200).json(employeeTime);
+
+    res.status(200).json({
+      status: true,
+      message: "Fetch Employee Time with Null Time Out",
+      employeeTime,
+    });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: error.message });
+    console.log(error.message);
+    res.status(500).json({
+      status: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -317,13 +438,17 @@ export const searchByNameAndDate = async (req, res) => {
 
     // Basic validation
     if (!name || !date) {
-      return res.status(400).json({ message: "Name and date are required" });
+      return res.status(400).json({
+        status: false,
+        message: "Name and date are required",
+      });
     }
 
     // Convert the date format from 'YYYY-MM-DD' to 'MM/DD/YYYY'
     const parsedDate = new Date(date);
-    const formattedDate = `${parsedDate.getMonth() + 1
-      }/${parsedDate.getDate()}/${parsedDate.getFullYear()}`;
+    const formattedDate = `${
+      parsedDate.getMonth() + 1
+    }/${parsedDate.getDate()}/${parsedDate.getFullYear()}`;
 
     let query = { date: formattedDate };
 
@@ -345,25 +470,34 @@ export const searchByNameAndDate = async (req, res) => {
       case "csv-staff":
         query.shift = "staff";
         break;
-      default:
+      default: {
         // Create a case-insensitive regex for partial name matching
-        { const nameRegex = new RegExp(name, "i");
-        query.employeeName = { $regex: nameRegex }; }
+        const nameRegex = new RegExp(name, "i");
+        query.employeeName = { $regex: nameRegex };
+      }
     }
 
     const employeeTimes = await EmployeeTime.find(query);
 
     // Handle no records found
     if (employeeTimes.length === 0) {
-      return res.status(404).json({ message: "No time records found" });
+      return res.status(404).json({
+        status: false,
+        message: "No time records found",
+      });
     }
 
-    res.status(200).json(employeeTimes);
+    res.status(200).json({
+      status: true,
+      message: "Searh name by date",
+      employeeTimes,
+    });
   } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ message: "Server error while fetching time records" });
+    console.error(error.message);
+    res.status(500).json({
+      status: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -387,21 +521,26 @@ export const updateEmployeeTimeBreak = async (req, res) => {
         dateSecondBreakStart: req.body.dateSecondBreakStart,
         dateSecondBreakEnd: req.body.dateSecondBreakEnd,
       },
-      { new: true } // Return the updated document
+      { new: true }, // Return the updated document
     );
 
     if (!employeeTime) {
       return res.status(404).json({
+        status: false,
         message: "No active time record found for the employee",
       });
     }
 
-    res.status(200).json(employeeTime);
+    res.status(200).json({
+      status: true,
+      message: "Update employee time break",
+      employeeTime,
+    });
   } catch (error) {
-    console.error("Error updating employee time:", error);
+    console.error(error.message);
     res.status(500).json({
-      message: "Failed to update employee time record",
-      error: error.message,
+      status: false,
+      message: "Internal Server Error",
     });
   }
 };
@@ -421,21 +560,26 @@ export const updateEmployeeTimelunch = async (req, res) => {
         dateLunchStart: req.body.dateLunchStart,
         dateLunchEnd: req.body.dateLunchEnd,
       },
-      { new: true } // Return the updated document
+      { new: true }, // Return the updated document
     );
 
     if (!employeeTime) {
       return res.status(404).json({
+        status: false,
         message: "No active time record found for the employee",
       });
     }
 
-    res.status(200).json(employeeTime);
+    res.status(200).json({
+      status: true,
+      message: "Update Employee Time Lunch",
+      employeeTime,
+    });
   } catch (error) {
-    console.error("Error updating employee time:", error);
+    console.error(error.message);
     res.status(500).json({
-      message: "Failed to update employee time record",
-      error: error.message,
+      status: false,
+      message: "Internal Server Error",
     });
   }
 };
@@ -449,13 +593,23 @@ export const getEmployeeTimeByEmployeeIdandDate = async (req, res) => {
     });
 
     if (!employeeTime) {
-      return res.status(404).json({ message: "Employee time not found" });
+      return res.status(404).json({
+        status: false,
+        message: "Employee time not found",
+      });
     }
 
-    res.status(200).json(employeeTime);
+    res.status(200).json({
+      status: true,
+      message: "Fetch Employee Time By Employee and Data",
+      employeeTime,
+    });
   } catch (error) {
-    console.error("Error fetching employee time:", error.message);
-    res.status(500).json({ message: error.message });
+    console.error(error.message);
+    res.status(500).json({
+      status: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -470,11 +624,15 @@ export const getIncompleteBreaks = async (req, res) => {
         { bioBreak: { $ne: null }, bioBreakEnd: null }, // Add bio break to incomplete checks
       ],
     }).select(
-      "employeeId employeeName date breakStart breakEnd secondBreakStart secondBreakEnd lunchStart lunchEnd bioBreak bioBreakEnd bioBreakDeductedFrom"
+      "employeeId employeeName date breakStart breakEnd secondBreakStart secondBreakEnd lunchStart lunchEnd bioBreak bioBreakEnd bioBreakDeductedFrom",
     );
 
     if (!incompleteBreaks || incompleteBreaks.length === 0) {
-      return res.status(200).json({ breaks: [] });
+      return res.status(200).json({  
+        status: true,
+        message: "",
+        breaks: [],
+      });
     }
 
     // Create a flat array with each incomplete break as a separate entry
@@ -532,13 +690,18 @@ export const getIncompleteBreaks = async (req, res) => {
     });
 
     res.status(200).json({
+      status: true,
       message: "Incomplete breaks retrieved successfully",
       count: formattedResponse.length,
       data: formattedResponse,
     });
+    
   } catch (error) {
-    console.error("Error fetching incomplete breaks:", error.message);
-    res.status(500).json({ message: error.message });
+    console.error(error.message);
+    res.status(500).json({ 
+      status: false,
+      message: "Internal Server Error", 
+    });
   }
 };
 
@@ -554,12 +717,16 @@ export const updateEmployeeBioBreak = async (req, res) => {
 
     if (!employeeTime) {
       return res.status(404).json({
+        status: false,
         message: "No active time record found for the employee",
       });
     }
 
     // Calculate which break to deduct time from based on usage
-    const breakDeductionInfo = calculateBreakDeduction(employeeTime, bioBreakDuration);
+    const breakDeductionInfo = calculateBreakDeduction(
+      employeeTime,
+      bioBreakDuration,
+    );
 
     // Update the employee time record
     const updatedEmployeeTime = await EmployeeTime.findOneAndUpdate(
@@ -575,17 +742,17 @@ export const updateEmployeeBioBreak = async (req, res) => {
         bioBreakDeductedFrom: breakDeductionInfo.deductedFrom,
         bioBreakDeductionAmount: breakDeductionInfo.deductionAmount,
         // Update the deducted break's total time if applicable
-        ...(breakDeductionInfo.deductedFrom === 'break1' && {
-          totalBreakTime: breakDeductionInfo.newBreakTime
+        ...(breakDeductionInfo.deductedFrom === "break1" && {
+          totalBreakTime: breakDeductionInfo.newBreakTime,
         }),
-        ...(breakDeductionInfo.deductedFrom === 'break2' && {
-          totalSecondBreakTime: breakDeductionInfo.newBreakTime
+        ...(breakDeductionInfo.deductedFrom === "break2" && {
+          totalSecondBreakTime: breakDeductionInfo.newBreakTime,
         }),
-        ...(breakDeductionInfo.deductedFrom === 'lunch' && {
-          totalLunchTime: breakDeductionInfo.newBreakTime
+        ...(breakDeductionInfo.deductedFrom === "lunch" && {
+          totalLunchTime: breakDeductionInfo.newBreakTime,
         }),
       },
-      { new: true }
+      { new: true },
     );
 
     res.status(200).json({
@@ -595,10 +762,10 @@ export const updateEmployeeBioBreak = async (req, res) => {
       data: updatedEmployeeTime,
     });
   } catch (error) {
-    console.error("Error updating bio break:", error);
+    console.error(error.message);
     res.status(500).json({
-      message: "Failed to update bio break",
-      error: error.message,
+      status: false,
+      message: "Internal Server Error",
     });
   }
 };
@@ -612,6 +779,7 @@ export const getBioBreakSummary = async (req, res) => {
 
     if (!employeeTime) {
       return res.status(404).json({
+        status: false,
         message: "No active time record found",
       });
     }
@@ -620,61 +788,63 @@ export const getBioBreakSummary = async (req, res) => {
       break1: {
         used: !!(employeeTime.breakStart && employeeTime.breakEnd),
         availableTime: employeeTime.totalBreakTime || 15,
-        timeUsed: employeeTime.totalBreakTime || 0
+        timeUsed: employeeTime.totalBreakTime || 0,
       },
       break2: {
         used: !!(employeeTime.secondBreakStart && employeeTime.secondBreakEnd),
         availableTime: employeeTime.totalSecondBreakTime || 15,
-        timeUsed: employeeTime.totalSecondBreakTime || 0
+        timeUsed: employeeTime.totalSecondBreakTime || 0,
       },
       lunch: {
         used: !!(employeeTime.lunchStart && employeeTime.lunchEnd),
         availableTime: employeeTime.totalLunchTime || 30,
-        timeUsed: employeeTime.totalLunchTime || 0
-      }
+        timeUsed: employeeTime.totalLunchTime || 0,
+      },
     };
 
     const breakSummary = {
       break1: {
         used: breakUsage.break1.used,
         availableTime: breakUsage.break1.availableTime,
-        timeUsed: breakUsage.break1.timeUsed
+        timeUsed: breakUsage.break1.timeUsed,
       },
       break2: {
         used: breakUsage.break2.used,
         availableTime: breakUsage.break2.availableTime,
-        timeUsed: breakUsage.break2.timeUsed
+        timeUsed: breakUsage.break2.timeUsed,
       },
       lunch: {
         used: breakUsage.lunch.used,
         availableTime: breakUsage.lunch.availableTime,
-        timeUsed: breakUsage.lunch.timeUsed
+        timeUsed: breakUsage.lunch.timeUsed,
       },
       bioBreak: {
-        hasBioBreak: !!(employeeTime.bioBreak),
+        hasBioBreak: !!employeeTime.bioBreak,
         bioBreakDuration: employeeTime.bioBreakDuration || 0,
-        deductedFrom: employeeTime.bioBreakDeductedFrom || 'none'
-      }
+        deductedFrom: employeeTime.bioBreakDeductedFrom || "none",
+      },
     };
 
     // Calculate which break would be deducted for a new bio break
     const potentialDeduction = calculateBreakDeduction(employeeTime, 15); // 15 minutes as example
 
     // Get available breaks for deduction
-    const availableForDeduction = ['break1', 'break2', 'lunch'].filter(breakType => !breakUsage[breakType].used);
+    const availableForDeduction = ["break1", "break2", "lunch"].filter(
+      (breakType) => !breakUsage[breakType].used,
+    );
 
     res.status(200).json({
+      status: true,
       message: "Bio break summary retrieved successfully",
       currentStatus: breakSummary,
       nextBioBreakWouldDeductFrom: potentialDeduction.deductedFrom,
-      availableForDeduction: availableForDeduction
+      availableForDeduction: availableForDeduction,
     });
   } catch (error) {
-    console.error("Error getting bio break summary:", error);
+    console.error(error.message);
     res.status(500).json({
-      message: "Failed to get bio break summary",
-      error: error.message,
+      status: false,
+      message: "Internal Server Error",
     });
   }
 };
-
