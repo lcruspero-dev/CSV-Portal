@@ -2,9 +2,6 @@ const asyncHandler = require("express-async-handler");
 const User = require("../models/userModel");
 const Ticket = require("../models/ticketModel");
 
-// @desc    Get user tickets
-// @route   GET /api/tickets
-// @access  Private
 const getTickets = asyncHandler(async (req, res) => {
   // Get user using the id and JWT
   const user = await User.findById(req.user.id);
@@ -19,11 +16,10 @@ const getTickets = asyncHandler(async (req, res) => {
     .populate("user", "name email");
 
   res.status(200).json(tickets);
+  
 });
 
-// @desc    Get user ticket
-// @route   GET /api/tickets/:id
-// @access  Private
+
 const getTicket = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id);
 
@@ -48,9 +44,7 @@ const getTicket = asyncHandler(async (req, res) => {
   res.status(200).json(ticket);
 });
 
-// @desc    Create new ticket
-// @route   POST /api/tickets
-// @access  Private
+
 const createTicket = asyncHandler(async (req, res) => {
   const {
     category,
@@ -105,9 +99,6 @@ const createTicket = asyncHandler(async (req, res) => {
   res.status(201).json(ticket);
 });
 
-// @desc    Delete ticket
-// @route   DELETE /api/tickets/:id
-// @access  Private
 const deleteTicket = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id);
 
@@ -128,9 +119,6 @@ const deleteTicket = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true });
 });
 
-// @desc    Update ticket
-// @route   PUT /api/tickets/:id
-// @access  Private
 const updateTicket = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id);
 
@@ -181,9 +169,7 @@ const updateTicket = asyncHandler(async (req, res) => {
   res.status(200).json(updatedTicket);
 });
 
-// @desc    View all tickets
-// @route   GET /api/tickets/all
-// @access  Private (Admin)
+
 const viewAllTickets = asyncHandler(async (req, res) => {
   const tickets = await Ticket.find()
     .sort({ createdAt: -1 })
@@ -191,9 +177,7 @@ const viewAllTickets = asyncHandler(async (req, res) => {
   res.status(200).json(tickets);
 });
 
-// @desc    View open tickets
-// @route   GET /api/tickets/open
-// @access  Private
+
 const viewOpenTickets = asyncHandler(async (req, res) => {
   const tickets = await Ticket.find({
     status: { $in: ["open", "In Progress"] },
@@ -203,9 +187,7 @@ const viewOpenTickets = asyncHandler(async (req, res) => {
   res.status(200).json(tickets);
 });
 
-// @desc    View closed tickets
-// @route   GET /api/tickets/closed
-// @access  Private
+
 const viewClosedTickets = asyncHandler(async (req, res) => {
   const tickets = await Ticket.find({ status: "closed" })
     .sort({ createdAt: -1 })
@@ -213,9 +195,7 @@ const viewClosedTickets = asyncHandler(async (req, res) => {
   res.status(200).json(tickets);
 });
 
-// @desc    View tickets by department
-// @route   GET /api/tickets/department/:dept
-// @access  Private
+
 const viewTicketsByDepartment = asyncHandler(async (req, res) => {
   const { dept } = req.params;
 
@@ -230,9 +210,7 @@ const viewTicketsByDepartment = asyncHandler(async (req, res) => {
   res.status(200).json(tickets);
 });
 
-// @desc    View tickets by priority
-// @route   GET /api/tickets/priority/:level
-// @access  Private
+
 const viewTicketsByPriority = asyncHandler(async (req, res) => {
   const { level } = req.params;
 

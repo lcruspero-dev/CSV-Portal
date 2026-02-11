@@ -34,7 +34,7 @@ exports.createScheduleEntry = async (req, res) => {
       const updatedScheduleEntry = await ScheduleEntry.findByIdAndUpdate(
         existingScheduleEntry._id,
         { ...req.body },
-        { new: true }
+        { new: true },
       );
       res.status(200).json(updatedScheduleEntry);
     } else {
@@ -61,7 +61,7 @@ exports.updateScheduleEntry = async (req, res) => {
 
     // Check if the date already exists in the schedule array
     const existingSchedule = scheduleEntry.schedule.find(
-      (entry) => entry.date === date
+      (entry) => entry.date === date,
     );
 
     // Determine if we should clear startTime and endTime
@@ -131,9 +131,8 @@ exports.updateTeamLeaderToInactive = async (req, res) => {
 // Get all attendance entries
 exports.getAttendanceEntries = async (req, res) => {
   try {
-    const attendanceEntries = await AttendanceEntry.find().populate(
-      "employeeId"
-    );
+    const attendanceEntries =
+      await AttendanceEntry.find().populate("employeeId");
     res.status(200).json(attendanceEntries);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -156,7 +155,7 @@ exports.createAttendanceEntry = async (req, res) => {
       const updatedEntry = await AttendanceEntry.findByIdAndUpdate(
         existingEntry._id,
         { ...req.body },
-        { new: true } // Return the updated document
+        { new: true }, // Return the updated document
       );
       return res.status(200).json(updatedEntry);
     } else {
@@ -178,7 +177,7 @@ exports.updateAttendanceEntry = async (req, res) => {
     const updatedAttendanceEntry = await AttendanceEntry.findByIdAndUpdate(
       id,
       { status, checkinTime, checkoutTime },
-      { new: true }
+      { new: true },
     );
     res.status(200).json(updatedAttendanceEntry);
   } catch (error) {
@@ -241,7 +240,7 @@ exports.getSchedulePerEmployeeByDate = async (req, res) => {
     }
 
     const schedule = scheduleEntry.schedule.find(
-      (entry) => entry.date === date
+      (entry) => entry.date === date,
     );
 
     if (!schedule) {

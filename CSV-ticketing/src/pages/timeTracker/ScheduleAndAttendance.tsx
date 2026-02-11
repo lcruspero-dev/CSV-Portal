@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useEffect, useState, useRef } from "react";
 import {
   addDays,
   eachDayOfInterval,
@@ -9,6 +10,7 @@ import {
   isToday,
   startOfMonth,
   startOfWeek,
+  parseISO,
 } from "date-fns";
 import {
   CalendarIcon,
@@ -22,8 +24,6 @@ import {
   TrendingUp,
   Eye,
 } from "lucide-react";
-import React, { useEffect, useState } from "react";
-
 import {
   ScheduleAndAttendanceAPI,
   TimeRecordAPI,
@@ -31,7 +31,6 @@ import {
 } from "@/API/endpoint";
 import { AbsenteeismAnalytics } from "@/components/kit/AbsenteeismAnalytics";
 import AddEmployee from "@/components/kit/AddEmployee";
-import { Attendance } from "@/components/kit/EmployeeAttendance";
 import { IncompleteBreaksDialog } from "@/components/kit/IncompleteBreaksDialog";
 import { EmployeesOnLunchDialog } from "@/components/kit/employeeLunchDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -261,6 +260,32 @@ const displayShiftInfo = (
   };
 };
 
+// Helper to get attendance color
+const getAttendanceColor = (status: AttendanceStatus): string => {
+  switch (status) {
+    case "Present":
+      return "bg-green-100 text-green-800 border-green-200";
+    case "NCNS":
+      return "bg-red-100 text-red-800 border-red-200";
+    case "Tardy":
+      return "bg-yellow-100 text-yellow-800 border-yellow-200";
+    case "Rest Day":
+      return "bg-gray-100 text-gray-800 border-gray-200";
+    case "RDOT":
+      return "bg-teal-100 text-teal-800 border-teal-200";
+    case "PTO":
+      return "bg-gray-100 text-black border-gray-50";
+    case "VTO":
+      return "bg-blue-100 text-blue-800 border-blue-200";
+    case "LOA":
+      return "bg-gray-100 text-black border-gray-50";
+    case "Suspended":
+      return "bg-orange-100 text-orange-800 border-orange-200";
+    default:
+      return "bg-gray-100 text-gray-800 border-gray-200";
+  }
+};
+
 const ScheduleAndAttendance: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>("weekly");
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
@@ -293,6 +318,28 @@ const ScheduleAndAttendance: React.FC = () => {
   const [otHours, setOtHours] = useState<string>("");
   const [otMinutes, setOtMinutes] = useState<string>("");
   const [showOtInput, setShowOtInput] = useState<boolean>(false);
+
+  // Refs for click outside detection
+  const fromCalendarRef = useRef<HTMLDivElement>(null);
+  const toCalendarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (fromCalendarRef.current && 
+          !fromCalendarRef.current.contains(event.target as Node)) {
+        setShowFromCalendar(false);
+      }
+      if (toCalendarRef.current && 
+          !toCalendarRef.current.contains(event.target as Node)) {
+        setShowToCalendar(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const DepartmentFilterDropdown = () => {
     return (
@@ -372,7 +419,7 @@ const ScheduleAndAttendance: React.FC = () => {
             }
 
             return {
-              date: sched.date,
+              date: sched.date, 
               shiftType: shiftType,
               _id: sched._id || Date.now().toString(),
               employeeId: entry.employeeId,
@@ -401,6 +448,7 @@ const ScheduleAndAttendance: React.FC = () => {
       const formattedAttendance = response.data.map((entry: any) => ({
         ...entry,
         date: new Date(entry.date),
+        status: entry.status as AttendanceStatus,
       }));
       setAttendance(formattedAttendance);
     } catch (err) {
@@ -519,16 +567,17 @@ const ScheduleAndAttendance: React.FC = () => {
   };
 
   const goToToday = () => {
-    setCurrentDate(new Date());
+    const today = new Date();
+    setCurrentDate(today);
     if (viewMode === "weekly") {
-      setFromDate(startOfWeek(new Date()));
-      setToDate(endOfWeek(new Date()));
+      setFromDate(startOfWeek(today));
+      setToDate(endOfWeek(today));
     } else if (viewMode === "monthly") {
-      setFromDate(startOfMonth(new Date()));
-      setToDate(endOfMonth(new Date()));
+      setFromDate(startOfMonth(today));
+      setToDate(endOfMonth(today));
     } else {
-      setFromDate(startOfWeek(new Date()));
-      setToDate(endOfWeek(new Date()));
+      setFromDate(startOfWeek(today));
+      setToDate(endOfWeek(today));
     }
   };
 
@@ -574,7 +623,7 @@ const ScheduleAndAttendance: React.FC = () => {
       (entry) =>
         entry.employeeId === employeeId &&
         entry.date &&
-        isSameDay(new Date(entry.date), date),
+        isSameDay(parseISO(entry.date), date),
     );
   };
 
@@ -633,7 +682,7 @@ const ScheduleAndAttendance: React.FC = () => {
         const existingEntryIndex = updatedSchedule.findIndex(
           (entry) =>
             entry.employeeId === selectedEmployee.id &&
-            isSameDay(new Date(entry.date), currentDate),
+            isSameDay(parseISO(entry.date), currentDate),
         );
 
         if (existingEntryIndex !== -1) {
@@ -691,7 +740,7 @@ const ScheduleAndAttendance: React.FC = () => {
 
       setSchedule(updatedSchedule);
       setIsAddShiftOpen(false);
-      setRepeatDays(1);
+      resetDialogState();
     }
   };
 
@@ -705,18 +754,8 @@ const ScheduleAndAttendance: React.FC = () => {
       setSelectedShiftType(entry.shiftType.type);
 
       if (hasShiftTime(entry.shiftType.type)) {
-        if (entry.shiftType.startTime) {
-          setSelectedStartTime(entry.shiftType.startTime);
-        } else {
-          setSelectedStartTime("00:00");
-        }
-
-        if (entry.shiftType.endTime) {
-          setSelectedEndTime(entry.shiftType.endTime);
-        } else {
-          setSelectedEndTime("00:00");
-        }
-
+        setSelectedStartTime(entry.shiftType.startTime || "00:00");
+        setSelectedEndTime(entry.shiftType.endTime || "00:00");
         setSelectedBreak1(entry.shiftType.break1 || undefined);
         setSelectedLunch(entry.shiftType.lunch || undefined);
         setSelectedBreak2(entry.shiftType.break2 || undefined);
@@ -731,23 +770,41 @@ const ScheduleAndAttendance: React.FC = () => {
     }
 
     setIsAddShiftOpen(true);
+    setActiveTab("schedule");
   };
 
   const handleAttendanceCellClick = (employee: Employee, date: Date) => {
-    if (date > new Date()) return;
+    if (date > new Date()) {
+      alert("Cannot set attendance for future dates");
+      return;
+    }
+    
     setSelectedEmployee(employee);
     setSelectedDate(date);
+    
     const entry = findAttendanceEntry(employee.id, date);
     setSelectedAttendanceStatus(entry ? entry.status : "Present");
+    
+    // Set OT data if exists
+    if (entry?.ot) {
+      const [hours, minutes] = entry.ot.split(':');
+      setOtHours(hours);
+      setOtMinutes(minutes);
+      setShowOtInput(true);
+    } else {
+      setOtHours("");
+      setOtMinutes("");
+      setShowOtInput(false);
+    }
+    
     setIsAddShiftOpen(true);
+    setActiveTab("attendance");
   };
 
   const handleUpdateAttendance = async () => {
     if (selectedEmployee && selectedDate) {
       try {
-        const formattedDate = `${
-          selectedDate.getMonth() + 1
-        }/${selectedDate.getDate()}/${selectedDate.getFullYear()}`;
+        const formattedDate = `${selectedDate.getMonth() + 1}/${selectedDate.getDate()}/${selectedDate.getFullYear()}`;
 
         const needsTimeData = [
           "Tardy",
@@ -777,30 +834,20 @@ const ScheduleAndAttendance: React.FC = () => {
           status: selectedAttendanceStatus,
         };
 
-        if (needsTimeData && showOtInput && (otHours || otMinutes)) {
+        // Only include OT for Present status
+        if (selectedAttendanceStatus === "Present" && showOtInput && (otHours || otMinutes)) {
           const hours = otHours || "0";
           const minutes = otMinutes || "0";
-          attendanceData.ot = `${hours.padStart(2, "0")}:${minutes.padStart(
-            2,
-            "0",
-          )}`;
-        } else if (!needsTimeData) {
+          attendanceData.ot = `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}`;
+        } else {
           attendanceData.ot = null;
         }
 
         if (needsTimeData && timeRecordData) {
-          if (timeRecordData.timeIn) {
-            attendanceData.logIn = timeRecordData.timeIn;
-          }
-          if (timeRecordData.timeOut) {
-            attendanceData.logOut = timeRecordData.timeOut;
-          }
-          if (timeRecordData.totalHours) {
-            attendanceData.totalHours = timeRecordData.totalHours;
-          }
-          if (timeRecordData.shift) {
-            attendanceData.shift = timeRecordData.shift;
-          }
+          attendanceData.logIn = timeRecordData.timeIn || null;
+          attendanceData.logOut = timeRecordData.timeOut || null;
+          attendanceData.totalHours = timeRecordData.totalHours || null;
+          attendanceData.shift = timeRecordData.shift || null;
         } else if (!needsTimeData) {
           attendanceData.logIn = null;
           attendanceData.logOut = null;
@@ -810,19 +857,15 @@ const ScheduleAndAttendance: React.FC = () => {
 
         await ScheduleAndAttendanceAPI.createAttendanceEntry(attendanceData);
 
-        const updatedEntry = {
+        const updatedEntry: AttendanceEntry = {
           employeeId: selectedEmployee.id,
           date: selectedDate,
           status: selectedAttendanceStatus,
-          ...(needsTimeData && {
-            ...(attendanceData.logIn && { logIn: attendanceData.logIn }),
-            ...(attendanceData.logOut && { logOut: attendanceData.logOut }),
-            ...(attendanceData.totalHours && {
-              totalHours: attendanceData.totalHours,
-            }),
-            ...(attendanceData.ot && { ot: attendanceData.ot }),
-            ...(attendanceData.shift && { shift: attendanceData.shift }),
-          }),
+          ...(attendanceData.logIn && { logIn: attendanceData.logIn }),
+          ...(attendanceData.logOut && { logOut: attendanceData.logOut }),
+          ...(attendanceData.totalHours && { totalHours: attendanceData.totalHours }),
+          ...(attendanceData.ot && { ot: attendanceData.ot }),
+          ...(attendanceData.shift && { shift: attendanceData.shift }),
         };
 
         setAttendance((prev) => {
@@ -840,6 +883,7 @@ const ScheduleAndAttendance: React.FC = () => {
         });
 
         setIsAddShiftOpen(false);
+        resetDialogState();
       } catch (err) {
         console.error("Error updating attendance:", err);
         setError("Failed to update attendance");
@@ -930,34 +974,13 @@ const ScheduleAndAttendance: React.FC = () => {
                       </Button>
                       {showFromCalendar && (
                         <div
+                          ref={fromCalendarRef}
                           className="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg"
-                          ref={(node) => {
-                            if (node) {
-                              const handleClickOutside = (
-                                event: MouseEvent,
-                              ) => {
-                                if (!node.contains(event.target as Node)) {
-                                  setShowFromCalendar(false);
-                                  document.removeEventListener(
-                                    "mousedown",
-                                    handleClickOutside,
-                                  );
-                                }
-                              };
-                              document.addEventListener(
-                                "mousedown",
-                                handleClickOutside,
-                              );
-                            }
-                          }}
                         >
                           <CalendarComponent
                             mode="single"
                             selected={fromDate}
-                            onSelect={(date) => {
-                              handleFromDateSelect(date);
-                              setShowFromCalendar(false);
-                            }}
+                            onSelect={handleFromDateSelect}
                             initialFocus
                           />
                         </div>
@@ -980,34 +1003,13 @@ const ScheduleAndAttendance: React.FC = () => {
                       </Button>
                       {showToCalendar && (
                         <div
+                          ref={toCalendarRef}
                           className="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg"
-                          ref={(node) => {
-                            if (node) {
-                              const handleClickOutside = (
-                                event: MouseEvent,
-                              ) => {
-                                if (!node.contains(event.target as Node)) {
-                                  setShowToCalendar(false);
-                                  document.removeEventListener(
-                                    "mousedown",
-                                    handleClickOutside,
-                                  );
-                                }
-                              };
-                              document.addEventListener(
-                                "mousedown",
-                                handleClickOutside,
-                              );
-                            }
-                          }}
                         >
                           <CalendarComponent
                             mode="single"
                             selected={toDate}
-                            onSelect={(date) => {
-                              handleToDateSelect(date);
-                              setShowToCalendar(false);
-                            }}
+                            onSelect={handleToDateSelect}
                             initialFocus
                           />
                         </div>
@@ -1139,7 +1141,7 @@ const ScheduleAndAttendance: React.FC = () => {
                                   handleScheduleCellClick(employee, day)
                                 }
                               >
-                                {scheduleEntry && scheduleEntry.shiftType && (
+                                {scheduleEntry && scheduleEntry.shiftType ? (
                                   <TooltipProvider>
                                     <Tooltip>
                                       <TooltipTrigger asChild>
@@ -1189,6 +1191,10 @@ const ScheduleAndAttendance: React.FC = () => {
                                       </TooltipContent>
                                     </Tooltip>
                                   </TooltipProvider>
+                                ) : (
+                                  <div className="text-gray-400 text-sm">
+                                    No shift
+                                  </div>
                                 )}
                               </td>
                             );
@@ -1200,16 +1206,148 @@ const ScheduleAndAttendance: React.FC = () => {
                 </div>
               </TabsContent>
 
-              <TabsContent value="attendance">
-                <Attendance
-                  viewMode={viewMode}
-                  currentDate={currentDate}
-                  filteredEmployees={filteredEmployees}
-                  attendance={attendance}
-                  handleAttendanceCellClick={handleAttendanceCellClick}
-                  fromDate={fromDate}
-                  toDate={toDate}
-                />
+              <TabsContent value="attendance" className="m-0">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead>
+                      <tr className="bg-gray-50">
+                        <th className="p-3 border border-gray-200 sticky left-0 bg-gray-50 z-10 min-w-48">
+                          <div className="flex items-center gap-2">
+                            <Users className="h-4 w-4 text-gray-500" />
+                            <span className="font-medium text-gray-700">
+                              Employee
+                            </span>
+                          </div>
+                        </th>
+                        {days.map((day) => (
+                          <th
+                            key={day.toString()}
+                            className="p-3 border border-gray-200 text-center min-w-36"
+                          >
+                            <div
+                              className={`font-medium ${
+                                isToday(day)
+                                  ? "text-purple-600 font-semibold"
+                                  : "text-gray-700"
+                              }`}
+                            >
+                              {format(day, "EEE")}
+                            </div>
+                            <div
+                              className={`text-sm ${
+                                isToday(day)
+                                  ? "text-purple-600 font-semibold"
+                                  : "text-gray-600"
+                              }`}
+                            >
+                              {format(day, "MMM d")}
+                            </div>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {filteredEmployees.map((employee) => (
+                        <tr
+                          key={employee.id}
+                          className="hover:bg-gray-50 transition-colors"
+                        >
+                          <td className="p-3 border border-gray-200 sticky left-0 z-10 bg-white">
+                            <div className="flex items-center">
+                              <Avatar className="h-8 w-8 mr-3">
+                                <AvatarImage
+                                  src={employee.avatarUrl}
+                                  alt={employee.name}
+                                />
+                                <AvatarFallback className="bg-purple-100 text-purple-700">
+                                  {employee.name.substring(0, 2).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <div className="font-medium text-gray-900">
+                                  {employee.name}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {employee.department}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          {days.map((day) => {
+                            const attendanceEntry = findAttendanceEntry(
+                              employee.id,
+                              day,
+                            );
+                            return (
+                              <td
+                                key={day.toString()}
+                                className={`p-3 border border-gray-200 text-center cursor-pointer ${
+                                  isToday(day) ? "bg-purple-50" : ""
+                                } ${day > new Date() ? "cursor-not-allowed bg-gray-50" : "hover:bg-gray-50"}`}
+                                onClick={() =>
+                                  day <= new Date() && 
+                                  handleAttendanceCellClick(employee, day)
+                                }
+                              >
+                                {attendanceEntry ? (
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <div>
+                                          <Badge
+                                            variant="outline"
+                                            className={`w-full flex items-center justify-center px-2 py-1 ${getAttendanceColor(
+                                              attendanceEntry.status,
+                                            )}`}
+                                          >
+                                            {attendanceEntry.status}
+                                          </Badge>
+                                          {attendanceEntry.ot && (
+                                            <span className="text-xs text-gray-600 mt-1 block">
+                                              OT: {attendanceEntry.ot}
+                                            </span>
+                                          )}
+                                          {attendanceEntry.totalHours && (
+                                            <span className="text-xs text-gray-600 mt-1 block">
+                                              {attendanceEntry.totalHours}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent className="max-w-xs whitespace-pre-line text-sm">
+                                        <div className="space-y-1">
+                                          <p className="font-semibold">
+                                            {attendanceEntry.status}
+                                          </p>
+                                          {attendanceEntry.logIn && (
+                                            <p>In: {attendanceEntry.logIn}</p>
+                                          )}
+                                          {attendanceEntry.logOut && (
+                                            <p>Out: {attendanceEntry.logOut}</p>
+                                          )}
+                                          {attendanceEntry.totalHours && (
+                                            <p>Hours: {attendanceEntry.totalHours}</p>
+                                          )}
+                                          {attendanceEntry.ot && (
+                                            <p>OT: {attendanceEntry.ot}</p>
+                                          )}
+                                        </div>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                ) : (
+                                  <div className="text-gray-400 text-sm">
+                                    {day > new Date() ? "Future" : "Not set"}
+                                  </div>
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </TabsContent>
             </Tabs>
           </CardContent>
@@ -1437,7 +1575,16 @@ const ScheduleAndAttendance: React.FC = () => {
                   <RadioGroup
                     value={selectedAttendanceStatus}
                     onValueChange={(value: string) => {
-                      setSelectedAttendanceStatus(value as AttendanceStatus);
+                      const newStatus = value as AttendanceStatus;
+                      setSelectedAttendanceStatus(newStatus);
+                      // Show OT input only for Present status
+                      if (newStatus === "Present") {
+                        setShowOtInput(true);
+                      } else {
+                        setShowOtInput(false);
+                        setOtHours("");
+                        setOtMinutes("");
+                      }
                     }}
                     className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto"
                   >
