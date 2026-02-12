@@ -2,11 +2,12 @@ import {
   ScheduleEntry,
   AttendanceEntry,
   TeamLeaderEntry,
-} from "../models/ScheduleAndAttendanceModel";
+} from "../models/ScheduleAndAttendanceModel.js";
 
 // Get all schedule entries
 export const getScheduleEntries = async (req, res) => {
   try {
+
     const scheduleEntries = await ScheduleEntry.find({
       teamLeader: {
         $ne: "Inactive",
@@ -25,6 +26,7 @@ export const getScheduleEntries = async (req, res) => {
       message: "Successfully Fetch Schedule Entries",
       scheduleEntries,
     });
+
   } catch (error) {
     console.error(error.message);
     res.status(500).json({
@@ -168,11 +170,13 @@ export const updateTeamLeaderToInactive = async (req, res) => {
     });
 
   } catch (error) {
+
     console.error(error.message);
     res.status(500).json({
       status: false,
       message: "Internal Server Error",
     });
+
   }
 };
 
@@ -187,12 +191,15 @@ export const getAttendanceEntries = async (req, res) => {
       message: "Fetch attendance entries",
       attendanceEntries,
     });
+
   } catch (error) {
+
     console.error(error.message);
     res.status(500).json({
       status: false,
       message: "Internal Server Error",
     });
+
   }
 };
 
