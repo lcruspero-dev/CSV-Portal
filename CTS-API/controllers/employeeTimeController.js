@@ -1,9 +1,9 @@
-import EmployeeTime from "../models/employeeTimeModel";
+import EmployeeTime from "../models/employeeTimeModel.js";
 import mongoose from "mongoose";
-import { autoUpdatePayrollFromTimeTracker } from "./payrollController";
+import { autoUpdatePayrollFromTimeTracker } from "./payrollController.js";
 
 // Helper function to trigger payroll update
-const triggerPayrollUpdate = async (employeeId, date, req, res) => {
+export const triggerPayrollUpdate = async (employeeId, date, req, res) => {
   try {
     // Calculate date range for the current month
     const currentDate = new Date(date);
@@ -54,7 +54,7 @@ const triggerPayrollUpdate = async (employeeId, date, req, res) => {
 };
 
 // Helper function to calculate which break to deduct time from
-const calculateBreakDeduction = (employeeTime, bioBreakDuration) => {
+export const calculateBreakDeduction = (employeeTime, bioBreakDuration) => {
   const deductionAmount = bioBreakDuration || 15; // Default to 15 minutes if not provided
 
   // Check break usage and available time in order of priority

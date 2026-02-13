@@ -1,4 +1,4 @@
-import Coaching from "../models/coachingModel";
+import Coaching from "../models/coachingModel.js";
 import mongoose from "mongoose";
 
 // Authorization middleware

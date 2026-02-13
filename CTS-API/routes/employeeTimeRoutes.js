@@ -15,7 +15,7 @@ const {
   getEmployeeTimeByEmployeeIdandDate,
   getIncompleteBreaks,
   updateEmployeeBioBreak
-} = require("../controllers/employeeTimeController");
+} = require("../controllers/employeeTimeController.js");
 const { protect, verifyAdmin } = require("../middleware/authMiddleware");
 
 router

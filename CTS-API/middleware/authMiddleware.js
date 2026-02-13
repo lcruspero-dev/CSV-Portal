@@ -1,8 +1,7 @@
-const jwt = require("jsonwebtoken");
-const asyncHandler = require("express-async-handler");
-const User = require("../models/userModel");
+import jwt  from"jsonwebtoken";
+import User  from"../models/userModel.js";
 
-const protect = asyncHandler(async (req, res, next) => {
+export const protect = async (req, res, next) => {
   let token;
 
   if (
@@ -29,10 +28,10 @@ const protect = asyncHandler(async (req, res, next) => {
     res.status(401);
     throw new Error("Not authorized to access this route");
   }
-});
+};
 
 // [SECTION] Verify Admin
-const verifyAdmin = (req, res, next) => {
+export const verifyAdmin = (req, res, next) => {
   if (req.user && req.user.isAdmin) {
     next();
   } else {
@@ -43,4 +42,3 @@ const verifyAdmin = (req, res, next) => {
   }
 };
 
-module.exports = { protect, verifyAdmin };

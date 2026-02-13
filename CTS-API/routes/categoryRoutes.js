@@ -1,14 +1,14 @@
-// routes/categoryRoutes.js
-const express = require("express");
-const router = express.Router();
-const {
+import express from "express";
+import {
   createCategory,
   getAllCategories,
   getCategory,
   updateCategory,
   deleteCategory,
   getCategoriesByRole,
-} = require("../controllers/categoryController");
+} from "../controllers/categoryController.js";
+
+const router = express.Router();
 
 router.route("/").post(createCategory).get(getAllCategories);
 
@@ -20,4 +20,4 @@ router
 
 router.route("/role/:role").get(getCategoriesByRole);
 
-module.exports = router;
+export default router;

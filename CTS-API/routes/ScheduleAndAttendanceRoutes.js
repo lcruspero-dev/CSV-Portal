@@ -1,6 +1,18 @@
 import express from "express";
-import scheduleAndAttendanceController from "../controllers/ScheduleAndAttendanceController";
-import { protect } from "../middleware/authMiddleware";
+import {
+  getScheduleEntries,
+  createAttendanceEntry,
+  updateAttendanceEntry,
+  createScheduleEntry,
+  updateScheduleEntry,
+  getAttendanceEntries,
+  getAllTeamLeaderEntries,
+  createTeamLeaderEntry,
+  checkExistingEntry,
+  getSchedulePerEmployee,
+  getSchedulePerEmployeeByDate
+ } from '../controllers/ScheduleAndAttendanceController.js'
+import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -8,64 +20,64 @@ const router = express.Router();
 router.get(
   "/schedule-entries",
   protect,
-  scheduleAndAttendanceController.getScheduleEntries
+  getScheduleEntries
 );
 router.post(
   "/schedule-entries",
   protect,
-  scheduleAndAttendanceController.createScheduleEntry
+ createScheduleEntry
 );
 router.put(
   "/schedule-entries/:id",
   protect,
-  scheduleAndAttendanceController.updateScheduleEntry
+ updateScheduleEntry
 );
 
 // Attendance Entry Routes
 router.get(
   "/attendance-entries",
   protect,
-  scheduleAndAttendanceController.getAttendanceEntries
+ getAttendanceEntries
 );
 router.post(
   "/attendance-entries",
   protect,
-  scheduleAndAttendanceController.createAttendanceEntry
+ createAttendanceEntry
 );
 router.put(
   "/attendance-entries/:id",
   protect,
-  scheduleAndAttendanceController.updateAttendanceEntry
+ updateAttendanceEntry
 );
 
 router.get(
   "/team-leader-entries",
   protect,
-  scheduleAndAttendanceController.getAllTeamLeaderEntries
+ getAllTeamLeaderEntries
 );
 
 router.post(
   "/team-leader-entries",
   protect,
-  scheduleAndAttendanceController.createTeamLeaderEntry
+ createTeamLeaderEntry
 );
 
 router.post(
   "/check-existing-entry",
   protect,
-  scheduleAndAttendanceController.checkExistingEntry
+ checkExistingEntry
 );
 
 router.get(
   "/schedule-per-employee-by-date",
   protect,
-  scheduleAndAttendanceController.getSchedulePerEmployeeByDate
+ getSchedulePerEmployeeByDate
 );
 
 router.get(
   "/schedule/employee",
   protect,
-  scheduleAndAttendanceController.getSchedulePerEmployee
+ getSchedulePerEmployee
 );
 
 export default router;

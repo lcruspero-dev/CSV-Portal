@@ -1,14 +1,16 @@
-const express = require("express");
-const router = express.Router();
-const {
+import express from "express";
+import {
   createAssign,
   getAllAssigns,
   getAssign,
   updateAssign,
   deleteAssign,
-} = require("../controllers/assignController");
+} from "../controllers/assignController.js";
+
+const router = express.Router();
 
 router.route("/").post(createAssign).get(getAllAssigns);
 router.route("/:id").get(getAssign).put(updateAssign).delete(deleteAssign);
 
-module.exports = router;
+export default router;
+

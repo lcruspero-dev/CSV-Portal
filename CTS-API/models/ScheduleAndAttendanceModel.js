@@ -80,21 +80,18 @@ const teamLeaderEntrySchema = new mongoose.Schema({
   },
 });
 
-const ScheduleEntry = mongoose.model("ScheduleEntry", scheduleEntrySchema);
-const AttendanceEntry = mongoose.model(
+export const ScheduleEntry = mongoose.model("ScheduleEntry", scheduleEntrySchema);
+
+export const AttendanceEntry = mongoose.model(
   "AttendanceEntry",
   attendanceEntrySchema,
 );
-const TeamLeaderEntry = mongoose.model(
+export const TeamLeaderEntry = mongoose.model(
   "TeamLeaderEntry",
   teamLeaderEntrySchema,
 );
 
-export default {
-  ScheduleEntry,
-  AttendanceEntry,
-  TeamLeaderEntry,
-};
+
 
 
 

@@ -1,5 +1,5 @@
 // controllers/assignController.js
-import Assign from "../models/assignModel";
+import Assign from "../models/assignModel.js";
 
 // Create new assignment
 export const createAssign = async (req, res) => {
