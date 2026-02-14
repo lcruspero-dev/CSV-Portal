@@ -1,6 +1,5 @@
-const express = require("express");
-const router = express.Router();
-const {
+import express from "express";
+import {
   getMemos,
   createMemo,
   updateMemo,
@@ -8,9 +7,10 @@ const {
   getMemoById,
   updateAcknowledged,
   getUserUnacknowledged,
-} = require("../controllers/memoController");
+} from "../controllers/memoController.js";
+import { protect, verifyAdmin } from "../middleware/authMiddleware.js";
 
-const { protect, verifyAdmin } = require("../middleware/authMiddleware");
+const router = express.Router();
 
 router.get("/", protect, getMemos);
 
@@ -31,4 +31,4 @@ router.get(
   getUserUnacknowledged
 );
 
-module.exports = router;
+export default router;

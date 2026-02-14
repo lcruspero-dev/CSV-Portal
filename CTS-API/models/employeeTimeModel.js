@@ -113,9 +113,8 @@ const employeeTimeSchema = mongoose.Schema(
     },
   },
   {
-    timestamps: true, 
-  }
+    timestamps: true,
+  },
 );
 
 export default mongoose.model("EmployeeTime", employeeTimeSchema);
-

@@ -1,7 +1,7 @@
-import User from "../models/userModel";
+import User from "../models/userModel.js";
 import mongoose from "mongoose";
 
-import Policies from "../models/policiesModel";
+import Policies from "../models/policiesModel.js";
 
 export const getAllPolicies = async (_req, res) => {
   try {

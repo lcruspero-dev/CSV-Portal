@@ -1,12 +1,12 @@
-import asyncHandler from "express-async-handler";
-import Survey from "../models/surveyModel";
+import Survey from "../models/surveyModel.js";
 import mongoose from "mongoose";
 
 // Helper function to check if ObjectId is valid
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
-export const createSurvey = asyncHandler(async (req, res) => {
-  const { title, question } = req.body;
+export const createSurvey = async (req, res) => {
+  try {
+     const { title, question } = req.body;
 
   // Validate required fields
   if (!title || !question) {
@@ -39,10 +39,26 @@ export const createSurvey = asyncHandler(async (req, res) => {
     data: survey,
     message: "Survey created successfully",
   });
-});
 
-export const getAllSurveys = asyncHandler(async (req, res) => {
-  const { status, startDate, endDate } = req.query;
+    
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({
+      status: false,
+      message: "Internal Server Error",
+    });
+    
+  }
+};
+
+export const getAllSurveys = async (req, res) => {
+
+ try {
+   const { 
+    status, 
+    startDate, 
+    endDate 
+  } = req.query;
   const filter = {};
 
   if (status) filter.status = status;
@@ -58,10 +74,21 @@ export const getAllSurveys = asyncHandler(async (req, res) => {
     count: surveys.length,
     data: surveys,
   });
-});
 
-export const getSurveyById = asyncHandler(async (req, res) => {
-  const { id } = req.params;
+ } catch (error) {
+  console.error(error.message);
+  res.status(500).json({
+    status: false,
+    message: "Internal Server Error",
+  });
+ }
+};
+
+export const getSurveyById = async (req, res) => {
+
+  try {
+
+   const { id } = req.params;
 
   if (!isValidObjectId(id)) {
     return res.status(400).json({
@@ -84,10 +111,19 @@ export const getSurveyById = asyncHandler(async (req, res) => {
   res.status(200).json({
     success: true,
     data: survey,
-  });
-});
+  });  
 
-export const updateSurvey = asyncHandler(async (req, res) => {
+  } catch (error) {
+    console.error(error.message);
+    res.statu(500).json({
+      status: false,
+      message: "Internal Server Error",
+    });
+    
+  }
+};
+
+export const updateSurvey = async (req, res) => {
   const { id } = req.params;
   const updateData = req.body;
 
@@ -129,7 +165,7 @@ export const updateSurvey = asyncHandler(async (req, res) => {
   const updatedSurvey = await Survey.findByIdAndUpdate(
     id,
     { $set: updateData },
-    { new: true, runValidators: true }
+    { new: true, runValidators: true },
   );
 
   res.status(200).json({
@@ -137,10 +173,11 @@ export const updateSurvey = asyncHandler(async (req, res) => {
     data: updatedSurvey,
     message: "Survey updated successfully",
   });
-});
+};
 
-export const deleteSurvey = asyncHandler(async (req, res) => {
-  const { id } = req.params;
+export const deleteSurvey = async (req, res) => {
+ try {
+   const { id } = req.params;
 
   if (!isValidObjectId(id)) {
     return res.status(400).json({
@@ -171,10 +208,19 @@ export const deleteSurvey = asyncHandler(async (req, res) => {
     success: true,
     message: "Survey deleted successfully",
   });
-});
+  
+ } catch (error) {
+  console.error(error.message);
+  res.status(500).json({
+    status: false,
+    message: "Internal Server Error"
+  })
+ }
+};
 
-export const submitResponse = asyncHandler(async (req, res) => {
-  const { id } = req.params;
+export const submitResponse = async (req, res) => {
+  try {
+    const { id } = req.params;
   const { feedback, ratingAnswer, isAnonymous } = req.body;
 
   // Validate feedback and ratingAnswer
@@ -211,7 +257,7 @@ export const submitResponse = asyncHandler(async (req, res) => {
   // Check if the user has already responded
   if (
     survey.responses.some(
-      (response) => response.respondent?.toString() === req.user._id.toString()
+      (response) => response.respondent?.toString() === req.user._id.toString(),
     )
   ) {
     return res.status(400).json({
@@ -236,11 +282,19 @@ export const submitResponse = asyncHandler(async (req, res) => {
     success: true,
     message: "Response submitted successfully",
   });
-});
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({
+      status: false,
+      messag: "Internal Server Error"
+    });
+  }
+};
 
 //get all survey with active status
-export const getAllActiveSurveys = asyncHandler(async (req, res) => {
-  // Fetch all active surveys
+export const getAllActiveSurveys = async (req, res) => {
+  try {
+    // Fetch all active surveys
   const surveys = await Survey.find({ status: "active" });
 
   if (surveys.length === 0) {
@@ -255,8 +309,8 @@ export const getAllActiveSurveys = asyncHandler(async (req, res) => {
     (survey) =>
       !survey.responses.some(
         (response) =>
-          response.respondent?.toString() === req.user._id.toString()
-      )
+          response.respondent?.toString() === req.user._id.toString(),
+      ),
   );
 
   if (filteredSurveys.length === 0) {
@@ -276,13 +330,22 @@ export const getAllActiveSurveys = asyncHandler(async (req, res) => {
     success: true,
     data: sanitizedSurveys,
   });
-});
 
-export const getAllSurveyTitles = asyncHandler(async (req, res) => {
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({
+      status: false,
+      message: "Internal Server Error"
+    })
+  }
+};
+
+export const getAllSurveyTitles = async (req, res) => {
   // Fetch all survey titles without status filter
-  const surveyTitles = await Survey.find(
+try {
+    const surveyTitles = await Survey.find(
     {}, // Empty filter to get all surveys
-    { title: 1, _id: 1, status: 1 } // Fetch title, ID and status fields
+    { title: 1, _id: 1, status: 1 }, // Fetch title, ID and status fields
   );
 
   if (surveyTitles.length === 0) {
@@ -304,6 +367,12 @@ export const getAllSurveyTitles = asyncHandler(async (req, res) => {
     count: titles.length,
     data: titles,
   });
-});
-
-
+  
+} catch (error) {
+  console.error(error.message);
+  res.status(500).json({
+    status: false,
+    message: "Internal Server Error",
+  });
+}
+};

@@ -1,6 +1,5 @@
-const express = require("express");
-const router = express.Router();
-const {
+import express from "express";
+import {
   processPayroll,
   getAllPayrolls,
   getPayrollByUser,
@@ -11,13 +10,17 @@ const {
   getEmployeePayslips,
   generatePayslipForRange,
   getAllArchivedPayslips,
-} = require("../controllers/payrollController");
-const { protect } = require("../middleware/authMiddleware");
+} from "../controllers/payrollController.js";
+import { protect } from "../middleware/authMiddleware.js";
+
+const router = express.Router();
 
 router.post("/process", protect, processPayroll);
 
 router.post("/auto-calculate/:userId", protect, async (req, res) => {
+
   try {
+
     const { userId } = req.params;
     const { startDate, endDate } = req.body;
     
@@ -28,7 +31,9 @@ router.post("/auto-calculate/:userId", protect, async (req, res) => {
       message: "Payroll auto-calculated successfully",
       payroll: result
     });
+
   } catch (error) {
+
     console.error('Error auto-calculating payroll:', error);
     res.status(500).json({
       status: "Error",
@@ -36,6 +41,7 @@ router.post("/auto-calculate/:userId", protect, async (req, res) => {
       error: error.message
     });
   }
+
 });
 
 router.put("/update/:id", protect, updatePayroll);
@@ -56,4 +62,4 @@ router.get("/:userId", protect, getPayrollByUser);
 
 router.delete("/:userId", protect, deletePayroll);
 
-module.exports = router;
+export default router;

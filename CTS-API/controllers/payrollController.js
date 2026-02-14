@@ -1,8 +1,8 @@
-import Payroll from "../models/payroll";
-import EmployeeTime from "../models/employeeTimeModel";
-import Payslip from "../models/payslipModel";
-import { ScheduleEntry } from "../models/ScheduleAndAttendanceModel";
-import UserProfile from "../models/userProfileModel";
+import Payroll from "../models/payroll.js";
+import EmployeeTime from "../models/employeeTimeModel.js";
+import Payslip from "../models/payslipModel.js";
+import { ScheduleEntry } from "../models/ScheduleAndAttendanceModel.js";
+import UserProfile from "../models/userProfileModel.js";
 
 // Helper function to convert time string to minutes since midnight
 function timeToMinutes(timeString) {
@@ -828,7 +828,7 @@ export const sendPayroll = async (req, res) => {
 };
 
 // GET ALL ARCHIVED PAYSLIPS
-exports.getAllArchivedPayslips = async (req, res) => {
+export const getAllArchivedPayslips = async (req, res) => {
     try {
         const { startDate, endDate } = req.query;
         
@@ -881,6 +881,7 @@ export const generatePayslipForRange = async (req, res) => {
             const [mm, dd, yyyy] = s.split('/').map((v) => Number(v));
             return new Date(yyyy, mm - 1, dd);
         };
+        
         const fmtMdY = (d) => {
             const mm = String(d.getMonth() + 1).padStart(2, '0');
             const dd = String(d.getDate()).padStart(2, '0');

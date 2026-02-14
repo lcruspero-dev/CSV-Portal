@@ -1,4 +1,4 @@
-import Nte from "../models/nteModel";
+import Nte from "../models/nteModel.js";
 import mongoose from "mongoose";
 
 // Authorization middleware

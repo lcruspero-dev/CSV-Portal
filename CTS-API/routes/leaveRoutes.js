@@ -1,9 +1,9 @@
 // routes/leaveRoutes.js
-const express = require("express");
-const { zonedTimeToUtc, utcToZonedTime, format } = require("date-fns-tz");
-const { addMonths, lastDayOfMonth } = require("date-fns");
-const EmployeeLeave = require("../models/EmployeeLeave");
-const { protect, verifyAdmin } = require("../middleware/authMiddleware");
+import express from "express";
+import { zonedTimeToUtc, utcToZonedTime, format } from "date-fns-tz";
+import { addMonths, lastDayOfMonth } from "date-fns";
+import EmployeeLeave from "../models/EmployeeLeave.js";
+import  { protect, verifyAdmin } from "../middleware/authMiddleware.js";
 
 const PH_TIMEZONE = "Asia/Manila";
 const router = express.Router();
@@ -166,4 +166,4 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

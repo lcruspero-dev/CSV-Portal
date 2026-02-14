@@ -35,21 +35,14 @@ export const triggerPayrollUpdate = async (employeeId, date, req, res) => {
     res.status(200).json({
       status: true,
       message: "Trigger payroll update",
-      data: [
-        employeeId,
-        startDate,
-        endDate
-      ]
+      data: [employeeId, startDate, endDate],
     });
-
   } catch (error) {
-
     console.error(error.message);
     res.status(500).json({
       status: false,
-      message: "Internal Server Error"
+      message: "Internal Server Error",
     });
-
   }
 };
 
@@ -112,9 +105,6 @@ export const calculateBreakDeduction = (employeeTime, bioBreakDuration) => {
     originalBreakTime: lunchInfo.availableTime,
     note: "All breaks were used, deducted from lunch",
   };
-
-    
-    
 };
 
 export const getEmployeeTimes = async (_req, res) => {
@@ -173,7 +163,6 @@ export const createEmployeeTimeIn = async (req, res) => {
       message: "Successfully Added Employee Time",
       newEmployeeTime,
     });
-
   } catch (error) {
     console.error(error.message);
     return res.status(500).json({
@@ -185,7 +174,6 @@ export const createEmployeeTimeIn = async (req, res) => {
 
 export const createEmployeeTimeOut = async (req, res) => {
   try {
-
     const employeeTime = await EmployeeTime.findById(req.params.id);
     if (!employeeTime) {
       return res.status(404).json({
@@ -330,7 +318,6 @@ export const deleteEmployeeTime = async (req, res) => {
 
 export const getEmployeeTimeByEmployeeId = async (req, res) => {
   try {
-
     const employeeTime = await EmployeeTime.find({
       employeeId: req.user._id,
     }).sort({ createdAt: -1 }); // Sort by createdAt in descending order
@@ -347,13 +334,11 @@ export const getEmployeeTimeByEmployeeId = async (req, res) => {
       message: "Fetch Employee Time By id",
     });
   } catch (error) {
-
     console.log(error.message);
     res.status(500).json({
       status: false,
       message: "Internal Server Error",
     });
-    
   }
 };
 
@@ -628,7 +613,7 @@ export const getIncompleteBreaks = async (req, res) => {
     );
 
     if (!incompleteBreaks || incompleteBreaks.length === 0) {
-      return res.status(200).json({  
+      return res.status(200).json({
         status: true,
         message: "",
         breaks: [],
@@ -695,12 +680,11 @@ export const getIncompleteBreaks = async (req, res) => {
       count: formattedResponse.length,
       data: formattedResponse,
     });
-    
   } catch (error) {
     console.error(error.message);
-    res.status(500).json({ 
+    res.status(500).json({
       status: false,
-      message: "Internal Server Error", 
+      message: "Internal Server Error",
     });
   }
 };

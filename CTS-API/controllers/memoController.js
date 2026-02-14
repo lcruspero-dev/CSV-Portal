@@ -1,6 +1,6 @@
 import User from "../models/userModel.js";
 import mongoose from "mongoose";
-import Memo from "../models/memoModel";
+import Memo from "../models/memoModel.js";
 
 export const getMemos = async (_req, res) => {
   try {

@@ -114,4 +114,4 @@ nteSchema.pre("save", function (next) {
   next();
 });
 
-module.exports = mongoose.model("NTE", nteSchema);
+export default mongoose.model("NTE", nteSchema);
