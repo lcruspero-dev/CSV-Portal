@@ -121,6 +121,7 @@ const GitHubSection = ({
 }: { 
   children: React.ReactNode;
   title: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   icon: React.ComponentType<any>;
 }) => (
   <div className="border border-gray-300 rounded-md bg-white">
@@ -246,6 +247,7 @@ export default function ViewProfile({
             <InfoItem label="Probationary date" value={formatDate(userData?.probationaryDate)} />
             <InfoItem label="Regularization date" value={formatDate(userData?.regularizationDate)} />
             <InfoItem label="Tax status" value={userData?.taxStatus} />
+            <InfoItem label="ID Number" value={userData?.idNum} />
           </div>
         </GitHubSection>
 

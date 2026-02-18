@@ -51,6 +51,7 @@ interface ProfileFormData {
   pagibigNo: string;
   hmoAccountNumber: number;
   bankAccountNumber: number;
+  idNum: number;
 
   // Contact Details
   mobileNumber: number;
@@ -168,6 +169,7 @@ export default function EditProfileForm({
       pagibigNo: userData?.pagibigNo ?? "",
       hmoAccountNumber: userData?.hmoAccountNumber ?? 0,
       bankAccountNumber: userData?.bankAccountNumber ?? 0,
+      idNum: userData?.idNum ?? 0,
 
       // Contact Details
       mobileNumber: userData?.mobileNumber ?? 0,
@@ -701,6 +703,26 @@ export default function EditProfileForm({
                           <FormControl>
                             <Input
                               type="date"
+                              {...field}
+                              className="rounded-md h-10 text-sm py-2"
+                            />
+                          </FormControl>
+                          <FormMessage className="text-sm" />
+                        </FormItem>
+                      )}
+                    />
+
+                      <FormField
+                      control={form.control}
+                      name="idNum"
+                      render={({ field }) => (
+                        <FormItem className="space-y-1 pt-2">
+                          <FormLabel className="text-sm">
+                           ID Number
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
                               {...field}
                               className="rounded-md h-10 text-sm py-2"
                             />

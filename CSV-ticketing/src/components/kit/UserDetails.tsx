@@ -40,6 +40,7 @@ interface UserProfileData {
   regularizationDate?: string;
   tinNo?: string;
   sssNo?: string;
+  idNum?: string;
   philhealthNo?: string;
   pagibigNo?: string;
   hmoAccountNumber?: string;
@@ -209,6 +210,7 @@ export default function ViewProfile({
     regularizationDate: "",
     tinNo: "",
     sssNo: "",
+    idNum: "",
     philhealthNo: "",
     pagibigNo: "",
     hmoAccountNumber: "",
@@ -254,6 +256,7 @@ export default function ViewProfile({
     regularizationDate: userData?.regularizationDate || "",
     tinNo: userData?.tinNo || "",
     sssNo: userData?.sssNo || "",
+    idNum: userData?.idNum || "",
     philhealthNo: userData?.philhealthNo || "",
     pagibigNo: userData?.pagibigNo || "",
     hmoAccountNumber: userData?.hmoAccountNumber || "",
@@ -751,10 +754,18 @@ export default function ViewProfile({
                 />
                 <InfoItem
                   label="Bank Account Number"
-                  value={localUserData.bankAccountNumber}
+                  value={localUserData.bankAccountNumber  }
                   isEditing={isEditing}
                   onChange={handleFieldChange}
                   name="bankAccountNumber"
+                  type="number"
+                />
+                  <InfoItem
+                  label="ID Number"
+                  value={localUserData.idNum}
+                  isEditing={isEditing}
+                  onChange={handleFieldChange}
+                  name="idNumber"
                   type="number"
                 />
               </div>

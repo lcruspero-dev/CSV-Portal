@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 // components/kit/IncompleteBreaksDialog.tsx
 import { timer, TimeRecordAPI } from "@/API/endpoint";
 import { Button } from "@/components/ui/button";

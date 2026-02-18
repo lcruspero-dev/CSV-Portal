@@ -51,6 +51,7 @@ interface UserProfile {
   barangay: string;
   cityMunicipality: string;
   province: string;
+  idNum: string;
   zipCode: string;
   personalEmail: string;
   contactNumber: string;
@@ -247,6 +248,7 @@ const ManageEmployees: React.FC = () => {
           barangay: "",
           cityMunicipality: "",
           province: "",
+          idNum: "",
           zipCode: "",
           personalEmail: "",
           contactNumber: "",

@@ -131,6 +131,8 @@ export const TimeRecordAPI = {
     apiHelper(`/api/employeeTimes/search/${id}?date=${date}`, "GET"),
   getAllEmployeeOnBreak: () =>
     apiHelper("/api/employeeTimes/incomplete", "GET"),
+  getAllEmployeeLogins: () =>
+    apiHelper("/api/employeeTimes/incompleteLogins", "GET"),
 };
 
 export const SurveyAPI = {

@@ -542,6 +542,52 @@ const getIncompleteBreaks = async (req, res) => {
   }
 };
 
+const getIncompleteLogins = async (req, res) => {
+  try {
+    // Find all records where employee has logged in but not logged out
+    const incompleteLogins = await EmployeeTime.find({
+      $and: [
+        { timeIn: { $ne: null } },  // timeIn exists and is not null
+        { timeOut: null }            // timeOut is null (not logged out)
+      ]
+    }).select(
+      "employeeId employeeName date timeIn timeOut totalHours"
+    );
+
+    if (!incompleteLogins || incompleteLogins.length === 0) {
+      return res.status(200).json({ 
+        message: "No incomplete logins found",
+        count: 0,
+        data: [] 
+      });
+    }
+
+    // Format the response similar to the breaks controller
+    const formattedResponse = incompleteLogins.map((record) => ({
+      employeeId: record.employeeId,
+      employeeName: record.employeeName,
+      date: record.date,
+      type: "Login",
+      timeIn: record.timeIn,
+      timeOut: record.timeOut,
+      totalHours: record.totalHours
+    }));
+
+    res.status(200).json({
+      message: "Incomplete logins retrieved successfully",
+      count: formattedResponse.length,
+      data: formattedResponse
+    });
+
+  } catch (error) {
+    console.error("Error fetching incomplete logins:", error.message);
+    res.status(500).json({ 
+      status: false,
+      message: error.message || "Internal Server Error" 
+    });
+  }
+};
+
 const updateEmployeeBioBreak = async (req, res) => {
   try {
     const { bioBreak, bioBreakEnd, bioBreakDuration } = req.body;
@@ -694,4 +740,5 @@ module.exports = {
   getIncompleteBreaks,
   updateEmployeeBioBreak,
   getBioBreakSummary,
+  getIncompleteLogins
 };

@@ -14,7 +14,8 @@ const {
   updateEmployeeTimelunch,
   getEmployeeTimeByEmployeeIdandDate,
   getIncompleteBreaks,
-  updateEmployeeBioBreak
+  updateEmployeeBioBreak,
+  getIncompleteLogins
 } = require("../controllers/employeeTimeController");
 const { protect, verifyAdmin } = require("../middleware/authMiddleware");
 
@@ -47,5 +48,7 @@ router.route("/bio/update").put(protect, updateEmployeeBioBreak);
 router.route("/search/:id").get(protect, getEmployeeTimeByEmployeeIdandDate);
 
 router.route("/incomplete").get(protect, getIncompleteBreaks);
+
+router.route("/incompleteLogins").get(protect, getIncompleteLogins);
 
 module.exports = router;
