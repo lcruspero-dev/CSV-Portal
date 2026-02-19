@@ -208,6 +208,7 @@ const viewTicketsByDepartment = asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 })
     .populate("user", "name email");
   res.status(200).json(tickets);
+  
 });
 
 

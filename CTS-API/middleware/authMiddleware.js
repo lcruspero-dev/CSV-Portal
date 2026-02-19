@@ -31,14 +31,18 @@ const protect = asyncHandler(async (req, res, next) => {
   }
 });
 
-// [SECTION] Verify Admin
+// [SECTION] Verify Admin, TM and TL
 const verifyAdmin = (req, res, next) => {
-  if (req.user && req.user.isAdmin) {
+  if (req.user && (
+    req.user.isAdmin ||
+    req.user.role === "TL" ||
+    req.user.role === "TM" 
+  )) {
     next();
   } else {
     res.status(403).json({
       auth: "failed",
-      message: "Action forbidden. Admin access required.",
+      message: "Action forbidden. Admin/TL/TM access required.",
     });
   }
 };
