@@ -1,5 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useState, useRef } from "react";
+import React, { 
+  useEffect, 
+  useState, 
+  useRef 
+} from "react";
+
+// Dates 
 import {
   addDays,
   eachDayOfInterval,
@@ -12,6 +18,8 @@ import {
   startOfWeek,
   parseISO,
 } from "date-fns";
+
+// Icons
 import {
   CalendarIcon,
   ChevronLeft,
@@ -24,15 +32,15 @@ import {
   TrendingUp,
   Eye,
 } from "lucide-react";
+
+// API Endpoints
 import {
   ScheduleAndAttendanceAPI,
   TimeRecordAPI,
   UserProfileAPI,
 } from "@/API/endpoint";
-import { AbsenteeismAnalytics } from "@/components/kit/AbsenteeismAnalytics";
-import AddEmployee from "@/components/kit/AddEmployee";
-import { IncompleteBreaksDialog } from "@/components/kit/IncompleteBreaksDialog";
-import { EmployeesOnLunchDialog } from "@/components/kit/employeeLunchDialog";
+
+// Shadcn UIs componets
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -53,7 +61,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { 
+  RadioGroup, 
+  RadioGroupItem 
+} from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -61,230 +72,45 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from "@/components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+
+// Kit Components
+import { AbsenteeismAnalytics } from "@/components/kit/AbsenteeismAnalytics";
+import AddEmployee from "@/components/kit/AddEmployee";
+import { IncompleteBreaksDialog } from "@/components/kit/IncompleteBreaksDialog";
+import { EmployeesOnLunchDialog } from "@/components/kit/employeeLunchDialog";
 import BackButton from "@/components/kit/BackButton";
 
 // Types
-export type Employee = {
-  id: string;
-  name: string;
-  department: string;
-  teamLeader: string;
-  avatarUrl?: string;
-  schedule: { date: string; shiftType: ShiftType }[];
-};
+import type {
+  Employee,
+  ShiftTypeValue,
+  ShiftType,
+  AttendanceStatus,
+  ScheduleEntry,
+  AttendanceEntry,
+  ViewMode
+} from '@/types/schedule'
 
-type ShiftTypeValue =
-  | "Morning"
-  | "Mid"
-  | "Night"
-  | "restday"
-  | "paidTimeOff"
-  | "plannedLeave"
-  | "holiday"
-  | "rdot";
+// Helpers
+import {
+  getShiftColor,
+  hasShiftTime,
+  displayShiftInfo,
+  getAttendanceColor
+} from '@/utils/scheduleHelper';
 
-export type ShiftType = {
-  type: ShiftTypeValue;
-  startTime?: string;
-  endTime?: string;
-  break1?: string;
-  break2?: string;
-  lunch?: string;
-};
-
-export type AttendanceStatus =
-  | "Present"
-  | "NCNS"
-  | "Call In"
-  | "Rest Day"
-  | "Tardy"
-  | "RDOT"
-  | "Suspended"
-  | "Attrition"
-  | "LOA"
-  | "PTO"
-  | "Half Day"
-  | "Early Log Out"
-  | "VTO"
-  | "TB"
-  | "Pending";
-
-export type ScheduleEntry = {
-  date: string;
-  shiftType: ShiftType;
-  _id: string;
-  employeeId: string;
-  employeeName: string;
-  teamLeader: string;
-  position: string;
-  schedule: {
-    date: string;
-    shiftType: ShiftType;
-    _id: string;
-  }[];
-  __v: number;
-};
-
-export type AttendanceEntry = {
-  shift?: string;
-  employeeId: string;
-  date: Date;
-  status: AttendanceStatus;
-  logIn?: string;
-  logOut?: string;
-  totalHours?: string;
-  ot?: string;
-};
-
-type ViewMode = "weekly" | "monthly" | "dateRange";
-
-// Professional shift colors with purple theme
-const getShiftColor = (shiftType: ShiftType): string => {
-  if (!shiftType || !shiftType.type)
-    return "bg-gray-100 text-gray-800 border-gray-200";
-
-  switch (shiftType.type) {
-    case "Morning":
-      return "bg-purple-100 text-purple-800 border-purple-200";
-    case "Mid":
-      return "bg-indigo-100 text-indigo-800 border-indigo-200";
-    case "Night":
-      return "bg-violet-100 text-violet-800 border-violet-200";
-    case "restday":
-      return "bg-gray-100 text-gray-800 border-gray-200";
-    case "paidTimeOff":
-      return "bg-blue-100 text-blue-800 border-blue-200";
-    case "plannedLeave":
-      return "bg-amber-100 text-amber-800 border-amber-200";
-    case "holiday":
-      return "bg-red-100 text-red-800 border-red-200";
-    case "rdot":
-      return "bg-teal-100 text-teal-800 border-teal-200";
-    default:
-      return "bg-gray-100 text-gray-800 border-gray-200";
-  }
-};
-
-// Helper to check if a shift type has time
-const hasShiftTime = (shiftType: ShiftTypeValue): boolean => {
-  return ["Morning", "Mid", "Night", "rdot"].includes(shiftType);
-};
-
-const formatTimeToAMPM = (time: string): string => {
-  if (!time) return "";
-
-  const [hourStr, minuteStr] = time.split(":");
-  const hour = parseInt(hourStr, 10);
-  const minute = minuteStr || "00";
-
-  const period = hour >= 12 ? "PM" : "AM";
-  const displayHour = hour % 12 || 12;
-
-  return `${displayHour}:${minute} ${period}`;
-};
-
-// Helper function to display shift information
-const displayShiftInfo = (
-  shiftType: ShiftType,
-): { name: string; time: string; details?: string } => {
-  if (!shiftType || !shiftType.type) return { name: "", time: "" };
-
-  let displayName = "";
-  let displayTime = "";
-  let details = "";
-
-  switch (shiftType.type) {
-    case "Morning":
-      displayName = "Morning Shift";
-      break;
-    case "Mid":
-      displayName = "Mid Shift";
-      break;
-    case "Night":
-      displayName = "Night Shift";
-      break;
-    case "restday":
-      displayName = "Rest Day";
-      break;
-    case "paidTimeOff":
-      displayName = "Paid Time Off";
-      break;
-    case "plannedLeave":
-      displayName = "Planned Leave";
-      break;
-    case "holiday":
-      displayName = "Holiday";
-      break;
-    case "rdot":
-      displayName = "RDOT";
-      break;
-    default:
-      displayName = shiftType.type;
-  }
-
-  if (
-    hasShiftTime(shiftType.type) &&
-    shiftType.startTime &&
-    shiftType.endTime
-  ) {
-    displayTime = `${formatTimeToAMPM(
-      shiftType.startTime,
-    )} - ${formatTimeToAMPM(shiftType.endTime)}`;
-
-    const detailsParts = [];
-    if (shiftType.startTime)
-      detailsParts.push(`Login: ${formatTimeToAMPM(shiftType.startTime)}`);
-    if (shiftType.endTime)
-      detailsParts.push(`Logout: ${formatTimeToAMPM(shiftType.endTime)}`);
-    if (shiftType.break1)
-      detailsParts.push(`Break 1: ${formatTimeToAMPM(shiftType.break1)}`);
-    if (shiftType.break2)
-      detailsParts.push(`Break 2: ${formatTimeToAMPM(shiftType.break2)}`);
-    if (shiftType.lunch)
-      detailsParts.push(`Lunch: ${formatTimeToAMPM(shiftType.lunch)}`);
-
-    details = detailsParts.join("\n");
-  }
-
-  return {
-    name: displayName,
-    time: displayTime,
-    details,
-  };
-};
-
-// Helper to get attendance color
-const getAttendanceColor = (status: AttendanceStatus): string => {
-  switch (status) {
-    case "Present":
-      return "bg-green-100 text-green-800 border-green-200";
-    case "NCNS":
-      return "bg-red-100 text-red-800 border-red-200";
-    case "Tardy":
-      return "bg-yellow-100 text-yellow-800 border-yellow-200";
-    case "Rest Day":
-      return "bg-gray-100 text-gray-800 border-gray-200";
-    case "RDOT":
-      return "bg-teal-100 text-teal-800 border-teal-200";
-    case "PTO":
-      return "bg-gray-100 text-black border-gray-50";
-    case "VTO":
-      return "bg-blue-100 text-blue-800 border-blue-200";
-    case "LOA":
-      return "bg-gray-100 text-black border-gray-50";
-    case "Suspended":
-      return "bg-orange-100 text-orange-800 border-orange-200";
-    default:
-      return "bg-gray-100 text-gray-800 border-gray-200";
-  }
-};
 
 const ScheduleAndAttendance: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>("weekly");
