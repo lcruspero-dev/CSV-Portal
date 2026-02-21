@@ -37,11 +37,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  AttendanceEntry,
-  AttendanceStatus,
-  Employee,
-} from "@/pages/timeTracker/ScheduleAndAttendance";
+import { AttendanceEntry, AttendanceStatus, Employee } from "@/types/schedule";
 
 // Helper to get attendance status color
 const getAttendanceStatusColor = (status: AttendanceStatus): string => {
@@ -161,13 +157,13 @@ export const Attendance: React.FC<AttendanceProps> = ({
 
   const findAttendanceEntry = (
     employeeId: string,
-    date: Date
+    date: Date,
   ): AttendanceEntry | undefined => {
     return attendance.find(
       (entry) =>
         entry.employeeId === employeeId &&
         entry.date &&
-        isSameDay(entry.date, date)
+        isSameDay(entry.date, date),
     );
   };
   const formatTime = (timeString: string) => {
@@ -250,7 +246,7 @@ export const Attendance: React.FC<AttendanceProps> = ({
                               <Badge
                                 variant="outline"
                                 className={`mb-1 ${getAttendanceStatusColor(
-                                  attendanceEntry.status
+                                  attendanceEntry.status,
                                 )}`}
                               >
                                 <span className="flex items-center">
