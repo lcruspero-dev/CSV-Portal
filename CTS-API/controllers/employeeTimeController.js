@@ -724,6 +724,56 @@ const getBioBreakSummary = async (req, res) => {
   }
 };
 
+const getEmployeeRunningTime = async (req, res) => {
+  
+  try {   
+    const activeSession = await EmployeeTime.findOne({
+      employeeId: req.user._id,
+      timeOut: null,
+    });
+
+    if (!activeSession) {
+      return res.status(404).json({
+        status: false,
+        message: "No active session found"
+      });
+    }
+
+    const now = new Date();
+    const timeIn = new Date(activeSession.timeIn);
+
+    const runningMs = now - timeIn;
+
+    const hours = Math.floor(runningMs / (1000 * 60 * 60));
+    const minutes = Math.floor(
+      (runningMs % (1000 * 60 * 60)) / (1000 * 60)
+    );
+
+    const seconds = Math.floor(
+      (runningMs % (1000 * 60)) / 1000
+    );
+
+    const formattedRunningTime =
+      `${hours.toString().padStart(2, "0")}:` +
+      `${minutes.toString().padStart(2, "0")}:` +
+      `${seconds.toString().padStart(2, "0")}`;
+
+    res.status(200).json({
+      session: activeSession,
+      runningTimeMs: runningMs,
+      runningTime: formattedRunningTime,
+    });
+
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({
+      status: false,
+      message: "Internal Server Error"
+    });
+    
+  }
+}
+
 module.exports = {
   getEmployeeTimes,
   createEmployeeTimeIn,
@@ -740,5 +790,6 @@ module.exports = {
   getIncompleteBreaks,
   updateEmployeeBioBreak,
   getBioBreakSummary,
-  getIncompleteLogins
+  getIncompleteLogins,
+  getEmployeeRunningTime
 };

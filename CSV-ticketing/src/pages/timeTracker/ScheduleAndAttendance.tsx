@@ -1,11 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { 
-  useEffect, 
-  useState, 
-  useRef 
-} from "react";
+import React, { useEffect, useState, useRef } from "react";
 
-// Dates 
+// Dates
 import {
   addDays,
   eachDayOfInterval,
@@ -61,10 +57,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { 
-  RadioGroup, 
-  RadioGroupItem 
-} from "@/components/ui/radio-group";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -72,12 +65,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
@@ -100,17 +88,16 @@ import type {
   AttendanceStatus,
   ScheduleEntry,
   AttendanceEntry,
-  ViewMode
-} from '@/types/schedule'
+  ViewMode,
+} from "@/types/schedule";
 
 // Helpers
 import {
   getShiftColor,
   hasShiftTime,
   displayShiftInfo,
-  getAttendanceColor
-} from '@/utils/scheduleHelper';
-
+  getAttendanceColor,
+} from "@/utils/scheduleHelper";
 
 const ScheduleAndAttendance: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>("weekly");
@@ -151,12 +138,16 @@ const ScheduleAndAttendance: React.FC = () => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (fromCalendarRef.current && 
-          !fromCalendarRef.current.contains(event.target as Node)) {
+      if (
+        fromCalendarRef.current &&
+        !fromCalendarRef.current.contains(event.target as Node)
+      ) {
         setShowFromCalendar(false);
       }
-      if (toCalendarRef.current && 
-          !toCalendarRef.current.contains(event.target as Node)) {
+      if (
+        toCalendarRef.current &&
+        !toCalendarRef.current.contains(event.target as Node)
+      ) {
         setShowToCalendar(false);
       }
     };
@@ -245,7 +236,7 @@ const ScheduleAndAttendance: React.FC = () => {
             }
 
             return {
-              date: sched.date, 
+              date: sched.date,
               shiftType: shiftType,
               _id: sched._id || Date.now().toString(),
               employeeId: entry.employeeId,
@@ -604,16 +595,16 @@ const ScheduleAndAttendance: React.FC = () => {
       alert("Cannot set attendance for future dates");
       return;
     }
-    
+
     setSelectedEmployee(employee);
     setSelectedDate(date);
-    
+
     const entry = findAttendanceEntry(employee.id, date);
     setSelectedAttendanceStatus(entry ? entry.status : "Present");
-    
+
     // Set OT data if exists
     if (entry?.ot) {
-      const [hours, minutes] = entry.ot.split(':');
+      const [hours, minutes] = entry.ot.split(":");
       setOtHours(hours);
       setOtMinutes(minutes);
       setShowOtInput(true);
@@ -622,7 +613,7 @@ const ScheduleAndAttendance: React.FC = () => {
       setOtMinutes("");
       setShowOtInput(false);
     }
-    
+
     setIsAddShiftOpen(true);
     setActiveTab("attendance");
   };
@@ -661,7 +652,11 @@ const ScheduleAndAttendance: React.FC = () => {
         };
 
         // Only include OT for Present status
-        if (selectedAttendanceStatus === "Present" && showOtInput && (otHours || otMinutes)) {
+        if (
+          selectedAttendanceStatus === "Present" &&
+          showOtInput &&
+          (otHours || otMinutes)
+        ) {
           const hours = otHours || "0";
           const minutes = otMinutes || "0";
           attendanceData.ot = `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}`;
@@ -689,7 +684,9 @@ const ScheduleAndAttendance: React.FC = () => {
           status: selectedAttendanceStatus,
           ...(attendanceData.logIn && { logIn: attendanceData.logIn }),
           ...(attendanceData.logOut && { logOut: attendanceData.logOut }),
-          ...(attendanceData.totalHours && { totalHours: attendanceData.totalHours }),
+          ...(attendanceData.totalHours && {
+            totalHours: attendanceData.totalHours,
+          }),
           ...(attendanceData.ot && { ot: attendanceData.ot }),
           ...(attendanceData.shift && { shift: attendanceData.shift }),
         };
@@ -1111,7 +1108,7 @@ const ScheduleAndAttendance: React.FC = () => {
                                   isToday(day) ? "bg-purple-50" : ""
                                 } ${day > new Date() ? "cursor-not-allowed bg-gray-50" : "hover:bg-gray-50"}`}
                                 onClick={() =>
-                                  day <= new Date() && 
+                                  day <= new Date() &&
                                   handleAttendanceCellClick(employee, day)
                                 }
                               >
@@ -1133,11 +1130,13 @@ const ScheduleAndAttendance: React.FC = () => {
                                               OT: {attendanceEntry.ot}
                                             </span>
                                           )}
-                                          {attendanceEntry.totalHours && (
-                                            <span className="text-xs text-gray-600 mt-1 block">
-                                              {attendanceEntry.totalHours}
-                                            </span>
+
+                                          {attendanceEntry.logIn && (
+                                            <p className="text-xs text-stone-500">In: {attendanceEntry.logIn}</p>
                                           )}
+                                          {attendanceEntry.logOut && (
+                                            <p className="text-xs text-stone-500">Out: {attendanceEntry.logOut}</p>
+                                          )}                     
                                         </div>
                                       </TooltipTrigger>
                                       <TooltipContent className="max-w-xs whitespace-pre-line text-sm">
@@ -1152,11 +1151,12 @@ const ScheduleAndAttendance: React.FC = () => {
                                             <p>Out: {attendanceEntry.logOut}</p>
                                           )}
                                           {attendanceEntry.totalHours && (
-                                            <p>Hours: {attendanceEntry.totalHours}</p>
+                                            <p>
+                                              Hours:{" "}
+                                              {attendanceEntry.totalHours}
+                                            </p>
                                           )}
-                                          {attendanceEntry.ot && (
-                                            <p>OT: {attendanceEntry.ot}</p>
-                                          )}
+                                        
                                         </div>
                                       </TooltipContent>
                                     </Tooltip>

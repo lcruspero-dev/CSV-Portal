@@ -61,6 +61,15 @@ const attendanceEntrySchema = new mongoose.Schema({
   logOut: {
     type: String,
   },
+  break1: {
+    type: String,
+  },
+  break2: {
+    type: String,
+  },
+  totalBreaks: {
+    type: String,
+  },
   totalHours: {
     type: String,
   },
@@ -84,11 +93,11 @@ const teamLeaderEntrySchema = new mongoose.Schema({
 const ScheduleEntry = mongoose.model("ScheduleEntry", scheduleEntrySchema);
 const AttendanceEntry = mongoose.model(
   "AttendanceEntry",
-  attendanceEntrySchema
+  attendanceEntrySchema,
 );
 const TeamLeaderEntry = mongoose.model(
   "TeamLeaderEntry",
-  teamLeaderEntrySchema
+  teamLeaderEntrySchema,
 );
 
 module.exports = { ScheduleEntry, AttendanceEntry, TeamLeaderEntry };
