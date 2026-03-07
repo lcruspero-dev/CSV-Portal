@@ -799,17 +799,53 @@ const ViewAllRaisedTickets: React.FC = () => {
       </Button>
       
       <div className="flex items-center gap-1 mx-2">
-        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-          <Button
-            key={page}
-            variant={currentPage === page ? "default" : "outline"}
-            onClick={() => updateUrlParams({ page: page.toString() })}
-            size="sm"
-            className={currentPage === page ? "bg-blue-600" : ""}
-          >
-            {page}
-          </Button>
-        ))}
+        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+          // For small number of pages, show all
+          if (totalPages <= 7) {
+            return (
+              <Button
+                key={page}
+                variant={currentPage === page ? "default" : "outline"}
+                onClick={() => updateUrlParams({ page: page.toString() })}
+                size="sm"
+                className={currentPage === page ? "bg-blue-600" : ""}
+              >
+                {page}
+              </Button>
+            );
+          }
+          
+          // For larger number of pages, show smart pagination
+          if (
+            page === 1 ||
+            page === totalPages ||
+            (page >= currentPage - 1 && page <= currentPage + 1)
+          ) {
+            return (
+              <Button
+                key={page}
+                variant={currentPage === page ? "default" : "outline"}
+                onClick={() => updateUrlParams({ page: page.toString() })}
+                size="sm"
+                className={currentPage === page ? "bg-blue-600" : ""}
+              >
+                {page}
+              </Button>
+            );
+          }
+          
+          // Show ellipsis after first page
+          if (page === 2 && currentPage > 3) {
+            return <span key="ellipsis-1" className="px-2 text-gray-400">...</span>;
+          }
+          
+          // Show ellipsis before last page
+          if (page === totalPages - 1 && currentPage < totalPages - 2) {
+            return <span key="ellipsis-2" className="px-2 text-gray-400">...</span>;
+          }
+          
+          return null;
+        })}
       </div>
       
       <Button
