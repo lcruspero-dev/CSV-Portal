@@ -174,10 +174,12 @@ const ViewAllRaisedTickets: React.FC = () => {
         filtered = filtered.filter((ticket) =>
           hrCategories.includes(ticket.category),
         );
-      } else if (assignedTo !== "all") {
+      } else if (assignedTo !== "all" && assignedTo !== "Not Assigned") {
         filtered = filtered.filter(
           (ticket) => ticket.assignedTo === assignedTo,
         );
+      } else if (assignedTo === "Not Assigned") {
+        filtered = filtered.filter((ticket) => !ticket.assignedTo);
       }
 
       // Status filtering
@@ -438,6 +440,13 @@ const ViewAllRaisedTickets: React.FC = () => {
     [navigate, searchParams],
   );
 
+  const handlePageChange = useCallback(
+    (page: number) => {
+      updateUrlParams({ page: page.toString() });
+    },
+    [updateUrlParams],
+  );
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
@@ -453,7 +462,6 @@ const ViewAllRaisedTickets: React.FC = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8">
           <div className="flex items-center gap-4">
-            {/* FIX: Remove onClick prop - BackButton already handles navigation */}
             <BackButton />
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-3">
@@ -778,89 +786,88 @@ const ViewAllRaisedTickets: React.FC = () => {
             </Table>
           </div>
 
-{/* Pagination */}
-{currentTickets.length > 0 && (
-  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-gray-200 bg-gray-50">
-    <div className="text-sm text-gray-600">
-      Showing {startIndex + 1} to{" "}
-      {Math.min(endIndex, filteredTickets.length)} of{" "}
-      {filteredTickets.length} tickets
-    </div>
-    <div className="flex items-center gap-2">
-      <Button
-        variant="outline"
-        onClick={goToPreviousPage}
-        disabled={currentPage === 1}
-        className="flex items-center gap-2"
-        size="sm"
-      >
-        <ChevronLeft className="h-4 w-4" />
-        Previous
-      </Button>
-      
-      <div className="flex items-center gap-1 mx-2">
-        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-          // For small number of pages, show all
-          if (totalPages <= 7) {
-            return (
-              <Button
-                key={page}
-                variant={currentPage === page ? "default" : "outline"}
-                onClick={() => updateUrlParams({ page: page.toString() })}
-                size="sm"
-                className={currentPage === page ? "bg-blue-600" : ""}
-              >
-                {page}
-              </Button>
-            );
-          }
-          
-          // For larger number of pages, show smart pagination
-          if (
-            page === 1 ||
-            page === totalPages ||
-            (page >= currentPage - 1 && page <= currentPage + 1)
-          ) {
-            return (
-              <Button
-                key={page}
-                variant={currentPage === page ? "default" : "outline"}
-                onClick={() => updateUrlParams({ page: page.toString() })}
-                size="sm"
-                className={currentPage === page ? "bg-blue-600" : ""}
-              >
-                {page}
-              </Button>
-            );
-          }
-          
-          // Show ellipsis after first page
-          if (page === 2 && currentPage > 3) {
-            return <span key="ellipsis-1" className="px-2 text-gray-400">...</span>;
-          }
-          
-          // Show ellipsis before last page
-          if (page === totalPages - 1 && currentPage < totalPages - 2) {
-            return <span key="ellipsis-2" className="px-2 text-gray-400">...</span>;
-          }
-          
-          return null;
-        })}
-      </div>
-      
-      <Button
-        variant="outline"
-        onClick={goToNextPage}
-        disabled={currentPage === totalPages}
-        className="flex items-center gap-2"
-        size="sm"
-      >
-        Next
-        <ChevronRight className="h-4 w-4" />
-      </Button>
-    </div>
-  </div>
-)}
+          {/* Pagination */}
+          {currentTickets.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-gray-200 bg-gray-50">
+              <div className="text-sm text-gray-600">
+                Showing {startIndex + 1} to{" "}
+                {Math.min(endIndex, filteredTickets.length)} of{" "}
+                {filteredTickets.length} tickets
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={goToPreviousPage}
+                  disabled={currentPage === 1}
+                  className="flex items-center gap-2"
+                  size="sm"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </Button>
+                
+                <div className="flex items-center gap-1 mx-2">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                    // For small number of pages, show all
+                    if (totalPages <= 7) {
+                      return (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? "default" : "outline"}
+                          onClick={() => handlePageChange(page)}
+                          size="sm"
+                          className={currentPage === page ? "bg-blue-600" : ""}
+                        >
+                          {page}
+                        </Button>
+                      );
+                    }
+                    
+                    // For larger number of pages, show smart pagination
+                    if (
+                      page === 1 || 
+                      page === totalPages || 
+                      (page >= currentPage - 1 && page <= currentPage + 1)
+                    ) {
+                      return (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? "default" : "outline"}
+                          onClick={() => handlePageChange(page)}
+                          size="sm"
+                          className={currentPage === page ? "bg-blue-600" : ""}
+                        >
+                          {page}
+                        </Button>
+                      );
+                    }
+                    
+                    // Show ellipsis
+                    if (page === 2 && currentPage > 3) {
+                      return <span key="ellipsis-start" className="px-2 text-gray-400">...</span>;
+                    }
+                    
+                    if (page === totalPages - 1 && currentPage < totalPages - 2) {
+                      return <span key="ellipsis-end" className="px-2 text-gray-400">...</span>;
+                    }
+                    
+                    return null;
+                  })}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages}
+                  className="flex items-center gap-2"
+                  size="sm"
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Mobile View */}
@@ -944,6 +951,35 @@ const ViewAllRaisedTickets: React.FC = () => {
                   </Button>
                 </div>
               ))}
+              
+              {/* Mobile Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between gap-2 mt-4">
+                  <Button
+                    variant="outline"
+                    onClick={goToPreviousPage}
+                    disabled={currentPage === 1}
+                    size="sm"
+                    className="flex items-center gap-1"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Prev
+                  </Button>
+                  <span className="text-sm text-gray-600">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    onClick={goToNextPage}
+                    disabled={currentPage === totalPages}
+                    size="sm"
+                    className="flex items-center gap-1"
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>
