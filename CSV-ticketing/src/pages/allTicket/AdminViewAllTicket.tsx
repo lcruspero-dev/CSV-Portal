@@ -779,84 +779,80 @@ const ViewAllRaisedTickets: React.FC = () => {
           </div>
 
           {/* Pagination */}
-          {currentTickets.length > 0 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-gray-200 bg-gray-50">
-              <div className="text-sm text-gray-600">
-                Showing {startIndex + 1} to{" "}
-                {Math.min(endIndex, filteredTickets.length)} of{" "}
-                {filteredTickets.length} tickets
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  onClick={goToPreviousPage}
-                  disabled={currentPage === 1}
-                  className="flex items-center gap-2"
-                  size="sm"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Previous
-                </Button>
-                <div className="flex items-center gap-1 mx-2">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1)
-                    .filter((page) => {
-                      // Show first, last, current, and pages around current
-                      if (totalPages <= 7) return true;
-                      if (page === 1 || page === totalPages) return true;
-                      if (Math.abs(page - currentPage) <= 1) return true;
-                      return false;
-                    })
-                    .map((page, index, array) => {
-                      // Add ellipsis for large page ranges
-                      if (index > 0 && page > array[index - 1] + 1) {
-                        return (
-                          <React.Fragment key={`ellipsis-${page}`}>
-                            <span className="px-2 text-gray-400">...</span>
-                            <Button
-                              variant={
-                                currentPage === page ? "default" : "outline"
-                              }
-                              onClick={() =>
-                                updateUrlParams({ page: page.toString() })
-                              }
-                              size="sm"
-                              className={
-                                currentPage === page ? "bg-blue-600" : ""
-                              }
-                            >
-                              {page}
-                            </Button>
-                          </React.Fragment>
-                        );
-                      }
-                      return (
-                        <Button
-                          key={page}
-                          variant={currentPage === page ? "default" : "outline"}
-                          onClick={() =>
-                            updateUrlParams({ page: page.toString() })
-                          }
-                          size="sm"
-                          className={currentPage === page ? "bg-blue-600" : ""}
-                        >
-                          {page}
-                        </Button>
-                      );
-                    })}
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={goToNextPage}
-                  disabled={currentPage === totalPages}
-                  className="flex items-center gap-2"
-                  size="sm"
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
+         {/* Pagination */}
+{currentTickets.length > 0 && (
+  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-gray-200 bg-gray-50">
+    <div className="text-sm text-gray-600">
+      Showing {startIndex + 1} to{" "}
+      {Math.min(endIndex, filteredTickets.length)} of{" "}
+      {filteredTickets.length} tickets
+    </div>
+    <div className="flex items-center gap-2">
+      <Button
+        variant="outline"
+        onClick={goToPreviousPage}
+        disabled={currentPage === 1}
+        className="flex items-center gap-2"
+        size="sm"
+      >
+        <ChevronLeft className="h-4 w-4" />
+        Previous
+      </Button>
+      
+      <div className="flex items-center gap-1 mx-2">
+        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page, index, array) => {
+          // Show first, last, current, and pages around current
+          if (
+            page === 1 ||
+            page === totalPages ||
+            (page >= currentPage - 1 && page <= currentPage + 1)
+          ) {
+            // Check if we need to add ellipsis before this page
+            if (index > 0 && array[index - 1] < page - 1) {
+              return (
+                <React.Fragment key={page}>
+                  <span className="px-2 text-gray-400">...</span>
+                  <Button
+                    variant={currentPage === page ? "default" : "outline"}
+                    onClick={() => updateUrlParams({ page: page.toString() })}
+                    size="sm"
+                    className={currentPage === page ? "bg-blue-600" : ""}
+                  >
+                    {page}
+                  </Button>
+                </React.Fragment>
+              );
+            }
+            
+            return (
+              <Button
+                key={page}
+                variant={currentPage === page ? "default" : "outline"}
+                onClick={() => updateUrlParams({ page: page.toString() })}
+                size="sm"
+                className={currentPage === page ? "bg-blue-600" : ""}
+              >
+                {page}
+              </Button>
+            );
+          }
+          return null;
+        })}
+      </div>
+      
+      <Button
+        variant="outline"
+        onClick={goToNextPage}
+        disabled={currentPage === totalPages}
+        className="flex items-center gap-2"
+        size="sm"
+      >
+        Next
+        <ChevronRight className="h-4 w-4" />
+      </Button>
+    </div>
+  </div>
+)}
         </div>
 
         {/* Mobile View */}
