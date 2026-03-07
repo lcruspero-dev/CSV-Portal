@@ -778,8 +778,7 @@ const ViewAllRaisedTickets: React.FC = () => {
             </Table>
           </div>
 
-          {/* Pagination */}
-         {/* Pagination */}
+{/* Pagination */}
 {currentTickets.length > 0 && (
   <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-gray-200 bg-gray-50">
     <div className="text-sm text-gray-600">
@@ -800,44 +799,17 @@ const ViewAllRaisedTickets: React.FC = () => {
       </Button>
       
       <div className="flex items-center gap-1 mx-2">
-        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page, index, array) => {
-          // Show first, last, current, and pages around current
-          if (
-            page === 1 ||
-            page === totalPages ||
-            (page >= currentPage - 1 && page <= currentPage + 1)
-          ) {
-            // Check if we need to add ellipsis before this page
-            if (index > 0 && array[index - 1] < page - 1) {
-              return (
-                <React.Fragment key={page}>
-                  <span className="px-2 text-gray-400">...</span>
-                  <Button
-                    variant={currentPage === page ? "default" : "outline"}
-                    onClick={() => updateUrlParams({ page: page.toString() })}
-                    size="sm"
-                    className={currentPage === page ? "bg-blue-600" : ""}
-                  >
-                    {page}
-                  </Button>
-                </React.Fragment>
-              );
-            }
-            
-            return (
-              <Button
-                key={page}
-                variant={currentPage === page ? "default" : "outline"}
-                onClick={() => updateUrlParams({ page: page.toString() })}
-                size="sm"
-                className={currentPage === page ? "bg-blue-600" : ""}
-              >
-                {page}
-              </Button>
-            );
-          }
-          return null;
-        })}
+        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+          <Button
+            key={page}
+            variant={currentPage === page ? "default" : "outline"}
+            onClick={() => updateUrlParams({ page: page.toString() })}
+            size="sm"
+            className={currentPage === page ? "bg-blue-600" : ""}
+          >
+            {page}
+          </Button>
+        ))}
       </div>
       
       <Button
