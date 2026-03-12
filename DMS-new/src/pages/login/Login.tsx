@@ -64,24 +64,27 @@ const Login = () => {
         validateUserAccess(response.data);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (validationError: any) {
-        if (validationError.message === "unauthorized_role") {
-          toast({
-            title: "Unauthorized Access",
-            description: "You do not have permission to access this system.",
-            variant: "destructive",
-          });
-          return;
-        }
-        if (validationError.message === "inactive_account") {
-          toast({
-            title: "Account Inactive",
-            description:
-              "Your account is not active. Please contact your administrator.",
-            variant: "destructive",
-          });
-          return;
-        }
-      }
+  if (validationError.message === "unauthorized_role") {
+    toast({
+      title: "Unauthorized Access",
+      description: "You do not have permission to access this system.",
+      variant: "destructive",
+    });
+    setIsLoading(false);
+    return;
+  }
+
+  if (validationError.message === "inactive_account") {
+    toast({
+      title: "Account Inactive",
+      description:
+        "Your account is not active. Please contact your administrator.",
+      variant: "destructive",
+    });
+    setIsLoading(false);
+    return;
+  }
+}
 
       // If validation passes, proceed with login
       toast({
