@@ -96,14 +96,6 @@ const employeeTimeSchema = mongoose.Schema(
       type: String,
       default: null,
     },
-    bioBreakStart: {
-      type: String,
-      default: null,
-    },
-    bioBreakend: {
-      type: String,
-      default: true,
-    },
     notes: {
       type: String,
       default: null,
