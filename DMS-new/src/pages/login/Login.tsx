@@ -64,24 +64,27 @@ const Login = () => {
         validateUserAccess(response.data);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (validationError: any) {
-        if (validationError.message === "unauthorized_role") {
-          toast({
-            title: "Unauthorized Access",
-            description: "You do not have permission to access this system.",
-            variant: "destructive",
-          });
-          return;
-        }
-        if (validationError.message === "inactive_account") {
-          toast({
-            title: "Account Inactive",
-            description:
-              "Your account is not active. Please contact your administrator.",
-            variant: "destructive",
-          });
-          return;
-        }
-      }
+  if (validationError.message === "unauthorized_role") {
+    toast({
+      title: "Unauthorized Access",
+      description: "You do not have permission to access this system.",
+      variant: "destructive",
+    });
+    setIsLoading(false);
+    return;
+  }
+
+  if (validationError.message === "inactive_account") {
+    toast({
+      title: "Account Inactive",
+      description:
+        "Your account is not active. Please contact your administrator.",
+      variant: "destructive",
+    });
+    setIsLoading(false);
+    return;
+  }
+}
 
       // If validation passes, proceed with login
       toast({
@@ -135,7 +138,7 @@ const Login = () => {
             <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm">
               <Shield className="w-20 h-20" />
             </div>
-            <h1 className="text-5xl font-bold tracking-tight">DMS</h1>
+            <h1 className="text-5xl font-bold tracking-tig  ht">DMS</h1>
             <h2 className="text-2xl font-semibold text-blue-100">
               Discipline Management System
             </h2>
@@ -145,22 +148,7 @@ const Login = () => {
             <p className="text-xl text-blue-100/90 leading-relaxed">
               Streamline your organization's discipline management with our comprehensive solution.
             </p>
-            <div className="flex items-center justify-center space-x-6 pt-4">
-              <div className="text-center">
-                <div className="text-3xl font-bold">99%</div>
-                <div className="text-sm text-blue-100/80">Efficiency</div>
-              </div>
-              <div className="h-12 w-px bg-white/30"></div>
-              <div className="text-center">
-                <div className="text-3xl font-bold">24/7</div>
-                <div className="text-sm text-blue-100/80">Access</div>
-              </div>
-              <div className="h-12 w-px bg-white/30"></div>
-              <div className="text-center">
-                <div className="text-3xl font-bold">100%</div>
-                <div className="text-sm text-blue-100/80">Secure</div>
-              </div>
-            </div>
+            
           </div>
         </div>
         
@@ -232,25 +220,7 @@ const Login = () => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="remember"
-                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                  />
-                  <label htmlFor="remember" className="ml-2 text-sm text-gray-600">
-                    Remember me
-                  </label>
-                </div>
-                <a
-                  href="#"
-                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  Forgot password?
-                </a>
-              </div>
-
+          
               <Button
                 type="submit"
                 disabled={isLoading}
@@ -267,25 +237,12 @@ const Login = () => {
               </Button>
             </form>
 
-            <div className="mt-8 pt-8 border-t border-gray-200">
-              <div className="text-center">
-                <p className="text-gray-600">
-                  Need help?{" "}
-                  <a
-                    href="#"
-                    className="text-blue-600 hover:text-blue-700 font-medium"
-                  >
-                    Contact Support
-                  </a>
-                </p>
-              </div>
-            </div>
+           
           </div>
 
           {/* Footer */}
           <div className="text-center text-sm text-gray-500">
             <p>© {new Date().getFullYear()} DMS. All rights reserved.</p>
-            <p className="mt-1">v2.1.0</p>
           </div>
         </div>
       </div>

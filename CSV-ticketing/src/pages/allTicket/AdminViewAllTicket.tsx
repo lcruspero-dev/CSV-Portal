@@ -174,10 +174,12 @@ const ViewAllRaisedTickets: React.FC = () => {
         filtered = filtered.filter((ticket) =>
           hrCategories.includes(ticket.category),
         );
-      } else if (assignedTo !== "all") {
+      } else if (assignedTo !== "all" && assignedTo !== "Not Assigned") {
         filtered = filtered.filter(
           (ticket) => ticket.assignedTo === assignedTo,
         );
+      } else if (assignedTo === "Not Assigned") {
+        filtered = filtered.filter((ticket) => !ticket.assignedTo);
       }
 
       // Status filtering
@@ -200,12 +202,9 @@ const ViewAllRaisedTickets: React.FC = () => {
       }
 
       setFilteredTickets(filtered);
-      // Reset to page 1 when filters change
-      if (searchParams.get("page") !== "1") {
-        updateUrlParams({ page: "1" });
-      }
+      // Removed automatic page reset - now page is controlled by URL params
     },
-    [itCategories, hrCategories, searchParams, updateUrlParams],
+    [itCategories, hrCategories], // Removed searchParams and updateUrlParams from dependencies
   );
 
   useEffect(() => {
@@ -368,14 +367,30 @@ const ViewAllRaisedTickets: React.FC = () => {
     [assign, loginUserRole, getFilteredAssign],
   );
 
+  // Ensure current page is within valid range
   const totalPages = useMemo(
     () => Math.ceil(filteredTickets.length / ITEMS_PER_PAGE),
     [filteredTickets.length],
   );
 
+  // Validate and adjust current page if it's out of bounds
+  const validCurrentPage = useMemo(() => {
+    if (totalPages === 0) return 1;
+    if (currentPage < 1) return 1;
+    if (currentPage > totalPages) return totalPages;
+    return currentPage;
+  }, [currentPage, totalPages]);
+
+  // Update URL if page is invalid
+  useEffect(() => {
+    if (validCurrentPage !== currentPage && totalPages > 0) {
+      updateUrlParams({ page: validCurrentPage.toString() });
+    }
+  }, [validCurrentPage, currentPage, totalPages, updateUrlParams]);
+
   const startIndex = useMemo(
-    () => (currentPage - 1) * ITEMS_PER_PAGE,
-    [currentPage],
+    () => (validCurrentPage - 1) * ITEMS_PER_PAGE,
+    [validCurrentPage],
   );
 
   const endIndex = useMemo(() => startIndex + ITEMS_PER_PAGE, [startIndex]);
@@ -386,21 +401,22 @@ const ViewAllRaisedTickets: React.FC = () => {
   );
 
   const goToNextPage = useCallback(() => {
-    if (currentPage < totalPages) {
-      updateUrlParams({ page: (currentPage + 1).toString() });
+    if (validCurrentPage < totalPages) {
+      updateUrlParams({ page: (validCurrentPage + 1).toString() });
     }
-  }, [currentPage, totalPages, updateUrlParams]);
+  }, [validCurrentPage, totalPages, updateUrlParams]);
 
   const goToPreviousPage = useCallback(() => {
-    if (currentPage > 1) {
-      updateUrlParams({ page: (currentPage - 1).toString() });
+    if (validCurrentPage > 1) {
+      updateUrlParams({ page: (validCurrentPage - 1).toString() });
     }
-  }, [currentPage, updateUrlParams]);
+  }, [validCurrentPage, updateUrlParams]);
 
   const handleStatusFilterChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
       const newStatus = e.target.value;
       updateUrlParams({ status: newStatus });
+      // Don't reset page here - let the URL handle it
     },
     [updateUrlParams],
   );
@@ -409,6 +425,7 @@ const ViewAllRaisedTickets: React.FC = () => {
     (e: React.ChangeEvent<HTMLSelectElement>) => {
       const newAssignedTo = e.target.value;
       updateUrlParams({ assignedTo: newAssignedTo });
+      // Don't reset page here - let the URL handle it
     },
     [updateUrlParams],
   );
@@ -418,7 +435,7 @@ const ViewAllRaisedTickets: React.FC = () => {
     updateUrlParams({
       status: "open",
       assignedTo: "all",
-      page: "1",
+      page: "1", // Reset to page 1 only when clearing filters
     });
     setSearchTicketNumber("");
   }, [updateUrlParams]);
@@ -438,6 +455,13 @@ const ViewAllRaisedTickets: React.FC = () => {
     [navigate, searchParams],
   );
 
+  const handlePageChange = useCallback(
+    (page: number) => {
+      updateUrlParams({ page: page.toString() });
+    },
+    [updateUrlParams],
+  );
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
@@ -453,7 +477,6 @@ const ViewAllRaisedTickets: React.FC = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8">
           <div className="flex items-center gap-4">
-            {/* FIX: Remove onClick prop - BackButton already handles navigation */}
             <BackButton />
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-3">
@@ -790,64 +813,66 @@ const ViewAllRaisedTickets: React.FC = () => {
                 <Button
                   variant="outline"
                   onClick={goToPreviousPage}
-                  disabled={currentPage === 1}
+                  disabled={validCurrentPage === 1}
                   className="flex items-center gap-2"
                   size="sm"
                 >
                   <ChevronLeft className="h-4 w-4" />
-                  Previous
                 </Button>
+                
                 <div className="flex items-center gap-1 mx-2">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1)
-                    .filter((page) => {
-                      // Show first, last, current, and pages around current
-                      if (totalPages <= 7) return true;
-                      if (page === 1 || page === totalPages) return true;
-                      if (Math.abs(page - currentPage) <= 1) return true;
-                      return false;
-                    })
-                    .map((page, index, array) => {
-                      // Add ellipsis for large page ranges
-                      if (index > 0 && page > array[index - 1] + 1) {
-                        return (
-                          <React.Fragment key={`ellipsis-${page}`}>
-                            <span className="px-2 text-gray-400">...</span>
-                            <Button
-                              variant={
-                                currentPage === page ? "default" : "outline"
-                              }
-                              onClick={() =>
-                                updateUrlParams({ page: page.toString() })
-                              }
-                              size="sm"
-                              className={
-                                currentPage === page ? "bg-blue-600" : ""
-                              }
-                            >
-                              {page}
-                            </Button>
-                          </React.Fragment>
-                        );
-                      }
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                    // For small number of pages, show all
+                    if (totalPages <= 7) {
                       return (
                         <Button
                           key={page}
-                          variant={currentPage === page ? "default" : "outline"}
-                          onClick={() =>
-                            updateUrlParams({ page: page.toString() })
-                          }
+                          variant={validCurrentPage === page ? "default" : "outline"}
+                          onClick={() => handlePageChange(page)}
                           size="sm"
-                          className={currentPage === page ? "bg-blue-600" : ""}
+                          className={validCurrentPage === page ? "bg-blue-600" : ""}
                         >
                           {page}
                         </Button>
                       );
-                    })}
+                    }
+                    
+                    // For larger number of pages, show smart pagination
+                    if (
+                      page === 1 || 
+                      page === totalPages || 
+                      (page >= validCurrentPage - 1 && page <= validCurrentPage + 1)
+                    ) {
+                      return (
+                        <Button
+                          key={page}
+                          variant={validCurrentPage === page ? "default" : "outline"}
+                          onClick={() => handlePageChange(page)}
+                          size="sm"
+                          className={validCurrentPage === page ? "bg-blue-600" : ""}
+                        >
+                          {page}
+                        </Button>
+                      );
+                    }
+                    
+                    // Show ellipsis
+                    if (page === 2 && validCurrentPage > 3) {
+                      return <span key="ellipsis-start" className="px-2 text-gray-400">...</span>;
+                    }
+                    
+                    if (page === totalPages - 1 && validCurrentPage < totalPages - 2) {
+                      return <span key="ellipsis-end" className="px-2 text-gray-400">...</span>;
+                    }
+                    
+                    return null;
+                  })}
                 </div>
+                
                 <Button
                   variant="outline"
                   onClick={goToNextPage}
-                  disabled={currentPage === totalPages}
+                  disabled={validCurrentPage === totalPages}
                   className="flex items-center gap-2"
                   size="sm"
                 >
@@ -940,6 +965,35 @@ const ViewAllRaisedTickets: React.FC = () => {
                   </Button>
                 </div>
               ))}
+              
+              {/* Mobile Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between gap-2 mt-4">
+                  <Button
+                    variant="outline"
+                    onClick={goToPreviousPage}
+                    disabled={validCurrentPage === 1}
+                    size="sm"
+                    className="flex items-center gap-1"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Prev
+                  </Button>
+                  <span className="text-sm text-gray-600">
+                    Page {validCurrentPage} of {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    onClick={goToNextPage}
+                    disabled={validCurrentPage === totalPages}
+                    size="sm"
+                    className="flex items-center gap-1"
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>

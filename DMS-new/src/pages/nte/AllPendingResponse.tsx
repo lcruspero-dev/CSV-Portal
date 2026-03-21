@@ -10,9 +10,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import PdfNteViewer from "@/components/ui/viewNteDialog"; // Import the PdfNteViewer component
-import { FileText, Search } from "lucide-react";
+import PdfNteViewer from "@/components/ui/viewNteDialog";
+import { FileText, Search, Trash2 } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface NteDetails {
   employeeId: string;
@@ -72,6 +82,10 @@ const PerTable: React.FC<PerTableProps> = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedNte, setSelectedNte] = useState<NteItem | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
+  
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -114,6 +128,35 @@ const PerTable: React.FC<PerTableProps> = () => {
     }
   };
 
+  const handleDeleteClick = (id: string) => {
+    setItemToDelete(id);
+    setShowDeleteDialog(true);
+  };
+
+  const handleDelete = async () => {
+    if (!itemToDelete) return;
+
+    try {
+      setDeleteLoading(true);
+      await NteAPI.deleteNte(itemToDelete);
+      
+      // Refresh the data after successful deletion
+      await fetchData();
+      
+      // Close the dialog and reset states
+      setShowDeleteDialog(false);
+      setItemToDelete(null);
+      
+      // Optional: Show success message (you can add a toast notification here)
+      console.log("NTE deleted successfully");
+    } catch (error) {
+      console.error("Error deleting NTE: ", error);
+      // Optional: Show error message (you can add a toast notification here)
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
     setCurrentPage(1);
@@ -141,10 +184,7 @@ const PerTable: React.FC<PerTableProps> = () => {
   };
 
   const formatDate = (dateString: string) => {
-    // Split YYYY-MM-DD into parts
     const [year, month, day] = dateString.split("-").map(Number);
-
-    // Custom month names mapping
     const months = [
       "January",
       "February",
@@ -159,8 +199,6 @@ const PerTable: React.FC<PerTableProps> = () => {
       "November",
       "December",
     ];
-
-    // Format as "Month DD, YYYY"
     return `${months[month - 1]} ${day}, ${year}`;
   };
 
@@ -209,7 +247,7 @@ const PerTable: React.FC<PerTableProps> = () => {
                 Status
               </TableHead>
               <TableHead className="font-bold bg-gray-800 text-white border-r text-center">
-                Action
+                Actions
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -262,14 +300,22 @@ const PerTable: React.FC<PerTableProps> = () => {
                     </span>
                   </TableCell>
                   <TableCell>
-                    <div className="flex justify-center">
+                    <div className="flex justify-center gap-2">
                       <Button
                         variant="secondary"
                         onClick={() => handleView(item._id)}
                         className="h-8 flex items-center gap-1 text-xs"
                       >
                         <FileText className="h-3 w-3" />
-                        View Details
+                        View
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={() => handleDeleteClick(item._id)}
+                        className="h-8 flex items-center gap-1 text-xs"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        Delete
                       </Button>
                     </div>
                   </TableCell>
@@ -312,6 +358,31 @@ const PerTable: React.FC<PerTableProps> = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              Notice of Explanation record and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteLoading}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleteLoading}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {deleteLoading ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {selectedNte && (
         <PdfNteViewer

@@ -1,4 +1,4 @@
-// components/kit/IncompleteBreaksDialog.tsx
+/* eslint-disable react-hooks/exhaustive-deps */
 import { timer, TimeRecordAPI } from "@/API/endpoint";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,7 +9,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { 
+  useCallback, 
+  useEffect, 
+  useRef, 
+  useState 
+} from "react";
 
 type IncompleteBreak = {
   employeeId: string;

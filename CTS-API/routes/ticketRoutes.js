@@ -24,7 +24,7 @@ router.use("/:ticketId/notes", noteRouter);
 router.get("/viewAll", protect, verifyAdmin, viewAllTickets);
 router.get("/viewOpen", protect, verifyAdmin, viewOpenTickets);
 router.get("/viewClosed", protect, verifyAdmin, viewClosedTickets);
-router.get("/category/:category", protect, viewTicketsByCategory);
+router.get("/category/:category", protect, verifyAdmin, viewTicketsByCategory);
 
 // Routes for viewing tickets based on department and priority
 router.get("/department/:dept", protect, verifyAdmin, viewTicketsByDepartment);

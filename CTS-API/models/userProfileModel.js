@@ -28,6 +28,9 @@ const userProfileSchema = mongoose.Schema(
     province: {
       type: String,
     },
+    idNum: {
+      type: String,
+    },
     zipCode: {
       type: String,
     },
