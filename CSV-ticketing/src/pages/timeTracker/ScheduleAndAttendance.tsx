@@ -618,101 +618,153 @@ const ScheduleAndAttendance: React.FC = () => {
     setActiveTab("attendance");
   };
 
-  const handleUpdateAttendance = async () => {
-    if (selectedEmployee && selectedDate) {
-      try {
-        const formattedDate = `${selectedDate.getMonth() + 1}/${selectedDate.getDate()}/${selectedDate.getFullYear()}`;
+const handleUpdateAttendance = async () => {
+  if (selectedEmployee && selectedDate) {
+    try {
+      const formattedDate = `${selectedDate.getMonth() + 1}/${selectedDate.getDate()}/${selectedDate.getFullYear()}`;
 
-        const needsTimeData = [
-          "Tardy",
-          "Half Day",
-          "RDOT",
-          "Early Log Out",
-          "Present",
-        ].includes(selectedAttendanceStatus);
+      const needsTimeData = [
+        "Tardy",
+        "Half Day",
+        "RDOT",
+        "Early Log Out",
+        "Present",
+      ].includes(selectedAttendanceStatus);
 
-        let timeRecordData = null;
-        if (needsTimeData) {
-          try {
-            const response =
-              await TimeRecordAPI.getEmployeeTimeByEmployeeIdandDate(
-                selectedEmployee.id,
-                formattedDate,
-              );
-            timeRecordData = response.data;
-          } catch (err) {
-            console.error("Error fetching time record:", err);
-          }
+      let timeRecordData = null;
+      if (needsTimeData) {
+        try {
+          const response =
+            await TimeRecordAPI.getEmployeeTimeByEmployeeIdandDate(
+              selectedEmployee.id,
+              formattedDate,
+            );
+          timeRecordData = response.data;
+          
+          // Debug: Log what data is actually coming back
+          console.log('Time Record Data Structure:', timeRecordData);
+          console.log('All properties:', Object.keys(timeRecordData));
+          
+          // Check different possible property names for breaks
+          console.log('Break related fields:', {
+            totalBreakTime: timeRecordData.totalBreakTime,
+            totalSecondBreakTime: timeRecordData.totalSecondBreakTime,
+            break1: timeRecordData.break1,
+            break2: timeRecordData.break2,
+            breaks: timeRecordData.breaks,
+            breakTime: timeRecordData.breakTime,
+            secondBreakTime: timeRecordData.secondBreakTime
+          });
+          
+        } catch (err) {
+          console.error("Error fetching time record:", err);
         }
-
-        const attendanceData: any = {
-          employeeId: selectedEmployee.id,
-          date: formattedDate,
-          status: selectedAttendanceStatus,
-        };
-
-        // Only include OT for Present status
-        if (
-          selectedAttendanceStatus === "Present" &&
-          showOtInput &&
-          (otHours || otMinutes)
-        ) {
-          const hours = otHours || "0";
-          const minutes = otMinutes || "0";
-          attendanceData.ot = `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}`;
-        } else {
-          attendanceData.ot = null;
-        }
-
-        if (needsTimeData && timeRecordData) {
-          attendanceData.logIn = timeRecordData.timeIn || null;
-          attendanceData.logOut = timeRecordData.timeOut || null;
-          attendanceData.totalHours = timeRecordData.totalHours || null;
-          attendanceData.shift = timeRecordData.shift || null;
-        } else if (!needsTimeData) {
-          attendanceData.logIn = null;
-          attendanceData.logOut = null;
-          attendanceData.totalHours = null;
-          attendanceData.shift = null;
-        }
-
-        await ScheduleAndAttendanceAPI.createAttendanceEntry(attendanceData);
-
-        const updatedEntry: AttendanceEntry = {
-          employeeId: selectedEmployee.id,
-          date: selectedDate,
-          status: selectedAttendanceStatus,
-          ...(attendanceData.logIn && { logIn: attendanceData.logIn }),
-          ...(attendanceData.logOut && { logOut: attendanceData.logOut }),
-          ...(attendanceData.totalHours && {
-            totalHours: attendanceData.totalHours,
-          }),
-          ...(attendanceData.ot && { ot: attendanceData.ot }),
-          ...(attendanceData.shift && { shift: attendanceData.shift }),
-        };
-
-        setAttendance((prev) => {
-          const existingIndex = prev.findIndex(
-            (entry) =>
-              entry.employeeId === selectedEmployee.id &&
-              isSameDay(entry.date, selectedDate),
-          );
-          if (existingIndex >= 0) {
-            const newAttendance = [...prev];
-            newAttendance[existingIndex] = updatedEntry;
-            return newAttendance;
-          }
-          return [...prev, updatedEntry];
-        });
-
-        setIsAddShiftOpen(false);
-        resetDialogState();
-      } catch (err) {
-        console.error("Error updating attendance:", err);
-        setError("Failed to update attendance");
       }
+
+      const attendanceData: any = {
+        employeeId: selectedEmployee.id,
+        date: formattedDate,
+        status: selectedAttendanceStatus,
+      };
+
+      // Only include OT for Present status
+      if (
+        selectedAttendanceStatus === "Present" &&
+        showOtInput &&
+        (otHours || otMinutes)
+      ) {
+        const hours = otHours || "0";
+        const minutes = otMinutes || "0";
+        attendanceData.ot = `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}`;
+      } else {
+        attendanceData.ot = null;
+      }
+
+      if (needsTimeData && timeRecordData) {
+        attendanceData.logIn = timeRecordData.timeIn || null;
+        attendanceData.logOut = timeRecordData.timeOut || null;
+        attendanceData.totalHours = timeRecordData.totalHours || null;
+        attendanceData.shift = timeRecordData.shift || null;
+        
+        if (timeRecordData.totalBreakTime) {
+          attendanceData.break1 = timeRecordData.totalBreakTime;
+        } else if (timeRecordData.break1) {
+          attendanceData.break1 = timeRecordData.break1;
+        } else if (timeRecordData.breakTime) {
+          attendanceData.break1 = timeRecordData.breakTime;
+        }
+        
+        if (timeRecordData.totalSecondBreakTime) {
+          attendanceData.break2 = timeRecordData.totalSecondBreakTime;
+        } else if (timeRecordData.break2) {
+          attendanceData.break2 = timeRecordData.break2;
+        } else if (timeRecordData.secondBreakTime) {
+          attendanceData.break2 = timeRecordData.secondBreakTime;
+        }
+        
+        // If breaks are stored as an array
+        if (timeRecordData.breaks && Array.isArray(timeRecordData.breaks)) {
+          attendanceData.break1 = timeRecordData.breaks[0]?.duration || null;
+          attendanceData.break2 = timeRecordData.breaks[1]?.duration || null;
+        }
+        
+        // If breaks are stored in a nested object
+        if (timeRecordData.breakDetails) {
+          attendanceData.break1 = timeRecordData.breakDetails.firstBreak || null;
+          attendanceData.break2 = timeRecordData.breakDetails.secondBreak || null;
+        }
+        
+        console.log('Final attendanceData with breaks:', {
+          break1: attendanceData.break1,
+          break2: attendanceData.break2
+        });
+        
+      } else if (!needsTimeData) {
+        attendanceData.logIn = null;
+        attendanceData.logOut = null;
+        attendanceData.totalHours = null;
+        attendanceData.shift = null;
+        attendanceData.break1 = null;
+        attendanceData.break2 = null;
+      }
+
+      await ScheduleAndAttendanceAPI.createAttendanceEntry(attendanceData);
+
+      const updatedEntry: AttendanceEntry = {
+        employeeId: selectedEmployee.id,
+        date: selectedDate,
+        status: selectedAttendanceStatus,
+        ...(attendanceData.logIn && { logIn: attendanceData.logIn }),
+        ...(attendanceData.logOut && { logOut: attendanceData.logOut }),
+        ...(attendanceData.totalHours && { totalHours: attendanceData.totalHours }),
+        ...(attendanceData.ot && { ot: attendanceData.ot }),
+        ...(attendanceData.shift && { shift: attendanceData.shift }),
+        ...(attendanceData.break1 && { break1: attendanceData.break1 }),
+        ...(attendanceData.break2 && { break2: attendanceData.break2 }),
+      };
+
+      setAttendance((prev) => {
+        const existingIndex = prev.findIndex(
+          (entry) =>
+            entry.employeeId === selectedEmployee.id &&
+            isSameDay(entry.date, selectedDate),    
+        );
+        if (existingIndex >= 0) {
+          const newAttendance = [...prev];
+          newAttendance[existingIndex] = updatedEntry;
+          return newAttendance;
+        }
+        return [...prev, updatedEntry];
+      });
+
+      setIsAddShiftOpen(false);
+      resetDialogState();
+    } catch (err) {
+      console.error("Error updating attendance:", err);
+      setError("Failed to update attendance");
     }
-  };
+  }
+};
 
   return (
     <div className="min-h-screen bg-gray-50 py-6 px-4 sm:px-6 lg:px-8">
@@ -1136,7 +1188,13 @@ const ScheduleAndAttendance: React.FC = () => {
                                           )}
                                           {attendanceEntry.logOut && (
                                             <p className="text-xs text-stone-500">Out: {attendanceEntry.logOut}</p>
-                                          )}                     
+                                          )}   
+                                           {attendanceEntry.totalHours && (
+                                            <p className="text-xs text-stone-500">
+                                             Total Hours:{" "}
+                                              {attendanceEntry.totalHours}
+                                            </p>
+                                          )}                  
                                         </div>
                                       </TooltipTrigger>
                                       <TooltipContent className="max-w-xs whitespace-pre-line text-sm">
@@ -1144,19 +1202,13 @@ const ScheduleAndAttendance: React.FC = () => {
                                           <p className="font-semibold">
                                             {attendanceEntry.status}
                                           </p>
-                                          {attendanceEntry.logIn && (
-                                            <p>In: {attendanceEntry.logIn}</p>
+                                           {attendanceEntry.break1 && (
+                                            <p>Total Break 1: {attendanceEntry.break1}</p>
                                           )}
-                                          {attendanceEntry.logOut && (
-                                            <p>Out: {attendanceEntry.logOut}</p>
+                                           {attendanceEntry.break2 && (
+                                            <p>Total Break 2: {attendanceEntry.break2}</p>
                                           )}
-                                          {attendanceEntry.totalHours && (
-                                            <p>
-                                              Hours:{" "}
-                                              {attendanceEntry.totalHours}
-                                            </p>
-                                          )}
-                                        
+                                         
                                         </div>
                                       </TooltipContent>
                                     </Tooltip>
