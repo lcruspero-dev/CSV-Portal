@@ -16,9 +16,7 @@ const getTickets = asyncHandler(async (req, res) => {
     .populate("user", "name email");
 
   res.status(200).json(tickets);
-  
 });
-
 
 const getTicket = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id);
@@ -43,7 +41,6 @@ const getTicket = asyncHandler(async (req, res) => {
 
   res.status(200).json(ticket);
 });
-
 
 const createTicket = asyncHandler(async (req, res) => {
   const {
@@ -138,7 +135,7 @@ const updateTicket = asyncHandler(async (req, res) => {
   if (
     req.body.status &&
     !["open", "closed", "In Progress", "Approved", "Rejected"].includes(
-      req.body.status
+      req.body.status,
     )
   ) {
     res.status(400);
@@ -163,12 +160,11 @@ const updateTicket = asyncHandler(async (req, res) => {
   const updatedTicket = await Ticket.findByIdAndUpdate(
     req.params.id,
     req.body,
-    { new: true, runValidators: true }
+    { new: true, runValidators: true },
   ).populate("user", "name email");
 
   res.status(200).json(updatedTicket);
 });
-
 
 const viewAllTickets = asyncHandler(async (req, res) => {
   const tickets = await Ticket.find()
@@ -176,7 +172,6 @@ const viewAllTickets = asyncHandler(async (req, res) => {
     .populate("user", "name email");
   res.status(200).json(tickets);
 });
-
 
 const viewOpenTickets = asyncHandler(async (req, res) => {
   const tickets = await Ticket.find({
@@ -187,14 +182,12 @@ const viewOpenTickets = asyncHandler(async (req, res) => {
   res.status(200).json(tickets);
 });
 
-
 const viewClosedTickets = asyncHandler(async (req, res) => {
   const tickets = await Ticket.find({ status: "closed" })
     .sort({ createdAt: -1 })
     .populate("user", "name email");
   res.status(200).json(tickets);
 });
-
 
 const viewTicketsByDepartment = asyncHandler(async (req, res) => {
   const { dept } = req.params;
@@ -208,9 +201,7 @@ const viewTicketsByDepartment = asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 })
     .populate("user", "name email");
   res.status(200).json(tickets);
-  
 });
-
 
 const viewTicketsByPriority = asyncHandler(async (req, res) => {
   const { level } = req.params;
