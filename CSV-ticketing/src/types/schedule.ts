@@ -66,6 +66,8 @@ export type AttendanceEntry = {
   status: AttendanceStatus;
   logIn?: string;
   logOut?: string;
+  break1?: string;
+  break2?: string;
   totalHours?: string;
   ot?: string;
 };

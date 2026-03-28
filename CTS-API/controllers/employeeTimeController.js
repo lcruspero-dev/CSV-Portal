@@ -536,6 +536,7 @@ const getIncompleteBreaks = async (req, res) => {
       count: formattedResponse.length,
       data: formattedResponse,
     });
+    
   } catch (error) {
     console.error("Error fetching incomplete breaks:", error.message);
     res.status(500).json({ message: error.message });
