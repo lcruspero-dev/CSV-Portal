@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const coachingSchema = new Schema({
-  
   coaching: {
     employeeId: {
       type: String,
@@ -44,7 +43,59 @@ const coachingSchema = new Schema({
       default: null,
     },
   },
-   status: {
+
+  employeeFeedback: {
+    name: {
+      type: String,
+    },
+    position: {
+      type: String,
+    },
+    responseDate: {
+      type: String,
+    },
+    responseDetail: {
+      type: String,
+    },
+    employeeSignatureDate: {
+      type: String,
+    },
+  },
+
+  noticeOfDecision: {
+    name: {
+      type: String,
+    },
+    position: {
+      type: String,
+    },
+    nteIssuanceDate: {
+      type: String,
+    },
+    writtenExplanationReceiptDate: {
+      type: String,
+    },
+    offenseType: {
+      type: String,
+    },
+    offenseDescription: {
+      type: String,
+    },
+    findings: {
+      type: String,
+    },
+    decision: {
+      type: String,
+    },
+    employeeSignatureDate: {
+      type: String,
+    },
+    authorizedSignatureDate: {
+      type: String,
+    },
+  },
+
+  status: {
     type: String,
     enum: ["DRAFT", "PER", "PNOD", "PNODA", "FTHR"],
   },
@@ -59,7 +110,6 @@ const coachingSchema = new Schema({
     type: Date,
     default: Date.now,
   },
-
 });
 
 coachingSchema.pre("save", function (next) {

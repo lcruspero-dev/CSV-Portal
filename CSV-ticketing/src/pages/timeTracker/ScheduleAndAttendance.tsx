@@ -13,6 +13,7 @@ import {
   startOfMonth,
   startOfWeek,
   parseISO,
+  isWeekend,
 } from "date-fns";
 
 // Icons
@@ -27,6 +28,20 @@ import {
   AlertCircle,
   TrendingUp,
   Eye,
+  RefreshCw,
+  CheckCircle2,
+  XCircle,
+  Clock3,
+  Coffee,
+  Sun,
+  Moon,
+  Star,
+  Gift,
+  Home,
+  Briefcase,
+  Plane,
+  Heart,
+  Loader2,
 } from "lucide-react";
 
 // API Endpoints
@@ -36,7 +51,7 @@ import {
   UserProfileAPI,
 } from "@/API/endpoint";
 
-// Shadcn UIs componets
+// Shadcn UIs components
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -72,6 +87,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 
 // Kit Components
 import { AbsenteeismAnalytics } from "@/components/kit/AbsenteeismAnalytics";
@@ -96,7 +113,6 @@ import {
   getShiftColor,
   hasShiftTime,
   displayShiftInfo,
-  getAttendanceColor,
 } from "@/utils/scheduleHelper";
 
 const ScheduleAndAttendance: React.FC = () => {
@@ -131,10 +147,51 @@ const ScheduleAndAttendance: React.FC = () => {
   const [otHours, setOtHours] = useState<string>("");
   const [otMinutes, setOtMinutes] = useState<string>("");
   const [showOtInput, setShowOtInput] = useState<boolean>(false);
+  const [hoveredCell, setHoveredCell] = useState<{
+    employeeId: string;
+    date: string;
+  } | null>(null);
 
   // Refs for click outside detection
   const fromCalendarRef = useRef<HTMLDivElement>(null);
   const toCalendarRef = useRef<HTMLDivElement>(null);
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+
+  // Shift type icons mapping
+  const getShiftIcon = (shiftType: ShiftTypeValue) => {
+    const icons: Record<ShiftTypeValue, any> = {
+      Morning: Sun,
+      Mid: Clock3,
+      Night: Moon,
+      restday: Home,
+      paidTimeOff: Gift,
+      plannedLeave: Plane,
+      holiday: Star,
+      rdot: Heart,
+    };
+    const Icon = icons[shiftType] || Clock;
+    return <Icon className="h-3 w-3 mr-1" />;
+  };
+
+  // Attendance status icons
+  const getAttendanceIcon = (status: AttendanceStatus) => {
+    const icons: Partial<Record<AttendanceStatus, any>> = {
+      Present: CheckCircle2,
+      NCNS: XCircle,
+      "Rest Day": Home,
+      Tardy: AlertCircle,
+      Suspended: XCircle,
+      Attrition: XCircle,
+      LOA: Briefcase,
+      PTO: Gift,
+      "Half Day": Clock3,
+      "Early Log Out": Clock3,
+      VTO: Gift,
+      TB: Heart,
+    };
+    const Icon = icons[status] || AlertCircle;
+    return <Icon className="h-3 w-3 mr-1" />;
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -159,21 +216,32 @@ const ScheduleAndAttendance: React.FC = () => {
   }, []);
 
   const DepartmentFilterDropdown = () => {
+    const uniqueLeaders = Array.from(
+      new Set(employees.map((emp) => emp.teamLeader)),
+    )
+      .filter((leader) => leader && leader.trim() !== "")
+      .sort();
+
     return (
       <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-        <SelectTrigger className="w-48">
+        <SelectTrigger className="w-48 bg-white border-gray-200 hover:border-purple-300 transition-colors">
           <SelectValue placeholder="Select Team Leader" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All Employees</SelectItem>
-          {Array.from(new Set(employees.map((emp) => emp.teamLeader)))
-            .filter((leader) => leader && leader.trim() !== "")
-            .sort()
-            .map((leader) => (
-              <SelectItem key={leader} value={leader}>
+          <SelectItem value="all">
+            <div className="flex items-center">
+              <Users className="h-4 w-4 mr-2" />
+              All Employees
+            </div>
+          </SelectItem>
+          {uniqueLeaders.map((leader) => (
+            <SelectItem key={leader} value={leader}>
+              <div className="flex items-center">
+                <div className="w-2 h-2 rounded-full bg-purple-500 mr-2" />
                 {leader}
-              </SelectItem>
-            ))}
+              </div>
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
     );
@@ -309,19 +377,45 @@ const ScheduleAndAttendance: React.FC = () => {
 
   if (loading)
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-700 font-medium">Loading employee data...</p>
+          <div className="relative">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <Loader2 className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-8 w-8 text-purple-300 animate-pulse" />
+          </div>
+          <p className="text-gray-700 font-medium mt-4">
+            Loading employee data...
+          </p>
+          <p className="text-gray-500 text-sm mt-1">
+            Please wait while we fetch the latest information
+          </p>
         </div>
       </div>
     );
 
   if (error)
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-        <AlertCircle className="inline h-5 w-5 mr-2" />
-        {error}
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Card className="max-w-md mx-auto border-red-200 shadow-lg">
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center text-center">
+              <div className="bg-red-100 rounded-full p-3 mb-4">
+                <AlertCircle className="h-8 w-8 text-red-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Error Loading Data
+              </h3>
+              <p className="text-gray-600 mb-4">{error}</p>
+              <Button
+                onClick={() => window.location.reload()}
+                variant="outline"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Retry
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
 
@@ -545,7 +639,6 @@ const ScheduleAndAttendance: React.FC = () => {
             selectedEmployee.id,
             currentScheduleData,
           );
-          console.log(`Successfully updated shift for ${currentFormattedDate}`);
         } catch (err) {
           console.error(
             `Error updating shift for ${currentFormattedDate}:`,
@@ -592,7 +685,6 @@ const ScheduleAndAttendance: React.FC = () => {
 
   const handleAttendanceCellClick = (employee: Employee, date: Date) => {
     if (date > new Date()) {
-      alert("Cannot set attendance for future dates");
       return;
     }
 
@@ -602,7 +694,6 @@ const ScheduleAndAttendance: React.FC = () => {
     const entry = findAttendanceEntry(employee.id, date);
     setSelectedAttendanceStatus(entry ? entry.status : "Present");
 
-    // Set OT data if exists
     if (entry?.ot) {
       const [hours, minutes] = entry.ot.split(":");
       setOtHours(hours);
@@ -618,166 +709,171 @@ const ScheduleAndAttendance: React.FC = () => {
     setActiveTab("attendance");
   };
 
-const handleUpdateAttendance = async () => {
-  if (selectedEmployee && selectedDate) {
-    try {
-      const formattedDate = `${selectedDate.getMonth() + 1}/${selectedDate.getDate()}/${selectedDate.getFullYear()}`;
+  const handleUpdateAttendance = async () => {
+    if (selectedEmployee && selectedDate) {
+      try {
+        const formattedDate = `${selectedDate.getMonth() + 1}/${selectedDate.getDate()}/${selectedDate.getFullYear()}`;
 
-      const needsTimeData = [
-        "Tardy",
-        "Half Day",
-        "RDOT",
-        "Early Log Out",
-        "Present",
-      ].includes(selectedAttendanceStatus);
+        const needsTimeData = [
+          "Tardy",
+          "Half Day",
+          "RDOT",
+          "Early Log Out",
+          "Present",
+        ].includes(selectedAttendanceStatus);
 
-      let timeRecordData = null;
-      if (needsTimeData) {
-        try {
-          const response =
-            await TimeRecordAPI.getEmployeeTimeByEmployeeIdandDate(
-              selectedEmployee.id,
-              formattedDate,
-            );
-          timeRecordData = response.data;
-          
-          // Debug: Log what data is actually coming back
-          console.log('Time Record Data Structure:', timeRecordData);
-          console.log('All properties:', Object.keys(timeRecordData));
-          
-          // Check different possible property names for breaks
-          console.log('Break related fields:', {
-            totalBreakTime: timeRecordData.totalBreakTime,
-            totalSecondBreakTime: timeRecordData.totalSecondBreakTime,
-            break1: timeRecordData.break1,
-            break2: timeRecordData.break2,
-            breaks: timeRecordData.breaks,
-            breakTime: timeRecordData.breakTime,
-            secondBreakTime: timeRecordData.secondBreakTime
-          });
-          
-        } catch (err) {
-          console.error("Error fetching time record:", err);
+        let timeRecordData = null;
+        if (needsTimeData) {
+          try {
+            const response =
+              await TimeRecordAPI.getEmployeeTimeByEmployeeIdandDate(
+                selectedEmployee.id,
+                formattedDate,
+              );
+            timeRecordData = response.data;
+          } catch (err) {
+            console.error("Error fetching time record:", err);
+          }
         }
-      }
 
-      const attendanceData: any = {
-        employeeId: selectedEmployee.id,
-        date: formattedDate,
-        status: selectedAttendanceStatus,
-      };
+        const attendanceData: any = {
+          employeeId: selectedEmployee.id,
+          date: formattedDate,
+          status: selectedAttendanceStatus,
+        };
 
-      // Only include OT for Present status
-      if (
-        selectedAttendanceStatus === "Present" &&
-        showOtInput &&
-        (otHours || otMinutes)
-      ) {
-        const hours = otHours || "0";
-        const minutes = otMinutes || "0";
-        attendanceData.ot = `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}`;
-      } else {
-        attendanceData.ot = null;
-      }
+        if (
+          selectedAttendanceStatus === "Present" &&
+          showOtInput &&
+          (otHours || otMinutes)
+        ) {
+          const hours = otHours || "0";
+          const minutes = otMinutes || "0";
+          attendanceData.ot = `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}`;
+        } else {
+          attendanceData.ot = null;
+        }
 
-      if (needsTimeData && timeRecordData) {
-        attendanceData.logIn = timeRecordData.timeIn || null;
-        attendanceData.logOut = timeRecordData.timeOut || null;
-        attendanceData.totalHours = timeRecordData.totalHours || null;
-        attendanceData.shift = timeRecordData.shift || null;
-        
-        if (timeRecordData.totalBreakTime) {
-          attendanceData.break1 = timeRecordData.totalBreakTime;
-        } else if (timeRecordData.break1) {
-          attendanceData.break1 = timeRecordData.break1;
-        } else if (timeRecordData.breakTime) {
-          attendanceData.break1 = timeRecordData.breakTime;
+        if (needsTimeData && timeRecordData) {
+          attendanceData.logIn = timeRecordData.timeIn || null;
+          attendanceData.logOut = timeRecordData.timeOut || null;
+          attendanceData.totalHours = timeRecordData.totalHours || null;
+          attendanceData.shift = timeRecordData.shift || null;
+
+          if (timeRecordData.totalBreakTime) {
+            attendanceData.break1 = timeRecordData.totalBreakTime;
+          } else if (timeRecordData.break1) {
+            attendanceData.break1 = timeRecordData.break1;
+          } else if (timeRecordData.breakTime) {
+            attendanceData.break1 = timeRecordData.breakTime;
+          }
+
+          if (timeRecordData.totalSecondBreakTime) {
+            attendanceData.break2 = timeRecordData.totalSecondBreakTime;
+          } else if (timeRecordData.break2) {
+            attendanceData.break2 = timeRecordData.break2;
+          } else if (timeRecordData.secondBreakTime) {
+            attendanceData.break2 = timeRecordData.secondBreakTime;
+          }
+
+          if (timeRecordData.breaks && Array.isArray(timeRecordData.breaks)) {
+            attendanceData.break1 = timeRecordData.breaks[0]?.duration || null;
+            attendanceData.break2 = timeRecordData.breaks[1]?.duration || null;
+          }
+
+          if (timeRecordData.breakDetails) {
+            attendanceData.break1 =
+              timeRecordData.breakDetails.firstBreak || null;
+            attendanceData.break2 =
+              timeRecordData.breakDetails.secondBreak || null;
+          }
+        } else if (!needsTimeData) {
+          attendanceData.logIn = null;
+          attendanceData.logOut = null;
+          attendanceData.totalHours = null;
+          attendanceData.shift = null;
+          attendanceData.break1 = null;
+          attendanceData.break2 = null;
         }
-        
-        if (timeRecordData.totalSecondBreakTime) {
-          attendanceData.break2 = timeRecordData.totalSecondBreakTime;
-        } else if (timeRecordData.break2) {
-          attendanceData.break2 = timeRecordData.break2;
-        } else if (timeRecordData.secondBreakTime) {
-          attendanceData.break2 = timeRecordData.secondBreakTime;
-        }
-        
-        // If breaks are stored as an array
-        if (timeRecordData.breaks && Array.isArray(timeRecordData.breaks)) {
-          attendanceData.break1 = timeRecordData.breaks[0]?.duration || null;
-          attendanceData.break2 = timeRecordData.breaks[1]?.duration || null;
-        }
-        
-        // If breaks are stored in a nested object
-        if (timeRecordData.breakDetails) {
-          attendanceData.break1 = timeRecordData.breakDetails.firstBreak || null;
-          attendanceData.break2 = timeRecordData.breakDetails.secondBreak || null;
-        }
-        
-        console.log('Final attendanceData with breaks:', {
-          break1: attendanceData.break1,
-          break2: attendanceData.break2
+
+        await ScheduleAndAttendanceAPI.createAttendanceEntry(attendanceData);
+
+        const updatedEntry: AttendanceEntry = {
+          employeeId: selectedEmployee.id,
+          date: selectedDate,
+          status: selectedAttendanceStatus,
+          ...(attendanceData.logIn && { logIn: attendanceData.logIn }),
+          ...(attendanceData.logOut && { logOut: attendanceData.logOut }),
+          ...(attendanceData.totalHours && {
+            totalHours: attendanceData.totalHours,
+          }),
+          ...(attendanceData.ot && { ot: attendanceData.ot }),
+          ...(attendanceData.shift && { shift: attendanceData.shift }),
+          ...(attendanceData.break1 && { break1: attendanceData.break1 }),
+          ...(attendanceData.break2 && { break2: attendanceData.break2 }),
+        };
+
+        setAttendance((prev) => {
+          const existingIndex = prev.findIndex(
+            (entry) =>
+              entry.employeeId === selectedEmployee.id &&
+              isSameDay(entry.date, selectedDate),
+          );
+          if (existingIndex >= 0) {
+            const newAttendance = [...prev];
+            newAttendance[existingIndex] = updatedEntry;
+            return newAttendance;
+          }
+          return [...prev, updatedEntry];
         });
-        
-      } else if (!needsTimeData) {
-        attendanceData.logIn = null;
-        attendanceData.logOut = null;
-        attendanceData.totalHours = null;
-        attendanceData.shift = null;
-        attendanceData.break1 = null;
-        attendanceData.break2 = null;
+
+        setIsAddShiftOpen(false);
+        resetDialogState();
+      } catch (err) {
+        console.error("Error updating attendance:", err);
+        setError("Failed to update attendance");
       }
-
-      await ScheduleAndAttendanceAPI.createAttendanceEntry(attendanceData);
-
-      const updatedEntry: AttendanceEntry = {
-        employeeId: selectedEmployee.id,
-        date: selectedDate,
-        status: selectedAttendanceStatus,
-        ...(attendanceData.logIn && { logIn: attendanceData.logIn }),
-        ...(attendanceData.logOut && { logOut: attendanceData.logOut }),
-        ...(attendanceData.totalHours && { totalHours: attendanceData.totalHours }),
-        ...(attendanceData.ot && { ot: attendanceData.ot }),
-        ...(attendanceData.shift && { shift: attendanceData.shift }),
-        ...(attendanceData.break1 && { break1: attendanceData.break1 }),
-        ...(attendanceData.break2 && { break2: attendanceData.break2 }),
-      };
-
-      setAttendance((prev) => {
-        const existingIndex = prev.findIndex(
-          (entry) =>
-            entry.employeeId === selectedEmployee.id &&
-            isSameDay(entry.date, selectedDate),    
-        );
-        if (existingIndex >= 0) {
-          const newAttendance = [...prev];
-          newAttendance[existingIndex] = updatedEntry;
-          return newAttendance;
-        }
-        return [...prev, updatedEntry];
-      });
-
-      setIsAddShiftOpen(false);
-      resetDialogState();
-    } catch (err) {
-      console.error("Error updating attendance:", err);
-      setError("Failed to update attendance");
     }
-  }
-};
+  };
+
+  // Status color mapping for visual indicators
+  const getStatusColorClass = (status: AttendanceStatus) => {
+    const colors: Record<AttendanceStatus, string> = {
+      Present: "text-green-600 bg-green-50 border-green-200",
+      NCNS: "text-red-600 bg-red-50 border-red-200",
+      "Call In": "text-yellow-600 bg-yellow-50 border-yellow-200",
+      "Rest Day": "text-blue-600 bg-blue-50 border-blue-200",
+      Tardy: "text-orange-600 bg-orange-50 border-orange-200",
+      RDOT: "text-purple-600 bg-purple-50 border-purple-200",
+      Suspended: "text-gray-600 bg-gray-50 border-gray-200",
+      Attrition: "text-gray-600 bg-gray-50 border-gray-200",
+      LOA: "text-indigo-600 bg-indigo-50 border-indigo-200",
+      PTO: "text-teal-600 bg-teal-50 border-teal-200",
+      "Half Day": "text-amber-600 bg-amber-50 border-amber-200",
+      "Early Log Out": "text-rose-600 bg-rose-50 border-rose-200",
+      VTO: "text-cyan-600 bg-cyan-50 border-cyan-200",
+      TB: "text-pink-600 bg-pink-50 border-pink-200",
+      Pending: "",
+    };
+    return colors[status] || "text-gray-600 bg-gray-50 border-gray-200";
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-6 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-50 to-purple-50/30 py-6 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header Section */}
+        {/* Header Section with Gradient */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-              Schedule & Attendance Management
-            </h1>
-            <p className="text-gray-600 mt-1">
-              Manage employee schedules and track attendance records
-            </p>
+          <div className="relative">
+            <div className="absolute -top-4 -left-4 w-20 h-20 bg-purple-200 rounded-full opacity-20 blur-2xl"></div>
+            <div className="relative">
+              <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                Schedule & Attendance Management
+              </h1>
+              <p className="text-gray-600 mt-1 flex items-center gap-2">
+                <div className="w-1 h-4 bg-purple-500 rounded-full"></div>
+                Manage employee schedules and track attendance records with ease
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <BackButton />
@@ -785,20 +881,22 @@ const handleUpdateAttendance = async () => {
         </div>
 
         {/* Analytics Section */}
-        <AbsenteeismAnalytics
-          employees={employees}
-          attendance={attendance}
-          schedule={schedule}
-          viewMode={viewMode}
-          currentDate={currentDate}
-          filteredEmployees={filteredEmployees.map((emp) => emp.id)}
-          fromDate={fromDate}
-          toDate={toDate}
-        />
+        <div className="transform transition-all duration-300 hover:translate-y-[-2px]">
+          <AbsenteeismAnalytics
+            employees={employees}
+            attendance={attendance}
+            schedule={schedule}
+            viewMode={viewMode}
+            currentDate={currentDate}
+            filteredEmployees={filteredEmployees.map((emp) => emp.id)}
+            fromDate={fromDate}
+            toDate={toDate}
+          />
+        </div>
 
         {/* Main Card */}
-        <Card className="border border-gray-200">
-          <CardHeader className="border-b border-gray-200">
+        <Card className="border border-gray-200/80 shadow-xl shadow-gray-200/20 backdrop-blur-sm bg-white/95 overflow-hidden flex flex-col">
+          <CardHeader className="border-b border-gray-200 bg-gradient-to-r from-white to-gray-50/50 flex-shrink-0">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 <DepartmentFilterDropdown />
@@ -817,16 +915,25 @@ const handleUpdateAttendance = async () => {
                     }
                   }}
                 >
-                  <TabsList>
-                    <TabsTrigger value="weekly">
+                  <TabsList className="bg-gray-100/50 p-1">
+                    <TabsTrigger
+                      value="weekly"
+                      className="data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all"
+                    >
                       <Calendar className="h-4 w-4 mr-2" />
                       Weekly
                     </TabsTrigger>
-                    <TabsTrigger value="monthly">
+                    <TabsTrigger
+                      value="monthly"
+                      className="data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all"
+                    >
                       <Calendar className="h-4 w-4 mr-2" />
                       Monthly
                     </TabsTrigger>
-                    <TabsTrigger value="dateRange">
+                    <TabsTrigger
+                      value="dateRange"
+                      className="data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all"
+                    >
                       <Filter className="h-4 w-4 mr-2" />
                       Date Range
                     </TabsTrigger>
@@ -842,15 +949,15 @@ const handleUpdateAttendance = async () => {
                           setShowToCalendar(false);
                           setShowFromCalendar(!showFromCalendar);
                         }}
-                        className="w-[140px] justify-start"
+                        className="w-[140px] justify-start border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all"
                       >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        <CalendarIcon className="mr-2 h-4 w-4 text-purple-500" />
                         {fromDate ? format(fromDate, "MMM d") : "From"}
                       </Button>
                       {showFromCalendar && (
                         <div
                           ref={fromCalendarRef}
-                          className="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg"
+                          className="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg animate-in fade-in zoom-in-95 duration-200"
                         >
                           <CalendarComponent
                             mode="single"
@@ -862,7 +969,7 @@ const handleUpdateAttendance = async () => {
                       )}
                     </div>
 
-                    <span className="text-gray-500">to</span>
+                    <span className="text-gray-400">→</span>
 
                     <div className="relative">
                       <Button
@@ -871,15 +978,15 @@ const handleUpdateAttendance = async () => {
                           setShowFromCalendar(false);
                           setShowToCalendar(!showToCalendar);
                         }}
-                        className="w-[140px] justify-start"
+                        className="w-[140px] justify-start border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all"
                       >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        <CalendarIcon className="mr-2 h-4 w-4 text-purple-500" />
                         {toDate ? format(toDate, "MMM d") : "To"}
                       </Button>
                       {showToCalendar && (
                         <div
                           ref={toCalendarRef}
-                          className="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg"
+                          className="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg animate-in fade-in zoom-in-95 duration-200"
                         >
                           <CalendarComponent
                             mode="single"
@@ -895,23 +1002,34 @@ const handleUpdateAttendance = async () => {
               </div>
 
               <div className="flex items-center space-x-2">
-                <div className="text-center">
-                  <h2 className="text-lg font-semibold text-gray-900">
+                <div className="text-center px-3 py-1 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg">
+                  <h2 className="text-sm font-semibold text-gray-700">
                     {getHeaderText()}
                   </h2>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1">
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
                     onClick={goToPreviousPeriod}
+                    className="hover:bg-purple-100 hover:text-purple-700 transition-all"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
-                  <Button variant="outline" size="sm" onClick={goToToday}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={goToToday}
+                    className="hover:bg-purple-100 hover:text-purple-700 transition-all"
+                  >
                     Today
                   </Button>
-                  <Button variant="outline" size="sm" onClick={goToNextPeriod}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={goToNextPeriod}
+                    className="hover:bg-purple-100 hover:text-purple-700 transition-all"
+                  >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
@@ -919,321 +1037,417 @@ const handleUpdateAttendance = async () => {
             </div>
           </CardHeader>
 
-          <CardContent className="p-0">
-            <Tabs defaultValue="schedule" onValueChange={setActiveTab}>
-              <div className="border-b border-gray-200 px-6 pt-4">
-                <TabsList>
-                  <TabsTrigger value="schedule" className="flex items-center">
-                    <Clock className="h-4 w-4 mr-2" />
+          <CardContent className="p-0 flex-1 overflow-hidden">
+            <Tabs
+              defaultValue="schedule"
+              onValueChange={setActiveTab}
+              className="h-full flex flex-col"
+            >
+              <div className="border-b border-gray-200 px-6 pt-4 flex-shrink-0">
+                <TabsList className="bg-gray-100/50 p-1">
+                  <TabsTrigger
+                    value="schedule"
+                    className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all"
+                  >
+                    <Clock className="h-4 w-4" />
                     Schedule
                   </TabsTrigger>
-                  <TabsTrigger value="attendance" className="flex items-center">
-                    <Eye className="h-4 w-4 mr-2" />
+                  <TabsTrigger
+                    value="attendance"
+                    className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all"
+                  >
+                    <Eye className="h-4 w-4" />
                     Attendance
                   </TabsTrigger>
                 </TabsList>
               </div>
 
-              <TabsContent value="schedule" className="m-0">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead>
-                      <tr className="bg-gray-50">
-                        <th className="p-3 border border-gray-200 sticky left-0 bg-gray-50 z-10 min-w-48">
-                          <div className="flex items-center gap-2">
-                            <Users className="h-4 w-4 text-gray-500" />
-                            <span className="font-medium text-gray-700">
-                              Employee
-                            </span>
-                          </div>
-                        </th>
-                        {days.map((day) => (
-                          <th
-                            key={day.toString()}
-                            className="p-3 border border-gray-200 text-center min-w-36"
-                          >
-                            <div
-                              className={`font-medium ${
-                                isToday(day)
-                                  ? "text-purple-600 font-semibold"
-                                  : "text-gray-700"
-                              }`}
-                            >
-                              {format(day, "EEE")}
-                            </div>
-                            <div
-                              className={`text-sm ${
-                                isToday(day)
-                                  ? "text-purple-600 font-semibold"
-                                  : "text-gray-600"
-                              }`}
-                            >
-                              {format(day, "MMM d")}
+              <TabsContent
+                value="schedule"
+                className="m-0 flex-1 overflow-hidden"
+              >
+                <div ref={tableContainerRef} className="h-full overflow-y-auto">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="sticky top-0 z-20 bg-gray-50/95 backdrop-blur-sm">
+                        <tr>
+                          <th className="p-4 border border-gray-200 sticky left-0 bg-gray-50/95 backdrop-blur-sm z-30 min-w-56">
+                            <div className="flex items-center gap-2">
+                              <div className="p-1.5 bg-purple-100 rounded-lg">
+                                <Users className="h-4 w-4 text-purple-600" />
+                              </div>
+                              <span className="font-semibold text-gray-700">
+                                Employee
+                              </span>
                             </div>
                           </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {filteredEmployees.map((employee) => (
-                        <tr
-                          key={employee.id}
-                          className="hover:bg-gray-50 transition-colors"
-                        >
-                          <td className="p-3 border border-gray-200 sticky left-0 z-10 bg-white">
-                            <div className="flex items-center">
-                              <Avatar className="h-8 w-8 mr-3">
-                                <AvatarImage
-                                  src={employee.avatarUrl}
-                                  alt={employee.name}
-                                />
-                                <AvatarFallback className="bg-purple-100 text-purple-700">
-                                  {employee.name.substring(0, 2).toUpperCase()}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <div className="font-medium text-gray-900">
-                                  {employee.name}
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  {employee.department}
+                          {days.map((day) => (
+                            <th
+                              key={day.toString()}
+                              className={`p-4 border border-gray-200 text-center min-w-40 transition-colors ${
+                                isToday(day) ? "bg-purple-50/50" : ""
+                              }`}
+                            >
+                              <div
+                                className={`font-semibold ${
+                                  isToday(day)
+                                    ? "text-purple-700"
+                                    : isWeekend(day)
+                                      ? "text-gray-500"
+                                      : "text-gray-700"
+                                }`}
+                              >
+                                {format(day, "EEE")}
+                              </div>
+                              <div
+                                className={`text-sm mt-1 ${
+                                  isToday(day)
+                                    ? "text-purple-600 font-medium"
+                                    : "text-gray-500"
+                                }`}
+                              >
+                                {format(day, "MMM d")}
+                              </div>
+                              {isToday(day) && (
+                                <div className="absolute top-0 right-0 w-1.5 h-1.5 bg-purple-500 rounded-full mt-1 mr-1"></div>
+                              )}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {filteredEmployees.map((employee) => (
+                          <tr
+                            key={employee.id}
+                            className="group hover:bg-gradient-to-r hover:from-purple-50/50 hover:to-transparent transition-all duration-200"
+                          >
+                            <td className="p-4 border border-gray-200 sticky left-0 z-10 bg-white group-hover:bg-purple-50/30 transition-colors">
+                              <div className="flex items-center">
+                                <Avatar className="h-9 w-9 mr-3 ring-2 ring-purple-100 group-hover:ring-purple-200 transition-all">
+                                  <AvatarImage
+                                    src={employee.avatarUrl}
+                                    alt={employee.name}
+                                  />
+                                  <AvatarFallback className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white">
+                                    {employee.name
+                                      .substring(0, 2)
+                                      .toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <div className="font-medium text-gray-900 group-hover:text-purple-700 transition-colors">
+                                    {employee.name}
+                                  </div>
+                                  <div className="text-xs text-gray-500 flex items-center gap-1">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-purple-400"></div>
+                                    {employee.department}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </td>
-                          {days.map((day) => {
-                            const scheduleEntry = findScheduleEntry(
-                              employee.id,
-                              day,
-                            );
-                            return (
-                              <td
-                                key={day.toString()}
-                                className={`p-3 border border-gray-200 text-center cursor-pointer ${
-                                  isToday(day) ? "bg-purple-50" : ""
-                                } hover:bg-gray-50`}
-                                onClick={() =>
-                                  handleScheduleCellClick(employee, day)
-                                }
-                              >
-                                {scheduleEntry && scheduleEntry.shiftType ? (
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <div className="flex flex-col items-center">
-                                          <Badge
-                                            variant="outline"
-                                            className={`w-full flex items-center justify-center px-2 py-1 ${getShiftColor(
-                                              scheduleEntry.shiftType,
-                                            )}`}
-                                          >
-                                            {
-                                              displayShiftInfo(
+                            </td>
+                            {days.map((day) => {
+                              const scheduleEntry = findScheduleEntry(
+                                employee.id,
+                                day,
+                              );
+                              const isHovered =
+                                hoveredCell?.employeeId === employee.id &&
+                                hoveredCell?.date === day.toISOString();
+                              return (
+                                <td
+                                  key={day.toString()}
+                                  className={`p-3 border border-gray-200 text-center cursor-pointer transition-all duration-200 ${
+                                    isToday(day) ? "bg-purple-50/30" : ""
+                                  } ${
+                                    isHovered
+                                      ? "bg-purple-100/50 shadow-inner"
+                                      : "hover:bg-purple-50"
+                                  }`}
+                                  onClick={() =>
+                                    handleScheduleCellClick(employee, day)
+                                  }
+                                  onMouseEnter={() =>
+                                    setHoveredCell({
+                                      employeeId: employee.id,
+                                      date: day.toISOString(),
+                                    })
+                                  }
+                                  onMouseLeave={() => setHoveredCell(null)}
+                                >
+                                  {scheduleEntry && scheduleEntry.shiftType ? (
+                                    <TooltipProvider delayDuration={200}>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <div className="flex flex-col items-center transform transition-transform hover:scale-105">
+                                            <Badge
+                                              variant="outline"
+                                              className={`w-full flex items-center justify-center px-2 py-1.5 gap-1 font-medium ${getShiftColor(
                                                 scheduleEntry.shiftType,
-                                              ).name
-                                            }
-                                          </Badge>
-                                          {displayShiftInfo(
-                                            scheduleEntry.shiftType,
-                                          ).time && (
-                                            <span className="text-xs text-gray-600 mt-1">
+                                              )} border-0 shadow-sm`}
+                                            >
+                                              {getShiftIcon(
+                                                scheduleEntry.shiftType.type,
+                                              )}
                                               {
                                                 displayShiftInfo(
                                                   scheduleEntry.shiftType,
-                                                ).time
+                                                ).name
                                               }
-                                            </span>
-                                          )}
-                                        </div>
-                                      </TooltipTrigger>
-                                      <TooltipContent className="max-w-xs whitespace-pre-line text-sm">
-                                        <div className="space-y-1">
-                                          <p className="font-semibold">
-                                            {
-                                              displayShiftInfo(
-                                                scheduleEntry.shiftType,
-                                              ).name
-                                            }
-                                          </p>
-                                          {displayShiftInfo(
-                                            scheduleEntry.shiftType,
-                                          )
-                                            .details?.split("\n")
-                                            .map((line, i) => (
-                                              <p key={i}>{line}</p>
-                                            ))}
-                                        </div>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                ) : (
-                                  <div className="text-gray-400 text-sm">
-                                    No shift
-                                  </div>
-                                )}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                                            </Badge>
+                                            {displayShiftInfo(
+                                              scheduleEntry.shiftType,
+                                            ).time && (
+                                              <span className="text-xs text-gray-500 mt-1">
+                                                {
+                                                  displayShiftInfo(
+                                                    scheduleEntry.shiftType,
+                                                  ).time
+                                                }
+                                              </span>
+                                            )}
+                                          </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-xs whitespace-pre-line text-sm bg-gray-900 text-white border-0">
+                                          <div className="space-y-1 p-1">
+                                            <p className="font-semibold flex items-center gap-1">
+                                              {getShiftIcon(
+                                                scheduleEntry.shiftType.type,
+                                              )}
+                                              {
+                                                displayShiftInfo(
+                                                  scheduleEntry.shiftType,
+                                                ).name
+                                              }
+                                            </p>
+                                            {displayShiftInfo(
+                                              scheduleEntry.shiftType,
+                                            )
+                                              .details?.split("\n")
+                                              .map((line, i) => (
+                                                <p key={i} className="text-xs">
+                                                  {line}
+                                                </p>
+                                              ))}
+                                          </div>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  ) : (
+                                    <div className="text-gray-400 text-sm flex items-center justify-center gap-1">
+                                      <Clock className="h-3 w-3" />
+                                      No shift
+                                    </div>
+                                  )}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </TabsContent>
 
-              <TabsContent value="attendance" className="m-0">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead>
-                      <tr className="bg-gray-50">
-                        <th className="p-3 border border-gray-200 sticky left-0 bg-gray-50 z-10 min-w-48">
-                          <div className="flex items-center gap-2">
-                            <Users className="h-4 w-4 text-gray-500" />
-                            <span className="font-medium text-gray-700">
-                              Employee
-                            </span>
-                          </div>
-                        </th>
-                        {days.map((day) => (
-                          <th
-                            key={day.toString()}
-                            className="p-3 border border-gray-200 text-center min-w-36"
-                          >
-                            <div
-                              className={`font-medium ${
-                                isToday(day)
-                                  ? "text-purple-600 font-semibold"
-                                  : "text-gray-700"
-                              }`}
-                            >
-                              {format(day, "EEE")}
-                            </div>
-                            <div
-                              className={`text-sm ${
-                                isToday(day)
-                                  ? "text-purple-600 font-semibold"
-                                  : "text-gray-600"
-                              }`}
-                            >
-                              {format(day, "MMM d")}
+              <TabsContent
+                value="attendance"
+                className="m-0 flex-1 overflow-hidden"
+              >
+                <div ref={tableContainerRef} className="h-full overflow-y-auto">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="sticky top-0 z-20 bg-gray-50/95 backdrop-blur-sm">
+                        <tr>
+                          <th className="p-4 border border-gray-200 sticky left-0 bg-gray-50/95 backdrop-blur-sm z-30 min-w-56">
+                            <div className="flex items-center gap-2">
+                              <div className="p-1.5 bg-purple-100 rounded-lg">
+                                <Users className="h-4 w-4 text-purple-600" />
+                              </div>
+                              <span className="font-semibold text-gray-700">
+                                Employee
+                              </span>
                             </div>
                           </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {filteredEmployees.map((employee) => (
-                        <tr
-                          key={employee.id}
-                          className="hover:bg-gray-50 transition-colors"
-                        >
-                          <td className="p-3 border border-gray-200 sticky left-0 z-10 bg-white">
-                            <div className="flex items-center">
-                              <Avatar className="h-8 w-8 mr-3">
-                                <AvatarImage
-                                  src={employee.avatarUrl}
-                                  alt={employee.name}
-                                />
-                                <AvatarFallback className="bg-purple-100 text-purple-700">
-                                  {employee.name.substring(0, 2).toUpperCase()}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <div className="font-medium text-gray-900">
-                                  {employee.name}
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  {employee.department}
+                          {days.map((day) => (
+                            <th
+                              key={day.toString()}
+                              className={`p-4 border border-gray-200 text-center min-w-40 transition-colors ${
+                                isToday(day) ? "bg-purple-50/50" : ""
+                              }`}
+                            >
+                              <div
+                                className={`font-semibold ${
+                                  isToday(day)
+                                    ? "text-purple-700"
+                                    : isWeekend(day)
+                                      ? "text-gray-500"
+                                      : "text-gray-700"
+                                }`}
+                              >
+                                {format(day, "EEE")}
+                              </div>
+                              <div
+                                className={`text-sm mt-1 ${
+                                  isToday(day)
+                                    ? "text-purple-600 font-medium"
+                                    : "text-gray-500"
+                                }`}
+                              >
+                                {format(day, "MMM d")}
+                              </div>
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {filteredEmployees.map((employee) => (
+                          <tr
+                            key={employee.id}
+                            className="group hover:bg-gradient-to-r hover:from-purple-50/50 hover:to-transparent transition-all duration-200"
+                          >
+                            <td className="p-4 border border-gray-200 sticky left-0 z-10 bg-white group-hover:bg-purple-50/30 transition-colors">
+                              <div className="flex items-center">
+                                <Avatar className="h-9 w-9 mr-3 ring-2 ring-purple-100 group-hover:ring-purple-200 transition-all">
+                                  <AvatarImage
+                                    src={employee.avatarUrl}
+                                    alt={employee.name}
+                                  />
+                                  <AvatarFallback className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white">
+                                    {employee.name
+                                      .substring(0, 2)
+                                      .toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <div className="font-medium text-gray-900 group-hover:text-purple-700 transition-colors">
+                                    {employee.name}
+                                  </div>
+                                  <div className="text-xs text-gray-500 flex items-center gap-1">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-purple-400"></div>
+                                    {employee.department}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </td>
-                          {days.map((day) => {
-                            const attendanceEntry = findAttendanceEntry(
-                              employee.id,
-                              day,
-                            );
-                            return (
-                              <td
-                                key={day.toString()}
-                                className={`p-3 border border-gray-200 text-center cursor-pointer ${
-                                  isToday(day) ? "bg-purple-50" : ""
-                                } ${day > new Date() ? "cursor-not-allowed bg-gray-50" : "hover:bg-gray-50"}`}
-                                onClick={() =>
-                                  day <= new Date() &&
-                                  handleAttendanceCellClick(employee, day)
-                                }
-                              >
-                                {attendanceEntry ? (
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <div>
-                                          <Badge
-                                            variant="outline"
-                                            className={`w-full flex items-center justify-center px-2 py-1 ${getAttendanceColor(
-                                              attendanceEntry.status,
-                                            )}`}
-                                          >
-                                            {attendanceEntry.status}
-                                          </Badge>
-                                          {attendanceEntry.ot && (
-                                            <span className="text-xs text-gray-600 mt-1 block">
-                                              OT: {attendanceEntry.ot}
-                                            </span>
-                                          )}
-
-                                          {attendanceEntry.logIn && (
-                                            <p className="text-xs text-stone-500">In: {attendanceEntry.logIn}</p>
-                                          )}
-                                          {attendanceEntry.logOut && (
-                                            <p className="text-xs text-stone-500">Out: {attendanceEntry.logOut}</p>
-                                          )}   
-                                           {attendanceEntry.totalHours && (
-                                            <p className="text-xs text-stone-500">
-                                             Total Hours:{" "}
-                                              {attendanceEntry.totalHours}
+                            </td>
+                            {days.map((day) => {
+                              const attendanceEntry = findAttendanceEntry(
+                                employee.id,
+                                day,
+                              );
+                              const isFuture = day > new Date();
+                              return (
+                                <td
+                                  key={day.toString()}
+                                  className={`p-3 border border-gray-200 text-center ${
+                                    !isFuture
+                                      ? "cursor-pointer transition-all duration-200 hover:bg-purple-50"
+                                      : "cursor-not-allowed bg-gray-50/50"
+                                  } ${isToday(day) ? "bg-purple-50/30" : ""}`}
+                                  onClick={() =>
+                                    !isFuture &&
+                                    handleAttendanceCellClick(employee, day)
+                                  }
+                                >
+                                  {attendanceEntry ? (
+                                    <TooltipProvider delayDuration={200}>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <div className="transform transition-transform hover:scale-105">
+                                            <Badge
+                                              variant="outline"
+                                              className={`w-full flex items-center justify-center px-2 py-1.5 gap-1 font-medium ${getStatusColorClass(
+                                                attendanceEntry.status,
+                                              )} border-0 shadow-sm`}
+                                            >
+                                              {getAttendanceIcon(
+                                                attendanceEntry.status,
+                                              )}
+                                              {attendanceEntry.status}
+                                            </Badge>
+                                            {attendanceEntry.ot && (
+                                              <span className="text-xs text-green-600 mt-1 block font-medium">
+                                                OT: {attendanceEntry.ot}h
+                                              </span>
+                                            )}
+                                            {attendanceEntry.logIn && (
+                                              <p className="text-xs text-gray-500 mt-0.5">
+                                                In: {attendanceEntry.logIn}
+                                              </p>
+                                            )}
+                                          </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-xs whitespace-pre-line text-sm bg-gray-900 text-white border-0">
+                                          <div className="space-y-1 p-1">
+                                            <p className="font-semibold flex items-center gap-1">
+                                              {getAttendanceIcon(
+                                                attendanceEntry.status,
+                                              )}
+                                              {attendanceEntry.status}
                                             </p>
-                                          )}                  
-                                        </div>
-                                      </TooltipTrigger>
-                                      <TooltipContent className="max-w-xs whitespace-pre-line text-sm">
-                                        <div className="space-y-1">
-                                          <p className="font-semibold">
-                                            {attendanceEntry.status}
-                                          </p>
-                                           {attendanceEntry.break1 && (
-                                            <p>Total Break 1: {attendanceEntry.break1}</p>
-                                          )}
-                                           {attendanceEntry.break2 && (
-                                            <p>Total Break 2: {attendanceEntry.break2}</p>
-                                          )}
-                                         
-                                        </div>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                ) : (
-                                  <div className="text-gray-400 text-sm">
-                                    {day > new Date() ? "Future" : "Not set"}
-                                  </div>
-                                )}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                                            {attendanceEntry.logIn && (
+                                              <p className="text-xs">
+                                                Login: {attendanceEntry.logIn}
+                                              </p>
+                                            )}
+                                            {attendanceEntry.logOut && (
+                                              <p className="text-xs">
+                                                Logout: {attendanceEntry.logOut}
+                                              </p>
+                                            )}
+                                            {attendanceEntry.totalHours && (
+                                              <p className="text-xs">
+                                                Total Hours:{" "}
+                                                {attendanceEntry.totalHours}
+                                              </p>
+                                            )}
+                                            {attendanceEntry.break1 && (
+                                              <p className="text-xs">
+                                                Break 1:{" "}
+                                                {attendanceEntry.break1}
+                                              </p>
+                                            )}
+                                            {attendanceEntry.break2 && (
+                                              <p className="text-xs">
+                                                Break 2:{" "}
+                                                {attendanceEntry.break2}
+                                              </p>
+                                            )}
+                                          </div>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  ) : (
+                                    <div className="text-gray-400 text-sm flex items-center justify-center gap-1">
+                                      {isFuture ? (
+                                        <>
+                                          <Clock className="h-3 w-3" />
+                                          Future
+                                        </>
+                                      ) : (
+                                        "Not set"
+                                      )}
+                                    </div>
+                                  )}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </TabsContent>
             </Tabs>
           </CardContent>
 
-          <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-gray-200 bg-gray-50">
-            <div className="text-sm text-gray-600 flex items-center">
-              <Users className="h-4 w-4 mr-2" />
-              Showing {filteredEmployees.length} employees
+          <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-white py-4 flex-shrink-0">
+            <div className="text-sm text-gray-600 flex items-center gap-2">
+              <div className="p-1 bg-purple-100 rounded-lg">
+                <Users className="h-4 w-4 text-purple-600" />
+              </div>
+              Showing {filteredEmployees.length} employee
+              {filteredEmployees.length !== 1 ? "s" : ""}
             </div>
             <div className="flex gap-3">
               <IncompleteBreaksDialog />
@@ -1280,19 +1494,21 @@ const handleUpdateAttendance = async () => {
             if (!open) resetDialogState();
           }}
         >
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader className="border-b border-gray-200 pb-4">
+              <DialogTitle className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
                 {selectedEmployee && selectedDate ? (
                   <>
                     Update {format(selectedDate, "MMM d, yyyy")} for{" "}
-                    {selectedEmployee.name}
+                    <span className="text-purple-600">
+                      {selectedEmployee.name}
+                    </span>
                   </>
                 ) : (
                   "Update Schedule"
                 )}
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="text-gray-500">
                 Modify shift details or attendance status
               </DialogDescription>
             </DialogHeader>
@@ -1301,14 +1517,29 @@ const handleUpdateAttendance = async () => {
               defaultValue={activeTab === "schedule" ? "shift" : "attendance"}
               className="mt-4"
             >
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="shift">Shift Schedule</TabsTrigger>
-                <TabsTrigger value="attendance">Attendance</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 bg-gray-100/50 p-1">
+                <TabsTrigger
+                  value="shift"
+                  className="flex items-center gap-2 data-[state=active]:bg-white"
+                >
+                  <Clock className="h-4 w-4" />
+                  Shift Schedule
+                </TabsTrigger>
+                <TabsTrigger
+                  value="attendance"
+                  className="flex items-center gap-2 data-[state=active]:bg-white"
+                >
+                  <Eye className="h-4 w-4" />
+                  Attendance
+                </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="shift" className="space-y-4">
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+              <TabsContent value="shift" className="space-y-6 mt-4">
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <div className="p-1 bg-purple-100 rounded">
+                      <Clock className="h-3 w-3 text-purple-600" />
+                    </div>
                     Shift Type
                   </Label>
                   <RadioGroup
@@ -1327,111 +1558,144 @@ const handleUpdateAttendance = async () => {
                     className="grid grid-cols-2 gap-2"
                   >
                     {[
-                      { value: "Morning", label: "Morning" },
-                      { value: "Mid", label: "Mid" },
-                      { value: "Night", label: "Night" },
-                      { value: "restday", label: "Rest Day" },
-                      { value: "paidTimeOff", label: "Paid Time Off" },
-                      { value: "plannedLeave", label: "Planned Leave" },
-                      { value: "holiday", label: "Holiday" },
-                      { value: "rdot", label: "RDOT" },
-                    ].map((shift) => (
-                      <div
-                        key={shift.value}
-                        className="flex items-center space-x-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
-                      >
-                        <RadioGroupItem
-                          value={shift.value}
-                          id={`shift-${shift.value}`}
-                        />
-                        <Label htmlFor={`shift-${shift.value}`}>
-                          {shift.label}
-                        </Label>
-                      </div>
-                    ))}
+                      { value: "Morning", label: "Morning", icon: Sun },
+                      { value: "Mid", label: "Mid", icon: Clock3 },
+                      { value: "Night", label: "Night", icon: Moon },
+                      { value: "restday", label: "Rest Day", icon: Home },
+                      {
+                        value: "paidTimeOff",
+                        label: "Paid Time Off",
+                        icon: Gift,
+                      },
+                      {
+                        value: "plannedLeave",
+                        label: "Planned Leave",
+                        icon: Plane,
+                      },
+                      { value: "holiday", label: "Holiday", icon: Star },
+                      { value: "rdot", label: "RDOT", icon: Heart },
+                    ].map((shift) => {
+                      const Icon = shift.icon;
+                      return (
+                        <div
+                          key={shift.value}
+                          className={`flex items-center space-x-2 p-3 border border-gray-200 rounded-lg hover:bg-purple-50 transition-all cursor-pointer ${
+                            selectedShiftType === shift.value
+                              ? "border-purple-500 bg-purple-50"
+                              : ""
+                          }`}
+                          onClick={() =>
+                            setSelectedShiftType(shift.value as ShiftTypeValue)
+                          }
+                        >
+                          <RadioGroupItem
+                            value={shift.value}
+                            id={`shift-${shift.value}`}
+                            className="hidden"
+                          />
+                          <Icon className="h-4 w-4 text-purple-500" />
+                          <Label
+                            htmlFor={`shift-${shift.value}`}
+                            className="cursor-pointer"
+                          >
+                            {shift.label}
+                          </Label>
+                        </div>
+                      );
+                    })}
                   </RadioGroup>
                 </div>
 
                 {hasShiftTime(selectedShiftType) && (
                   <>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                          Shift Start
-                        </Label>
-                        <input
-                          type="time"
-                          value={selectedStartTime}
-                          onChange={(e) => setSelectedStartTime(e.target.value)}
-                          className="w-full p-2 border border-gray-300 rounded-md"
-                        />
+                    <Separator />
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                            Shift Start
+                          </Label>
+                          <Input
+                            type="time"
+                            value={selectedStartTime}
+                            onChange={(e) =>
+                              setSelectedStartTime(e.target.value)
+                            }
+                            className="border-gray-200 focus:border-purple-500 focus:ring-purple-500"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                            Shift End
+                          </Label>
+                          <Input
+                            type="time"
+                            value={selectedEndTime}
+                            onChange={(e) => setSelectedEndTime(e.target.value)}
+                            className="border-gray-200 focus:border-purple-500 focus:ring-purple-500"
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                          Shift End
-                        </Label>
-                        <input
-                          type="time"
-                          value={selectedEndTime}
-                          onChange={(e) => setSelectedEndTime(e.target.value)}
-                          className="w-full p-2 border border-gray-300 rounded-md"
-                        />
-                      </div>
-                    </div>
 
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
-                        <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                          1st Break
-                        </Label>
-                        <input
-                          type="time"
-                          value={selectedBreak1 || ""}
-                          onChange={(e) =>
-                            setSelectedBreak1(e.target.value || undefined)
-                          }
-                          className="w-full p-2 border border-gray-300 rounded-md"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                          Lunch
-                        </Label>
-                        <input
-                          type="time"
-                          value={selectedLunch || ""}
-                          onChange={(e) =>
-                            setSelectedLunch(e.target.value || undefined)
-                          }
-                          className="w-full p-2 border border-gray-300 rounded-md"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                          2nd Break
-                        </Label>
-                        <input
-                          type="time"
-                          value={selectedBreak2 || ""}
-                          onChange={(e) =>
-                            setSelectedBreak2(e.target.value || undefined)
-                          }
-                          className="w-full p-2 border border-gray-300 rounded-md"
-                        />
+                      <div className="grid grid-cols-3 gap-4">
+                        <div>
+                          <Label className="text-sm font-medium text-gray-700 mb-2 block flex items-center gap-1">
+                            <Coffee className="h-3 w-3" />
+                            1st Break
+                          </Label>
+                          <Input
+                            type="time"
+                            value={selectedBreak1 || ""}
+                            onChange={(e) =>
+                              setSelectedBreak1(e.target.value || undefined)
+                            }
+                            className="border-gray-200 focus:border-purple-500 focus:ring-purple-500"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                            🍱 Lunch
+                          </Label>
+                          <Input
+                            type="time"
+                            value={selectedLunch || ""}
+                            onChange={(e) =>
+                              setSelectedLunch(e.target.value || undefined)
+                            }
+                            className="border-gray-200 focus:border-purple-500 focus:ring-purple-500"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
+                            <Coffee className="h-3 w-3" />
+                            2nd Break
+                          </Label>
+                          <Input
+                            type="time"
+                            value={selectedBreak2 || ""}
+                            onChange={(e) =>
+                              setSelectedBreak2(e.target.value || undefined)
+                            }
+                            className="border-gray-200 focus:border-purple-500 focus:ring-purple-500"
+                          />
+                        </div>
                       </div>
                     </div>
                   </>
                 )}
 
+                <Separator />
+
                 <div className="flex items-center space-x-3">
-                  <Label className="text-sm font-medium text-gray-700">
+                  <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <RefreshCw className="h-4 w-4" />
                     Repeat for
                   </Label>
                   <Select
                     value={repeatDays.toString()}
                     onValueChange={(value) => setRepeatDays(parseInt(value))}
                   >
-                    <SelectTrigger className="w-40">
+                    <SelectTrigger className="w-40 border-gray-200">
                       <SelectValue placeholder="Repeat days" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1445,9 +1709,12 @@ const handleUpdateAttendance = async () => {
                 </div>
               </TabsContent>
 
-              <TabsContent value="attendance" className="space-y-4">
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+              <TabsContent value="attendance" className="space-y-6 mt-4">
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <div className="p-1 bg-purple-100 rounded">
+                      <Eye className="h-3 w-3 text-purple-600" />
+                    </div>
                     Attendance Status
                   </Label>
                   <RadioGroup
@@ -1455,7 +1722,6 @@ const handleUpdateAttendance = async () => {
                     onValueChange={(value: string) => {
                       const newStatus = value as AttendanceStatus;
                       setSelectedAttendanceStatus(newStatus);
-                      // Show OT input only for Present status
                       if (newStatus === "Present") {
                         setShowOtInput(true);
                       } else {
@@ -1464,7 +1730,7 @@ const handleUpdateAttendance = async () => {
                         setOtMinutes("");
                       }
                     }}
-                    className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto"
+                    className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto"
                   >
                     {[
                       "Present",
@@ -1484,18 +1750,38 @@ const handleUpdateAttendance = async () => {
                     ].map((status) => (
                       <div
                         key={status}
-                        className="flex items-center space-x-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+                        className={`flex items-center space-x-2 p-3 border border-gray-200 rounded-lg hover:bg-purple-50 transition-all cursor-pointer ${
+                          selectedAttendanceStatus === status
+                            ? "border-purple-500 bg-purple-50"
+                            : ""
+                        }`}
+                        onClick={() =>
+                          setSelectedAttendanceStatus(
+                            status as AttendanceStatus,
+                          )
+                        }
                       >
                         <RadioGroupItem
                           value={status}
-                          id={`status-${status
-                            .toLowerCase()
-                            .replace(" ", "-")}`}
+                          id={`status-${status.toLowerCase().replace(" ", "-")}`}
+                          className="hidden"
+                        />
+                        <div
+                          className={`w-2 h-2 rounded-full ${
+                            status === "Present"
+                              ? "bg-green-500"
+                              : status === "NCNS"
+                                ? "bg-red-500"
+                                : status === "Tardy"
+                                  ? "bg-orange-500"
+                                  : status === "Rest Day"
+                                    ? "bg-blue-500"
+                                    : "bg-gray-400"
+                          }`}
                         />
                         <Label
-                          htmlFor={`status-${status
-                            .toLowerCase()
-                            .replace(" ", "-")}`}
+                          htmlFor={`status-${status.toLowerCase().replace(" ", "-")}`}
+                          className="cursor-pointer"
                         >
                           {status}
                         </Label>
@@ -1505,7 +1791,7 @@ const handleUpdateAttendance = async () => {
                 </div>
 
                 {selectedAttendanceStatus === "Present" && (
-                  <div className="space-y-3 border border-gray-200 rounded-lg p-4">
+                  <div className="space-y-3 border border-purple-200 rounded-lg p-4 bg-purple-50/30">
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id="has-ot"
@@ -1517,6 +1803,7 @@ const handleUpdateAttendance = async () => {
                             setOtMinutes("");
                           }
                         }}
+                        className="border-purple-300 data-[state=checked]:bg-purple-600"
                       />
                       <Label
                         htmlFor="has-ot"
@@ -1532,28 +1819,28 @@ const handleUpdateAttendance = async () => {
                           <Label className="text-sm font-medium text-gray-700 mb-2 block">
                             OT Hours
                           </Label>
-                          <input
+                          <Input
                             type="number"
                             min="0"
                             max="24"
                             value={otHours}
                             onChange={(e) => setOtHours(e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded-md"
                             placeholder="Hours"
+                            className="border-gray-200 focus:border-purple-500 focus:ring-purple-500"
                           />
                         </div>
                         <div>
                           <Label className="text-sm font-medium text-gray-700 mb-2 block">
                             OT Minutes
                           </Label>
-                          <input
+                          <Input
                             type="number"
                             min="0"
                             max="59"
                             value={otMinutes}
                             onChange={(e) => setOtMinutes(e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded-md"
                             placeholder="Minutes"
+                            className="border-gray-200 focus:border-purple-500 focus:ring-purple-500"
                           />
                         </div>
                       </div>
@@ -1566,9 +1853,9 @@ const handleUpdateAttendance = async () => {
                   selectedAttendanceStatus === "Present" ||
                   selectedAttendanceStatus === "RDOT" ||
                   selectedAttendanceStatus === "Early Log Out") && (
-                  <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                    <p className="flex items-center">
-                      <TrendingUp className="h-4 w-4 mr-2" />
+                  <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
+                    <p className="flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-blue-500" />
                       Time data will be automatically filled from time records.
                     </p>
                   </div>
@@ -1576,13 +1863,14 @@ const handleUpdateAttendance = async () => {
               </TabsContent>
             </Tabs>
 
-            <DialogFooter>
+            <DialogFooter className="border-t border-gray-200 pt-4 mt-4">
               <Button
                 variant="outline"
                 onClick={() => {
                   resetDialogState();
                   setIsAddShiftOpen(false);
                 }}
+                className="border-gray-200 hover:bg-gray-100"
               >
                 Cancel
               </Button>
@@ -1592,7 +1880,7 @@ const handleUpdateAttendance = async () => {
                     ? handleAddShift
                     : handleUpdateAttendance
                 }
-                className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
+                className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all"
               >
                 Save Changes
               </Button>
