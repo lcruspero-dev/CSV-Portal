@@ -235,6 +235,7 @@ export const AttendanceTracker: React.FC = () => {
     } else {
       return `${hoursPart} hours, ${minutesPart} minutes`;
     }
+    
   };
 
   // Format minutes to "X hours, Y minutes" format
