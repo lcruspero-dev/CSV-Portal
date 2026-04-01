@@ -11,22 +11,26 @@ const RealTimeClock = () => {
     return () => clearInterval(timer);
   }, []);
 
+  const timeZone = "Asia/Kuala_Lumpur"; // or "Asia/Singapore"
+
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString("en-US", {
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone,
       hour12: true,
       hour: "numeric",
       minute: "2-digit",
       second: "2-digit",
-    });
+    }).format(date);
   };
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString("en-US", {
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone,
       weekday: "short",
       year: "numeric",
       month: "short",
       day: "numeric",
-    });
+    }).format(date);
   };
 
   return (
@@ -38,7 +42,10 @@ const RealTimeClock = () => {
         </span>
       </div>
       <span className="text-[10px] text-white/80 mt-0.5">
-        {formatDate(currentTime)}
+        {formatDate(currentTime)} 
+      </span>
+      <span className="text-[8px] text-white/50 mt-0.5">
+        (UTC+08:00)
       </span>
     </div>
   );
