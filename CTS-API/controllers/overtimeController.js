@@ -1,6 +1,6 @@
-const Overtime = require("../models/overtimeModel");
+import Overtime from "../models/overtimeModel";
 
-const index = async (req, res) => {
+export const index = async (req, res) => {
   try {
     const overtimes = await Overtime.find();
 
@@ -18,7 +18,7 @@ const index = async (req, res) => {
   }
 };
 
-const show = async (req, res) => {
+export const show = async (req, res) => {
   try {
     const overtime = await Overtime.findById(req.params.id);
 
@@ -43,7 +43,7 @@ const show = async (req, res) => {
   }
 };
 
-const store = async (req, res) => {
+export const store = async (req, res) => {
   try {
     const {
       overtimeType,
@@ -106,7 +106,7 @@ const store = async (req, res) => {
   }
 };
 
-const update = async (req, res) => {
+export const update = async (req, res) => {
   try {
     const { id } = req.params;
     const {
@@ -237,7 +237,7 @@ const update = async (req, res) => {
   }
 };
 
-const destroy = async (req, res) => {
+export const destroy = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -291,11 +291,3 @@ const destroy = async (req, res) => {
     });
   }
 };  
-
-module.exports = {
-  index,
-  show,
-  store,
-  update,
-  destroy
-};

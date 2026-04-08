@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const scheduleEntrySchema = new mongoose.Schema({
   employeeId: {
@@ -90,14 +90,13 @@ const teamLeaderEntrySchema = new mongoose.Schema({
   },
 });
 
-const ScheduleEntry = mongoose.model("ScheduleEntry", scheduleEntrySchema);
-const AttendanceEntry = mongoose.model(
+export const ScheduleEntry = mongoose.model("ScheduleEntry", scheduleEntrySchema);
+export const AttendanceEntry = mongoose.model(
   "AttendanceEntry",
   attendanceEntrySchema,
 );
-const TeamLeaderEntry = mongoose.model(
+export const TeamLeaderEntry = mongoose.model(
   "TeamLeaderEntry",
   teamLeaderEntrySchema,
 );
 
-module.exports = { ScheduleEntry, AttendanceEntry, TeamLeaderEntry };

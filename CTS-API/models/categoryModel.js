@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const categorySchema = mongoose.Schema({
   category: {
@@ -11,5 +11,4 @@ const categorySchema = mongoose.Schema({
     enum: ["HR", "IT"],
   },
 });
-
-module.exports = mongoose.model("category", categorySchema);
+export default mongoose.model("category", categorySchema);

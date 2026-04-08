@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const OvertimeApplicationSchema = mongoose.Schema(
   {
@@ -71,7 +71,7 @@ const OvertimeApplicationSchema = mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model(
+export default mongoose.model(
   "OvertimeApplication",
   OvertimeApplicationSchema
 );

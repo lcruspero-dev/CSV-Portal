@@ -1,6 +1,5 @@
-const express = require("express");
-const router = express.Router();
-const {
+import express from "express";
+import {
   getEmployeeTimes,
   createEmployeeTimeIn,
   createEmployeeTimeOut,
@@ -16,8 +15,10 @@ const {
   getIncompleteBreaks,
   updateEmployeeBioBreak,
   getIncompleteLogins
-} = require("../controllers/employeeTimeController");
-const { protect, verifyAdmin } = require("../middleware/authMiddleware");
+} from "../controllers/employeeTimeController.js";
+import { protect, verifyAdmin } from "../middleware/authMiddleware.js";
+
+const router = express.Router();
 
 router
   .route("/")
@@ -51,4 +52,4 @@ router.route("/incomplete").get(protect, getIncompleteBreaks);
 
 router.route("/incompleteLogins").get(protect, getIncompleteLogins);
 
-module.exports = router;
+export default router;

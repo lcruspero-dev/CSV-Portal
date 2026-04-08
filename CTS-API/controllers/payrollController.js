@@ -1,8 +1,8 @@
-const Payroll = require("../models/payroll");
-const EmployeeTime = require("../models/employeeTimeModel");
-const Payslip = require("../models/payslipModel");
-const { ScheduleEntry } = require("../models/ScheduleAndAttendanceModel");
-const UserProfile = require("../models/userProfileModel");
+import Payroll from "../models/payroll.js";
+import EmployeeTime from "../models/employeeTimeModel.js";
+import Payslip from "../models/payslipModel.js";
+import { ScheduleEntry } from "../models/ScheduleAndAttendanceModel.js";
+import UserProfile from "../models/userProfileModel.js";
 
 // Helper function to convert time string to minutes since midnight
 function timeToMinutes(timeString) {
@@ -291,7 +291,7 @@ function computePayroll(payroll) {
 }
 
 // Auto-update payroll from time tracker data
-exports.autoUpdatePayrollFromTimeTracker = async (userId, startDate, endDate) => {
+export const autoUpdatePayrollFromTimeTracker = async (userId, startDate, endDate) => {
     try {
         // Calculate payroll data from time tracker
         const calculatedData = await calculatePayrollData(userId, startDate, endDate);
@@ -379,7 +379,7 @@ exports.autoUpdatePayrollFromTimeTracker = async (userId, startDate, endDate) =>
 };
 
 // CREATE or UPDATE Payroll
-exports.processPayroll = async (req, res) => {
+export const processPayroll = async (req, res) => {
     try {
         const { payrollRate } = req.body;
 
@@ -487,7 +487,7 @@ exports.processPayroll = async (req, res) => {
 };
 
 // GET Payroll by User
-exports.getPayrollByUser = async (req, res) => {
+export const getPayrollByUser = async (req, res) => {
     try {
         const { userId } = req.params;
         const payroll = await Payroll.findOne({ "payrollRate.userId": userId }).lean();
@@ -510,7 +510,7 @@ exports.getPayrollByUser = async (req, res) => {
 };
 
 // DELETE Payroll by User
-exports.deletePayroll = async (req, res) => {
+export const deletePayroll = async (req, res) => {
     try {
         const { userId } = req.params;
         const payroll = await Payroll.findOneAndDelete(
@@ -535,7 +535,7 @@ exports.deletePayroll = async (req, res) => {
 };
 
 // GET ALL Payrolls
-exports.getAllPayrolls = async (req, res) => {
+export const getAllPayrolls = async (req, res) => {
     try {
         const payrolls = await Payroll.find().lean();
 
@@ -550,7 +550,7 @@ exports.getAllPayrolls = async (req, res) => {
     }
 };
 
-exports.updatePayroll = async (req, res) => {
+export const updatePayroll = async (req, res) => {
     try {
         const { id } = req.params;   
         const payroll = await Payroll.findById(id);
@@ -591,7 +591,7 @@ exports.updatePayroll = async (req, res) => {
 };
 
 // GET SENT PAYROLLS FOR EMPLOYEE (PAYSLIPS)
-exports.getEmployeePayslips = async (req, res) => {
+export const getEmployeePayslips = async (req, res) => {
     try {
         const { userId } = req.params;
         // Prefer real payslip snapshots if available
@@ -630,7 +630,7 @@ exports.getEmployeePayslips = async (req, res) => {
 };
 
 // SEND PAYROLL TO EMPLOYEE
-exports.sendPayroll = async (req, res) => {
+export const sendPayroll = async (req, res) => {
     try {
         const { userId } = req.params;
         const { payrollId } = req.body;
@@ -828,7 +828,7 @@ exports.sendPayroll = async (req, res) => {
 };
 
 // GET ALL ARCHIVED PAYSLIPS
-exports.getAllArchivedPayslips = async (req, res) => {
+export const getAllArchivedPayslips = async (req, res) => {
     try {
         const { startDate, endDate } = req.query;
         

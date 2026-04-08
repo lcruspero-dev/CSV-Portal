@@ -1,13 +1,9 @@
-const asyncHandler = require("express-async-handler");
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcryptjs");
+import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
 
-const User = require("../models/userModel");
+import User from "../models/userModel.js";
 
-// @desc    Register a new user
-// @route   /api/users
-// @access  Public
-const registerUser = asyncHandler(async (req, res) => {
+export const registerUser = async (req, res) => {
   const { name, email, password, isAdmin } = req.body;
 
   // Validation
@@ -33,7 +29,7 @@ const registerUser = asyncHandler(async (req, res) => {
     name,
     email,
     password: hashedPassword,
-    isAdmin: isAdmin || false, // Set isAdmin, default to false if not provided
+    isAdmin: isAdmin || false, 
     role: "user",
   });
 
@@ -52,12 +48,12 @@ const registerUser = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error("User could not be created");
   }
-});
+};
 
 // @desc    Login a user
 // @route   /api/users/login
 // @access  Public
-const loginUser = asyncHandler(async (req, res) => {
+export const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
   const user = await User.findOne({ email });
@@ -78,12 +74,12 @@ const loginUser = asyncHandler(async (req, res) => {
     res.status(401);
     throw new Error("Invalid credentials");
   }
-});
+};
 
 // @desc    Get current user
 // @route   /api/users/me
 // @access  Private
-const getMe = asyncHandler(async (req, res) => {
+export const getMe = async (req, res) => {
   const user = {
     id: req.user._id,
     email: req.user.email,
@@ -91,7 +87,7 @@ const getMe = asyncHandler(async (req, res) => {
     isAdmin: req.user.isAdmin,
   };
   res.status(200).json(user);
-});
+};
 
 // Generate token
 const generateToken = (id, isAdmin, name) => {
@@ -101,7 +97,7 @@ const generateToken = (id, isAdmin, name) => {
 };
 
 // Reset password using secret key
-const adminResetPassword = asyncHandler(async (req, res) => {
+export const adminResetPassword = async (req, res) => {
   const { email, password, confirmPassword, secretKey } = req.body;
 
   // Validate input fields
@@ -161,15 +157,14 @@ const adminResetPassword = asyncHandler(async (req, res) => {
     email: user.email,
     name: user.name,
   });
-});
+};
 
-//get all users emails
-const getAllUsersEmails = asyncHandler(async (req, res) => {
+export const getAllUsersEmails = async (req, res) => {
   const users = await User.find({}, { email: 1 });
   res.status(200).json(users);
-});
+};
 
-const searchUsers = asyncHandler(async (req, res) => {
+export const searchUsers = async (req, res) => {
   // Get user information from the authenticated request
   const requestingUser = req.user; // Assuming you have user data in req.user from auth middleware
 
@@ -198,9 +193,9 @@ const searchUsers = asyncHandler(async (req, res) => {
   }
 
   res.status(200).json(users);
-});
+};
 
-const setUserToInactive = asyncHandler(async (req, res) => {
+export const setUserToInactive = async (req, res) => {
   const { userId } = req.params;
   const user = await User.findById(userId);
   if (!user) {
@@ -209,8 +204,9 @@ const setUserToInactive = asyncHandler(async (req, res) => {
   }
   await User.findByIdAndUpdate(userId, { status: "inactive" });
   res.status(200).json({ message: "User set to inactive" });
-});
-const setUserToActive = asyncHandler(async (req, res) => {
+};
+
+export const setUserToActive = async (req, res) => {
   const { userId } = req.params;
   const user = await User.findById(userId);
   if (!user) {
@@ -219,9 +215,9 @@ const setUserToActive = asyncHandler(async (req, res) => {
   }
   await User.findByIdAndUpdate(userId, { status: "active" });
   res.status(200).json({ message: "User set to active" });
-});
+};
 
-const changePassword = asyncHandler(async (req, res) => {
+export const changePassword = async (req, res) => {
   const userId = req.user._id;
   const { currentPassword, newPassword } = req.body;
   const user = await User.findById(userId);
@@ -238,10 +234,10 @@ const changePassword = asyncHandler(async (req, res) => {
   const hashedPassword = await bcrypt.hash(newPassword, salt);
   await User.findByIdAndUpdate(userId, { password: hashedPassword });
   res.status(200).json({ message: "Password changed successfully" });
-});
+};
 
 //update login limit
-const updateLoginLimit = asyncHandler(async (req, res) => {
+export const updateLoginLimit = async (req, res) => {
   const { userId } = req.params; // Destructure userId from params
   const { loginLimit } = req.body;
 
@@ -254,9 +250,9 @@ const updateLoginLimit = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(userId, { loginLimit });
 
   res.status(200).json({ message: "Login limit updated successfully" });
-});
+};
 
-const addUser = asyncHandler(async (req, res) => {
+export const addUser = async (req, res) => {
   const { 
     name, 
     email, 
@@ -305,9 +301,9 @@ const addUser = asyncHandler(async (req, res) => {
       loginLimit: user.loginLimit,
     },
   });
-});
+};
 
-module.exports = {
+exports = {
   registerUser,
   loginUser,
   getMe,

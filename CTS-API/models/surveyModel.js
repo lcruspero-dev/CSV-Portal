@@ -1,5 +1,5 @@
-const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
+import mongoose from "mongoose";
+import Schema from "mongoose";
 
 const surveySchema = new Schema({
   title: {
@@ -65,4 +65,4 @@ surveySchema.pre("save", function (next) {
   next();
 });
 
-module.exports = mongoose.model("Survey", surveySchema);
+export default mongoose.model("Survey", surveySchema);

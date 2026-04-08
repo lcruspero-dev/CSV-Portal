@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const manualSchema = mongoose.Schema({
     title: {
@@ -17,5 +17,5 @@ const manualSchema = mongoose.Schema({
     timestamps: true,
 });
 
-module.exports = mongoose.model("Manual", manualSchema);
+export default mongoose.model("Manual", manualSchema);
     

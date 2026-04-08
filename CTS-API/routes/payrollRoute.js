@@ -1,6 +1,5 @@
-const express = require("express");
-const router = express.Router();
-const {
+import express from "express";
+import {
   processPayroll,
   getAllPayrolls,
   getPayrollByUser,
@@ -11,8 +10,10 @@ const {
   getEmployeePayslips,
   generatePayslipForRange,
   getAllArchivedPayslips,
-} = require("../controllers/payrollController");
-const { protect } = require("../middleware/authMiddleware");
+} from "../controllers/payrollController.js";
+import { protect } from "../middleware/authMiddleware.js";
+
+const router = express.Router();
 
 router.post("/process", protect, processPayroll);
 
@@ -56,4 +57,4 @@ router.get("/:userId", protect, getPayrollByUser);
 
 router.delete("/:userId", protect, deletePayroll);
 
-module.exports = router;
+export default router;

@@ -1,5 +1,5 @@
-const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
+import mongoose from "mongoose";
+import Schema from "mongoose";
 
 const nteSchema = new Schema({
   nte: {
@@ -115,4 +115,4 @@ nteSchema.pre("save", function (next) {
   next();
 });
 
-module.exports = mongoose.model("NTE", nteSchema);
+export default mongoose.model("NTE", nteSchema);

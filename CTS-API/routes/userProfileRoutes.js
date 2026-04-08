@@ -1,6 +1,5 @@
-const express = require("express");
-const router = express.Router();
-const {
+import express from "express";
+import {
   createUserProfile,
   getUserProfile,
   updateUserProfile,
@@ -9,9 +8,11 @@ const {
   getAllUserAvatar,
   adminUpdateUserProfile,
   getAllUsers,
-} = require("../controllers/userProfileController");
+} from "../controllers/userProfileController.js";
 
-const { protect, verifyAdmin } = require("../middleware/authMiddleware");
+import { protect, verifyAdmin } from "../middleware/authMiddleware.js";
+
+const router = express.Router();
 
 // Routes
 router.post("/", protect, createUserProfile); // Create user profile
@@ -29,4 +30,4 @@ router.put(
   adminUpdateUserProfile
 );
 
-module.exports = router;
+export default router;

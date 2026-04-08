@@ -1,6 +1,5 @@
-const express = require("express");
-const router = express.Router();
-const {
+import express from "express";
+import {
   getAllPolicies,
   getPoliciesById,
   createPolicies,
@@ -8,8 +7,10 @@ const {
   getUserUnacknowledged,
   updateAcknowledged,
   deletePolicies,
-} = require("../controllers/policiesController");
-const { protect, verifyAdmin } = require("../middleware/authMiddleware");
+} from "../controllers/policiesController.js";
+import { protect, verifyAdmin } from "../middleware/authMiddleware.js";
+
+const router = express.Router();
 
 router.get("/", protect, getAllPolicies);
 
@@ -25,4 +26,4 @@ router.put("/:id/acknowledged", protect, updateAcknowledged);
 
 router.get("/unacknowledged/:policyId", protect, verifyAdmin, getUserUnacknowledged);
 
-module.exports = router;
+export default router;

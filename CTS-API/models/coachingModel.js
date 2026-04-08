@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 const Schema = mongoose.Schema;
 
 const coachingSchema = new Schema({
@@ -117,4 +117,4 @@ coachingSchema.pre("save", function (next) {
   next();
 });
 
-module.exports = mongoose.model("COACHING", coachingSchema);
+export default mongoose.model("COACHING", coachingSchema);

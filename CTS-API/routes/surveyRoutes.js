@@ -1,6 +1,8 @@
-const router = require("express").Router();
-const surveyController = require("../controllers/surveyController");
-const { protect, verifyAdmin } = require("../middleware/authMiddleware");
+import express from "express";
+import surveyController from "../controllers/surveyController.js";
+import { protect, verifyAdmin } from "../middleware/authMiddleware.js";
+
+const router = express.Router();
 
 router.post("/", protect, verifyAdmin, surveyController.createSurvey);
 router.get("/", protect, verifyAdmin, surveyController.getAllSurveys);
@@ -16,4 +18,4 @@ router.get(
   surveyController.getAllSurveyTitles
 );
 
-module.exports = router;
+export default router;

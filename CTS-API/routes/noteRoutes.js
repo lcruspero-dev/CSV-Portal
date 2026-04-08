@@ -1,11 +1,10 @@
-const express = require("express");
-const router = express.Router({ mergeParams: true });
-const { getNotes, addNote } = require("../controllers/noteController");
+import express from "express";
+import { getNotes, addNote } from "../controllers/noteController.js";
+import { protect } from "../middleware/authMiddleware.js";
 
-const { protect } = require("../middleware/authMiddleware");
+const router = express.Router();
 
 router.route("/").get(protect, getNotes).post(protect, addNote);
 
-module.exports = router;
+export default router;
 
-// /api/tickets/:ticketId/notes

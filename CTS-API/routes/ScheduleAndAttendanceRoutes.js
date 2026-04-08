@@ -1,7 +1,9 @@
-const express = require("express");
+import express from "express";
+import scheduleAndAttendanceController from "../controllers/ScheduleAndAttendanceController.js";
+import { protect } from "../middleware/authMiddleware.js";
+
 const router = express.Router();
-const scheduleAndAttendanceController = require("../controllers/ScheduleAndAttendanceController");
-const { protect } = require("../middleware/authMiddleware");
+
 
 // Schedule Entry Routes
 router.get(
@@ -66,4 +68,5 @@ router.get(
   protect,
   scheduleAndAttendanceController.getSchedulePerEmployee
 );
-module.exports = router;
+
+export default router;

@@ -1,13 +1,12 @@
-// jobs/leaveAccrualJob.js
-const cron = require("node-cron");
-const { zonedTimeToUtc } = require("date-fns-tz");
-const mongoose = require("mongoose");
-const EmployeeLeave = require("../models/EmployeeLeave");
-const {
+import cron from "node-cron";
+import { zonedTimeToUtc } from "date-fns-tz";
+import mongoose from "mongoose";
+import EmployeeLeave from "../models/EmployeeLeave.js";
+import {
   calculateAccrual,
   getTodayPHT,
   PH_TIMEZONE,
-} = require("../utils/leaveAccrual");
+} from "../utils/leaveAccrual.js";
 
 // Lock model for preventing duplicate runs
 const Lock = mongoose.model(
@@ -20,7 +19,7 @@ const Lock = mongoose.model(
   })
 );
 
-const runLeaveAccrual = async () => {
+export const runLeaveAccrual = async () => {
   let lock = null;
 
   try {
@@ -123,14 +122,9 @@ cron.schedule("0 3 * * *", () => runLeaveAccrual(), {
 console.log("Leave accrual job scheduled to run daily at 3 AM Asia/Manila");
 
 // Manual execution
-const manualRun = async () => {
+export const manualRun = async () => {
   console.log("Starting manual execution...");
   const result = await runLeaveAccrual();
   console.log("Job completed with result:", result);
   return result;
-};
-
-module.exports = {
-  runLeaveAccrual,
-  manualRun,
 };

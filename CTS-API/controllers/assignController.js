@@ -1,8 +1,7 @@
-// controllers/assignController.js
-const Assign = require("../models/assignModel");
+import Assign from "../models/assignModel.js";
 
 // Create new assignment
-const createAssign = async (req, res) => {
+export const createAssign = async (req, res) => {
   try {
     const { name, role } = req.body;
 
@@ -41,7 +40,7 @@ const createAssign = async (req, res) => {
 };
 
 // Get all assignments
-const getAllAssigns = async (req, res) => {
+export const getAllAssigns = async (req, res) => {
   try {
     const assigns = await Assign.find();
 
@@ -59,7 +58,7 @@ const getAllAssigns = async (req, res) => {
 };
 
 // Get single assignment
-const getAssign = async (req, res) => {
+export const getAssign = async (req, res) => {
   try {
     const assign = await Assign.findById(req.params.id);
 
@@ -83,7 +82,7 @@ const getAssign = async (req, res) => {
 };
 
 // Update assignment
-const updateAssign = async (req, res) => {
+export const updateAssign = async (req, res) => {
   try {
     const { name, role } = req.body;
 
@@ -114,7 +113,7 @@ const updateAssign = async (req, res) => {
 };
 
 // Delete assignment
-const deleteAssign = async (req, res) => {
+export const deleteAssign = async (req, res) => {
   try {
     const assign = await Assign.findById(req.params.id);
 
@@ -139,10 +138,3 @@ const deleteAssign = async (req, res) => {
   }
 };
 
-module.exports = {
-  createAssign,
-  getAllAssigns,
-  getAssign,
-  updateAssign,
-  deleteAssign,
-};

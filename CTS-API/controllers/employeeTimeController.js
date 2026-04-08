@@ -1,9 +1,9 @@
-const EmployeeTime = require("../models/employeeTimeModel");
-const mongoose = require("mongoose");
-const { autoUpdatePayrollFromTimeTracker } = require("./payrollController");
+import EmployeeTime from "../models/employeeTimeModel.js";
+import mongoose from "mongoose";
+import { autoUpdatePayrollFromTimeTracker } from "./payrollController.js";
 
 // Helper function to trigger payroll update
-const triggerPayrollUpdate = async (employeeId, date) => {
+export const triggerPayrollUpdate = async (employeeId, date) => {
   try {
     // Calculate date range for the current month
     const currentDate = new Date(date);
@@ -29,7 +29,7 @@ const triggerPayrollUpdate = async (employeeId, date) => {
 };
 
 // Helper function to calculate which break to deduct time from
-const calculateBreakDeduction = (employeeTime, bioBreakDuration) => {
+export const calculateBreakDeduction = (employeeTime, bioBreakDuration) => {
   const deductionAmount = bioBreakDuration || 15; // Default to 15 minutes if not provided
   
   // Check break usage and available time in order of priority
@@ -86,7 +86,7 @@ const calculateBreakDeduction = (employeeTime, bioBreakDuration) => {
   };
 };
 
-const getEmployeeTimes = async (_req, res) => {
+export const getEmployeeTimes = async (_req, res) => {
   try {
     const employeeTimes = await EmployeeTime.find();
     res.status(200).json(employeeTimes);
@@ -96,7 +96,7 @@ const getEmployeeTimes = async (_req, res) => {
   }
 };
 
-const createEmployeeTimeIn = async (req, res) => {
+export const createEmployeeTimeIn = async (req, res) => {
   try {
     // Count existing records for this employee, date, and shift
     const existingRecordsCount = await EmployeeTime.countDocuments({
@@ -133,7 +133,7 @@ const createEmployeeTimeIn = async (req, res) => {
   }
 };
 
-const createEmployeeTimeOut = async (req, res) => {
+export const createEmployeeTimeOut = async (req, res) => {
   try {
     const employeeTime = await EmployeeTime.findById(req.params.id);
     if (!employeeTime) {
@@ -148,7 +148,7 @@ const createEmployeeTimeOut = async (req, res) => {
   }
 };
 
-const updateEmployeeTime = async (req, res) => {
+export const updateEmployeeTime = async (req, res) => {
   try {
     const {
       secretKey,
@@ -228,7 +228,7 @@ const updateEmployeeTime = async (req, res) => {
   }
 };
 
-const deleteEmployeeTime = async (req, res) => {
+export const deleteEmployeeTime = async (req, res) => {
   try {
     const employeeTime = await EmployeeTime.findById(req.params.id);
     if (!employeeTime) {
@@ -242,7 +242,7 @@ const deleteEmployeeTime = async (req, res) => {
   }
 };
 
-const getEmployeeTimeByEmployeeId = async (req, res) => {
+export const getEmployeeTimeByEmployeeId = async (req, res) => {
   try {
     const employeeTime = await EmployeeTime.find({
       employeeId: req.user._id,
@@ -258,7 +258,7 @@ const getEmployeeTimeByEmployeeId = async (req, res) => {
   }
 };
 
-const updateEmployeeTimeOut = async (req, res) => {
+export const updateEmployeeTimeOut = async (req, res) => {
   try {
     // Destructure values from the request body
     const { timeOut, totalHours, notes } = req.body;
@@ -295,7 +295,7 @@ const updateEmployeeTimeOut = async (req, res) => {
   }
 };
 
-const getEmployeeTimeWithNullTimeOut = async (req, res) => {
+export const getEmployeeTimeWithNullTimeOut = async (req, res) => {
   try {
     const employeeTime = await EmployeeTime.find({
       employeeId: req.user._id,
@@ -311,7 +311,7 @@ const getEmployeeTimeWithNullTimeOut = async (req, res) => {
   }
 };
 
-const searchByNameAndDate = async (req, res) => {
+export const searchByNameAndDate = async (req, res) => {
   try {
     const { name, date } = req.query;
 
@@ -367,7 +367,7 @@ const searchByNameAndDate = async (req, res) => {
   }
 };
 
-const updateEmployeeTimeBreak = async (req, res) => {
+export const updateEmployeeTimeBreak = async (req, res) => {
   try {
     // Find and update the employee time record
     const employeeTime = await EmployeeTime.findOneAndUpdate(
@@ -406,7 +406,7 @@ const updateEmployeeTimeBreak = async (req, res) => {
   }
 };
 
-const updateEmployeeTimelunch = async (req, res) => {
+export const updateEmployeeTimelunch = async (req, res) => {
   try {
     // Find and update the employee time record
     const employeeTime = await EmployeeTime.findOneAndUpdate(
@@ -440,7 +440,7 @@ const updateEmployeeTimelunch = async (req, res) => {
   }
 };
 
-const getEmployeeTimeByEmployeeIdandDate = async (req, res) => {
+export const getEmployeeTimeByEmployeeIdandDate = async (req, res) => {
   try {
     const { date } = req.query;
     const employeeTime = await EmployeeTime.findOne({
@@ -459,7 +459,7 @@ const getEmployeeTimeByEmployeeIdandDate = async (req, res) => {
   }
 };
 
-const getIncompleteBreaks = async (req, res) => {
+export const getIncompleteBreaks = async (req, res) => {
   try {
     // Find all records where at least one break is started but not ended
     const incompleteBreaks = await EmployeeTime.find({
@@ -543,7 +543,7 @@ const getIncompleteBreaks = async (req, res) => {
   }
 };
 
-const getIncompleteLogins = async (req, res) => {
+export const getIncompleteLogins = async (req, res) => {
   try {
     // Find all records where employee has logged in but not logged out
     const incompleteLogins = await EmployeeTime.find({
@@ -589,7 +589,7 @@ const getIncompleteLogins = async (req, res) => {
   }
 };
 
-const updateEmployeeBioBreak = async (req, res) => {
+export const updateEmployeeBioBreak = async (req, res) => {
   try {
     const { bioBreak, bioBreakEnd, bioBreakDuration } = req.body;
 
@@ -650,7 +650,7 @@ const updateEmployeeBioBreak = async (req, res) => {
   }
 };
 
-const getBioBreakSummary = async (req, res) => {
+export const getBioBreakSummary = async (req, res) => {
   try {
     const employeeTime = await EmployeeTime.findOne({
       employeeId: req.user._id,
@@ -725,7 +725,7 @@ const getBioBreakSummary = async (req, res) => {
   }
 };
 
-const getEmployeeRunningTime = async (req, res) => {
+export const getEmployeeRunningTime = async (req, res) => {
   
   try {   
     const activeSession = await EmployeeTime.findOne({
@@ -774,23 +774,3 @@ const getEmployeeRunningTime = async (req, res) => {
     
   }
 }
-
-module.exports = {
-  getEmployeeTimes,
-  createEmployeeTimeIn,
-  updateEmployeeTime,
-  deleteEmployeeTime,
-  createEmployeeTimeOut,
-  getEmployeeTimeByEmployeeId,
-  updateEmployeeTimeOut,
-  getEmployeeTimeWithNullTimeOut,
-  searchByNameAndDate,
-  updateEmployeeTimeBreak,
-  updateEmployeeTimelunch,
-  getEmployeeTimeByEmployeeIdandDate,
-  getIncompleteBreaks,
-  updateEmployeeBioBreak,
-  getBioBreakSummary,
-  getIncompleteLogins,
-  getEmployeeRunningTime
-};

@@ -1,8 +1,8 @@
-const Manual = require('../models/manualModel');
-const mongoose = require("mongoose");
+import Manual from '../models/manualModel.js';
+import mongoose from "mongoose";
 
 // GET /manuals
-const index = async (req, res) => {
+export const index = async (req, res) => {
     try {
         const manuals = await Manual.find().sort({ createdAt: -1 });
 
@@ -20,7 +20,7 @@ const index = async (req, res) => {
 };
 
 // GET /manuals/:id
-const show = async (req, res) => {
+export const show = async (req, res) => {
     try {
         const { id } = req.params;
 
@@ -54,7 +54,7 @@ const show = async (req, res) => {
 };
 
 // POST /manuals
-const store = async (req, res) => {
+export const store = async (req, res) => {
     try {
         const manual = await Manual.create(req.body);
 
@@ -72,7 +72,7 @@ const store = async (req, res) => {
 };
 
 // PUT /manuals/:id
-const update = async (req, res) => {
+export const update = async (req, res) => {
     try {
         const { id } = req.params;
 
@@ -110,7 +110,7 @@ const update = async (req, res) => {
 };
 
 // DELETE /manuals/:id
-const destroy = async (req, res) => {
+export const destroy = async (req, res) => {
     try {
         const { id } = req.params;
 
@@ -141,12 +141,4 @@ const destroy = async (req, res) => {
             message: "Internal Server Error"
         });
     }
-};
-
-module.exports = {
-    index,
-    show,
-    store,
-    update,
-    destroy
 };

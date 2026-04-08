@@ -1,8 +1,7 @@
-// controllers/categoryController.js
-const Category = require("../models/categoryModel");
+import Category from "../models/categoryModel.js";
 
 // Create new category
-const createCategory = async (req, res) => {
+export const createCategory = async (req, res) => {
   try {
     const { category, role } = req.body;
 
@@ -41,7 +40,7 @@ const createCategory = async (req, res) => {
 };
 
 // Get all categories
-const getAllCategories = async (req, res) => {
+export const getAllCategories = async (req, res) => {
   try {
     const categories = await Category.find();
 
@@ -66,7 +65,7 @@ const getAllCategories = async (req, res) => {
 };
 
 // Get single category
-const getCategory = async (req, res) => {
+export const getCategory = async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
 
@@ -90,7 +89,7 @@ const getCategory = async (req, res) => {
 };
 
 // Update category
-const updateCategory = async (req, res) => {
+export const updateCategory = async (req, res) => {
   try {
     const { category: categoryName, role } = req.body;
 
@@ -129,7 +128,7 @@ const updateCategory = async (req, res) => {
 };
 
 // Delete category
-const deleteCategory = async (req, res) => {
+export const deleteCategory = async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
 
@@ -155,7 +154,7 @@ const deleteCategory = async (req, res) => {
 };
 
 // Get categories by role
-const getCategoriesByRole = async (req, res) => {
+export const getCategoriesByRole = async (req, res) => {
   try {
     const { role } = req.params;
 
@@ -181,11 +180,3 @@ const getCategoriesByRole = async (req, res) => {
   }
 };
 
-module.exports = {
-  createCategory,
-  getAllCategories,
-  getCategory,
-  updateCategory,
-  deleteCategory,
-  getCategoriesByRole,
-};

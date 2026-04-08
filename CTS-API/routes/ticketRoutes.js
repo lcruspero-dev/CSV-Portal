@@ -1,6 +1,5 @@
-const express = require("express");
-const router = express.Router();
-const {
+import express from "express";
+import {
   getTickets,
   getTicket,
   createTicket,
@@ -12,12 +11,15 @@ const {
   viewTicketsByDepartment,
   viewTicketsByPriority,
   viewTicketsByCategory,
-} = require("../controllers/ticketController");
+} from "../controllers/ticketController.js";
 
-const { protect, verifyAdmin } = require("../middleware/authMiddleware");
+import { protect, verifyAdmin } from "../middleware/authMiddleware.js";
 
 // Re-route into note router
-const noteRouter = require("./noteRoutes");
+import noteRouter from "./noteRoutes.js";
+
+const router = express.Router();
+
 router.use("/:ticketId/notes", noteRouter);
 
 // Routes for viewing tickets based on status
@@ -40,4 +42,4 @@ router
   .put(protect, verifyAdmin, updateTicket)
   .delete(protect, verifyAdmin, deleteTicket);
 
-module.exports = router;
+export default router;

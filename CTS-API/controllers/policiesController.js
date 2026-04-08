@@ -1,10 +1,8 @@
-const User = require("../models/userModel");
-const mongoose = require("mongoose");
+import User from "../models/userModel.js";
+import mongoose from "mongoose";
+import Policies from "../models/policiesModel.js";
 
-const asyncHandler = require("express-async-handler");
-const Policies = require("../models/policiesModel");
-
-const getAllPolicies = asyncHandler(async (_req, res) => {
+export const getAllPolicies = async (_req, res) => {
   try {
     const user = await User.findById(_req.user._id);
 
@@ -33,9 +31,9 @@ const getAllPolicies = asyncHandler(async (_req, res) => {
     res.status(404);
     throw new Error("Policies not found"); 
   }
-});
+};
 
-const createPolicies = asyncHandler(async (req, res) => {
+export const createPolicies = async (req, res) => {
     const {subject, description} = req.body;
     if (!subject || !description) {
         throw new Error("Please add all required fields");
@@ -43,9 +41,9 @@ const createPolicies = asyncHandler(async (req, res) => {
 
     const policies = await Policies.create(req.body);
     res.status(200).json(policies);
-});
+};
 
-const updatePolicies = asyncHandler(async (req, res) => {
+export const updatePolicies = async (req, res) => {
   const policies = await Policies.findById(req.params.id); 
 
   if (!policies) {
@@ -64,9 +62,9 @@ const updatePolicies = asyncHandler(async (req, res) => {
   });
 
   res.status(200).json(updatedPolicies);
-});
+};
 
-const deletePolicies = asyncHandler(async (req, res) => {
+export const deletePolicies = async (req, res) => {
     const policies = await Policies.findById(req.params.id);
 
     if(!policies) {
@@ -80,9 +78,9 @@ const deletePolicies = asyncHandler(async (req, res) => {
         id: req.params.id
     });
 
-});
+};
 
-const getPoliciesById = asyncHandler(async (req, res) => {
+export const getPoliciesById = async (req, res) => {
     const policies = await Policies.findById(req.params.id);
 
     if (!policies) {
@@ -91,9 +89,9 @@ const getPoliciesById = asyncHandler(async (req, res) => {
     }
     res.status(200).json(policies);
 
-});
+};
 
-const updateAcknowledged = asyncHandler(async (req, res) => {
+export const updateAcknowledged = async (req, res) => {
     const userId = req.user.id;
     const name = req.user.name;
     const {id} = req.params;
@@ -129,9 +127,9 @@ const updateAcknowledged = asyncHandler(async (req, res) => {
 
     res.status(200).json(updatedPolicy)
 
-});
+};
 
-const getUserUnacknowledged = asyncHandler(async (req, res) => {
+export const getUserUnacknowledged = async (req, res) => {
   try {
    const policyId = req.params.policyId;
     
@@ -168,14 +166,4 @@ const getUserUnacknowledged = asyncHandler(async (req, res) => {
     console.error('Error in getUserUnacknowledged:', error);
     return res.status(500).json({ message: error.message });
   }
-});
-
-module.exports = {
-    getAllPolicies,
-    getPoliciesById,
-    createPolicies,
-    updatePolicies,
-    getUserUnacknowledged,
-    updateAcknowledged,
-    deletePolicies
-}
+};

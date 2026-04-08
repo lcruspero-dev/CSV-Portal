@@ -1,6 +1,5 @@
-const asyncHandler = require("express-async-handler");
-const Nte = require("../models/nteModel");
-const mongoose = require("mongoose");
+import Nte from "../models/nteModel.js";
+import mongoose from "mongoose";
 
 // Authorization middleware
 const canUpdateNte = (user) => {
@@ -8,7 +7,7 @@ const canUpdateNte = (user) => {
 };
 
 // Get all NTEs
-const getNtes = asyncHandler(async (req, res) => {
+export const getNtes = async (req, res) => {
   const ntes = await Nte.find()
     .populate("nte.employeeId", "name email")
     .sort({ createdAt: -1 });
@@ -18,10 +17,10 @@ const getNtes = asyncHandler(async (req, res) => {
     throw new Error("NTEs not found");
   }
   res.status(200).json(ntes);
-});
+};
 
 // Get single NTE
-const getNte = asyncHandler(async (req, res) => {
+export const getNte = async (req, res) => {
   const { id } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -36,10 +35,10 @@ const getNte = asyncHandler(async (req, res) => {
   }
 
   res.status(200).json(nte);
-});
+};
 
 // Create NTE - Only admin/TL/TM
-const createNte = asyncHandler(async (req, res) => {
+export const createNte = async (req, res) => {
   const createdBy = req.user.name;
   const { nte, status } = req.body;
 
@@ -96,10 +95,10 @@ const createNte = asyncHandler(async (req, res) => {
   });
 
   res.status(201).json(newNte);
-});
+};
 
 // Update NTE sections
-const updateNte = asyncHandler(async (req, res) => {
+export const updateNte = async (req, res) => {
   const { id } = req.params;
   const { nte, employeeFeedback, noticeOfDecision, status } = req.body;
 
@@ -135,10 +134,10 @@ const updateNte = asyncHandler(async (req, res) => {
   const updatedNte = await existingNte.save(); // Ensures __v is incremented
 
   res.status(200).json(updatedNte);
-});
+};
 
 // Delete NTE - Only admin/TL/TM
-const deleteNte = asyncHandler(async (req, res) => {
+export const deleteNte = async (req, res) => {
   const { id } = req.params;
 
   if (!canUpdateNte(req.user)) {
@@ -159,16 +158,16 @@ const deleteNte = asyncHandler(async (req, res) => {
 
   await nte.deleteOne();
   res.status(200).json({ message: "NTE deleted successfully" });
-});
+};
 
 //get nte by status query param
-const getNtesByStatus = asyncHandler(async (req, res) => {
+export const getNtesByStatus = async (req, res) => {
   const status = req.params.status;
   const ntes = await Nte.find({ status }).sort({ createdAt: -1 }); // newest first
   res.status(200).json(ntes);
-});
+};
 
-const getNtesByUser = asyncHandler(async (req, res) => {
+export const getNtesByUser = async (req, res) => {
   const userId = req.user?._id?.toString();
 
   if (!userId) {
@@ -184,14 +183,6 @@ const getNtesByUser = asyncHandler(async (req, res) => {
     .lean();
 
   res.status(200).json(ntes);
-});
-
-module.exports = {
-  getNtes,
-  getNte,
-  createNte,
-  updateNte,
-  deleteNte,
-  getNtesByStatus,
-  getNtesByUser,
 };
+
+

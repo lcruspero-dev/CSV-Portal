@@ -1,7 +1,7 @@
-const Ad = require("../models/adModel");
+import Ad from "../models/adModel";
 
 // Get the current ad
-const getActiveAd = async (req, res) => {
+export const getActiveAd = async (req, res) => {
   try {
     const ad = await Ad.findOne();
     if (!ad) return res.status(404).json({ message: "No ad found" });
@@ -32,5 +32,3 @@ const getActiveAd = async (req, res) => {
 //     res.status(500).json({ message: error.message });
 //   }
 // };
-
-module.exports = { getActiveAd };

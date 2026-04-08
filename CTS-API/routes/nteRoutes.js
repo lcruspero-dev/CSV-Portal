@@ -1,6 +1,8 @@
-const router = require("express").Router();
-const nteController = require("../controllers/nteController");
-const { protect } = require("../middleware/authMiddleware");
+import express from "express";
+import nteController from "../controllers/nteController.js";
+import { protect } from "../middleware/authMiddleware.js";
+
+const router = express.Router();
 
 // Role verification middleware for TL/TM/Admin
 const verifyTeamRole = (req, res, next) => {
@@ -11,6 +13,7 @@ const verifyTeamRole = (req, res, next) => {
     throw new Error("Not authorized");
   }
 };
+
 router.get("/my/nte", protect, nteController.getNtesByUser);
 // Basic CRUD routes - restricted to TL/TM/Admin
 router.post("/", protect, verifyTeamRole, nteController.createNte);
@@ -27,4 +30,4 @@ router.get(
   nteController.getNtesByStatus
 );
 
-module.exports = router;
+export default router;

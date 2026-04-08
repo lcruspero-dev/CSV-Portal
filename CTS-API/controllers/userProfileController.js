@@ -1,7 +1,7 @@
-const UserProfile = require("../models/userProfileModel");
+import UserProfile from "../models/userProfileModel.js";
 
 // Create User Profile or update existing
-const createUserProfile = async (req, res) => {
+export const createUserProfile = async (req, res) => {
   try {
     let userProfile = await UserProfile.findOne({ userId: req.user.id });
     if (userProfile) {
@@ -28,17 +28,16 @@ const createUserProfile = async (req, res) => {
   }
 };
 
-const getAllUsers = async (req, res) => {
+export const getAllUsers = async (req, res) => {
   try {
     const users = await UserProfile.find();
-    res.status(200).json(users); // <-- returns array
+    res.status(200).json(users); 
   } catch (error) {
     res.status(500).json({ message: "Error fetching users", error });
   }
 };
 
-// Get User Profile by User ID
-const getUserProfile = async (req, res) => {
+export const getUserProfile = async (req, res) => {
   try {
     const userProfile = await UserProfile.findOne({ userId: req.user.id });
     if (!userProfile) {
@@ -50,8 +49,7 @@ const getUserProfile = async (req, res) => {
   }
 };
 
-// Update User Profile
-  const updateUserProfile = async (req, res) => {
+export const updateUserProfile = async (req, res) => {
     try {
       const updatedProfile = await UserProfile.findOneAndUpdate(
         { userId: req.user.id },
@@ -67,8 +65,7 @@ const getUserProfile = async (req, res) => {
     }
   };
 
-// Delete User Profile
-const deleteUserProfile = async (req, res) => {
+export const deleteUserProfile = async (req, res) => {
   try {
     const deletedProfile = await UserProfile.findOneAndDelete({
       userId: req.user.id,
@@ -82,10 +79,9 @@ const deleteUserProfile = async (req, res) => {
   }
 };
 
-const getUserProfileById = async (req, res) => {
+export const getUserProfileById = async (req, res) => {
   try {
-    const userProfile = await UserProfile.findOne({ userId: req.params.id }); // Query by userId instead of _id
-
+    const userProfile = await UserProfile.findOne({ userId: req.params.id }); 
     if (!userProfile) {
       return res.status(404).json({ message: "User profile not found" });
     }
@@ -96,7 +92,7 @@ const getUserProfileById = async (req, res) => {
   }
 };
 
-const getAllUserAvatar = async (req, res) => {
+export const getAllUserAvatar = async (req, res) => {
   try {
     const userProfiles = await UserProfile.find(
       {},
@@ -108,7 +104,7 @@ const getAllUserAvatar = async (req, res) => {
   }
 };
 
-const adminUpdateUserProfile = async (req, res) => {
+export const adminUpdateUserProfile = async (req, res) => {
   try {
     const updatedProfile = await UserProfile.findOneAndUpdate(
       { userId: req.params.id },
@@ -127,13 +123,3 @@ const adminUpdateUserProfile = async (req, res) => {
   }
 };
 
-module.exports = {
-  createUserProfile,
-  getUserProfile,
-  updateUserProfile,
-  deleteUserProfile,
-  getUserProfileById,
-  getAllUserAvatar,
-  adminUpdateUserProfile,
-  getAllUsers
-};

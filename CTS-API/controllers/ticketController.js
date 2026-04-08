@@ -1,8 +1,7 @@
-const asyncHandler = require("express-async-handler");
-const User = require("../models/userModel");
-const Ticket = require("../models/ticketModel");
+import User from "../models/userModel.js";
+import Ticket from "../models/ticketModel.js";
 
-const getTickets = asyncHandler(async (req, res) => {
+export const getTickets = async (req, res) => {
   // Get user using the id and JWT
   const user = await User.findById(req.user.id);
 
@@ -12,13 +11,13 @@ const getTickets = asyncHandler(async (req, res) => {
   }
 
   const tickets = await Ticket.find({ user: req.user._id })
-    .sort({ createdAt: -1 }) // Sort tickets from new to old
+    .sort({ createdAt: -1 }) 
     .populate("user", "name email");
 
   res.status(200).json(tickets);
-});
+};
 
-const getTicket = asyncHandler(async (req, res) => {
+export const getTicket = async (req, res) => {
   const user = await User.findById(req.user.id);
 
   if (!user) {
@@ -40,9 +39,9 @@ const getTicket = asyncHandler(async (req, res) => {
   }
 
   res.status(200).json(ticket);
-});
+};
 
-const createTicket = asyncHandler(async (req, res) => {
+export const createTicket = async (req, res) => {
   const {
     category,
     description,
@@ -94,9 +93,9 @@ const createTicket = asyncHandler(async (req, res) => {
 
   await ticket.save();
   res.status(201).json(ticket);
-});
+};
 
-const deleteTicket = asyncHandler(async (req, res) => {
+export const deleteTicket = async (req, res) => {
   const user = await User.findById(req.user.id);
 
   if (!user) {
@@ -114,9 +113,9 @@ const deleteTicket = asyncHandler(async (req, res) => {
   await ticket.deleteOne();
 
   res.status(200).json({ success: true });
-});
+};
 
-const updateTicket = asyncHandler(async (req, res) => {
+export const updateTicket = async (req, res) => {
   const user = await User.findById(req.user.id);
 
   if (!user) {
@@ -164,32 +163,32 @@ const updateTicket = asyncHandler(async (req, res) => {
   ).populate("user", "name email");
 
   res.status(200).json(updatedTicket);
-});
+};
 
-const viewAllTickets = asyncHandler(async (req, res) => {
+export const viewAllTickets = async (req, res) => {
   const tickets = await Ticket.find()
     .sort({ createdAt: -1 })
     .populate("user", "name email");
   res.status(200).json(tickets);
-});
+};
 
-const viewOpenTickets = asyncHandler(async (req, res) => {
+export const viewOpenTickets = async (req, res) => {
   const tickets = await Ticket.find({
     status: { $in: ["open", "In Progress"] },
   })
     .sort({ createdAt: -1 })
     .populate("user", "name email");
   res.status(200).json(tickets);
-});
+};
 
-const viewClosedTickets = asyncHandler(async (req, res) => {
+export const viewClosedTickets = async (req, res) => {
   const tickets = await Ticket.find({ status: "closed" })
     .sort({ createdAt: -1 })
     .populate("user", "name email");
   res.status(200).json(tickets);
-});
+};
 
-const viewTicketsByDepartment = asyncHandler(async (req, res) => {
+export const viewTicketsByDepartment = async (req, res) => {
   const { dept } = req.params;
 
   if (!["HR", "IT"].includes(dept)) {
@@ -201,9 +200,9 @@ const viewTicketsByDepartment = asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 })
     .populate("user", "name email");
   res.status(200).json(tickets);
-});
+};
 
-const viewTicketsByPriority = asyncHandler(async (req, res) => {
+export const viewTicketsByPriority = async (req, res) => {
   const { level } = req.params;
 
   if (!["4-Low", "3-Moderate", "2-High", "1-Critical"].includes(level)) {
@@ -215,27 +214,13 @@ const viewTicketsByPriority = asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 })
     .populate("user", "name email");
   res.status(200).json(tickets);
-});
+} ;
 
-const viewTicketsByCategory = asyncHandler(async (req, res) => {
+export const viewTicketsByCategory = async (req, res) => {
   const { category } = req.params;
 
   const tickets = await Ticket.find({ category })
     .sort({ createdAt: -1 })
     .populate("user", "name email");
   res.status(200).json(tickets);
-});
-
-module.exports = {
-  getTickets,
-  createTicket,
-  getTicket,
-  deleteTicket,
-  updateTicket,
-  viewAllTickets,
-  viewOpenTickets,
-  viewClosedTickets,
-  viewTicketsByDepartment,
-  viewTicketsByPriority,
-  viewTicketsByCategory,
 };

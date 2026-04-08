@@ -1,6 +1,6 @@
-const router = require("express").Router();
-const coachingController = require("../controllers/coachingController");
-const { protect } = require("../middleware/authMiddleware");
+import express from "express";
+import coachingController from "../controllers/coachingController.js";
+import { protect } from "../middleware/authMiddleware.js";
 
 const verifyTeamRole = (req, res, next) => {
     if (req.user.isAdmin || req.user.role === "TL" || req.user.role === "TM") {
@@ -10,6 +10,9 @@ const verifyTeamRole = (req, res, next) => {
         throw new Error("Not authorized");
     }
 }
+
+const router = express.Router();
+
 router.get("/my/coaching", protect, coachingController.getCoachingByUser);
 router.post("/", protect, verifyTeamRole, coachingController.createCoaching);
 router.get("/", protect, verifyTeamRole, coachingController.getCoaching);
@@ -18,4 +21,4 @@ router.put("/:id", protect, coachingController.updateCoaching);
 router.delete("/:id", protect, verifyTeamRole, coachingController.deleteCoaching);
 router.get("/status/:status", protect, verifyTeamRole, coachingController.getCoachingByStatus);
 
-module.exports = router;
+export default router;

@@ -1,24 +1,44 @@
-const express = require("express");
-const { errorHandler } = require("./middleware/errorMiddleware");
-const connectDB = require("./config/db");
-const PORT = process.env.PORT || 3000;
-const cors = require("cors");
+// Packages import
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+
+// Middleware import
+import { errorHandler } from "./middleware/errorMiddleware.js";
+
+// Database import
+import connectDB from "./config/db.js";
+
+//Main routes import
+import userRoutes from "./routes/userRoutes.js";
+import ticketRoutes from "./routes/ticketRoutes.js";
+import memosRoutes from "./routes/memoRoutes.js";
+import policies from "./routes/policiesRoute.js";
+import assignRoutes from "./routes/assignRoutes.js";
+import categoryRoutes from "./routes/categoryRoutes.js";
+import employeeTimeRoutes from "./routes/employeeTimeRoutes.js";
+import scheduleAndAttendanceRoutes from "./routes/ScheduleAndAttendanceRoutes.js";
+import surveyRoutes from "./routes/surveyRoutes.js";
+import nteRoutes from "./routes/nteRoutes.js";
+import coachingRoutes from "./routes/coachingRoutes.js";
+import userProfileRoutes from "./routes/userProfileRoutes.js";
+import leaveRoutes from "./routes/leaveRoutes.js";
+import payrollRoutes from "./routes/payrollRoute.js";
+
+// Leave accrual job
+import leaveAccrualJob from "./jobs/leaveAccrualJob.js";
+
+
+console.log("Starting server initialization...");
+
+dotenv.config();
+const PORT = process.env.PORT;
 
 // Connect to database
 connectDB();
+leaveAccrualJob();
 
-require("./jobs/leaveAccrualJob.js");
 const app = express();
-
-/**
- * Each app.use(middleware) is called every time
- * a request is sent to the server
- */
-
-/**
- * This is a built-in middleware function in Express.
- * It parses incoming requests with JSON payloads and is based on body-parser.
- */
 app.use(express.json());
 
 const corsOptions = {
@@ -27,35 +47,25 @@ const corsOptions = {
   optionsSuccessStatus: 200,
 };
 app.use(cors(corsOptions));
-
-/**
- * This is a built-in middleware function in Express.
- * It parses incoming requests (Object as strings or arrays) with
- * urlencoded payloads and is based on body-parser.
- */
 app.use(express.urlencoded({ extended: false }));
 
 // Routes endpoints
-app.use("/api/users", require("./routes/userRoutes"));
-app.use("/api/tickets", require("./routes/ticketRoutes"));
-app.use("/api/memos", require("./routes/memoRoutes"));
-app.use("/api/policies", require("./routes/policiesRoute"));
-app.use("/api/assigns", require("./routes/assignRoutes"));
-app.use("/api/categories", require("./routes/categoryRoutes"));
-app.use("/api/employeeTimes", require("./routes/employeeTimeRoutes"));
-app.use(
-  "/api/ScheduleAndAttendanceRoutes",
-  require("./routes/ScheduleAndAttendanceRoutes")
-);
-app.use("/api/surveys", require("./routes/surveyRoutes"));
-app.use("/api/ntes", require("./routes/nteRoutes"));
-app.use("/api/coaching", require("./routes/coachingRoutes"));
-app.use("/api/userprofiles", require("./routes/userProfileRoutes"));
-app.use("/api/leave", require("./routes/leaveRoutes"));
-app.use("/api/payroll", require("./routes/payrollRoute.js"));
+app.use("/api/users", userRoutes);
+app.use("/api/tickets", ticketRoutes);
+app.use("/api/memos", memosRoutes);
+app.use("/api/policies", policies);
+app.use("/api/assigns", assignRoutes);
+app.use("/api/categories", categoryRoutes);
+app.use("/api/employeeTimes", employeeTimeRoutes);
+app.use("/api/ScheduleAndAttendanceRoutes", scheduleAndAttendanceRoutes);
+app.use("/api/surveys", surveyRoutes);
+app.use("/api/ntes", nteRoutes);
+app.use("/api/coaching", coachingRoutes);
+app.use("/api/userprofiles", userProfileRoutes);
+app.use("/api/leave", leaveRoutes);
+app.use("/api/payroll", payrollRoutes);
 
-// Serve frontend time
-
+// Server frontend time
 app.get("/api/current-time", (_req, res) => {
   const currentTime = new Date();
   res.json({
@@ -67,11 +77,6 @@ app.get("/api/current-time", (_req, res) => {
 app.use(errorHandler);
 app.disable("x-powered-by");
 
-/**
- * app.listen()
- * Starts a UNIX socket and listens for connections on the given path.
- * This method is identical to Node’s http.Server.listen().
- */
 app.listen(PORT, () => {
   console.log(`Server is running on port http://localhost:${PORT}`);
 });

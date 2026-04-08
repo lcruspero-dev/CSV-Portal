@@ -1,7 +1,8 @@
-const express = require("express");
+import express from "express";
+import { getActiveAd } from "../controllers/adController.js";
+
 const router = express.Router();
-const { getActiveAd } = require("../controllers/adController");
 
 router.get("/active", getActiveAd);
 
-module.exports = router;
+export default router;
