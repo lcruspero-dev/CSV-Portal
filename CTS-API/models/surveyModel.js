@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
-import Schema from "mongoose";
 
-const surveySchema = new Schema({
+const surveySchema = new mongoose.Schema({
   title: {
     type: String,
     required: true,
@@ -12,7 +11,7 @@ const surveySchema = new Schema({
     required: true,
   },
   createdBy: {
-    type: Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
   },
@@ -28,7 +27,7 @@ const surveySchema = new Schema({
   responses: [
     {
       respondent: {
-        type: Schema.Types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId,
         ref: "User",
       },
       username: {

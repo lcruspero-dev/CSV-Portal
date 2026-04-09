@@ -302,17 +302,3 @@ export const addUser = async (req, res) => {
     },
   });
 };
-
-exports = {
-  registerUser,
-  loginUser,
-  getMe,
-  adminResetPassword,
-  getAllUsersEmails,
-  searchUsers,
-  setUserToInactive,
-  setUserToActive,
-  changePassword,
-  updateLoginLimit,
-  addUser
-};

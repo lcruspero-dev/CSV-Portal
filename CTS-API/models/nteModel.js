@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
-import Schema from "mongoose";
 
-const nteSchema = new Schema({
+const nteSchema = new mongoose.Schema({
   nte: {
     employeeId: {
       type: String,

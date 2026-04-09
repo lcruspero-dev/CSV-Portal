@@ -1,15 +1,14 @@
-// utils/leaveAccrual.js
-const {
+import {
   addMonths,
   lastDayOfMonth,
   isBefore,
   differenceInMonths,
-} = require("date-fns");
-const { zonedTimeToUtc, utcToZonedTime } = require("date-fns-tz");
+} from "date-fns";
+import { zonedTimeToUtc, utcToZonedTime } from "date-fns-tz";
 
-const PH_TIMEZONE = "Asia/Manila";
+export const PH_TIMEZONE = "Asia/Manila";
 
-const getTodayPHT = () => {
+export const getTodayPHT = () => {
   const now = new Date();
   return utcToZonedTime(now, PH_TIMEZONE);
 };
@@ -36,40 +35,35 @@ const getNextAccrualDate = (currentDate, startDate) => {
   return nextMonth;
 };
 
-// Helper to get the same day next month based on start date (adjusts for short months)
+// Helper to get the same day next month based on start date
 const getSameDayNextMonth = (date, startDate) => {
   return getNextAccrualDate(date, startDate);
 };
 
-const calculateAccrual = (employee) => {
+export const calculateAccrual = (employee) => {
   const todayPHT = getTodayPHT();
-  todayPHT.setHours(0, 0, 0, 0); // Start of day in PHT
+  todayPHT.setHours(0, 0, 0, 0);
 
-  // Convert stored dates to PHT for comparison
   const nextAccrualPHT = convertToPHTime(employee.nextAccrualDate);
   nextAccrualPHT.setHours(0, 0, 0, 0);
 
-  // Check if it's time to accrue leave (in PHT)
   if (isBefore(todayPHT, nextAccrualPHT)) {
-    return null; // Not time yet
+    return null;
   }
 
   const lastAccrualPHT = convertToPHTime(employee.lastAccrualDate);
   lastAccrualPHT.setHours(0, 0, 0, 0);
 
-  // Calculate how many full months have passed
   const monthsPassed = differenceInMonths(todayPHT, lastAccrualPHT);
 
   if (monthsPassed < 1) {
     return null;
   }
 
-  // Calculate new values in PHT
   const accruedDays = employee.accrualRate * monthsPassed;
   const newBalance = employee.currentBalance + accruedDays;
-  const newStart = employee.startingLeaveCredit + accruedDays;
+  const newStart = employee.startingLeaveCredit + accruedDays
 
-  // Calculate new accrual dates based on start date
   let newLastAccrualPHT = lastAccrualPHT;
   for (let i = 0; i < monthsPassed; i++) {
     newLastAccrualPHT = getSameDayNextMonth(
@@ -82,7 +76,6 @@ const calculateAccrual = (employee) => {
     employee.startDate
   );
 
-  // Convert back to UTC for storage
   return {
     currentBalance: newBalance,
     startingLeaveCredit: newStart,
@@ -96,12 +89,4 @@ const calculateAccrual = (employee) => {
       description: `Accrued ${accruedDays} days for ${monthsPassed} month(s)`,
     },
   };
-};
-
-module.exports = {
-  calculateAccrual,
-  getTodayPHT,
-  convertToPHTime,
-  getSameDayNextMonth,
-  getNextAccrualDate,
 };

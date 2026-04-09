@@ -26,7 +26,7 @@ import leaveRoutes from "./routes/leaveRoutes.js";
 import payrollRoutes from "./routes/payrollRoute.js";
 
 // Leave accrual job
-import leaveAccrualJob from "./jobs/leaveAccrualJob.js";
+import {runLeaveAccrual } from "./jobs/leaveAccrualJob.js";
 
 
 console.log("Starting server initialization...");
@@ -36,7 +36,7 @@ const PORT = process.env.PORT;
 
 // Connect to database
 connectDB();
-leaveAccrualJob();
+runLeaveAccrual();
 
 const app = express();
 app.use(express.json());

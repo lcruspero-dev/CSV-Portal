@@ -128,3 +128,8 @@ export const manualRun = async () => {
   console.log("Job completed with result:", result);
   return result;
 };
+
+export default {
+  runLeaveAccrual,
+  manualRun,
+};

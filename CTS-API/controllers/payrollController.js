@@ -867,7 +867,7 @@ export const getAllArchivedPayslips = async (req, res) => {
 };
 
 // GENERATE PAYSLIP FOR CUSTOM DATE RANGE (without mutating payroll)
-exports.generatePayslipForRange = async (req, res) => {
+export const generatePayslipForRange = async (req, res) => {
     try {
         const { userId } = req.params;
         let { startDate, endDate } = req.body || {};
