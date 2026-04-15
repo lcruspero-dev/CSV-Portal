@@ -376,17 +376,26 @@ const autoMarkAttendance = async (employeeId: string, date: Date) => {
 };
 
   // Function to check and update attendance for all employees for a specific date
-  const checkAndUpdateAttendanceForDate = async (date: Date) => {
-    if (!autoAttendanceEnabled) return;
+// Function to check and update attendance for all employees for a specific date
+const checkAndUpdateAttendanceForDate = async (date: Date) => {
+  if (!autoAttendanceEnabled) return;
 
-    const today = new Date();
-    // Only auto-mark for today and past dates, not future dates
-    if (date > today) return;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  // Only auto-mark for today and past dates (up to 30 days ago)
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(today.getDate() - 30);
+  thirtyDaysAgo.setHours(0, 0, 0, 0);
+  
+  if (date > today || date < thirtyDaysAgo) {
+    return;
+  }
 
-    for (const employee of employees) {
-      await autoMarkAttendance(employee.id, date);
-    }
-  };
+  for (const employee of employees) {
+    await autoMarkAttendance(employee.id, date);
+  }
+};
 
   // Function to check all dates in current view for attendance updates
   const checkAllDatesInView = async () => {
