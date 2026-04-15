@@ -42,7 +42,6 @@ import {
   Plane,
   Heart,
   Loader2,
-  Bell,
 } from "lucide-react";
 
 // API Endpoints
@@ -90,7 +89,6 @@ import {
 } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { toast } from "@/components/ui/use-toast";
 
 // Kit Components
 import { AbsenteeismAnalytics } from "@/components/kit/AbsenteeismAnalytics";
@@ -153,9 +151,6 @@ const ScheduleAndAttendance: React.FC = () => {
     employeeId: string;
     date: string;
   } | null>(null);
-  const [autoAttendanceEnabled, setAutoAttendanceEnabled] = useState<boolean>(true);
-  const [lastAutoUpdate, setLastAutoUpdate] = useState<Date | null>(null);
-  const [noTimeRecordCache, setNoTimeRecordCache] = useState<Map<string, boolean>>(new Map());
 
   // Refs for click outside detection
   const fromCalendarRef = useRef<HTMLDivElement>(null);
@@ -197,250 +192,6 @@ const ScheduleAndAttendance: React.FC = () => {
     const Icon = icons[status] || AlertCircle;
     return <Icon className="h-3 w-3 mr-1" />;
   };
-
-  // Function to automatically mark attendance based on time records
- // Function to automatically mark attendance based on time records
-const autoMarkAttendance = async (employeeId: string, date: Date) => {
-  if (!autoAttendanceEnabled) return;
-
-  // Don't process future dates
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  if (date > today) {
-    return;
-  }
-
-  const cacheKey = `${employeeId}-${format(date, 'yyyy-MM-dd')}`;
-  
-  // Check cache to avoid repeated API calls for employees with no time records
-  if (noTimeRecordCache.get(cacheKey)) {
-    return;
-  }
-
-  try {
-    const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
-    
-    // Check if attendance already exists for this employee and date
-    const existingAttendance = attendance.find(
-      (entry) =>
-        entry.employeeId === employeeId &&
-        isSameDay(entry.date, date)
-    );
-
-    // If already marked as Present or other status, skip
-    if (existingAttendance && existingAttendance.status !== "Pending") {
-      return;
-    }
-
-    // Get the schedule for this employee on this date to check if they should be working
-    const scheduleEntry = findScheduleEntry(employeeId, date);
-    
-    // If it's a rest day or holiday, don't auto-mark as Present
-    if (scheduleEntry?.shiftType?.type === "restday" || 
-        scheduleEntry?.shiftType?.type === "holiday") {
-      return;
-    }
-
-    // Fetch time record for the employee - handle 404 gracefully
-    let timeRecordData = null;
-    try {
-      const timeRecordResponse = await TimeRecordAPI.getEmployeeTimeByEmployeeIdandDate(
-        employeeId,
-        formattedDate
-      );
-      timeRecordData = timeRecordResponse.data;
-    } catch (err: any) {
-      // If it's a 404 error or "Employee time not found", that means no time record exists
-      if (err?.response?.status === 404 || 
-          err?.message === 'Employee time not found' ||
-          err?.response?.data?.message === 'Employee time not found') {
-        // Cache this result to avoid repeated API calls for the same employee/date
-        setNoTimeRecordCache(prev => new Map(prev).set(cacheKey, true));
-        return;
-      }
-      // Re-throw other errors to be caught by outer catch
-      throw err;
-    }
-
-    // Clear cache if time record exists (so we can check again later)
-    if (noTimeRecordCache.get(cacheKey)) {
-      setNoTimeRecordCache(prev => {
-        const newMap = new Map(prev);
-        newMap.delete(cacheKey);
-        return newMap;
-      });
-    }
-
-    // Check if employee has logged in (has timeIn record)
-    if (timeRecordData && timeRecordData.timeIn) {
-      // Prepare attendance data
-      const attendanceData: any = {
-        employeeId: employeeId,
-        date: formattedDate,
-        status: "Present",
-        logIn: timeRecordData.timeIn || null,
-        logOut: timeRecordData.timeOut || null,
-        totalHours: timeRecordData.totalHours || null,
-        shift: timeRecordData.shift || null,
-      };
-
-      // Handle break times
-      if (timeRecordData.totalBreakTime) {
-        attendanceData.break1 = timeRecordData.totalBreakTime;
-      } else if (timeRecordData.break1) {
-        attendanceData.break1 = timeRecordData.break1;
-      } else if (timeRecordData.breakTime) {
-        attendanceData.break1 = timeRecordData.breakTime;
-      }
-
-      if (timeRecordData.totalSecondBreakTime) {
-        attendanceData.break2 = timeRecordData.totalSecondBreakTime;
-      } else if (timeRecordData.break2) {
-        attendanceData.break2 = timeRecordData.break2;
-      } else if (timeRecordData.secondBreakTime) {
-        attendanceData.break2 = timeRecordData.secondBreakTime;
-      }
-
-      if (timeRecordData.breaks && Array.isArray(timeRecordData.breaks)) {
-        attendanceData.break1 = timeRecordData.breaks[0]?.duration || null;
-        attendanceData.break2 = timeRecordData.breaks[1]?.duration || null;
-      }
-
-      if (timeRecordData.breakDetails) {
-        attendanceData.break1 = timeRecordData.breakDetails.firstBreak || null;
-        attendanceData.break2 = timeRecordData.breakDetails.secondBreak || null;
-      }
-
-      // Check if this is an update or new entry
-      if (existingAttendance) {
-        await ScheduleAndAttendanceAPI.updateAttendanceEntry(
-          employeeId,
-          formattedDate,
-          attendanceData
-        );
-      } else {
-        await ScheduleAndAttendanceAPI.createAttendanceEntry(attendanceData);
-      }
-
-      // Update local state
-      const updatedEntry: AttendanceEntry = {
-        employeeId: employeeId,
-        date: date,
-        status: "Present",
-        ...(attendanceData.logIn && { logIn: attendanceData.logIn }),
-        ...(attendanceData.logOut && { logOut: attendanceData.logOut }),
-        ...(attendanceData.totalHours && { totalHours: attendanceData.totalHours }),
-        ...(attendanceData.ot && { ot: attendanceData.ot }),
-        ...(attendanceData.shift && { shift: attendanceData.shift }),
-        ...(attendanceData.break1 && { break1: attendanceData.break1 }),
-        ...(attendanceData.break2 && { break2: attendanceData.break2 }),
-      };
-
-      setAttendance((prev) => {
-        const existingIndex = prev.findIndex(
-          (entry) =>
-            entry.employeeId === employeeId &&
-            isSameDay(entry.date, date)
-        );
-        if (existingIndex >= 0) {
-          const newAttendance = [...prev];
-          newAttendance[existingIndex] = updatedEntry;
-          return newAttendance;
-        }
-        return [...prev, updatedEntry];
-      });
-
-      // Show notification for auto-marked attendance (only once per employee per day)
-      if (!existingAttendance) {
-        const employee = employees.find(emp => emp.id === employeeId);
-        toast({
-          title: "Attendance Auto-Marked",
-          description: `${employee?.name || "Employee"} has been automatically marked as Present for ${format(date, "MMM d, yyyy")}`,
-          duration: 3000,
-        });
-      }
-    }
-  } catch (err: any) {
-    // Silent fail for 404 errors - don't log anything
-    if (err?.response?.status === 404 || 
-        err?.message === 'Employee time not found' ||
-        err?.response?.data?.message === 'Employee time not found') {
-      // Cache this result to avoid repeated API calls
-      const cacheKey = `${employeeId}-${format(date, 'yyyy-MM-dd')}`;
-      setNoTimeRecordCache(prev => new Map(prev).set(cacheKey, true));
-      return;
-    }
-    // Only log actual errors that are not 404s
-    console.error(`Error auto-marking attendance for ${employeeId}:`, err);
-  }
-};
-
-  // Function to check and update attendance for all employees for a specific date
-// Function to check and update attendance for all employees for a specific date
-const checkAndUpdateAttendanceForDate = async (date: Date) => {
-  if (!autoAttendanceEnabled) return;
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  // Only auto-mark for today and past dates (up to 30 days ago)
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(today.getDate() - 30);
-  thirtyDaysAgo.setHours(0, 0, 0, 0);
-  
-  if (date > today || date < thirtyDaysAgo) {
-    return;
-  }
-
-  for (const employee of employees) {
-    await autoMarkAttendance(employee.id, date);
-  }
-};
-
-  // Function to check all dates in current view for attendance updates
-  const checkAllDatesInView = async () => {
-    if (!autoAttendanceEnabled) return;
-
-    const days = getDaysInView();
-    const today = new Date();
-    
-    for (const day of days) {
-      if (day <= today) {
-        await checkAndUpdateAttendanceForDate(day);
-      }
-    }
-  };
-
-  // Auto-check attendance periodically (every 5 minutes)
-  useEffect(() => {
-    if (!autoAttendanceEnabled || employees.length === 0) return;
-
-    const checkAttendance = async () => {
-      const now = new Date();
-      // Only check if enough time has passed since last update (minimum 1 minute)
-      if (lastAutoUpdate && (now.getTime() - lastAutoUpdate.getTime()) < 60000) {
-        return;
-      }
-      
-      await checkAllDatesInView();
-      setLastAutoUpdate(now);
-    };
-
-    // Initial check
-    checkAttendance();
-
-    // Set up interval to check every 5 minutes
-    const interval = setInterval(checkAttendance, 5 * 60 * 1000);
-    
-    return () => clearInterval(interval);
-  }, [employees, autoAttendanceEnabled, currentDate, viewMode, fromDate, toDate]);
-
-  // Re-check when attendance data is fetched or updated
-  useEffect(() => {
-    if (employees.length > 0 && autoAttendanceEnabled) {
-      checkAllDatesInView();
-    }
-  }, [attendance, employees, autoAttendanceEnabled]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -1078,43 +829,11 @@ const checkAndUpdateAttendanceForDate = async (date: Date) => {
 
         setIsAddShiftOpen(false);
         resetDialogState();
-        
-        toast({
-          title: "Attendance Updated",
-          description: `${selectedEmployee.name}'s attendance has been updated to ${selectedAttendanceStatus}`,
-          duration: 3000,
-        });
       } catch (err) {
         console.error("Error updating attendance:", err);
         setError("Failed to update attendance");
-        toast({
-          title: "Error",
-          description: "Failed to update attendance. Please try again.",
-          variant: "destructive",
-          duration: 3000,
-        });
       }
     }
-  };
-
-  // Manual refresh function for attendance
-  const handleManualRefreshAttendance = async () => {
-    await checkAllDatesInView();
-    toast({
-      title: "Attendance Refreshed",
-      description: "Attendance records have been checked and updated automatically.",
-      duration: 3000,
-    });
-  };
-
-  // Clear cache function
-  const handleClearCache = () => {
-    setNoTimeRecordCache(new Map());
-    toast({
-      title: "Cache Cleared",
-      description: "Time record cache has been cleared. Attendance will re-check all dates.",
-      duration: 3000,
-    });
   };
 
   // Status color mapping for visual indicators
@@ -1134,7 +853,7 @@ const checkAndUpdateAttendanceForDate = async (date: Date) => {
       "Early Log Out": "text-rose-600 bg-rose-50 border-rose-200",
       VTO: "text-cyan-600 bg-cyan-50 border-cyan-200",
       TB: "text-pink-600 bg-pink-50 border-pink-200",
-      Pending: "text-gray-500 bg-gray-50 border-gray-200",
+      Pending: "",
     };
     return colors[status] || "text-gray-600 bg-gray-50 border-gray-200";
   };
@@ -1160,50 +879,6 @@ const checkAndUpdateAttendanceForDate = async (date: Date) => {
             <BackButton />
           </div>
         </div>
-
-        {/* Auto Attendance Banner */}
-        {autoAttendanceEnabled && (
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Bell className="h-5 w-5 text-green-600" />
-              <div>
-                <p className="text-sm font-medium text-green-800">
-                  Auto-Attendance Active
-                </p>
-                <p className="text-xs text-green-600">
-                  Employees are automatically marked as Present when they log in
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleManualRefreshAttendance}
-                className="border-green-300 text-green-700 hover:bg-green-50"
-              >
-                <RefreshCw className="h-3 w-3 mr-1" />
-                Refresh Now
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleClearCache}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                Clear Cache
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setAutoAttendanceEnabled(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                Disable
-              </Button>
-            </div>
-          </div>
-        )}
 
         {/* Analytics Section */}
         <div className="transform transition-all duration-300 hover:translate-y-[-2px]">
