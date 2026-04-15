@@ -51,6 +51,7 @@ export const TicketAPi = {
 
   // MEMO
   createMemo: (body: object) => apiHelper("/api/memos/create", "POST", body),
+  updateMemo: (id: string, body: object) => apiHelper(`/api/memos/${id}`, "PUT", body),
   getAllMemos: () => apiHelper("/api/memos", "GET"),
   getIndividualMemo: (id: any) => apiHelper(`/api/memos/${id}`, "GET"),
   acknowledgement: (id: any) => apiHelper(`/api/memos/${id}/acknowledged`, "PUT"),
@@ -58,6 +59,7 @@ export const TicketAPi = {
 
   // Policies
   createPolicies: (body: object) => apiHelper("/api/policies/create", "POST", body),
+  updatePolicy: (id: string, body: object) => apiHelper(`/api/memos/${id}`, "PUT", body),
   getAllPolicies: () => apiHelper("/api/policies", "GET"),
   getIndividualPolicy: (id: any) => apiHelper(`/api/policies/${id}`, "GET"),
   acknowledgementPolicy: (id: any) => apiHelper(`/api/policies/${id}/acknowledged`, "PUT"),

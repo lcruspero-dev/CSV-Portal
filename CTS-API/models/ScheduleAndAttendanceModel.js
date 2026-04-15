@@ -12,7 +12,7 @@ const scheduleEntrySchema = new mongoose.Schema({
   schedule: [
     {
       date: {
-        type: String, // You can also use Date type if needed
+        type: String, 
       },
       shiftType: {
         type: String,

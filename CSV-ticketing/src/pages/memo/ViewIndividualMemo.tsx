@@ -8,6 +8,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import Loading from "@/components/ui/loading";
 import {
@@ -28,9 +29,10 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-import { Check, FileText } from "lucide-react";
+import { Check, FileText, Edit } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useLocation } from "react-router-dom";
+import axios from "axios";
 
 interface User {
   _id: string;
@@ -50,11 +52,13 @@ interface UnacknowledgedUser {
 }
 
 interface Document {
+  _id: string;
   subject: string;
   createdAt: string;
   file: string;
   description: string;
   acknowledgedby: AcknowledgedBy[];
+  isPinned?: boolean;
 }
 
 const formatDate = (dateString: string) => {
@@ -251,6 +255,165 @@ const DocumentTabs = ({
   );
 };
 
+// Update Document Component
+const UpdateDocumentDialog = ({ 
+  document, 
+  documentType, 
+  onUpdateSuccess 
+}: { 
+  document: Document, 
+  documentType: string,
+  onUpdateSuccess: () => void 
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [subject, setSubject] = useState("");
+  const [description, setDescription] = useState("");
+  const [, setFilename] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [newFile, setNewFile] = useState<File | null>(null);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (document && isOpen) {
+      setSubject(document.subject || "");
+      setDescription(document.description || "");
+      setFilename(document.file || "");
+    }
+  }, [document, isOpen]);
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setNewFile(file);
+    setFilename(file.name);
+  };
+
+  const handleSave = async () => {
+    if (isSaving) return;
+
+    setIsSaving(true);
+    try {
+      let fileUrl = document.file;
+      
+      // Upload new file if selected
+      if (newFile) {
+        const formData = new FormData();
+        formData.append("file", newFile);
+        
+        const uploadResponse = await axios.post(
+          `${import.meta.env.VITE_UPLOADFILES_URL}/upload`,
+          formData,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+          }
+        );
+        fileUrl = uploadResponse.data.filename;
+      }
+
+      const body = {
+        subject,
+        description,
+        file: fileUrl,
+      };
+
+      // Call appropriate API based on document type
+      if (documentType === 'memo') {
+        await TicketAPi.updateMemo(document._id, body);
+      } else {
+        await TicketAPi.updatePolicy(document._id, body);
+      }
+
+      toast({
+        title: "Success",
+        description: `${documentType.charAt(0).toUpperCase() + documentType.slice(1)} updated successfully`,
+      });
+
+      setIsOpen(false);
+      onUpdateSuccess();
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Error",
+        description: `Failed to update ${documentType}`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" className="flex items-center gap-2">
+          <Edit size={16} />
+          Edit {documentType}
+        </Button>
+      </DialogTrigger>
+
+      <DialogContent className="w-[900px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold">
+            Update {documentType.charAt(0).toUpperCase() + documentType.slice(1)}
+          </DialogTitle>
+          <DialogDescription>
+            Edit the {documentType} details below
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid gap-4 py-4">
+          <div className="space-y-2">
+            <Label>Subject</Label>
+            <Input
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="Enter subject"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Description</Label>
+            <Textarea
+              className="h-60"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Enter description"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Current File</Label>
+            {document.file && (
+              <div className="text-sm text-blue-600 mb-2">
+                Current: {document.file}
+              </div>
+            )}
+            <Label>Upload New File (Optional)</Label>
+            <Input type="file" onChange={handleFileUpload} />
+            <p className="text-xs text-gray-500 mt-1">
+              Leave empty to keep the current file
+            </p>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setIsOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSave} disabled={isSaving}>
+            {isSaving ? "Saving..." : "Save Changes"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// Add missing imports
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+
 const ViewIndividualDocument = () => {
   const [document, setDocument] = useState<Document | null>(null);
   const [unacknowledgedUsers, setUnacknowledgedUsers] = useState<UnacknowledgedUser[]>([]);
@@ -264,6 +427,7 @@ const ViewIndividualDocument = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [tempChecked, setTempChecked] = useState(false);
   const [showPdfPreview, setShowPdfPreview] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Determine if this is a memo or policy based on the route
   const isPolicyRoute = location.pathname.includes('/policies/');
@@ -369,13 +533,21 @@ const ViewIndividualDocument = () => {
     }
   };
 
+  const handleDocumentUpdate = useCallback(async () => {
+    if (id) {
+      await getIndividualDocument(id);
+      await getUnacknowledgedUsers(id);
+      setRefreshTrigger(prev => prev + 1);
+    }
+  }, [id, getIndividualDocument, getUnacknowledgedUsers]);
+
   useEffect(() => {
     if (id) {
       setIsLoading(true);
       getIndividualDocument(id);
       getUnacknowledgedUsers(id);
     }
-  }, [id, getIndividualDocument, getUnacknowledgedUsers]);
+  }, [id, getIndividualDocument, getUnacknowledgedUsers, refreshTrigger]);
 
   useEffect(() => {
     // Check if user has already acknowledged this document
@@ -426,10 +598,19 @@ const ViewIndividualDocument = () => {
   return (
     <div className="container mx-auto px-4 py-1 max-w-6xl">
       <div className="space-y-2">
-        <div className="flex justify-start">
+        <div className="flex justify-between items-center">
           <div className="flex items-center mt-1 scale-90 origin-left">
             <BackButton />
           </div>
+          
+          {/* Admin Edit Button */}
+          {user?.isAdmin && (
+            <UpdateDocumentDialog 
+              document={document}
+              documentType={documentType}
+              onUpdateSuccess={handleDocumentUpdate}
+            />
+          )}
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
