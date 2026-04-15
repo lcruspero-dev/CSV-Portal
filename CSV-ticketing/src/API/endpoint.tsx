@@ -210,7 +210,7 @@ export const ScheduleAndAttendanceAPI = {
       "POST",
       body
     ),
-  updateAttendanceEntry: (id: string, body: object) =>
+  updateAttendanceEntry: (id: string, formattedDate: string, body: object) =>
     apiHelper(
       `/api/ScheduleAndAttendanceRoutes/attendance-entries/${id}`,
       "PUT",
