@@ -43,55 +43,23 @@ interface SummaryCardProps {
 const SummaryCard: React.FC<SummaryCardProps> = ({ label, value, highlight, onClick }) => (
   <div
     onClick={onClick}
-    className={`p-4 rounded-lg shadow border text-center cursor-pointer ${
-      highlight ? "bg-yellow-50 border-yellow-300" : "bg-white border-gray-200"
-    } hover:shadow-md transition`}
+    className={`
+      group cursor-pointer
+      p-5 rounded-2xl
+      border backdrop-blur-md
+      transition-all duration-300
+      hover:-translate-y-1 hover:shadow-xl
+      ${highlight 
+        ? "bg-yellow-50/80 border-yellow-300 shadow-md" 
+        : "bg-white/80 border-gray-200 shadow-sm"}
+    `}
   >
-    <p className="text-sm font-medium text-gray-600">{label}</p>
-    <p className="text-xl font-bold text-gray-900 mt-1">{value}</p>
+    <p className="text-sm text-gray-500">{label}</p>
+    <p className="text-2xl font-bold text-gray-900 mt-1 group-hover:text-[#5602FF]">
+      {value}
+    </p>
   </div>
 );
-
-interface PaginationProps {
-  currentPage: number;
-  totalPages: number;
-  onChange: (page: number) => void;
-}
-
-const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onChange }) => {
-  const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
-
-  return (
-    <div className="flex justify-center items-center gap-2 py-4">
-      <Button
-        size="sm"
-        variant="outline"
-        disabled={currentPage === 1}
-        onClick={() => onChange(currentPage - 1)}
-      >
-        Previous
-      </Button>
-      {pageNumbers.map((page) => (
-        <Button
-          key={page}
-          size="sm"
-          variant={page === currentPage ? "default" : "outline"}
-          onClick={() => onChange(page)}
-        >
-          {page}
-        </Button>
-      ))}
-      <Button
-        size="sm"
-        variant="outline"
-        disabled={currentPage === totalPages}
-        onClick={() => onChange(currentPage + 1)}
-      >
-        Next
-      </Button>
-    </div>
-  );
-};
 
 function ViewMemo() {
   const [memos, setMemos] = useState<Memo[]>([]);
@@ -140,72 +108,70 @@ function ViewMemo() {
     currentPage * itemsPerPage
   );
 
-  const clearFilter = () => {
-    setShowPendingOnly(false);
-  };
-
   if (loading) return <LoadingComponent />;
 
   return (
-    <div className="bg-gradient-to-b from-gray-50 to-white px-6 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 px-6 py-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-10">
+        
+        {/* HEADER */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-10">
           <div className="flex items-center gap-4">
             <BackButton />
             <div>
-              <h1 className="text-2xl font-semibold text-gray-900">
+              <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
                 Company Memoranda
               </h1>
-              <p className="text-sm text-gray-600">
+              <p className="text-gray-500 text-sm">
                 Controlled internal communications
               </p>
             </div>
           </div>
 
-          {user?.isAdmin && <CreateMemo setMemos={setMemos} setLoading={setLoading} />}
+          {user?.isAdmin && (
+            <CreateMemo setMemos={setMemos} setLoading={setLoading} />
+          )}
         </div>
 
-        {/* Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* SUMMARY CARDS */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
           <SummaryCard label="Total Memoranda" value={memos.length} />
           <SummaryCard label="Acknowledged" value={memos.filter(isAcknowledged).length} />
           <SummaryCard
-            label="Pending Acknowledgement"
+            label="Pending"
             value={pendingCount}
             highlight
             onClick={() => setShowPendingOnly(true)}
           />
         </div>
 
-        {/* Table */}
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        {/* TABLE CONTAINER */}
+        <div className="bg-white/80 backdrop-blur rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
+          
+          {/* FILTER BAR */}
+          {showPendingOnly && (
+            <div className="flex items-center justify-between px-6 py-3 bg-yellow-50 border-b border-yellow-200">
+              <div className="flex items-center gap-2 text-yellow-800 text-sm">
+                <Filter className="h-4 w-4" />
+                Pending acknowledgement filter active
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowPendingOnly(false)}
+                className="border-yellow-400 text-yellow-700 hover:bg-yellow-100"
+              >
+                Clear
+              </Button>
+            </div>
+          )}
+
           <Table>
-            <TableHeader className="bg-gray-100">
-              {showPendingOnly ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="p-0">
-                    <div className="flex items-center justify-between px-4 py-3 bg-yellow-50 border-b border-yellow-300">
-                      <div className="flex items-center gap-2 text-yellow-800">
-                        <Filter className="h-4 w-4" />
-                        <span className="text-sm font-medium">
-                          Showing memoranda pending your acknowledgement
-                        </span>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={clearFilter}
-                        className="border-yellow-400 text-yellow-700 hover:bg-yellow-100"
-                      >
-                        Clear Filter
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : null}
+            {/* STICKY HEADER */}
+            <TableHeader className="bg-gray-50 sticky top-0 z-10">
               <TableRow>
-                <TableHead>Date Issued</TableHead>
+                <TableHead>Date</TableHead>
                 <TableHead>Subject</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-center">Action</TableHead>
@@ -214,36 +180,43 @@ function ViewMemo() {
 
             <TableBody>
               {paginatedMemos.map((memo) => (
-                <TableRow key={memo._id}>
+                <TableRow
+                  key={memo._id}
+                  className="hover:bg-gray-50 transition"
+                >
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-gray-400" />
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <Calendar className="h-4 w-4" />
                       {formattedDate(memo.createdAt)}
                     </div>
                   </TableCell>
 
-                  <TableCell className="font-medium text-gray-900">{memo.subject}</TableCell>
+                  <TableCell className="font-medium text-gray-900">
+                    {memo.subject}
+                  </TableCell>
 
                   <TableCell>
                     <span
-                      className={`text-xs font-medium px-2 py-1 rounded ${
-                        isAcknowledged(memo)
+                      className={`
+                        px-3 py-1 text-xs font-medium rounded-full
+                        ${isAcknowledged(memo)
                           ? "bg-green-100 text-green-700"
-                          : "bg-yellow-100 text-yellow-800"
-                      }`}
+                          : "bg-yellow-100 text-yellow-800"}
+                      `}
                     >
-                      {isAcknowledged(memo) ? "Acknowledged" : "Pending Acknowledgement"}
+                      {isAcknowledged(memo) ? "Acknowledged" : "Pending"}
                     </span>
                   </TableCell>
 
                   <TableCell className="text-center">
                     <Button
                       size="sm"
+                      className="gap-1"
                       variant="outline"
                       onClick={() => navigate(`/memo/${memo._id}`)}
                     >
-                      <Eye className="h-4 w-4 mr-1" />
-                      View Document
+                      <Eye className="h-4 w-4" />
+                      View
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -254,25 +227,47 @@ function ViewMemo() {
               <TableFooter>
                 <TableRow>
                   <TableCell colSpan={4}>
-                    <Pagination
-                      currentPage={currentPage}
-                      totalPages={Math.ceil(filteredMemos.length / itemsPerPage)}
-                      onChange={setCurrentPage}
-                    />
+                    <div className="flex justify-center py-4">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage((p) => p - 1)}
+                      >
+                        Previous
+                      </Button>
+
+                      <span className="px-4 text-sm text-gray-600">
+                        Page {currentPage} of{" "}
+                        {Math.ceil(filteredMemos.length / itemsPerPage)}
+                      </span>
+
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={
+                          currentPage ===
+                          Math.ceil(filteredMemos.length / itemsPerPage)
+                        }
+                        onClick={() => setCurrentPage((p) => p + 1)}
+                      >
+                        Next
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               </TableFooter>
             )}
           </Table>
 
+          {/* EMPTY STATE */}
           {filteredMemos.length === 0 && (
-            <div className="text-center py-10 text-gray-600">
-              {showPendingOnly 
-                ? "No memoranda pending your acknowledgement."
-                : "No memoranda available."}
+            <div className="text-center py-16 text-gray-500">
+              {showPendingOnly
+                ? "No pending memoranda 🎉"
+                : "No memoranda available"}
             </div>
           )}
-          
         </div>
       </div>
     </div>

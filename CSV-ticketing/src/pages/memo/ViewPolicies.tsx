@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { TicketAPi } from "@/API/endpoint";
 import { useCallback, useEffect, useState } from "react";
 import BackButton from "@/components/kit/BackButton";
@@ -34,6 +35,30 @@ export interface User {
   email: string;
 }
 
+
+const StatCard = ({ label, value, tone = "default", onClick }: any) => {
+  const tones: any = {
+    default: "bg-white border-gray-200",
+    success: "bg-green-50 border-green-200",
+    warning: "bg-yellow-50 border-yellow-200",
+  };
+
+  return (
+    <div
+      onClick={onClick}
+      className={`
+        p-6 rounded-2xl border shadow-sm
+        hover:shadow-lg hover:-translate-y-1
+        transition-all cursor-pointer
+        ${tones[tone]}
+      `}
+    >
+      <p className="text-sm text-gray-600">{label}</p>
+      <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
+    </div>
+  );
+};
+
 function ViewPolicies() {
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [filteredPolicies, setFilteredPolicies] = useState<Policy[]>([]);
@@ -41,9 +66,10 @@ function ViewPolicies() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [showPendingOnly, setShowPendingOnly] = useState(false);
-  const itemsPerPage = 8;
 
+  const itemsPerPage = 8;
   const navigate = useNavigate();
+
   const user: User | null = (() => {
     const u = localStorage.getItem("user");
     return u ? JSON.parse(u) : null;
@@ -52,7 +78,7 @@ function ViewPolicies() {
   const isAcknowledged = useCallback(
     (policy: Policy) =>
       policy.acknowledgedby?.some((ack) => ack.userId === user?._id),
-    [user],
+    [user]
   );
 
   const fetchPolicies = async () => {
@@ -64,14 +90,10 @@ function ViewPolicies() {
             acknowledgedby: p.acknowledgedby || [],
           }))
         : [];
+
       setPolicies(data);
       setFilteredPolicies(data);
       setTotalPages(Math.ceil(data.length / itemsPerPage));
-    } catch (err) {
-      console.error("Error fetching policies:", err);
-      setPolicies([]);
-      setFilteredPolicies([]);
-      setTotalPages(1);
     } finally {
       setLoading(false);
     }
@@ -83,105 +105,87 @@ function ViewPolicies() {
 
   useEffect(() => {
     let filtered = policies;
-    if (showPendingOnly) filtered = policies.filter((p) => !isAcknowledged(p));
+
+    if (showPendingOnly) {
+      filtered = policies.filter((p) => !isAcknowledged(p));
+    }
+
     setFilteredPolicies(filtered);
     setTotalPages(Math.ceil(filtered.length / itemsPerPage));
     setCurrentPage(1);
   }, [showPendingOnly, policies, isAcknowledged]);
 
-  const paginatedPolicies = filteredPolicies.slice(
+  const paginated = filteredPolicies.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
+    currentPage * itemsPerPage
   );
-
-  const clearFilter = () => {
-    setShowPendingOnly(false);
-  };
 
   const pendingCount = policies.filter((p) => !isAcknowledged(p)).length;
   const acknowledgedCount = policies.filter(isAcknowledged).length;
 
-  const getStatusColor = (policy: Policy) =>
-    isAcknowledged(policy)
-      ? "bg-green-100 text-green-700"
-      : "bg-yellow-100 text-yellow-800";
-
-  const getStatusText = (policy: Policy) =>
-    isAcknowledged(policy) ? "Acknowledged" : "Pending Acknowledgement";
-
   if (loading) return <LoadingComponent />;
 
   return (
-    <div className="bg-gradient-to-b from-gray-50 to-white px-6 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 px-6 py-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+
+        {/* HEADER */}
         <div className="flex items-center justify-between mb-10">
           <div className="flex items-center gap-4">
             <BackButton />
             <div>
-              <h1 className="text-2xl font-semibold text-gray-900">
+              <h1 className="text-3xl font-bold text-gray-900">
                 Company Policies
               </h1>
-              <p className="text-sm text-gray-600">
-                Controlled internal communications
+              <p className="text-sm text-gray-500">
+                Controlled internal governance documents
               </p>
             </div>
           </div>
+
           {user?.isAdmin && (
             <CreatePolicies setPolicies={setPolicies} setLoading={setLoading} />
           )}
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-2xl p-6 shadow border border-gray-200">
-            <p className="text-sm font-medium text-gray-600">Total Messages</p>
-            <p className="text-2xl font-bold text-gray-900 mt-1">
-              {policies.length}
-            </p>
-          </div>
-          <div className="bg-white rounded-2xl p-6 shadow border border-gray-200">
-            <p className="text-sm font-medium text-gray-600">Acknowledged</p>
-            <p className="text-2xl font-bold text-green-700 mt-1">
-              {acknowledgedCount}
-            </p>
-          </div>
-          <div
-            className={`bg-yellow-50 rounded-2xl p-6 shadow border border-gray-200 cursor-pointer ${
-              showPendingOnly ? "ring-2 ring-yellow-500 border-yellow-500" : ""
-            }`}
+        {/* STATS */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+          <StatCard label="Total Policies" value={policies.length} />
+          <StatCard
+            label="Acknowledged"
+            value={acknowledgedCount}
+            tone="success"
+          />
+          <StatCard
+            label="Pending Review"
+            value={pendingCount}
+            tone="warning"
             onClick={() => setShowPendingOnly(true)}
-          >
-            <p className="text-sm font-medium text-yellow-800">
-              Pending Acknowledgement
-            </p>
-            <p className="text-2xl font-bold text-yellow-800 mt-1">
-              {pendingCount}
-            </p>
-          </div>
+          />
         </div>
 
-        {/* Table */}
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-          {/* Filter Banner - Above the table but inside the border */}
+        {/* TABLE CONTAINER */}
+        <div className="bg-white/80 backdrop-blur border border-gray-200 shadow-xl rounded-2xl overflow-hidden">
+
+          {/* FILTER BAR */}
           {showPendingOnly && (
-            <div className="flex items-center justify-between bg-yellow-50 border-b border-yellow-300 p-4">
+            <div className="flex items-center justify-between px-6 py-3 bg-yellow-50 border-b border-yellow-200">
               <span className="text-sm text-yellow-800">
-                Showing policies pending your acknowledgement
+                Showing only policies pending acknowledgement
               </span>
+
               <Button
-                variant="outline"
                 size="sm"
-                onClick={clearFilter}
-                className="border-yellow-400 text-yellow-700 hover:bg-yellow-100"
+                variant="outline"
+                onClick={() => setShowPendingOnly(false)}
               >
-                Clear Filter
+                Clear filter
               </Button>
             </div>
           )}
 
           <Table>
-            <TableHeader className="bg-gray-100">
+            <TableHeader className="bg-gray-50">
               <TableRow>
                 <TableHead>Date Issued</TableHead>
                 <TableHead>Subject</TableHead>
@@ -191,75 +195,80 @@ function ViewPolicies() {
             </TableHeader>
 
             <TableBody>
-              {paginatedPolicies.map((policy) => (
-                <TableRow key={policy._id}>
+              {paginated.map((policy) => (
+                <TableRow
+                  key={policy._id}
+                  className="hover:bg-gray-50 transition"
+                >
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-gray-400" />
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <Calendar className="h-4 w-4" />
                       {formattedDate(policy.createdAt)}
                     </div>
                   </TableCell>
+
                   <TableCell className="font-medium text-gray-900">
                     {policy.subject}
                   </TableCell>
+
                   <TableCell>
                     <span
-                      className={`text-xs font-medium px-2 py-1 rounded ${getStatusColor(policy)}`}
+                      className={`px-3 py-1 text-xs rounded-full font-medium ${
+                        isAcknowledged(policy)
+                          ? "bg-green-100 text-green-700"
+                          : "bg-yellow-100 text-yellow-800"
+                      }`}
                     >
-                      {getStatusText(policy)}
+                      {isAcknowledged(policy)
+                        ? "Acknowledged"
+                        : "Pending"}
                     </span>
                   </TableCell>
+
                   <TableCell className="text-center">
                     <Button
                       size="sm"
                       variant="outline"
+                      className="gap-1"
                       onClick={() => navigate(`/policies/${policy._id}`)}
                     >
-                      <Eye className="h-4 w-4 mr-1" />
-                      View Document
+                      <Eye className="h-4 w-4" />
+                      View
                     </Button>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
 
+            {/* PAGINATION */}
             {totalPages > 1 && (
               <TableFooter>
                 <TableRow>
                   <TableCell colSpan={4}>
-                    <div className="flex justify-center gap-2 py-4">
+                    <div className="flex justify-center items-center gap-2 py-4">
+
                       <Button
-                        variant="outline"
                         size="sm"
-                        onClick={() => setCurrentPage(currentPage - 1)}
+                        variant="outline"
                         disabled={currentPage === 1}
+                        onClick={() => setCurrentPage((p) => p - 1)}
                       >
-                        <ChevronLeft className="h-4 w-4" /> Previous
+                        <ChevronLeft className="h-4 w-4" />
                       </Button>
 
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                        (num) => (
-                          <Button
-                            key={num}
-                            variant={
-                              num === currentPage ? "default" : "outline"
-                            }
-                            size="sm"
-                            onClick={() => setCurrentPage(num)}
-                          >
-                            {num}
-                          </Button>
-                        ),
-                      )}
+                      <span className="text-sm text-gray-600 px-2">
+                        Page {currentPage} / {totalPages}
+                      </span>
 
                       <Button
-                        variant="outline"
                         size="sm"
-                        onClick={() => setCurrentPage(currentPage + 1)}
+                        variant="outline"
                         disabled={currentPage === totalPages}
+                        onClick={() => setCurrentPage((p) => p + 1)}
                       >
-                        Next <ChevronRight className="h-4 w-4" />
+                        <ChevronRight className="h-4 w-4" />
                       </Button>
+
                     </div>
                   </TableCell>
                 </TableRow>
@@ -267,11 +276,12 @@ function ViewPolicies() {
             )}
           </Table>
 
+          {/* EMPTY STATE */}
           {filteredPolicies.length === 0 && (
-            <div className="text-center py-10 text-gray-600">
+            <div className="text-center py-14 text-gray-500">
               {showPendingOnly
-                ? "No policies pending your acknowledgement."
-                : "No policies available."}
+                ? "No pending policies 🎉"
+                : "No policies available"}
             </div>
           )}
         </div>
