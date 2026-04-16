@@ -229,8 +229,8 @@ exports.checkExistingEntry = async (req, res) => {
 };
 
 exports.getSchedulePerEmployeeByDate = async (req, res) => {
-  const { date } = req.query; // Read date from query parameters
-  const employeeId = req.user.id; // Get employeeId from authenticated user
+  const { date } = req.query; 
+  const employeeId = req.user.id;
 
   try {
     const scheduleEntry = await ScheduleEntry.findOne({ employeeId });
@@ -256,7 +256,7 @@ exports.getSchedulePerEmployeeByDate = async (req, res) => {
 };
 
 exports.getSchedulePerEmployee = async (req, res) => {
-  const employeeId = req.user.id; // Get employeeId from authenticated user
+  const employeeId = req.user.id; 
 
   try {
     const scheduleEntry = await ScheduleEntry.findOne({ employeeId });
@@ -265,7 +265,7 @@ exports.getSchedulePerEmployee = async (req, res) => {
       return res.status(404).json({ message: "Schedule entry not found" });
     }
 
-    // Return the schedule data along with employeeName, teamLeader, and position
+    
     const response = {
       employeeName: scheduleEntry.employeeName,
       teamLeader: scheduleEntry.teamLeader,

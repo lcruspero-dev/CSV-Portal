@@ -266,7 +266,7 @@ export const AttendanceTracker: React.FC = () => {
   };
 
   // Alert timeout reference
-  const alertTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+ const alertTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showAlert = (type: "break1" | "break2" | "lunch") => {
     const messages = {
@@ -523,7 +523,7 @@ export const AttendanceTracker: React.FC = () => {
       return;
     }
 
-    let intervalId: NodeJS.Timeout;
+    let intervalId: ReturnType<typeof setInterval>;
 
     const serverTime = new Date(
       `${currentServerTime.date} ${currentServerTime.time}`
@@ -1138,27 +1138,16 @@ export const AttendanceTracker: React.FC = () => {
           </div>
         </div>
 
-        {/* Current Date Display */}
+        {/* Timer and Controls Section */}
         <Card className="border border-gray-200">
           <CardContent className="p-6">
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2 mb-2">
+            <div className="flex flex-col items-center space-y-6">
+               <div className="flex items-center justify-center gap-2 mb-2">
                 <Calendar className="h-5 w-5 text-purple-600" />
                 <p className="text-lg font-medium text-gray-900">
                   {currentFormattedDate || "Loading date..."}
                 </p>
               </div>
-              <p className="text-gray-600">
-                Server time: {currentServerTime.time}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Timer and Controls Section */}
-        <Card className="border border-gray-200">
-          <CardContent className="p-6">
-            <div className="flex flex-col items-center space-y-6">
               {/* Timer Display */}
               <div className={`text-center ${!isTimeIn ? "opacity-50" : ""}`}>
                 <p className="text-sm font-medium text-gray-600 mb-2">
