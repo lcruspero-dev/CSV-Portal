@@ -1639,7 +1639,7 @@ const ScheduleAndAttendance: React.FC = () => {
 
                       <div className="grid grid-cols-3 gap-4">
                         <div>
-                          <Label className="text-sm font-medium text-gray-700 mb-2 block flex items-center gap-1">
+                          <Label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
                             <Coffee className="h-3 w-3" />
                             1st Break
                           </Label>

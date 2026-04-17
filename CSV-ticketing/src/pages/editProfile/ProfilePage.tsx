@@ -40,10 +40,10 @@ export default function ProfilePage() {
     <div className="container mx-auto py-3">
       {isEditing ? (
         <EditProfileForm
-          userData={userData} // Required prop
-          onCancel={() => setIsEditing(false)} // Required prop
+          userData={userData} 
+          onCancel={() => setIsEditing(false)} 
           onSave={(updatedData) => {
-            setUserData(updatedData); // Required prop
+            setUserData(updatedData); 
             setIsEditing(false);
           }}
         />

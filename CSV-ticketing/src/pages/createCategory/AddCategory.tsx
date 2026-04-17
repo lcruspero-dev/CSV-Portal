@@ -51,7 +51,6 @@ const AddCategory: React.FC<CreateMemoProps> = ({ setCategory, setLoading }) => 
   const handleSave = async () => {
     if (isSaving) return;
 
-    // Validation
     if (!categoryName.trim() || !role) {
       toast({
         title: "Missing Information",
@@ -77,7 +76,6 @@ const AddCategory: React.FC<CreateMemoProps> = ({ setCategory, setLoading }) => 
         variant: "default",
       });
       
-      // Reset form
       setCategoryName("");
       setRole("");
       setIsDialogOpen(false);
