@@ -406,8 +406,8 @@ const AdminHome = () => {
                           </span>
                         </div>
                         <p className="text-sm text-rose-600">
-                          {stats.highPriority} high priority tickets need
-                          immediate attention
+                          {stats.highPriority} High priority tickets need
+                          Immediate attention
                         </p>
                       </div>
                     

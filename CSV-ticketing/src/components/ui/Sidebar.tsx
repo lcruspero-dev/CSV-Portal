@@ -1,3 +1,13 @@
+//React hooks
+import React, { useEffect, useState } from "react";
+
+// React router hooks
+import { useLocation, useNavigate } from "react-router-dom";
+
+// Utils
+import { cn } from "@/lib/utils";
+
+// Components
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,7 +24,8 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip";
 import { useToast } from "@/components/ui/use-toast";
-import { cn } from "@/lib/utils";
+
+// Icons
 import {
   CalendarCheck,
   ChevronLeft,
@@ -39,20 +50,21 @@ import {
   Lock,
   FileBarChart,
 } from "lucide-react";
-import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
 
+// Interfaces
 interface SidebarProps {
   isOpen: boolean;
   toggleSidebar: () => void;
 }
 
+//Types for the Nav Group
 type NavGroup = {
   name: string;
   items: NavItem[];
   icon?: React.ReactNode;
 };
 
+//Types for the Nav Item
 interface NavItem {
   title: string;
   path: string;
@@ -78,6 +90,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
     "Team Management": true,
   });
 
+// Nav gorup links
   const navGroups: NavGroup[] = [
     {
       name: "Actions",
@@ -212,7 +225,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       setPassword("");
       toast({
         title: "Access Granted",
-        description: "Welcome to the protected section.",
+        description: "Welcome to the leave section.",
         variant: "default",
       });
     } else {
@@ -234,6 +247,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       handleProtectedNavigation(item.path);
     } else {
       navigate(item.path);
+    }
+  };
+
+  // Function to close mobile sheet
+  const closeMobileSheet = () => {
+    const closeButton = document.querySelector('[data-radix-collection-item]');
+    if (closeButton) {
+      (closeButton as HTMLElement).click();
     }
   };
 
@@ -300,176 +321,78 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         </DialogContent>
       </Dialog>
 
-      {/* Mobile Sidebar */}
-      <Sheet>
-        <SheetTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden fixed top-4 left-4 z-50 bg-gradient-to-r from-purple-600 to-indigo-600 shadow-lg rounded-full border border-white"
-          >
-            <Menu className="h-5 w-5 text-white" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="w-80 p-0 bg-white">
-          <div className="flex flex-col h-full">
-            {/* Header */}
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-lg">
-                  <Home className="h-6 w-6 text-purple-600" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    Admin Panel
-                  </h2>
-                  <p className="text-sm text-gray-600">Management Dashboard</p>
-                </div>
-              </div>
-            </div>
+      {/* Mobile & Tablet Sidebar - Visible on screens below 1024px (lg breakpoint) */}
+      <div className="lg:hidden">
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button
+              size="icon"
+              className="fixed top-4 left-4 z-50 bg-gradient-to-r from-purple-600 to-indigo-600 shadow-lg rounded-full border border-white hover:bg-gradient-to-r hover:from-purple-700 hover:to-indigo-700"
+            >
+              <Menu className="h-5 w-5 text-white" />
+            </Button>
+          </SheetTrigger>
 
-            {/* Navigation */}
-            <div className="flex-1 overflow-y-auto py-4">
-              <nav className="px-4">
-                {navGroups.map((group, groupIndex) => (
-                  <div key={groupIndex} className="mb-6">
-                    <Button
-                      variant="ghost"
-                      onClick={() => toggleDropdown(group.name)}
-                      className="w-full justify-between px-2 py-3 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-gray-100 rounded-lg text-gray-600">
-                          {group.icon}
-                        </div>
-                        <span className="text-sm font-medium text-gray-900">
-                          {group.name}
-                        </span>
-                      </div>
-                      <ChevronDown
-                        className={cn(
-                          "h-4 w-4 text-gray-400 transition-transform duration-200",
-                          openDropdowns[group.name] ? "rotate-180" : ""
-                        )}
-                      />
-                    </Button>
-
-                    {openDropdowns[group.name] && (
-                      <div className="ml-2 mt-2 space-y-1">
-                        {group.items.map((item, index) => {
-                          const isActive = location.pathname === item.path;
-                          return (
-                            <Button
-                              key={index}
-                              variant="ghost"
-                              onClick={() => handleNavigation(item)}
-                              className={cn(
-                                "w-full justify-start gap-3 px-2 py-2.5 rounded-lg transition-colors",
-                                isActive
-                                  ? "bg-purple-50 text-purple-700 border border-purple-200"
-                                  : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-                              )}
-                            >
-                              <div
-                                className={cn(
-                                  "p-1.5 rounded-md",
-                                  isActive
-                                    ? "bg-gradient-to-br from-purple-600 to-indigo-600 text-white"
-                                    : "bg-gray-100 text-gray-600"
-                                )}
-                              >
-                                {item.icon}
-                              </div>
-                              <span className="text-sm flex-1 text-left">
-                                {item.title}
-                              </span>
-                              {item.protected && (
-                                <Shield className="h-3.5 w-3.5 text-purple-500" />
-                              )}
-                            </Button>
-                          );
-                        })}
-                      </div>
-                    )}
+          <SheetContent side="left" className="w-80 p-0 bg-white z-[100]">
+            <div className="flex flex-col h-full">
+              {/* Header */}
+              <div className="p-6 border-b border-gray-200">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-lg">
+                    <Home className="h-6 w-6 text-purple-600" />
                   </div>
-                ))}
-              </nav>
-            </div>
-
-            {/* Footer */}
-            <div className="p-4 border-t border-gray-200">
-              <div className="text-center">
-                <p className="text-xs text-gray-500">CSV Now Admin v2.0</p>
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900">
+                      Admin Panel
+                    </h2>
+                    <p className="text-sm text-gray-600">Management Dashboard</p>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
 
-      {/* Desktop Sidebar */}
-      <div
-        className={cn(
-          "hidden md:flex flex-col transition-all duration-300 ease-in-out h-screen sticky top-0 bg-white border-r border-gray-200 shadow-sm",
-          isOpen ? "w-64" : "w-20",
-          isMounted ? "opacity-100" : "opacity-0"
-        )}
-      >
-        {/* Header */}
-        <div
-          className={cn(
-            "flex items-center border-b border-gray-200 transition-all duration-300 flex-shrink-0",
-            isOpen ? "justify-between p-6" : "justify-center p-4"
-          )}
-        >
-          {isOpen && (
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-lg">
-                <Home className="h-6 w-6 text-purple-600" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-gray-900">Admin Panel</h2>
-              </div>
-            </div>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className={cn(
-              "rounded-lg transition-all duration-200 hover:bg-gray-100 border border-gray-300",
-              isOpen ? "h-8 w-8" : "h-9 w-9"
-            )}
-            onClick={handleToggle}
-          >
-            {isOpen ? (
-              <ChevronLeft className="h-4 w-4 text-gray-600" />
-            ) : (
-              <ChevronRight className="h-4 w-4 text-gray-600" />
-            )}
-          </Button>
-        </div>
+              {/* Navigation */}
+              <div className="flex-1 overflow-y-auto py-4">
+                <nav className="px-4">
+                  {navGroups.map((group, groupIndex) => (
+                    <div key={groupIndex} className="mb-6">
+                      <Button
+                        variant="ghost"
+                        onClick={() => toggleDropdown(group.name)}
+                        className="w-full justify-between px-2 py-3 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-gray-100 rounded-lg text-gray-600">
+                            {group.icon}
+                          </div>
+                          <span className="text-sm font-medium text-gray-900">
+                            {group.name}
+                          </span>
+                        </div>
+                        <ChevronDown
+                          className={cn(
+                            "h-4 w-4 text-gray-400 transition-transform duration-200",
+                            openDropdowns[group.name] ? "rotate-180" : ""
+                          )}
+                        />
+                      </Button>
 
-        {/* Navigation */}
-        <div className="flex-1 overflow-y-auto py-4">
-          <TooltipProvider delayDuration={300}>
-            <nav className="flex flex-col px-3">
-              {navGroups.map((group, groupIndex) => {
-                // In collapsed state
-                if (!isOpen) {
-                  return (
-                    <div key={groupIndex} className="mb-1">
-                      {group.items.map((item, index) => {
-                        const isActive = location.pathname === item.path;
-                        return (
-                          <Tooltip key={index}>
-                            <TooltipTrigger asChild>
+                      {openDropdowns[group.name] && (
+                        <div className="ml-2 mt-2 space-y-1">
+                          {group.items.map((item, index) => {
+                            const isActive = location.pathname === item.path;
+                            return (
                               <Button
+                                key={index}
                                 variant="ghost"
-                                onClick={() => handleNavigation(item)}
+                                onClick={() => {
+                                  handleNavigation(item);
+                                  closeMobileSheet();
+                                }}
                                 className={cn(
-                                  "w-full p-2 justify-center rounded-lg mb-1 transition-colors",
+                                  "w-full justify-start gap-3 px-2 py-2.5 rounded-lg transition-colors",
                                   isActive
-                                    ? "bg-purple-50 text-purple-700"
-                                    : "text-gray-600 hover:text-purple-700 hover:bg-gray-50"
+                                    ? "bg-purple-50 text-purple-700 border border-purple-200"
+                                    : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                                 )}
                               >
                                 <div
@@ -482,105 +405,210 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                                 >
                                   {item.icon}
                                 </div>
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="right">
-                              <div className="flex items-center gap-2">
-                                <span>{item.title}</span>
+                                <span className="text-sm flex-1 text-left">
+                                  {item.title}
+                                </span>
                                 {item.protected && (
-                                  <Shield className="h-3 w-3 text-purple-500" />
+                                  <Shield className="h-3.5 w-3.5 text-purple-500" />
                                 )}
-                              </div>
-                            </TooltipContent>
-                          </Tooltip>
-                        );
-                      })}
-                    </div>
-                  );
-                }
-
-                // In expanded state
-                return (
-                  <div key={groupIndex} className="mb-4">
-                    <Button
-                      variant="ghost"
-                      onClick={() => toggleDropdown(group.name)}
-                      className={cn(
-                        "w-full justify-between px-3 py-3 rounded-lg hover:bg-gray-50 transition-colors",
-                        openDropdowns[group.name] ? "bg-gray-50" : ""
-                      )}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-gray-100 rounded-lg text-gray-600">
-                          {group.icon}
+                              </Button>
+                            );
+                          })}
                         </div>
-                        <span className="text-sm font-medium text-gray-900">
-                          {group.name}
-                        </span>
-                      </div>
-                      <ChevronDown
-                        className={cn(
-                          "h-4 w-4 text-gray-400 transition-transform duration-200",
-                          openDropdowns[group.name] ? "rotate-180" : ""
-                        )}
-                      />
-                    </Button>
+                      )}
+                    </div>
+                  ))}
+                </nav>
+              </div>
 
-                    {openDropdowns[group.name] && (
-                      <div className="ml-2 mt-2 space-y-1">
+              {/* Footer */}
+              <div className="p-4 border-t border-gray-200">
+                <div className="text-center">
+                  <p className="text-xs text-gray-500">CSV Now Admin</p>
+                </div>
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
+
+      {/* Desktop Sidebar - Visible on screens above 1024px (lg breakpoint) */}
+      <div className="hidden lg:block">
+        <div
+          className={cn(
+            "flex flex-col transition-all duration-300 ease-in-out h-screen sticky top-0 bg-white border-r border-gray-200 shadow-sm",
+            isOpen ? "w-64" : "w-20",
+            isMounted ? "opacity-100" : "opacity-0"
+          )}
+        >
+          {/* Header */}
+          <div
+            className={cn(
+              "flex items-center border-b border-gray-200 transition-all duration-300 flex-shrink-0",
+              isOpen ? "justify-between p-6" : "justify-center p-4"
+            )}
+          >
+            {isOpen && (
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-lg">
+                  <Home className="h-6 w-6 text-purple-600" />
+                </div>
+                <div>
+                  <h2 className="font-semibold text-gray-900">Admin Panel</h2>
+                </div>
+              </div>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                "rounded-lg transition-all duration-200 hover:bg-gray-100 border border-gray-300",
+                isOpen ? "h-8 w-8" : "h-9 w-9"
+              )}
+              onClick={handleToggle}
+            >
+              {isOpen ? (
+                <ChevronLeft className="h-4 w-4 text-gray-600" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-gray-600" />
+              )}
+            </Button>
+          </div>
+
+          {/* Navigation */}
+          <div className="flex-1 overflow-y-auto py-4">
+            <TooltipProvider delayDuration={300}>
+              <nav className="flex flex-col px-3">
+                {navGroups.map((group, groupIndex) => {
+                  // In collapsed state
+                  if (!isOpen) {
+                    return (
+                      <div key={groupIndex} className="mb-1">
                         {group.items.map((item, index) => {
                           const isActive = location.pathname === item.path;
                           return (
-                            <Button
-                              key={index}
-                              variant="ghost"
-                              onClick={() => handleNavigation(item)}
-                              className={cn(
-                                "w-full justify-start gap-3 px-3 py-2.5 rounded-lg transition-colors",
-                                isActive
-                                  ? "bg-purple-50 text-purple-700 border border-purple-200"
-                                  : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-                              )}
-                            >
-                              <div
-                                className={cn(
-                                  "p-1.5 rounded-md",
-                                  isActive
-                                    ? "bg-gradient-to-br from-purple-600 to-indigo-600 text-white"
-                                    : "bg-gray-100 text-gray-600"
-                                )}
-                              >
-                                {item.icon}
-                              </div>
-                              <span className="text-sm flex-1 text-left">
-                                {item.title}
-                              </span>
-                              {item.protected && (
-                                <Shield className="h-3.5 w-3.5 text-purple-500" />
-                              )}
-                            </Button>
+                            <Tooltip key={index}>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  onClick={() => handleNavigation(item)}
+                                  className={cn(
+                                    "w-full p-2 justify-center rounded-lg mb-1 transition-colors",
+                                    isActive
+                                      ? "bg-purple-50 text-purple-700"
+                                      : "text-gray-600 hover:text-purple-700 hover:bg-gray-50"
+                                  )}
+                                >
+                                  <div
+                                    className={cn(
+                                      "p-1.5 rounded-md",
+                                      isActive
+                                        ? "bg-gradient-to-br from-purple-600 to-indigo-600 text-white"
+                                        : "bg-gray-100 text-gray-600"
+                                    )}
+                                  >
+                                    {item.icon}
+                                  </div>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent side="right">
+                                <div className="flex items-center gap-2">
+                                  <span>{item.title}</span>
+                                  {item.protected && (
+                                    <Shield className="h-3 w-3 text-purple-500" />
+                                  )}
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
                           );
                         })}
                       </div>
-                    )}
-                  </div>
-                );
-              })}
-            </nav>
-          </TooltipProvider>
-        </div>
+                    );
+                  }
 
-        {/* Footer */}
-        {isOpen && (
-          <div className="p-4 border-t border-gray-200">
-            <div className="text-center">
-              <p className="text-xs text-gray-500 mb-1">CSV Now Admin Panel</p>
-              <p className="text-xs text-gray-400">
-                {new Date().getFullYear()}
-              </p>
-            </div>
+                  // In expanded state
+                  return (
+                    <div key={groupIndex} className="mb-4">
+                      <Button
+                        variant="ghost"
+                        onClick={() => toggleDropdown(group.name)}
+                        className={cn(
+                          "w-full justify-between px-3 py-3 rounded-lg hover:bg-gray-50 transition-colors",
+                          openDropdowns[group.name] ? "bg-gray-50" : ""
+                        )}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-gray-100 rounded-lg text-gray-600">
+                            {group.icon}
+                          </div>
+                          <span className="text-sm font-medium text-gray-900">
+                            {group.name}
+                          </span>
+                        </div>
+                        <ChevronDown
+                          className={cn(
+                            "h-4 w-4 text-gray-400 transition-transform duration-200",
+                            openDropdowns[group.name] ? "rotate-180" : ""
+                          )}
+                        />
+                      </Button>
+
+                      {openDropdowns[group.name] && (
+                        <div className="ml-2 mt-2 space-y-1">
+                          {group.items.map((item, index) => {
+                            const isActive = location.pathname === item.path;
+                            return (
+                              <Button
+                                key={index}
+                                variant="ghost"
+                                onClick={() => handleNavigation(item)}
+                                className={cn(
+                                  "w-full justify-start gap-3 px-3 py-2.5 rounded-lg transition-colors",
+                                  isActive
+                                    ? "bg-purple-50 text-purple-700 border border-purple-200"
+                                    : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                                )}
+                              >
+                                <div
+                                  className={cn(
+                                    "p-1.5 rounded-md",
+                                    isActive
+                                      ? "bg-gradient-to-br from-purple-600 to-indigo-600 text-white"
+                                      : "bg-gray-100 text-gray-600"
+                                  )}
+                                >
+                                  {item.icon}
+                                </div>
+                                <span className="text-sm flex-1 text-left">
+                                  {item.title}
+                                </span>
+                                {item.protected && (
+                                  <Shield className="h-3.5 w-3.5 text-purple-500" />
+                                )}
+                              </Button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </nav>
+            </TooltipProvider>
           </div>
-        )}
+
+          {/* Footer */}
+          {isOpen && (
+            <div className="p-4 border-t border-gray-200">
+              <div className="text-center">
+                <p className="text-xs text-gray-700">CSV Now Admin</p>
+                <h6 className="text-xs text-gray-500">
+                  {new Date().getFullYear()}
+                </h6>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </>
   );
