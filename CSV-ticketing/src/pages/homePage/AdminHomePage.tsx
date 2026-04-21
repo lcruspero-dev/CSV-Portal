@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Ticket,
   Clock,
@@ -34,6 +35,7 @@ interface Ticket {
 
 const AdminHome = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const navigate = useNavigate();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const userString = localStorage.getItem("user");
   const user = userString ? JSON.parse(userString) : null;
@@ -308,14 +310,7 @@ const AdminHome = () => {
                       <Activity className="h-3 w-3 mr-1" />
                       Live Data
                     </Badge>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-gray-600 hover:text-purple-600"
-                    >
-                      <Eye className="h-4 w-4 mr-1" />
-                      Details
-                    </Button>
+                   
                   </div>
                 </div>
               </CardHeader>
@@ -415,13 +410,7 @@ const AdminHome = () => {
                           immediate attention
                         </p>
                       </div>
-                      <Button
-                        className="w-full bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white"
-                        size="sm"
-                      >
-                        <AlertTriangle className="h-4 w-4 mr-2" />
-                        View Priority Tickets
-                      </Button>
+                    
                     </div>
                   ) : (
                     <div className="text-center py-8">
@@ -455,6 +444,8 @@ const AdminHome = () => {
                   variant="outline"
                   size="sm"
                   className="border-gray-300"
+                  onClick={() => navigate('/all-tickets')}
+
                 >
                   <Ticket className="h-4 w-4 mr-2" />
                   View All Tickets

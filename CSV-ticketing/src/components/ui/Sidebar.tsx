@@ -37,7 +37,6 @@ import {
   CreditCard,
   Database,
   Lock,
-  Bell,
   FileBarChart,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
@@ -184,11 +183,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
           title: "Manage Survey",
           path: "/createsurvey",
           icon: <Settings className="h-5 w-5" />,
-        },
-        {
-          title: "Notifications",
-          path: "/notifications",
-          icon: <Bell className="h-5 w-5" />,
         },
       ],
     },
@@ -434,7 +428,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
               </div>
               <div>
                 <h2 className="font-semibold text-gray-900">Admin Panel</h2>
-                <p className="text-xs text-gray-600">Management Console</p>
               </div>
             </div>
           )}
