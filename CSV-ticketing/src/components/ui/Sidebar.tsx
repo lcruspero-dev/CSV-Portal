@@ -260,6 +260,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
 
   return (
     <>
+    
       {/* Password Dialog */}
       <Dialog
         open={isPasswordDialogOpen}
@@ -333,7 +334,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
             </Button>
           </SheetTrigger>
 
-          <SheetContent side="left" className="w-80 p-0 bg-white z-[100]">
+          <SheetContent side="left" className="w-80 p-0 bg-white z-[100] fixed">
             <div className="flex flex-col h-full">
               {/* Header */}
               <div className="p-6 border-b border-gray-200">
@@ -432,11 +433,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         </Sheet>
       </div>
 
-      {/* Desktop Sidebar - Visible on screens above 1024px (lg breakpoint) */}
-      <div className="hidden lg:block">
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:block fixed inset-y-0 left-0 z-40">
         <div
           className={cn(
-            "flex flex-col transition-all duration-300 ease-in-out h-screen sticky top-0 bg-white border-r border-gray-200 shadow-sm",
+            "flex flex-col transition-all duration-300 ease-in-out h-full bg-white border-r border-gray-200 shadow-sm",
             isOpen ? "w-64" : "w-20",
             isMounted ? "opacity-100" : "opacity-0"
           )}
@@ -597,17 +598,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
             </TooltipProvider>
           </div>
 
-          {/* Footer */}
-          {isOpen && (
-            <div className="p-4 border-t border-gray-200">
-              <div className="text-center">
-                <p className="text-xs text-gray-700">CSV Now Admin</p>
-                <h6 className="text-xs text-gray-500">
-                  {new Date().getFullYear()}
-                </h6>
-              </div>
-            </div>
-          )}
+    
         </div>
       </div>
     </>

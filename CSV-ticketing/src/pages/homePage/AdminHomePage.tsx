@@ -13,7 +13,6 @@ import {
   RefreshCw,
   Bell,
   Package,
-  Menu,
   Users,
   CheckCircle,
   TrendingUp,
@@ -22,6 +21,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import TitleCase from "@/utils/titleCase";
+import { cn } from "@/lib/utils";
 
 interface Ticket {
   _id: string;
@@ -58,9 +58,8 @@ const AdminHome = () => {
       setIsMobile(width < 640);
       setIsTablet(width >= 640 && width < 1024);
 
-      if (width < 640) {
-        setSidebarOpen(false);
-      } else if (width < 1024) {
+      // Auto-collapse sidebar on mobile/tablet
+      if (width < 1024) {
         setSidebarOpen(false);
       } else {
         setSidebarOpen(true);
@@ -160,38 +159,31 @@ const AdminHome = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Mobile Menu Button */}
-      {isMobile && !sidebarOpen && (
-        <button
-          onClick={toggleSidebar}
-          className="fixed top-4 left-4 z-50 w-12 h-12 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full flex items-center justify-center border-2 border-white shadow-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-300"
-        >
-          <Menu className="h-5 w-5 text-white" />
-        </button>
-      )}
+    <div className="min-h-screen bg-gray-50">
+      {/* Sidebar - Fixed position */}
+      <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
 
-      {/* Sidebar */}
-      <div
-        className={`${
-          isMobile ? "fixed inset-y-0 left-0 z-50" : "relative flex-shrink-0"
-        } transition-all duration-300`}
-      >
-        <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
-      </div>
-
-      {/* Mobile overlay */}
+      {/* Mobile overlay when sidebar is open */}
       {(isMobile || isTablet) && sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/70 z-40 backdrop-blur-sm"
+          className="fixed inset-0 bg-black/50 z-30 backdrop-blur-sm lg:hidden"
           onClick={toggleSidebar}
         />
       )}
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col min-h-screen overflow-x-hidden">
+      {/* Main Content - Pushed right on desktop, full width on mobile */}
+      <div
+        className={cn(
+          "transition-all duration-300 ease-in-out",
+          // Desktop: Add margin to accommodate fixed sidebar
+          "lg:ml-0",
+          sidebarOpen ? "lg:ml-64" : "lg:ml-20",
+          // Mobile/Tablet: No margin needed (sidebar is overlay)
+          "ml-0"
+        )}
+      >
         {/* Main content area */}
-        <main className="flex-1 mx-auto w-full px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
+        <main className="w-full px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -207,7 +199,6 @@ const AdminHome = () => {
                   Welcome back, {TitleCase(user?.name)}. Here's your overview for today.
                 </p>
               </div>
-              
             </div>
           </motion.div>
 
@@ -224,9 +215,6 @@ const AdminHome = () => {
                 value: stats.total,
                 description: "All tickets in system",
                 icon: <Package className="h-5 w-5 sm:h-6 sm:w-6" />,
-                color: "border-purple-200",
-                bgColor: "bg-gradient-to-br from-purple-50 to-indigo-50",
-                iconBg: "bg-gradient-to-br from-purple-600 to-indigo-600",
                 trend: "+12%",
               },
               {
@@ -234,9 +222,6 @@ const AdminHome = () => {
                 value: stats.open,
                 description: "Requiring attention",
                 icon: <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6" />,
-                color: "border-blue-200",
-                bgColor: "bg-gradient-to-br from-blue-50 to-cyan-50",
-                iconBg: "bg-gradient-to-br from-blue-600 to-cyan-600",
                 trend: "+5%",
               },
               {
@@ -244,9 +229,6 @@ const AdminHome = () => {
                 value: stats.inProgress,
                 description: "Being worked on",
                 icon: <RefreshCw className="h-5 w-5 sm:h-6 sm:w-6" />,
-                color: "border-amber-200",
-                bgColor: "bg-gradient-to-br from-amber-50 to-yellow-50",
-                iconBg: "bg-gradient-to-br from-amber-600 to-yellow-600",
                 trend: "+8%",
               },
               {
@@ -254,9 +236,6 @@ const AdminHome = () => {
                 value: stats.highPriority,
                 description: "Critical issues",
                 icon: <Bell className="h-5 w-5 sm:h-6 sm:w-6" />,
-                color: "border-rose-200",
-                bgColor: "bg-gradient-to-br from-rose-50 to-pink-50",
-                iconBg: "bg-gradient-to-br from-rose-600 to-pink-600",
                 trend: "+3%",
               },
             ].map((stat, index) => (
@@ -310,7 +289,6 @@ const AdminHome = () => {
                       <Activity className="h-3 w-3 mr-1" />
                       Live Data
                     </Badge>
-                   
                   </div>
                 </div>
               </CardHeader>
@@ -407,10 +385,9 @@ const AdminHome = () => {
                         </div>
                         <p className="text-sm text-rose-600">
                           {stats.highPriority} High priority tickets need
-                          Immediate attention
+                          immediate attention
                         </p>
                       </div>
-                    
                     </div>
                   ) : (
                     <div className="text-center py-8">
@@ -445,7 +422,6 @@ const AdminHome = () => {
                   size="sm"
                   className="border-gray-300"
                   onClick={() => navigate('/all-tickets')}
-
                 >
                   <Ticket className="h-4 w-4 mr-2" />
                   View All Tickets
@@ -497,6 +473,7 @@ const AdminHome = () => {
                         variant="ghost"
                         size="sm"
                         className="text-gray-600 hover:text-purple-600"
+                        onClick={() => navigate(`/ticket/${ticket._id}`)}
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
