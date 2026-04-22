@@ -1096,6 +1096,8 @@ export const AttendanceTracker: React.FC = () => {
 
   return (
     <div className="bg-gradient-to-b from-gray-50 to-white py-6 px-4 sm:px-6 lg:px-8">
+            <BackButton />
+
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Alert Dialog */}
         {alert.show && (
@@ -1123,6 +1125,7 @@ export const AttendanceTracker: React.FC = () => {
         )}
 
         {/* Header Section */}
+
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
@@ -1134,7 +1137,6 @@ export const AttendanceTracker: React.FC = () => {
           </div>
           <div className="flex items-center gap-3">
             <ViewScheduleButton />
-            <BackButton />
           </div>
         </div>
 

@@ -155,11 +155,16 @@ function CreateAssign() {
 
   return (
     <>
+    <div className="py-6 px-4 sm:px-6 lg:px-8">
+            <BackButton />
+
+    </div>
+
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
         {/* Header Section */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
           <div className="flex items-center space-x-4 mb-4 lg:mb-0">
-            <BackButton />
             <div className="flex items-center space-x-3">
               <div className="p-2 rounded-lg bg-gradient-to-r from-[#1638df] to-[#192fb4]">
                 <Users className="w-6 h-6 text-white" />

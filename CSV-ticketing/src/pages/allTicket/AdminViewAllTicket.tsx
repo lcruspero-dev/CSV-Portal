@@ -472,12 +472,14 @@ const ViewAllRaisedTickets: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-6">
+    <div className="min-h-screen bg-gray-50 py-6 px-4 sm:px-6 lg:px-8">
+            <BackButton />
+
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+        
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8">
           <div className="flex items-center gap-4">
-            <BackButton />
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-3">
                 <div className="p-2 bg-blue-600 rounded-lg">
