@@ -1,6 +1,5 @@
 const Ad = require("../models/adModel");
 
-// Get the current ad
 const getActiveAd = async (req, res) => {
   try {
     const ad = await Ad.findOne();

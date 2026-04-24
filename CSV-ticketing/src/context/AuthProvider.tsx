@@ -64,7 +64,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("user");
     localStorage.removeItem("viewAsUser");
-    window.location.href = "/sign-in"; // Redirect to login
+    window.location.href = "/sign-in"; 
   };
 
   return (

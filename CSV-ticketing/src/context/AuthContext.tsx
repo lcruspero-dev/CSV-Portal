@@ -87,7 +87,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       user: null,
       isLoading: false,
     });
-    // window.location.href = "/sign-in";
   };
 
   return (
