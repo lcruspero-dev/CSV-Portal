@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 // Dates
 import {
@@ -10,38 +10,38 @@ import {
   format,
   isSameDay,
   isToday,
+  isWeekend,
+  parseISO,
   startOfMonth,
   startOfWeek,
-  parseISO,
-  isWeekend,
 } from "date-fns";
 
 // Icons
 import {
+  AlertCircle,
+  Briefcase,
+  Calendar,
   CalendarIcon,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  Users,
-  Filter,
-  Calendar,
   Clock,
-  AlertCircle,
-  TrendingUp,
-  Eye,
-  RefreshCw,
-  CheckCircle2,
-  XCircle,
   Clock3,
   Coffee,
-  Sun,
-  Moon,
-  Star,
+  Eye,
+  Filter,
   Gift,
-  Home,
-  Briefcase,
-  Plane,
   Heart,
+  Home,
   Loader2,
+  Moon,
+  Plane,
+  RefreshCw,
+  Star,
+  Sun,
+  TrendingUp,
+  Users,
+  XCircle,
 } from "lucide-react";
 
 // API Endpoints
@@ -71,6 +71,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
@@ -80,6 +81,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Tooltip,
@@ -87,32 +89,30 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 
 // Kit Components
 import { AbsenteeismAnalytics } from "@/components/kit/AbsenteeismAnalytics";
 import AddEmployee from "@/components/kit/AddEmployee";
+import BackButton from "@/components/kit/BackButton";
 import { IncompleteBreaksDialog } from "@/components/kit/IncompleteBreaksDialog";
 import { EmployeesOnLunchDialog } from "@/components/kit/employeeLunchDialog";
-import BackButton from "@/components/kit/BackButton";
 
 // Types
 import type {
-  Employee,
-  ShiftTypeValue,
-  ShiftType,
-  AttendanceStatus,
-  ScheduleEntry,
   AttendanceEntry,
+  AttendanceStatus,
+  Employee,
+  ScheduleEntry,
+  ShiftType,
+  ShiftTypeValue,
   ViewMode,
 } from "@/types/schedule";
 
 // Helpers
 import {
+  displayShiftInfo,
   getShiftColor,
   hasShiftTime,
-  displayShiftInfo,
 } from "@/utils/scheduleHelper";
 
 const ScheduleAndAttendance: React.FC = () => {
@@ -1639,7 +1639,7 @@ const ScheduleAndAttendance: React.FC = () => {
 
                       <div className="grid grid-cols-3 gap-4">
                         <div>
-                          <Label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
+                          <Label className="text-sm font-medium text-gray-700 mb-2 block flex items-center gap-1">
                             <Coffee className="h-3 w-3" />
                             1st Break
                           </Label>
