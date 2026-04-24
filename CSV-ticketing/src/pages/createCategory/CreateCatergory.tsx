@@ -118,7 +118,7 @@ function CreateCategory() {
         category: editedCategoryName,
         role: editedRole,
       };
-      await Category.updateCategory(editingCategory._id, body);
+      await Category.updateCategory(editingCategory._id, body)
       await getCategory(); // Refresh the list
       setIsEditDialogOpen(false);
       toast({
