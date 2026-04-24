@@ -266,9 +266,8 @@ const getAllActiveSurveys = asyncHandler(async (req, res) => {
     });
   }
 
-  // Map surveys to hide the "responses" field
   const sanitizedSurveys = filteredSurveys.map((survey) => {
-    const { responses, ...rest } = survey.toObject();
+    const {  ...rest } = survey.toObject();
     return rest;
   });
 

@@ -8,4 +8,3 @@ router.route("/").get(protect, getNotes).post(protect, addNote);
 
 module.exports = router;
 
-// /api/tickets/:ticketId/notes

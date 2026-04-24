@@ -1,4 +1,3 @@
-// jobs/leaveAccrualJob.js
 const cron = require("node-cron");
 const { zonedTimeToUtc } = require("date-fns-tz");
 const mongoose = require("mongoose");

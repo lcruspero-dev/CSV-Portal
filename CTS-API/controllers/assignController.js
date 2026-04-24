@@ -1,4 +1,3 @@
-// controllers/assignController.js
 const Assign = require("../models/assignModel");
 
 // Create new assignment
