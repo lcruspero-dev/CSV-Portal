@@ -29,7 +29,7 @@ interface Employee {
 
 interface TeamLeader {
   _id: string;
-  teamLeader: string; // Use the `teamLeader` field for display and value
+  teamLeader: string; 
 }
 
 interface AddEmployeeProps {
@@ -50,11 +50,11 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({
   const [teamLeaders, setTeamLeaders] = useState<TeamLeader[]>([]);
   const [selectedTeamLeader, setSelectedTeamLeader] = useState<string>("");
   const [selectedPosition, setSelectedPosition] = useState<string>("");
-  const [showConfirmation, setShowConfirmation] = useState(false); // State for confirmation dialog
+  const [showConfirmation, setShowConfirmation] = useState(false); 
   const [existingEntry, setExistingEntry] = useState<{
     employeeName: string;
     teamLeader: string;
-  } | null>(null); // Store existing entry details
+  } | null>(null); 
 
   useEffect(() => {
     const searchEmployees = async () => {
@@ -86,7 +86,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({
     const fetchTeamLeaders = async () => {
       try {
         const response = await ScheduleAndAttendanceAPI.getTeamLeader();
-        setTeamLeaders(response.data); // Set the team leaders from the API response
+        setTeamLeaders(response.data);
       } catch (error) {
         console.error("Error fetching team leaders", error);
         toast({
@@ -105,23 +105,20 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({
 
     setIsSubmitting(true);
     try {
-      // Check if the employee is already a member of the team leader
       const existingEntryResponse =
         await ScheduleAndAttendanceAPI.checkExistingEntry({
           employeeId: selectedEmployee._id,
         });
 
       if (existingEntryResponse.data.exists) {
-        // Show confirmation dialog
         setExistingEntry({
           employeeName: existingEntryResponse.data.employeeName,
           teamLeader: existingEntryResponse.data.teamLeader,
         });
         setShowConfirmation(true);
-        return; // Stop further execution until user confirms
+        return; 
       }
 
-      // If no existing entry or user confirms, proceed to create/update
       await proceedWithAddEmployee();
     } catch (error) {
       console.error("Error creating schedule entry", error);
@@ -137,7 +134,6 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({
 
   const proceedWithAddEmployee = async () => {
     try {
-      // Send the selected employee data to the schedule entry API
       await ScheduleAndAttendanceAPI.createScheduleEntry({
         employeeId: selectedEmployee?._id,
         employeeName: selectedEmployee?.name,
@@ -145,12 +141,10 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({
         position: selectedPosition,
       });
 
-      // Call the onAdd callback to update the parent component
       if (selectedEmployee) {
         // onAdd(selectedEmployee);
       }
 
-      // Show success message
       toast({
         title: "Success",
         description: `${selectedEmployee?.name} has been added.`,
@@ -159,7 +153,6 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({
       // Reset and close the dialog
       resetForm();
 
-      // Call the onEmployeeAdded callback after successful addition
       if (onEmployeeAdded) {
         await onEmployeeAdded(); // Make sure to await this if it's async
       }
@@ -299,6 +292,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({
                           Team Manager
                         </SelectItem>
                         <SelectItem value="Team Leader">Team Leader</SelectItem>
+                        <SelectItem value="Record Specialist">Record Specialist</SelectItem>
                         <SelectItem value="Executive Assistant">
                           Executive Assistant
                         </SelectItem>
@@ -311,9 +305,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({
                         <SelectItem value="Site Director">
                           Site Director
                         </SelectItem>
-                        <SelectItem value="Administrative Assistant">
-                          Administrative Assistant
-                        </SelectItem>
+                       
                       </SelectContent>
                     </Select>
                   </div>
@@ -348,7 +340,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({
           <DialogFooter className="text-xs">
             <Button
               variant="outline"
-              onClick={resetForm} // Clear all states on cancel
+              onClick={resetForm} 
               disabled={isSubmitting}
             >
               Cancel
