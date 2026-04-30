@@ -60,7 +60,7 @@ interface EmployeeLeaveCredit {
   __v: number;
   isActive?: boolean;
   startingLeaveCredit?: number;
-  employmentStatus?: "Probationary" | "Regular"; // Added employment status
+  employmentStatus?: "Probationary" | "Regular"; 
 }
 
 const LoadingState = () => {

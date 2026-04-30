@@ -280,7 +280,7 @@ function ViewPolicies() {
           {filteredPolicies.length === 0 && (
             <div className="text-center py-14 text-gray-500">
               {showPendingOnly
-                ? "No pending policies 🎉"
+                ? "No pending policies "
                 : "No policies available"}
             </div>
           )}

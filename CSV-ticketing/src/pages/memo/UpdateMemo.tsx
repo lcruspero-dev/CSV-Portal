@@ -44,7 +44,6 @@ const UpdateMemo: React.FC<UpdateMemoProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
-  // ✅ preload memo data
   useEffect(() => {
     if (memo) {
       setSubject(memo.subject || "");
@@ -75,7 +74,6 @@ const UpdateMemo: React.FC<UpdateMemoProps> = ({
 
       setIsDialogOpen(false);
       
-      // Call the success callback if provided
       if (onUpdateSuccess) {
         onUpdateSuccess();
       }
