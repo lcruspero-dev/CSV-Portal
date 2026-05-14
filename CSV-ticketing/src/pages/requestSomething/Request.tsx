@@ -1112,15 +1112,6 @@ const Request = () => {
           </form>
         </div>
 
-        {/* Help Text */}
-        <div className="mt-6 text-center p-4 bg-white/80 backdrop-blur-sm rounded-xl border border-gray-200">
-          <p className="text-sm text-gray-600">
-            Need assistance? Contact HR at{" "}
-            <a href="tel:+1234567890" className="text-blue-600 hover:text-blue-700 font-medium">
-              (123) 456-7890
-            </a>
-          </p>
-        </div>
       </div>
 
       {/* Leave Type Selection Dialog */}
