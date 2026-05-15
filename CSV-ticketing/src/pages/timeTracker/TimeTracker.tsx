@@ -4,8 +4,6 @@
 import { ScheduleAndAttendanceAPI, timer } from "@/API/endpoint";
 import BackButton from "@/components/kit/BackButton";
 import { ViewScheduleButton } from "@/components/kit/ViewScheduleButton";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -21,14 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
 import {
   Filter,
@@ -87,29 +77,25 @@ interface AlertState {
 
 type CutoffPeriod = "1-15" | "16-31";
 
-// Loading spinner
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center">
-    <div className="h-6 w-6 border-2 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+    <div className="h-5 w-5 border-2 border-indigo-200 border-t-indigo-500 rounded-full animate-spin" />
   </div>
 );
 
 export const AttendanceTracker: React.FC = () => {
   const [isTimeIn, setIsTimeIn] = useState(false);
   const [attendanceEntries, setAttendanceEntries] = useState<AttendanceEntry[]>(
-    []
+    [],
   );
   const [filteredEntries, setFilteredEntries] = useState<AttendanceEntry[]>([]);
   const [currentEntry, setCurrentEntry] = useState<Partial<AttendanceEntry>>(
-    {}
+    {},
   );
   const [dialogOpen, setDialogOpen] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [currentServerTime, setCurrentServerTime] =
-    useState<CurrentTimeResponse>({
-      date: "",
-      time: "",
-    });
+    useState<CurrentTimeResponse>({ date: "", time: "" });
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
   const [isLoadingSecondBreakStart, setIsLoadingSecondBreakStart] =
     useState(false);
@@ -120,31 +106,25 @@ export const AttendanceTracker: React.FC = () => {
     message: "",
   });
 
-  // Updated state initialization for automatic date/cutoff selection
   const getCurrentCutoff = (): CutoffPeriod => {
     const today = new Date();
     const day = today.getDate();
     return day <= 15 ? "1-15" : "16-31";
   };
 
-  const [selectedCutoff, setSelectedCutoff] = useState<CutoffPeriod>(
-    getCurrentCutoff()
-  );
+  const [selectedCutoff, setSelectedCutoff] =
+    useState<CutoffPeriod>(getCurrentCutoff());
   const [selectedMonth, setSelectedMonth] = useState<number>(
-    new Date().getMonth()
+    new Date().getMonth(),
   );
   const [selectedYear, setSelectedYear] = useState<number>(
-    new Date().getFullYear()
+    new Date().getFullYear(),
   );
-
-  // Alert tracking to prevent duplicate alerts
   const [alertShown, setAlertShown] = useState({
     break1: false,
     break2: false,
     lunch: false,
   });
-
-  // Loading states
   const [isLoadingInitial, setIsLoadingInitial] = useState(true);
   const [isLoadingTimeIn, setIsLoadingTimeIn] = useState(false);
   const [isLoadingTimeOut, setIsLoadingTimeOut] = useState(false);
@@ -156,117 +136,79 @@ export const AttendanceTracker: React.FC = () => {
 
   const { toast } = useToast();
 
-  // Toast function
   const showToast = (
     title: string,
     description: string,
-    variant: "default" | "destructive" = "default"
+    variant: "default" | "destructive" = "default",
   ) => {
-    toast({
-      title,
-      description,
-      variant,
-    });
+    toast({ title, description, variant });
   };
 
-  // Function to set current date filters based on server time
   const setCurrentDateFilters = (serverDate?: string) => {
     const dateToUse = serverDate ? new Date(serverDate) : new Date();
     const day = dateToUse.getDate();
     const month = dateToUse.getMonth();
     const year = dateToUse.getFullYear();
-
-    // Set cutoff based on current day
     const cutoff: CutoffPeriod = day <= 15 ? "1-15" : "16-31";
     setSelectedCutoff(cutoff);
     setSelectedMonth(month);
     setSelectedYear(year);
   };
 
-  // Time formatting functions
   const formatTimeTo12Hour = (timeString: string): string => {
     if (!timeString) return "";
-
     try {
       const upperTime = timeString.toUpperCase();
-      if (upperTime.includes("AM") || upperTime.includes("PM")) {
+      if (upperTime.includes("AM") || upperTime.includes("PM"))
         return timeString;
-      }
-
       const timeParts = timeString.split(":");
       let hourNum = parseInt(timeParts[0], 10);
       const minuteNum = timeParts[1] ? parseInt(timeParts[1], 10) : 0;
-
       if (isNaN(hourNum) || isNaN(minuteNum)) return timeString;
-
       const period = hourNum >= 12 ? "PM" : "AM";
       hourNum = hourNum % 12 || 12;
-
       return `${hourNum}:${minuteNum.toString().padStart(2, "0")} ${period}`;
     } catch (error) {
-      console.error("Error formatting time:", error, "Input:", timeString);
       return timeString;
     }
   };
 
-  const formatTime = (timeString: string): string => {
-    return formatTimeTo12Hour(timeString);
-  };
+  const formatTime = (timeString: string): string =>
+    formatTimeTo12Hour(timeString);
 
-  // Format hours to "X hours, Y minutes" format
   const formatHoursToHoursMinutes = (hoursString: string): string => {
-    if (!hoursString || hoursString === "0" || hoursString === "0.00") {
+    if (!hoursString || hoursString === "0" || hoursString === "0.00")
       return "-";
-    }
-
     const hours = parseFloat(hoursString);
-    if (isNaN(hours) || hours === 0) {
-      return "-";
-    }
-
+    if (isNaN(hours) || hours === 0) return "-";
     const totalMinutes = Math.round(hours * 60);
     const hoursPart = Math.floor(totalMinutes / 60);
     const minutesPart = totalMinutes % 60;
-
-    if (hoursPart === 0) {
-      return `${minutesPart} minutes`;
-    } else if (minutesPart === 0) {
-      return `${hoursPart} hours`;
-    } else {
-      return `${hoursPart} hours, ${minutesPart} minutes`;
-    }
-    
+    if (hoursPart === 0) return `${minutesPart}m`;
+    if (minutesPart === 0) return `${hoursPart}h`;
+    return `${hoursPart}h ${minutesPart}m`;
   };
 
-  // Format minutes to "X hours, Y minutes" format
   const formatMinutesToHoursMinutes = (minutes: number): string => {
-    if (!minutes || minutes === 0) {
-      return "-";
-    }
-
+    if (!minutes || minutes === 0) return "-";
     const hoursPart = Math.floor(minutes / 60);
     const minutesPart = minutes % 60;
-
-    if (hoursPart === 0) {
-      return `${minutesPart} minutes`;
-    } else if (minutesPart === 0) {
-      return `${hoursPart} hours`;
-    } else {
-      return `${hoursPart} hours, ${minutesPart} minutes`;
-    }
+    if (hoursPart === 0) return `${minutesPart}m`;
+    if (minutesPart === 0) return `${hoursPart}h`;
+    return `${hoursPart}h ${minutesPart}m`;
   };
 
-  // Calculate overbreak time
   const calculateOverbreak = (
     breakTime: number,
-    allowedBreakTime: number
+    allowedBreakTime: number,
   ): number => {
     if (!breakTime || breakTime <= allowedBreakTime) return 0;
     return Math.round((breakTime - allowedBreakTime) * 60);
   };
 
-  // Alert timeout reference
- const alertTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const alertTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const showAlert = (type: "break1" | "break2" | "lunch") => {
     const messages = {
@@ -274,21 +216,9 @@ export const AttendanceTracker: React.FC = () => {
       break2: "Break 2 will end in 1 minute! Time to return to work.",
       lunch: "Lunch break will end in 1 minute! Time to return to work.",
     };
-
-    setAlert({
-      show: true,
-      type,
-      message: messages[type],
-    });
-
-    setAlertShown((prev) => ({
-      ...prev,
-      [type]: true,
-    }));
-
-    if (alertTimeoutRef.current) {
-      clearTimeout(alertTimeoutRef.current);
-    }
+    setAlert({ show: true, type, message: messages[type] });
+    setAlertShown((prev) => ({ ...prev, [type]: true }));
+    if (alertTimeoutRef.current) clearTimeout(alertTimeoutRef.current);
     alertTimeoutRef.current = setTimeout(() => {
       setAlert({ show: false, type: null, message: "" });
     }, 10000);
@@ -302,41 +232,33 @@ export const AttendanceTracker: React.FC = () => {
     }
   };
 
-  // Reset alert tracking when breaks/lunch end
   useEffect(() => {
-    if (currentEntry.breakEnd) {
+    if (currentEntry.breakEnd)
       setAlertShown((prev) => ({ ...prev, break1: false }));
-    }
-    if (currentEntry.secondBreakEnd) {
+    if (currentEntry.secondBreakEnd)
       setAlertShown((prev) => ({ ...prev, break2: false }));
-    }
-    if (currentEntry.lunchEnd) {
+    if (currentEntry.lunchEnd)
       setAlertShown((prev) => ({ ...prev, lunch: false }));
-    }
   }, [
     currentEntry.breakEnd,
     currentEntry.secondBreakEnd,
     currentEntry.lunchEnd,
   ]);
 
-  // Format current date for display
   const formatCurrentDate = (dateString: string): string => {
     const date = new Date(dateString);
-    const options: Intl.DateTimeFormatOptions = {
+    return date.toLocaleDateString("en-US", {
       weekday: "long",
       year: "numeric",
       month: "long",
       day: "numeric",
-    };
-    return date.toLocaleDateString("en-US", options);
+    });
   };
 
-  // Get current formatted date from server time
   const currentFormattedDate = currentServerTime.date
     ? formatCurrentDate(currentServerTime.date)
     : "";
 
-  // Generate months for dropdown
   const months = [
     { value: 0, label: "January" },
     { value: 1, label: "February" },
@@ -352,50 +274,36 @@ export const AttendanceTracker: React.FC = () => {
     { value: 11, label: "December" },
   ];
 
-  // Generate years for dropdown (current year and previous 5 years)
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 3 }, (_, i) => currentYear - i);
 
-  // Filter entries based on selected cutoff period, month, and year
   const filterEntriesByCutoff = (
     entries: AttendanceEntry[],
     cutoff: CutoffPeriod,
     month: number,
-    year: number
+    year: number,
   ): AttendanceEntry[] => {
     return entries.filter((entry) => {
       const entryDate = new Date(entry.date);
-      const entryMonth = entryDate.getMonth();
-      const entryYear = entryDate.getFullYear();
       const day = entryDate.getDate();
-
-      if (entryMonth !== month || entryYear !== year) {
+      if (entryDate.getMonth() !== month || entryDate.getFullYear() !== year)
         return false;
-      }
-
-      if (cutoff === "1-15") {
-        return day >= 1 && day <= 15;
-      } else {
-        return day >= 16;
-      }
+      return cutoff === "1-15" ? day >= 1 && day <= 15 : day >= 16;
     });
   };
 
-  // Apply filter when cutoff selection, month, year, or attendance entries change
   useEffect(() => {
     const filtered = filterEntriesByCutoff(
       attendanceEntries,
       selectedCutoff,
       selectedMonth,
-      selectedYear
+      selectedYear,
     );
     setFilteredEntries(filtered);
   }, [attendanceEntries, selectedCutoff, selectedMonth, selectedYear]);
 
-  // Check for break/lunch time alerts (1 minute before end)
   useEffect(() => {
     if (!isTimeIn) return;
-
     const checkForAlerts = () => {
       if (
         currentEntry.breakStart &&
@@ -423,16 +331,12 @@ export const AttendanceTracker: React.FC = () => {
         showAlert("lunch");
       }
     };
-
     checkForAlerts();
   }, [elapsedTime, currentEntry, isTimeIn, alertShown]);
 
-  // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
-      if (alertTimeoutRef.current) {
-        clearTimeout(alertTimeoutRef.current);
-      }
+      if (alertTimeoutRef.current) clearTimeout(alertTimeoutRef.current);
     };
   }, []);
 
@@ -451,7 +355,7 @@ export const AttendanceTracker: React.FC = () => {
             calculateOverbreak(entry.totalSecondBreakTime || 0, 0.25),
           overlunch:
             entry.overLunch || calculateOverbreak(entry.totalLunchTime || 0, 1),
-        })
+        }),
       );
       setAttendanceEntries(entriesWithOverbreak);
     } catch (error) {
@@ -459,14 +363,13 @@ export const AttendanceTracker: React.FC = () => {
       if (typeof error === "object" && error !== null && "message" in error) {
         if (
           (error as { message: string }).message === "Employee time not found"
-        ) {
+        )
           return;
-        }
       }
       showToast(
         "Error",
         "Failed to load attendance history. Please try refreshing.",
-        "destructive"
+        "destructive",
       );
     } finally {
       setIsLoadingHistory(false);
@@ -479,12 +382,8 @@ export const AttendanceTracker: React.FC = () => {
       setCurrentServerTime(response.data);
       return response.data;
     } catch (error) {
-      console.error("Error getting current time from API:", error);
       const now = new Date();
-      return {
-        date: now.toLocaleDateString(),
-        time: now.toLocaleTimeString(),
-      };
+      return { date: now.toLocaleDateString(), time: now.toLocaleTimeString() };
     }
   };
 
@@ -493,20 +392,13 @@ export const AttendanceTracker: React.FC = () => {
       setIsLoadingInitial(true);
       try {
         const currentTimeData = await getCurrentTimeFromAPI();
-
-        // Set current date filters based on server time
         setCurrentDateFilters(currentTimeData.date);
-
         const employeeId = JSON.parse(localStorage.getItem("user")!)._id;
         const shift = await fetchShiftSchedule(
           currentTimeData.date,
-          employeeId
+          employeeId,
         );
-
-        if (shift) {
-          setCurrentEntry((prev) => ({ ...prev, shift }));
-        }
-
+        if (shift) setCurrentEntry((prev) => ({ ...prev, shift }));
         await Promise.all([getAttendance(), getCurrentTime()]);
       } catch (error) {
         console.error("Error initializing data:", error);
@@ -514,23 +406,17 @@ export const AttendanceTracker: React.FC = () => {
         setIsLoadingInitial(false);
       }
     };
-
     initializeData();
   }, []);
 
   useEffect(() => {
-    if (!isTimeIn || !currentEntry.date) {
-      return;
-    }
-
+    if (!isTimeIn || !currentEntry.date) return;
     let intervalId: ReturnType<typeof setInterval>;
-
     const serverTime = new Date(
-      `${currentServerTime.date} ${currentServerTime.time}`
+      `${currentServerTime.date} ${currentServerTime.time}`,
     ).getTime();
     const localTime = Date.now();
     const timeOffset = serverTime - localTime;
-
     const isOnBreak = currentEntry.breakStart && !currentEntry.breakEnd;
     const isOnSecondBreak =
       currentEntry.secondBreakStart && !currentEntry.secondBreakEnd;
@@ -539,88 +425,58 @@ export const AttendanceTracker: React.FC = () => {
     intervalId = setInterval(() => {
       const currentTime = Date.now() + timeOffset;
       let diffMs = 0;
-
       if (isOnBreak) {
         const breakStartTime = new Date(
-          `${currentEntry.dateBreakStart || currentEntry.date} ${
-            currentEntry.breakStart
-          }`
+          `${currentEntry.dateBreakStart || currentEntry.date} ${currentEntry.breakStart}`,
         ).getTime();
         diffMs = currentTime - breakStartTime;
       } else if (isOnSecondBreak) {
         const secondBreakStartTime = new Date(
-          `${currentEntry.dateSecondBreakStart || currentEntry.date} ${
-            currentEntry.secondBreakStart
-          }`
+          `${currentEntry.dateSecondBreakStart || currentEntry.date} ${currentEntry.secondBreakStart}`,
         ).getTime();
         diffMs = currentTime - secondBreakStartTime;
       } else if (isOnLunch) {
         const lunchStartTime = new Date(
-          `${currentEntry.dateLunchStart || currentEntry.date} ${
-            currentEntry.lunchStart
-          }`
+          `${currentEntry.dateLunchStart || currentEntry.date} ${currentEntry.lunchStart}`,
         ).getTime();
         diffMs = currentTime - lunchStartTime;
       } else {
         const timeInDate = new Date(
-          `${currentEntry.date} ${currentEntry.timeIn}`
+          `${currentEntry.date} ${currentEntry.timeIn}`,
         ).getTime();
-
         let totalLunchMs = 0;
         if (currentEntry.lunchStart && currentEntry.lunchEnd) {
           const lunchStart = new Date(
-            `${currentEntry.dateLunchStart || currentEntry.date} ${
-              currentEntry.lunchStart
-            }`
+            `${currentEntry.dateLunchStart || currentEntry.date} ${currentEntry.lunchStart}`,
           );
           const lunchEnd = new Date(
-            `${currentEntry.dateLunchEnd || currentEntry.date} ${
-              currentEntry.lunchEnd
-            }`
+            `${currentEntry.dateLunchEnd || currentEntry.date} ${currentEntry.lunchEnd}`,
           );
-
-          if (lunchEnd < lunchStart) {
-            lunchEnd.setDate(lunchEnd.getDate() + 1);
-          }
-
+          if (lunchEnd < lunchStart) lunchEnd.setDate(lunchEnd.getDate() + 1);
           totalLunchMs = lunchEnd.getTime() - lunchStart.getTime();
         }
-
         diffMs = currentTime - timeInDate - totalLunchMs;
       }
-
       setElapsedTime(Math.max(0, Math.floor(diffMs / 1000)));
     }, 1000);
-
-    return () => {
-      clearInterval(intervalId);
-    };
+    return () => clearInterval(intervalId);
   }, [isTimeIn, currentEntry, currentServerTime]);
 
   const formatElapsedTime = (totalSeconds: number) => {
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
-
-    return `${hours.toString().padStart(2, "0")}:${minutes
-      .toString()
-      .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+    return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   };
 
   const getCurrentTime = async () => {
     try {
       const response = await timer.getCurrentTimeIn();
       const currentTimeData = response.data[0];
-
       if (currentTimeData) {
-        if (currentTimeData.timeOut) {
-          setIsTimeIn(false);
-        } else {
-          setIsTimeIn(true);
-        }
+        setIsTimeIn(!currentTimeData.timeOut);
         setCurrentEntry(currentTimeData);
       } else {
-        console.warn("No current time data found.");
         setIsTimeIn(false);
       }
     } catch (error) {
@@ -632,23 +488,16 @@ export const AttendanceTracker: React.FC = () => {
     setIsLoadingTimeIn(true);
     try {
       const userString = localStorage.getItem("user");
-      if (!userString) {
-        throw new Error("User data not found in local storage");
-      }
-
+      if (!userString) throw new Error("User data not found in local storage");
       const user = JSON.parse(userString);
-      const loginLimit = user.loginLimit;
-
       const currentTimeData = await getCurrentTimeFromAPI();
-
       const entry: AttendanceEntry = {
         id: `entry-${new Date().getTime()}`,
         date: currentTimeData.date,
         timeIn: currentTimeData.time,
         shift: currentEntry.shift || "",
-        loginLimit: loginLimit,
+        loginLimit: user.loginLimit,
       };
-
       const response = await timer.timeIn(entry);
       setCurrentEntry(response.data);
       getAttendance();
@@ -656,17 +505,10 @@ export const AttendanceTracker: React.FC = () => {
       setElapsedTime(0);
       showToast("Time In Recorded", "You have successfully clocked in.");
     } catch (error: any) {
-      console.error("Error logging time:", error);
       let errorMessage = "An error occurred while logging time";
-
-      if (error.response?.status === 409 && error.response?.data?.message) {
+      if (error.response?.status === 409 && error.response?.data?.message)
         errorMessage = error.response.data.message;
-      } else if (error.message === "User data not found in local storage") {
-        errorMessage = "User data not found in the storage";
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-
+      else if (error.message) errorMessage = error.message;
       showToast("Error", errorMessage, "destructive");
     } finally {
       setIsLoadingTimeIn(false);
@@ -677,41 +519,32 @@ export const AttendanceTracker: React.FC = () => {
     setIsLoadingTimeOut(true);
     try {
       const currentTimeData = await getCurrentTimeFromAPI();
-
       const timeInDate = new Date(
-        `${currentEntry.date} ${currentEntry.timeIn}`
+        `${currentEntry.date} ${currentEntry.timeIn}`,
       );
       const timeOutDate = new Date(
-        `${currentTimeData.date} ${currentTimeData.time}`
+        `${currentTimeData.date} ${currentTimeData.time}`,
       );
-
       let totalLunchMs = 0;
       if (currentEntry.lunchStart && currentEntry.lunchEnd) {
         const lunchStart = new Date(
-          `${currentEntry.dateLunchStart} ${currentEntry.lunchStart}`
+          `${currentEntry.dateLunchStart} ${currentEntry.lunchStart}`,
         );
         const lunchEnd = new Date(
-          `${currentEntry.dateLunchEnd} ${currentEntry.lunchEnd}`
+          `${currentEntry.dateLunchEnd} ${currentEntry.lunchEnd}`,
         );
-
-        if (lunchEnd < lunchStart) {
-          lunchEnd.setDate(lunchEnd.getDate() + 1);
-        }
-
+        if (lunchEnd < lunchStart) lunchEnd.setDate(lunchEnd.getDate() + 1);
         totalLunchMs = lunchEnd.getTime() - lunchStart.getTime();
       }
-
       const diffMs =
         timeOutDate.getTime() - timeInDate.getTime() - totalLunchMs;
       const totalHours = diffMs / (1000 * 60 * 60);
-
       const updatedEntry = {
         ...currentEntry,
         timeOut: currentTimeData.time,
         totalHours: Number(totalHours.toFixed(2)),
-        notes: notes,
+        notes,
       };
-
       await timer.timeOut(updatedEntry);
       setCurrentEntry(updatedEntry);
       getAttendance();
@@ -719,19 +552,13 @@ export const AttendanceTracker: React.FC = () => {
       setDialogOpen(false);
       setElapsedTime(0);
       hideAlert();
-      setAlertShown({
-        break1: false,
-        break2: false,
-        lunch: false,
-      });
-
+      setAlertShown({ break1: false, break2: false, lunch: false });
       showToast("Time Out Recorded", "You have successfully clocked out.");
     } catch (error) {
-      console.error("Error logging timeout:", error);
       showToast(
         "Error",
-        "Failed to complete time out. Please try again. If the issue persists, contact IT Support.",
-        "destructive"
+        "Failed to complete time out. Please try again.",
+        "destructive",
       );
     } finally {
       setIsLoadingTimeOut(false);
@@ -742,13 +569,11 @@ export const AttendanceTracker: React.FC = () => {
     setIsLoadingBreakStart(true);
     try {
       const currentTimeData = await getCurrentTimeFromAPI();
-
       const updatedEntry = {
         ...currentEntry,
         breakStart: currentTimeData.time,
         dateBreakStart: currentTimeData.date,
       };
-
       const response = await timer.updateBreakStart(updatedEntry);
       setCurrentEntry(response.data);
       setElapsedTime(0);
@@ -756,11 +581,10 @@ export const AttendanceTracker: React.FC = () => {
       setAlertShown((prev) => ({ ...prev, break1: false }));
       showToast("Break Started", "Break 1 has started. 15 minutes allocated.");
     } catch (error) {
-      console.error("Error starting break:", error);
       showToast(
         "Error",
         "Failed to start break. Please try again.",
-        "destructive"
+        "destructive",
       );
     } finally {
       setIsLoadingBreakStart(false);
@@ -771,41 +595,33 @@ export const AttendanceTracker: React.FC = () => {
     setIsLoadingBreakEnd(true);
     try {
       const currentTimeData = await getCurrentTimeFromAPI();
-
       const breakStart = new Date(
-        `${currentEntry.dateBreakStart} ${currentEntry.breakStart}`
+        `${currentEntry.dateBreakStart} ${currentEntry.breakStart}`,
       );
       const breakEnd = new Date(
-        `${currentTimeData.date} ${currentTimeData.time}`
+        `${currentTimeData.date} ${currentTimeData.time}`,
       );
-
-      if (breakEnd < breakStart) {
-        breakEnd.setDate(breakEnd.getDate() + 1);
-      }
-
-      const breakDurationMs = breakEnd.getTime() - breakStart.getTime();
-      const newBreakTimeHours = breakDurationMs / (1000 * 60 * 60);
-      const totalBreakTimeHours =
-        (currentEntry.totalBreakTime || 0) + newBreakTimeHours;
-
+      if (breakEnd < breakStart) breakEnd.setDate(breakEnd.getDate() + 1);
+      const newBreakTimeHours =
+        (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
       const updatedEntry = {
         ...currentEntry,
         breakEnd: currentTimeData.time,
         dateBreakEnd: currentTimeData.date,
-        totalBreakTime: Number(totalBreakTimeHours.toFixed(2)),
+        totalBreakTime: Number(
+          ((currentEntry.totalBreakTime || 0) + newBreakTimeHours).toFixed(2),
+        ),
       };
-
       const response = await timer.updateBreakEnd(updatedEntry);
       setCurrentEntry(response.data);
       hideAlert();
       setAlertShown((prev) => ({ ...prev, break1: false }));
       showToast("Break Ended", "Break 1 has ended. Back to work!");
     } catch (error) {
-      console.error("Error ending break:", error);
       showToast(
         "Error",
         "Failed to end break. Please try again.",
-        "destructive"
+        "destructive",
       );
     } finally {
       setIsLoadingBreakEnd(false);
@@ -816,13 +632,11 @@ export const AttendanceTracker: React.FC = () => {
     setIsLoadingLunchStart(true);
     try {
       const currentTimeData = await getCurrentTimeFromAPI();
-
       const updatedEntry = {
         ...currentEntry,
         lunchStart: currentTimeData.time,
         dateLunchStart: currentTimeData.date,
       };
-
       const response = await timer.updateLunchStart(updatedEntry);
       setCurrentEntry(response.data);
       setElapsedTime(0);
@@ -830,14 +644,13 @@ export const AttendanceTracker: React.FC = () => {
       setAlertShown((prev) => ({ ...prev, lunch: false }));
       showToast(
         "Lunch Started",
-        "Lunch break has started. 60 minutes allocated."
+        "Lunch break has started. 60 minutes allocated.",
       );
     } catch (error) {
-      console.error("Error starting lunch:", error);
       showToast(
         "Error",
         "Failed to start lunch. Please try again.",
-        "destructive"
+        "destructive",
       );
     } finally {
       setIsLoadingLunchStart(false);
@@ -848,70 +661,55 @@ export const AttendanceTracker: React.FC = () => {
     setIsLoadingLunchEnd(true);
     try {
       const currentTimeData = await getCurrentTimeFromAPI();
-
       const lunchStart = new Date(
-        `${currentEntry.dateLunchStart} ${currentEntry.lunchStart}`
+        `${currentEntry.dateLunchStart} ${currentEntry.lunchStart}`,
       );
       const lunchEnd = new Date(
-        `${currentTimeData.date} ${currentTimeData.time}`
+        `${currentTimeData.date} ${currentTimeData.time}`,
       );
-
-      if (lunchEnd < lunchStart) {
-        lunchEnd.setDate(lunchEnd.getDate() + 1);
-      }
-
-      const lunchDurationMs = lunchEnd.getTime() - lunchStart.getTime();
-      const newLunchTimeHours = lunchDurationMs / (1000 * 60 * 60);
-      const totalLunchTimeHours =
-        (currentEntry.totalLunchTime || 0) + newLunchTimeHours;
-
+      if (lunchEnd < lunchStart) lunchEnd.setDate(lunchEnd.getDate() + 1);
+      const newLunchTimeHours =
+        (lunchEnd.getTime() - lunchStart.getTime()) / (1000 * 60 * 60);
       const updatedEntry = {
         ...currentEntry,
         lunchEnd: currentTimeData.time,
         dateLunchEnd: currentTimeData.date,
-        totalLunchTime: Number(totalLunchTimeHours.toFixed(2)),
+        totalLunchTime: Number(
+          ((currentEntry.totalLunchTime || 0) + newLunchTimeHours).toFixed(2),
+        ),
       };
-
       const response = await timer.updateLunchEnd(updatedEntry);
       setCurrentEntry(response.data);
       hideAlert();
       setAlertShown((prev) => ({ ...prev, lunch: false }));
       showToast("Lunch Ended", "Lunch break has ended. Back to work!");
     } catch (error) {
-      console.error("Error ending lunch:", error);
       showToast(
         "Error",
         "Failed to end lunch. Please try again.",
-        "destructive"
+        "destructive",
       );
     } finally {
       setIsLoadingLunchEnd(false);
     }
   };
 
-  const handleActionChange = (value: string) => {
-    setSelectedAction(value);
-  };
+  const handleActionChange = (value: string) => setSelectedAction(value);
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
   };
 
   const fetchShiftSchedule = async (date: string, employeeId: string) => {
     try {
-      const formattedDate = formatDate(date);
       const response =
         await ScheduleAndAttendanceAPI.getSchedulePerEmployeeByDate(
           employeeId,
-          formattedDate
+          formatDate(date),
         );
       return response.data.shiftType;
     } catch (error) {
-      console.error("Error fetching shift schedule:", error);
       return null;
     }
   };
@@ -957,8 +755,6 @@ export const AttendanceTracker: React.FC = () => {
       case "timeOut":
         setDialogOpen(true);
         break;
-      default:
-        break;
     }
   };
 
@@ -966,13 +762,11 @@ export const AttendanceTracker: React.FC = () => {
     setIsLoadingSecondBreakStart(true);
     try {
       const currentTimeData = await getCurrentTimeFromAPI();
-
       const updatedEntry = {
         ...currentEntry,
         secondBreakStart: currentTimeData.time,
         dateSecondBreakStart: currentTimeData.date,
       };
-
       const response = await timer.updateSecondBreakStart(updatedEntry);
       setCurrentEntry(response.data);
       setElapsedTime(0);
@@ -980,14 +774,13 @@ export const AttendanceTracker: React.FC = () => {
       setAlertShown((prev) => ({ ...prev, break2: false }));
       showToast(
         "Break 2 Started",
-        "Break 2 has started. 15 minutes allocated."
+        "Break 2 has started. 15 minutes allocated.",
       );
     } catch (error) {
-      console.error("Error starting break 2:", error);
       showToast(
         "Error",
         "Failed to start second break. Please try again.",
-        "destructive"
+        "destructive",
       );
     } finally {
       setIsLoadingSecondBreakStart(false);
@@ -998,46 +791,38 @@ export const AttendanceTracker: React.FC = () => {
     setIsLoadingSecondBreakEnd(true);
     try {
       const currentTimeData = await getCurrentTimeFromAPI();
-
       const secondBreakStart = new Date(
-        `${currentEntry.dateSecondBreakStart} ${currentEntry.secondBreakStart}`
+        `${currentEntry.dateSecondBreakStart} ${currentEntry.secondBreakStart}`,
       );
       const secondBreakEnd = new Date(
-        `${currentTimeData.date} ${currentTimeData.time}`
+        `${currentTimeData.date} ${currentTimeData.time}`,
       );
-
-      if (secondBreakEnd < secondBreakStart) {
+      if (secondBreakEnd < secondBreakStart)
         secondBreakEnd.setDate(secondBreakEnd.getDate() + 1);
-      }
-
-      const secondBreakDurationMs =
-        secondBreakEnd.getTime() - secondBreakStart.getTime();
       const newSecondBreakTimeHours = Number(
-        secondBreakDurationMs / (1000 * 60 * 60)
+        (secondBreakEnd.getTime() - secondBreakStart.getTime()) /
+          (1000 * 60 * 60),
       );
       const totalSecondBreakTimeHours =
         (currentEntry.totalSecondBreakTime ?? 0) + newSecondBreakTimeHours;
-
       const updatedEntry = {
         ...currentEntry,
         secondBreakEnd: currentTimeData.time,
         dateSecondBreakEnd: currentTimeData.date,
         totalSecondBreakTime: Number(
-          (totalSecondBreakTimeHours || 0).toFixed(2)
+          (totalSecondBreakTimeHours || 0).toFixed(2),
         ),
       };
-
       const response = await timer.updateSecondBreakEnd(updatedEntry);
       setCurrentEntry(response.data);
       hideAlert();
       setAlertShown((prev) => ({ ...prev, break2: false }));
       showToast("Break 2 Ended", "Break 2 has ended. Back to work!");
     } catch (error) {
-      console.error("Error ending break 2:", error);
       showToast(
         "Error",
         "Failed to end second break. Please try again.",
-        "destructive"
+        "destructive",
       );
     } finally {
       setIsLoadingSecondBreakEnd(false);
@@ -1046,7 +831,6 @@ export const AttendanceTracker: React.FC = () => {
 
   const getAvailableActions = () => {
     const actions = [];
-
     if (currentEntry.breakStart && !currentEntry.breakEnd) {
       actions.push({ value: "endBreak", label: "End Break 1" });
     } else if (currentEntry.secondBreakStart && !currentEntry.secondBreakEnd) {
@@ -1054,39 +838,43 @@ export const AttendanceTracker: React.FC = () => {
     } else if (currentEntry.lunchStart && !currentEntry.lunchEnd) {
       actions.push({ value: "endLunch", label: "End Lunch" });
     } else {
-      if (!currentEntry.breakStart) {
+      if (!currentEntry.breakStart)
         actions.push({ value: "startBreak", label: "Start Break 1" });
-      }
-
       if (
         currentEntry.breakStart &&
         currentEntry.breakEnd &&
         !currentEntry.secondBreakStart
-      ) {
-        actions.push({
-          value: "startSecondBreak",
-          label: "Start Break 2",
-        });
-      }
-
-      if (!currentEntry.lunchStart) {
+      )
+        actions.push({ value: "startSecondBreak", label: "Start Break 2" });
+      if (!currentEntry.lunchStart)
         actions.push({ value: "startLunch", label: "Start Lunch" });
-      }
-
-      if (isTimeIn) {
-        actions.push({ value: "timeOut", label: "Time Out" });
-      }
+      if (isTimeIn) actions.push({ value: "timeOut", label: "Time Out" });
     }
-
     return actions;
   };
 
+  // Determine current timer label & color
+  const getTimerMeta = () => {
+    if (currentEntry.breakStart && !currentEntry.breakEnd)
+      return { label: "Break 1 Timer", color: "#0284c7", bg: "#f0f9ff" };
+    if (currentEntry.secondBreakStart && !currentEntry.secondBreakEnd)
+      return { label: "Break 2 Timer", color: "#4f46e5", bg: "#eef2ff" };
+    if (currentEntry.lunchStart && !currentEntry.lunchEnd)
+      return { label: "Lunch Timer", color: "#d97706", bg: "#fffbeb" };
+    return { label: "Work Timer", color: "#7c3aed", bg: "#f5f3ff" };
+  };
+
+  const timerMeta = getTimerMeta();
+
   if (isLoadingInitial) {
     return (
-      <div className="flex justify-center items-start w-full pt-4">
-        <div className="bg-gray-50 rounded-lg p-8 border border-gray-200">
-          <LoadingSpinner />
-          <p className="text-gray-700 mt-4 text-center">
+      <div className="flex justify-center items-center min-h-screen bg-[#f5f5f8]">
+        <div
+          style={{ fontFamily: "'Outfit', sans-serif" }}
+          className="text-center"
+        >
+          <div className="w-12 h-12 border-2 border-indigo-200 border-t-indigo-500 rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-sm text-gray-500 font-medium">
             Loading time tracker...
           </p>
         </div>
@@ -1095,543 +883,863 @@ export const AttendanceTracker: React.FC = () => {
   }
 
   return (
-    <div className="bg-gradient-to-b from-gray-50 to-white py-6 px-4 sm:px-6 lg:px-8">
-            <BackButton />
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
 
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Alert Dialog */}
+        .at-root { font-family: 'Outfit', sans-serif; background: #f5f5f8; min-height: 100vh; }
+
+        /* HEADER */
+        .at-header {
+          background: #fff;
+          border-bottom: 1px solid #e8e8f0;
+          padding: 1.5rem 2rem 1.4rem;
+        }
+        .at-header-inner {
+          max-width: 1200px; margin: 0 auto;
+          display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+        }
+        .at-tag {
+          display: inline-flex; align-items: center; gap: 0.4rem;
+          background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 100px;
+          padding: 0.22rem 0.7rem; margin-bottom: 0.6rem;
+        }
+        .at-tag-dot { width: 5px; height: 5px; border-radius: 50%; background: #7c3aed; }
+        .at-tag-text { font-size: 0.63rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #7c3aed; }
+        .at-heading { font-size: 1.75rem; font-weight: 800; color: #0f0f1a; letter-spacing: -0.03em; line-height: 1; }
+        .at-subheading { font-size: 0.85rem; color: #8888a0; margin-top: 0.3rem; }
+
+        /* BODY */
+        .at-body { max-width: 1200px; margin: 0 auto; padding: 1.75rem 2rem 3rem; }
+        @media (max-width: 640px) { .at-header { padding: 1.25rem; } .at-body { padding: 1.25rem; } .at-heading { font-size: 1.4rem; } }
+
+        /* SECTION */
+        .at-section-label { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: #9090a8; margin-bottom: 0.9rem; }
+
+        /* TIMER CARD */
+        .at-timer-card {
+          background: #fff; border: 1px solid #e8e8f0; border-radius: 20px; overflow: hidden;
+        }
+        .at-timer-top {
+          padding: 1.5rem 1.75rem 0;
+          display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+        }
+        .at-date-row { display: flex; align-items: center; gap: 0.5rem; }
+        .at-date-text { font-size: 0.85rem; font-weight: 500; color: #5050708; }
+
+        /* CLOCK DISPLAY */
+        .at-clock-wrap {
+          display: flex; flex-direction: column; align-items: center;
+          padding: 2rem 1.75rem 1.5rem;
+        }
+        .at-clock-label {
+          font-size: 0.65rem; font-weight: 700; letter-spacing: 0.14em;
+          text-transform: uppercase; margin-bottom: 0.75rem;
+          padding: 0.25rem 0.75rem; border-radius: 100px;
+          background: var(--timer-bg); color: var(--timer-color);
+        }
+        .at-clock {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: clamp(2.8rem, 8vw, 5rem);
+          font-weight: 700;
+          letter-spacing: -0.02em;
+          color: var(--timer-color);
+          line-height: 1;
+          opacity: var(--timer-opacity, 1);
+          transition: color 0.4s ease;
+        }
+        .at-clock-dimmed { opacity: 0.3; }
+
+        /* STATUS PILLS */
+        .at-status-row {
+          display: flex; align-items: center; justify-content: center;
+          gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; padding-bottom: 0.25rem;
+        }
+        .at-status-pill {
+          display: inline-flex; align-items: center; gap: 0.35rem;
+          padding: 0.25rem 0.65rem; border-radius: 100px;
+          font-size: 0.68rem; font-weight: 600;
+          background: #f5f3ff; color: #7c3aed; border: 1px solid #ddd6fe;
+        }
+        .at-status-pill-dot { width: 5px; height: 5px; border-radius: 50%; background: #10b981; animation: at-blink 1.5s ease infinite; }
+        @keyframes at-blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+        /* CONTROLS */
+        .at-controls {
+          display: flex; align-items: center; justify-content: center;
+          gap: 0.75rem; flex-wrap: wrap;
+          border-top: 1px solid #f0f0f6;
+          padding: 1.25rem 1.75rem;
+        }
+        .at-time-in-btn {
+          display: inline-flex; align-items: center; gap: 0.5rem;
+          background: #7c3aed; color: white;
+          font-family: 'Outfit', sans-serif;
+          font-size: 0.88rem; font-weight: 700;
+          padding: 0.65rem 1.5rem; border-radius: 12px;
+          border: none; cursor: pointer;
+          transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+          box-shadow: 0 2px 12px rgba(124,58,237,0.25);
+          min-width: 140px; justify-content: center;
+        }
+        .at-time-in-btn:hover { background: #6d28d9; transform: translateY(-1px); box-shadow: 0 4px 18px rgba(124,58,237,0.3); }
+        .at-time-in-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        .at-confirm-btn {
+          display: inline-flex; align-items: center; gap: 0.5rem;
+          background: #4f46e5; color: white;
+          font-family: 'Outfit', sans-serif;
+          font-size: 0.85rem; font-weight: 700;
+          padding: 0.6rem 1.25rem; border-radius: 11px;
+          border: none; cursor: pointer;
+          transition: background 0.2s, transform 0.15s;
+        }
+        .at-confirm-btn:hover { background: #4338ca; transform: translateY(-1px); }
+        .at-confirm-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        /* SESSION CARDS */
+        .at-session-section { padding: 0 1.75rem 1.75rem; }
+        .at-session-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.75rem; }
+        .at-session-card {
+          background: #f8f8fb; border: 1px solid #ededf5; border-radius: 14px; padding: 1rem 1.1rem;
+          transition: border-color 0.2s;
+        }
+        .at-session-card:hover { border-color: #d0d0e8; }
+        .at-session-card-header { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.65rem; }
+        .at-session-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+        .at-session-card-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #9090a8; }
+        .at-session-main { font-size: 1rem; font-weight: 700; color: #1a1a2e; }
+        .at-session-sub { font-size: 0.72rem; color: #9090a8; margin-top: 0.15rem; }
+
+        /* HISTORY CARD */
+        .at-history-card {
+          background: #fff; border: 1px solid #e8e8f0; border-radius: 20px; overflow: hidden; margin-top: 1.25rem;
+        }
+        .at-history-header {
+          padding: 1.3rem 1.75rem 1rem;
+          border-bottom: 1px solid #f0f0f6;
+          display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+        }
+        .at-history-title { font-size: 0.95rem; font-weight: 700; color: #1a1a2e; }
+        .at-history-sub { font-size: 0.73rem; color: #9090a8; margin-top: 0.15rem; }
+
+        .at-filter-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+        .at-filter-icon { color: #9090a8; }
+
+        .at-refresh-btn {
+          display: inline-flex; align-items: center; gap: 0.4rem;
+          font-family: 'Outfit', sans-serif;
+          font-size: 0.75rem; font-weight: 600; color: #4f46e5;
+          background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 9px;
+          padding: 0.4rem 0.8rem; cursor: pointer;
+          transition: background 0.2s, border-color 0.2s;
+        }
+        .at-refresh-btn:hover { background: #e0e7ff; border-color: #a5b4fc; }
+        .at-refresh-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .at-history-body { padding: 0; }
+
+        /* TABLE */
+        .at-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+        .at-table thead tr { border-bottom: 1px solid #f0f0f6; }
+        .at-table th {
+          padding: 0.75rem 1rem; text-align: left;
+          font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+          color: #9090a8; white-space: nowrap; background: #fafafa;
+        }
+        .at-table tbody tr { border-bottom: 1px solid #f5f5fa; transition: background 0.12s; }
+        .at-table tbody tr:last-child { border-bottom: none; }
+        .at-table tbody tr:hover { background: #f8f8fb; }
+        .at-table td { padding: 0.75rem 1rem; color: #3a3a5a; vertical-align: middle; white-space: nowrap; }
+        .at-table td:first-child { font-weight: 600; color: #1a1a2e; }
+
+        .at-in-progress {
+          display: inline-flex; align-items: center; gap: 0.3rem;
+          font-size: 0.65rem; font-weight: 700; color: #059669;
+          background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 100px;
+          padding: 0.15rem 0.5rem;
+        }
+
+        .at-overbreak {
+          color: #dc2626; font-weight: 600;
+        }
+
+        .at-empty-row td { text-align: center; padding: 3rem 1rem; }
+        .at-empty-icon { width: 48px; height: 48px; background: #f5f5f8; border-radius: 14px; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem; }
+        .at-empty-title { font-size: 0.88rem; font-weight: 700; color: #1a1a2e; }
+        .at-empty-sub { font-size: 0.75rem; color: #9090a8; margin-top: 0.2rem; }
+
+        .at-table-footer { padding: 0.75rem 1.75rem; font-size: 0.72rem; color: #9090a8; border-top: 1px solid #f0f0f6; }
+
+        /* ALERT OVERLAY */
+        .at-alert-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.25); backdrop-filter: blur(4px); z-index: 50; display: flex; align-items: center; justify-content: center; }
+        .at-alert-box {
+          background: #fff; border-radius: 18px; padding: 1.75rem; max-width: 420px; margin: 1rem;
+          box-shadow: 0 20px 60px rgba(0,0,0,0.12); border: 1px solid #e8e8f0;
+          animation: at-pop 0.25s ease;
+        }
+        @keyframes at-pop { from{transform:scale(0.94);opacity:0} to{transform:scale(1);opacity:1} }
+        .at-alert-icon { width: 44px; height: 44px; background: #fffbeb; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; }
+        .at-alert-title { font-size: 1rem; font-weight: 800; color: #1a1a2e; margin-bottom: 0.4rem; }
+        .at-alert-msg { font-size: 0.83rem; color: #6060808; line-height: 1.5; margin-bottom: 1.25rem; }
+        .at-alert-btn {
+          background: #7c3aed; color: white; border: none; border-radius: 10px;
+          padding: 0.6rem 1.25rem; font-size: 0.82rem; font-weight: 700;
+          cursor: pointer; font-family: 'Outfit', sans-serif;
+          transition: background 0.2s; float: right;
+        }
+        .at-alert-btn:hover { background: #6d28d9; }
+
+        .at-overflow-x { overflow-x: auto; }
+      `}</style>
+
+      <div className="at-root">
+        {/* ALERT */}
         {alert.show && (
-          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/20 backdrop-blur-sm">
-            <div className="bg-white rounded-lg shadow-xl p-6 max-w-md mx-4 animate-in zoom-in-95 border border-gray-200">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="flex-shrink-0">
-                  <AlertCircle className="h-8 w-8 text-amber-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Time Alert
-                </h3>
+          <div className="at-alert-overlay">
+            <div className="at-alert-box">
+              <div className="at-alert-icon">
+                <AlertCircle
+                  style={{ width: 22, height: 22, color: "#d97706" }}
+                />
               </div>
-              <p className="text-gray-700 mb-6">{alert.message}</p>
-              <div className="flex justify-end">
-                <Button
-                  onClick={hideAlert}
-                  className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
-                >
-                  Got it!
-                </Button>
-              </div>
+              <p className="at-alert-title">Time Alert</p>
+              <p className="at-alert-msg">{alert.message}</p>
+              <button className="at-alert-btn" onClick={hideAlert}>
+                Got it!
+              </button>
+              <div style={{ clear: "both" }} />
             </div>
           </div>
         )}
 
-        {/* Header Section */}
-
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-              Time Tracker
-            </h1>
-            <p className="text-gray-600 mt-1">
-              Track your work hours, breaks, and attendance
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <ViewScheduleButton />
-          </div>
-        </div>
-
-        {/* Timer and Controls Section */}
-        <Card className="border border-gray-200">
-          <CardContent className="p-6">
-            <div className="flex flex-col items-center space-y-6">
-               <div className="flex items-center justify-center gap-2 mb-2">
-                <Calendar className="h-5 w-5 text-purple-600" />
-                <p className="text-lg font-medium text-gray-900">
-                  {currentFormattedDate || "Loading date..."}
-                </p>
-              </div>
-              {/* Timer Display */}
-              <div className={`text-center ${!isTimeIn ? "opacity-50" : ""}`}>
-                <p className="text-sm font-medium text-gray-600 mb-2">
-                  {currentEntry.breakStart && !currentEntry.breakEnd
-                    ? "Break 1 Timer"
-                    : currentEntry.secondBreakStart &&
-                      !currentEntry.secondBreakEnd
-                    ? "Break 2 Timer"
-                    : currentEntry.lunchStart && !currentEntry.lunchEnd
-                    ? "Lunch Timer"
-                    : "Work Timer"}
-                </p>
-                <div
-                  className={`
-                  text-3xl md:text-4xl lg:text-5xl font-bold tracking-tighter font-mono
-                  ${
-                    currentEntry.breakStart && !currentEntry.breakEnd
-                      ? "text-blue-600"
-                      : ""
-                  }
-                  ${
-                    currentEntry.secondBreakStart &&
-                    !currentEntry.secondBreakEnd
-                      ? "text-indigo-600"
-                      : ""
-                  }
-                  ${
-                    currentEntry.lunchStart && !currentEntry.lunchEnd
-                      ? "text-purple-600"
-                      : ""
-                  }
-                  ${
-                    !currentEntry.breakStart &&
-                    !currentEntry.lunchStart &&
-                    !currentEntry.secondBreakStart
-                      ? "text-gray-900"
-                      : ""
-                  }
-                `}
+        <div className="at-body">
+          {/* TIMER CARD */}
+          <p className="at-section-label">Today's Session</p>
+          <BackButton />
+          <div className="at-timer-card">
+            <div className="at-timer-top">
+              <div className="at-date-row">
+                <Calendar style={{ width: 15, height: 15, color: "#9090a8" }} />
+                <span
+                  style={{
+                    fontSize: "0.83rem",
+                    color: "#6060a0",
+                    fontWeight: 500,
+                  }}
                 >
-                  {formatElapsedTime(elapsedTime)}
-                </div>
+                  {currentFormattedDate || "Loading..."}
+                </span>
               </div>
-
-              {/* Action Controls */}
-              <div className="flex flex-col sm:flex-row justify-center items-center gap-3 w-full max-w-lg mx-auto">
-                {!isTimeIn ? (
-                  <Button
-                    onClick={handleTimeIn}
-                    className="w-full sm:w-auto min-w-[140px] bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
-                    disabled={isLoadingTimeIn}
-                    size="lg"
-                  >
-                    {isLoadingTimeIn ? (
-                      <LoadingSpinner />
-                    ) : (
-                      <>
-                        <Home className="mr-2 h-5 w-5" />
-                        Time In
-                      </>
-                    )}
-                  </Button>
-                ) : (
-                  <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
-
-                    <Select
-                      value={selectedAction || undefined}
-                      onValueChange={handleActionChange}
-                    >
-                      <SelectTrigger className="w-full sm:w-56">
-                        <SelectValue placeholder="Select Action" />
-                      </SelectTrigger>
-
-                      <SelectContent>
-                        {getAvailableActions().map((action) => (
-                          <SelectItem key={action.value} value={action.value}>
-                            {action.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-
-                    </Select>
-
-                    {selectedAction && (
-                      <Button
-                        onClick={handleConfirmAction}
-                        className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
-                        disabled={
-                          isLoadingBreakStart ||
-                          isLoadingBreakEnd ||
-                          isLoadingSecondBreakStart ||
-                          isLoadingSecondBreakEnd ||
-                          isLoadingLunchStart ||
-                          isLoadingLunchEnd ||
-                          isLoadingTimeOut
-                        }
-                      >
-                        Confirm
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Time Out Dialog */}
-              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Complete Your Work Day</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="notes">Notes (Optional)</Label>
-                      <Input
-                        id="notes"
-                        placeholder="Add any notes about your work day..."
-                      />
-                    </div>
-                    <div className="flex justify-end gap-3">
-                      <Button
-                        variant="outline"
-                        onClick={() => setDialogOpen(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          const notesInput = document.getElementById(
-                            "notes"
-                          ) as HTMLInputElement;
-                          handleTimeOut({
-                            notes: notesInput?.value,
-                          });
-                        }}
-                        disabled={isLoadingTimeOut}
-                        className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
-                      >
-                        {isLoadingTimeOut ? <LoadingSpinner /> : "Complete Day"}
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-
-              {/* Current Session Summary */}
+              <ViewScheduleButton />
               {isTimeIn && (
-                <div className="w-full max-w-4xl mx-auto mt-6">
-                  <p className="font-semibold text-gray-700 mb-4 text-center">
-                    Current Session
-                  </p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {currentEntry.timeIn && (
-                      <Card className="border border-gray-200">
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Clock className="h-4 w-4 text-purple-600" />
-                            <span className="text-sm font-medium text-gray-700">
-                              Time In
-                            </span>
-                          </div>
-                          <p className="text-lg font-semibold text-gray-900">
-                            {formatTime(currentEntry.timeIn)}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    )}
-
-                    {currentEntry.shift && (
-                      <Card className="border border-gray-200">
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-2 mb-2">
-                            <TrendingUp className="h-4 w-4 text-blue-600" />
-                            <span className="text-sm font-medium text-gray-700">
-                              Shift
-                            </span>
-                          </div>
-                          <p className="text-lg font-semibold text-gray-900">
-                            {currentEntry.shift}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    )}
-
-                    {currentEntry.breakStart && (
-                      <Card className="border border-gray-200">
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Coffee className="h-4 w-4 text-green-600" />
-                            <span className="text-sm font-medium text-gray-700">
-                              Break 1
-                            </span>
-                          </div>
-                          <div className="space-y-1">
-                            <p className="text-sm text-gray-600">
-                              Start: {formatTime(currentEntry.breakStart)}
-                            </p>
-                            {currentEntry.breakEnd && (
-                              <p className="text-sm text-gray-600">
-                                End: {formatTime(currentEntry.breakEnd)}
-                              </p>
-                            )}
-                            {currentEntry.totalBreakTime !== undefined && (
-                              <p className="text-sm font-medium text-gray-900">
-                                Total:{" "}
-                                {formatMinutesToHoursMinutes(
-                                  Math.round(currentEntry.totalBreakTime * 60)
-                                )}
-                              </p>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )}
-
-                    {currentEntry.secondBreakStart && (
-                      <Card className="border border-gray-200">
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Coffee className="h-4 w-4 text-indigo-600" />
-                            <span className="text-sm font-medium text-gray-700">
-                              Break 2
-                            </span>
-                          </div>
-                          <div className="space-y-1">
-                            <p className="text-sm text-gray-600">
-                              Start: {formatTime(currentEntry.secondBreakStart)}
-                            </p>
-                            {currentEntry.secondBreakEnd && (
-                              <p className="text-sm text-gray-600">
-                                End: {formatTime(currentEntry.secondBreakEnd)}
-                              </p>
-                            )}
-                            {currentEntry.totalSecondBreakTime !==
-                              undefined && (
-                              <p className="text-sm font-medium text-gray-900">
-                                Total:{" "}
-                                {formatMinutesToHoursMinutes(
-                                  Math.round(
-                                    currentEntry.totalSecondBreakTime * 60
-                                  )
-                                )}
-                              </p>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )}
-
-                    {currentEntry.lunchStart && (
-                      <Card className="border border-gray-200">
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Utensils className="h-4 w-4 text-amber-600" />
-                            <span className="text-sm font-medium text-gray-700">
-                              Lunch
-                            </span>
-                          </div>
-                          <div className="space-y-1">
-                            <p className="text-sm text-gray-600">
-                              Start: {formatTime(currentEntry.lunchStart)}
-                            </p>
-                            {currentEntry.lunchEnd && (
-                              <p className="text-sm text-gray-600">
-                                End: {formatTime(currentEntry.lunchEnd)}
-                              </p>
-                            )}
-                            {currentEntry.totalLunchTime !== undefined && (
-                              <p className="text-sm font-medium text-gray-900">
-                                Total:{" "}
-                                {formatMinutesToHoursMinutes(
-                                  Math.round(currentEntry.totalLunchTime * 60)
-                                )}
-                              </p>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )}
-                  </div>
+                <div className="at-status-pill">
+                  <div className="at-status-pill-dot" />
+                  Active Session
                 </div>
               )}
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Attendance History Section */}
-        <Card className="border border-gray-200">
-          <CardHeader>
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-              <CardTitle className="text-lg font-semibold text-gray-900">
-                Attendance History
-              </CardTitle>
+            {/* CLOCK */}
+            <div className="at-clock-wrap">
+              <span
+                className="at-clock-label"
+                style={
+                  {
+                    "--timer-bg": timerMeta.bg,
+                    "--timer-color": timerMeta.color,
+                  } as any
+                }
+              >
+                {timerMeta.label}
+              </span>
+              <div
+                className={`at-clock ${!isTimeIn ? "at-clock-dimmed" : ""}`}
+                style={{ "--timer-color": timerMeta.color } as any}
+              >
+                {formatElapsedTime(elapsedTime)}
+              </div>
+            </div>
 
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <Filter className="h-4 w-4 text-gray-500" />
+            {/* CONTROLS */}
+            <div className="at-controls">
+              {!isTimeIn ? (
+                <button
+                  className="at-time-in-btn"
+                  onClick={handleTimeIn}
+                  disabled={isLoadingTimeIn}
+                >
+                  {isLoadingTimeIn ? (
+                    <LoadingSpinner />
+                  ) : (
+                    <>
+                      <Home style={{ width: 16, height: 16 }} /> Clock In
+                    </>
+                  )}
+                </button>
+              ) : (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.65rem",
+                    flexWrap: "wrap",
+                    justifyContent: "center",
+                  }}
+                >
                   <Select
-                    value={selectedYear.toString()}
-                    onValueChange={(value) => setSelectedYear(parseInt(value))}
+                    value={selectedAction || undefined}
+                    onValueChange={handleActionChange}
                   >
-                    <SelectTrigger className="w-28">
-                      <SelectValue placeholder="Year" />
+                    <SelectTrigger
+                      style={{
+                        width: "200px",
+                        fontFamily: "'Outfit', sans-serif",
+                        fontSize: "0.83rem",
+                        borderRadius: "11px",
+                        borderColor: "#e0e0f0",
+                      }}
+                    >
+                      <SelectValue placeholder="Select Action" />
                     </SelectTrigger>
                     <SelectContent>
-                      {years.map((year) => (
-                        <SelectItem key={year} value={year.toString()}>
-                          {year}
+                      {getAvailableActions().map((action) => (
+                        <SelectItem
+                          key={action.value}
+                          value={action.value}
+                          style={{ fontFamily: "'Outfit', sans-serif" }}
+                        >
+                          {action.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  {selectedAction && (
+                    <button
+                      className="at-confirm-btn"
+                      onClick={handleConfirmAction}
+                      disabled={
+                        isLoadingBreakStart ||
+                        isLoadingBreakEnd ||
+                        isLoadingSecondBreakStart ||
+                        isLoadingSecondBreakEnd ||
+                        isLoadingLunchStart ||
+                        isLoadingLunchEnd ||
+                        isLoadingTimeOut
+                      }
+                    >
+                      {isLoadingBreakStart ||
+                      isLoadingBreakEnd ||
+                      isLoadingSecondBreakStart ||
+                      isLoadingSecondBreakEnd ||
+                      isLoadingLunchStart ||
+                      isLoadingLunchEnd ||
+                      isLoadingTimeOut ? (
+                        <LoadingSpinner />
+                      ) : (
+                        "Confirm"
+                      )}
+                    </button>
+                  )}
                 </div>
+              )}
+            </div>
 
-                <Select
-                  value={selectedMonth.toString()}
-                  onValueChange={(value) => setSelectedMonth(parseInt(value))}
+            {/* SESSION SUMMARY */}
+            {isTimeIn && (
+              <div className="at-session-section">
+                <p
+                  style={{
+                    fontSize: "0.65rem",
+                    fontWeight: 700,
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
+                    color: "#9090a8",
+                    marginBottom: "0.75rem",
+                  }}
                 >
-                  <SelectTrigger className="w-36">
-                    <SelectValue placeholder="Month" />
+                  Session Summary
+                </p>
+                <div className="at-session-grid">
+                  {currentEntry.timeIn && (
+                    <div className="at-session-card">
+                      <div className="at-session-card-header">
+                        <div
+                          className="at-session-icon"
+                          style={{ background: "#f5f3ff" }}
+                        >
+                          <Clock
+                            style={{ width: 14, height: 14, color: "#7c3aed" }}
+                          />
+                        </div>
+                        <span className="at-session-card-label">Time In</span>
+                      </div>
+                      <p className="at-session-main">
+                        {formatTime(currentEntry.timeIn)}
+                      </p>
+                    </div>
+                  )}
+                  {currentEntry.shift && (
+                    <div className="at-session-card">
+                      <div className="at-session-card-header">
+                        <div
+                          className="at-session-icon"
+                          style={{ background: "#f0f9ff" }}
+                        >
+                          <TrendingUp
+                            style={{ width: 14, height: 14, color: "#0284c7" }}
+                          />
+                        </div>
+                        <span className="at-session-card-label">Shift</span>
+                      </div>
+                      <p className="at-session-main">{currentEntry.shift}</p>
+                    </div>
+                  )}
+                  {currentEntry.breakStart && (
+                    <div className="at-session-card">
+                      <div className="at-session-card-header">
+                        <div
+                          className="at-session-icon"
+                          style={{ background: "#f0fdf4" }}
+                        >
+                          <Coffee
+                            style={{ width: 14, height: 14, color: "#059669" }}
+                          />
+                        </div>
+                        <span className="at-session-card-label">Break 1</span>
+                      </div>
+                      <p className="at-session-main">
+                        {formatTime(currentEntry.breakStart)}
+                      </p>
+                      {currentEntry.breakEnd && (
+                        <p className="at-session-sub">
+                          End: {formatTime(currentEntry.breakEnd)}
+                        </p>
+                      )}
+                      {currentEntry.totalBreakTime !== undefined && (
+                        <p className="at-session-sub">
+                          Total:{" "}
+                          {formatMinutesToHoursMinutes(
+                            Math.round(currentEntry.totalBreakTime * 60),
+                          )}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  {currentEntry.secondBreakStart && (
+                    <div className="at-session-card">
+                      <div className="at-session-card-header">
+                        <div
+                          className="at-session-icon"
+                          style={{ background: "#eef2ff" }}
+                        >
+                          <Coffee
+                            style={{ width: 14, height: 14, color: "#4f46e5" }}
+                          />
+                        </div>
+                        <span className="at-session-card-label">Break 2</span>
+                      </div>
+                      <p className="at-session-main">
+                        {formatTime(currentEntry.secondBreakStart)}
+                      </p>
+                      {currentEntry.secondBreakEnd && (
+                        <p className="at-session-sub">
+                          End: {formatTime(currentEntry.secondBreakEnd)}
+                        </p>
+                      )}
+                      {currentEntry.totalSecondBreakTime !== undefined && (
+                        <p className="at-session-sub">
+                          Total:{" "}
+                          {formatMinutesToHoursMinutes(
+                            Math.round(currentEntry.totalSecondBreakTime * 60),
+                          )}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  {currentEntry.lunchStart && (
+                    <div className="at-session-card">
+                      <div className="at-session-card-header">
+                        <div
+                          className="at-session-icon"
+                          style={{ background: "#fffbeb" }}
+                        >
+                          <Utensils
+                            style={{ width: 14, height: 14, color: "#d97706" }}
+                          />
+                        </div>
+                        <span className="at-session-card-label">Lunch</span>
+                      </div>
+                      <p className="at-session-main">
+                        {formatTime(currentEntry.lunchStart)}
+                      </p>
+                      {currentEntry.lunchEnd && (
+                        <p className="at-session-sub">
+                          End: {formatTime(currentEntry.lunchEnd)}
+                        </p>
+                      )}
+                      {currentEntry.totalLunchTime !== undefined && (
+                        <p className="at-session-sub">
+                          Total:{" "}
+                          {formatMinutesToHoursMinutes(
+                            Math.round(currentEntry.totalLunchTime * 60),
+                          )}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* TIME OUT DIALOG */}
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogContent
+              style={{
+                fontFamily: "'Outfit', sans-serif",
+                borderRadius: "18px",
+              }}
+            >
+              <DialogHeader>
+                <DialogTitle style={{ fontWeight: 800, fontSize: "1.05rem" }}>
+                  Complete Your Work Day
+                </DialogTitle>
+              </DialogHeader>
+              <div style={{ paddingTop: "0.5rem" }}>
+                <Label
+                  htmlFor="notes"
+                  style={{
+                    fontSize: "0.78rem",
+                    fontWeight: 600,
+                    color: "#6060a0",
+                  }}
+                >
+                  Notes (Optional)
+                </Label>
+                <Input
+                  id="notes"
+                  placeholder="Add any notes about your work day..."
+                  style={{
+                    marginTop: "0.4rem",
+                    borderRadius: "10px",
+                    fontFamily: "'Outfit', sans-serif",
+                  }}
+                />
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    gap: "0.6rem",
+                    marginTop: "1rem",
+                  }}
+                >
+                  <button
+                    onClick={() => setDialogOpen(false)}
+                    style={{
+                      fontFamily: "'Outfit', sans-serif",
+                      fontSize: "0.82rem",
+                      fontWeight: 600,
+                      padding: "0.55rem 1.1rem",
+                      borderRadius: "10px",
+                      border: "1px solid #e0e0f0",
+                      background: "#f8f8fb",
+                      cursor: "pointer",
+                      color: "#6060a0",
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      const notesInput = document.getElementById(
+                        "notes",
+                      ) as HTMLInputElement;
+                      handleTimeOut({ notes: notesInput?.value });
+                    }}
+                    disabled={isLoadingTimeOut}
+                    className="at-time-in-btn"
+                    style={{
+                      minWidth: "auto",
+                      padding: "0.55rem 1.1rem",
+                      fontSize: "0.82rem",
+                    }}
+                  >
+                    {isLoadingTimeOut ? <LoadingSpinner /> : "Complete Day"}
+                  </button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* HISTORY */}
+          <div className="at-history-card">
+            <div className="at-history-header">
+              <div>
+                <p className="at-history-title">Attendance History</p>
+                <p className="at-history-sub">
+                  {months.find((m) => m.value === selectedMonth)?.label}{" "}
+                  {selectedYear} · {selectedCutoff} cut-off
+                </p>
+              </div>
+              <div className="at-filter-row">
+                <Filter style={{ width: 13, height: 13, color: "#9090a8" }} />
+                <Select
+                  value={selectedYear.toString()}
+                  onValueChange={(v) => setSelectedYear(parseInt(v))}
+                >
+                  <SelectTrigger
+                    style={{
+                      width: "90px",
+                      fontFamily: "'Outfit', sans-serif",
+                      fontSize: "0.78rem",
+                      borderRadius: "9px",
+                      borderColor: "#e0e0f0",
+                    }}
+                  >
+                    <SelectValue placeholder="Year" />
                   </SelectTrigger>
                   <SelectContent>
-                    {months.map((month) => (
+                    {years.map((year) => (
                       <SelectItem
-                        key={month.value}
-                        value={month.value.toString()}
+                        key={year}
+                        value={year.toString()}
+                        style={{ fontFamily: "'Outfit', sans-serif" }}
                       >
-                        {month.label}
+                        {year}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-
                 <Select
-                  value={selectedCutoff}
-                  onValueChange={(value: CutoffPeriod) =>
-                    setSelectedCutoff(value)
-                  }
+                  value={selectedMonth.toString()}
+                  onValueChange={(v) => setSelectedMonth(parseInt(v))}
                 >
-                  <SelectTrigger className="w-36">
-                    <SelectValue placeholder="Cut-off Period" />
+                  <SelectTrigger
+                    style={{
+                      width: "120px",
+                      fontFamily: "'Outfit', sans-serif",
+                      fontSize: "0.78rem",
+                      borderRadius: "9px",
+                      borderColor: "#e0e0f0",
+                    }}
+                  >
+                    <SelectValue placeholder="Month" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1-15">1st - 15th</SelectItem>
-                    <SelectItem value="16-31">16th - 31st</SelectItem>
+                    {months.map((m) => (
+                      <SelectItem
+                        key={m.value}
+                        value={m.value.toString()}
+                        style={{ fontFamily: "'Outfit', sans-serif" }}
+                      >
+                        {m.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-
-                <Button
-                  variant="outline"
-                  size="sm"
+                <Select
+                  value={selectedCutoff}
+                  onValueChange={(v: CutoffPeriod) => setSelectedCutoff(v)}
+                >
+                  <SelectTrigger
+                    style={{
+                      width: "120px",
+                      fontFamily: "'Outfit', sans-serif",
+                      fontSize: "0.78rem",
+                      borderRadius: "9px",
+                      borderColor: "#e0e0f0",
+                    }}
+                  >
+                    <SelectValue placeholder="Cut-off" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem
+                      value="1-15"
+                      style={{ fontFamily: "'Outfit', sans-serif" }}
+                    >
+                      1st – 15th
+                    </SelectItem>
+                    <SelectItem
+                      value="16-31"
+                      style={{ fontFamily: "'Outfit', sans-serif" }}
+                    >
+                      16th – 31st
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <button
+                  className="at-refresh-btn"
                   onClick={getAttendance}
                   disabled={isLoadingHistory}
                 >
-                  <RefreshCw className="h-4 w-4 mr-2" />
+                  <RefreshCw style={{ width: 12, height: 12 }} />
                   Refresh
-                </Button>
+                </button>
               </div>
             </div>
-          </CardHeader>
 
-          <CardContent>
-            {isLoadingHistory ? (
-              <div className="flex justify-center py-8">
-                <LoadingSpinner />
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="min-w-[100px]">Date</TableHead>
-                      <TableHead className="min-w-[100px]">Time In</TableHead>
-                      <TableHead className="min-w-[100px]">Time Out</TableHead>
-                      <TableHead className="min-w-[100px]">
-                        Total Hours
-                      </TableHead>
-                      <TableHead className="min-w-[100px]">Break 1</TableHead>
-                      <TableHead className="min-w-[100px]">Lunch</TableHead>
-                      <TableHead className="min-w-[100px]">Break 2</TableHead>
-                      <TableHead className="min-w-[100px]">
-                        Overbreak 1
-                      </TableHead>
-                      <TableHead className="min-w-[100px]">
-                        Overbreak 2
-                      </TableHead>
-                      <TableHead className="min-w-[100px]">Overlunch</TableHead>
-                      <TableHead className="min-w-[150px]">Notes</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredEntries.length > 0 ? (
-                      filteredEntries.map((entry, index) => (
-                        <TableRow key={entry.id || `entry-${index}`}>
-                          <TableCell className="font-medium">
-                            {entry.date}
-                          </TableCell>
-                          <TableCell>{formatTime(entry.timeIn)}</TableCell>
-                          <TableCell>
-                            {entry.timeOut
-                              ? formatTime(entry.timeOut)
-                              : "In Progress"}
-                          </TableCell>
-                          <TableCell>
-                            {formatHoursToHoursMinutes(
-                              String(entry.totalHours || "")
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {formatHoursToHoursMinutes(
-                              String(entry.totalBreakTime || "")
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {formatHoursToHoursMinutes(
-                              String(entry.totalLunchTime || "")
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {formatHoursToHoursMinutes(
-                              String(entry.totalSecondBreakTime || "")
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {entry.overbreak1 && entry.overbreak1 > 0
-                              ? `${entry.overbreak1} minutes`
-                              : "-"}
-                          </TableCell>
-                          <TableCell>
-                            {entry.overbreak2 && entry.overbreak2 > 0
-                              ? `${entry.overbreak2} minutes`
-                              : "-"}
-                          </TableCell>
-                          <TableCell>
-                            {entry.overlunch && entry.overlunch > 0
-                              ? `${entry.overlunch} minutes`
-                              : "-"}
-                          </TableCell>
-                          <TableCell>
-                            <div
-                              className="truncate max-w-[200px]"
+            <div className="at-history-body">
+              {isLoadingHistory ? (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    padding: "3rem 1rem",
+                  }}
+                >
+                  <LoadingSpinner />
+                </div>
+              ) : (
+                <div className="at-overflow-x">
+                  <table className="at-table">
+                    <thead>
+                      <tr>
+                        {[
+                          "Date",
+                          "Time In",
+                          "Time Out",
+                          "Total Hrs",
+                          "Break 1",
+                          "Lunch",
+                          "Break 2",
+                          "Overbreak 1",
+                          "Overbreak 2",
+                          "Overlunch",
+                          "Notes",
+                        ].map((h) => (
+                          <th key={h}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredEntries.length > 0 ? (
+                        filteredEntries.map((entry, index) => (
+                          <tr key={entry.id || `entry-${index}`}>
+                            <td>{entry.date}</td>
+                            <td>{formatTime(entry.timeIn)}</td>
+                            <td>
+                              {entry.timeOut ? (
+                                formatTime(entry.timeOut)
+                              ) : (
+                                <span className="at-in-progress">
+                                  <span
+                                    style={{
+                                      width: 5,
+                                      height: 5,
+                                      borderRadius: "50%",
+                                      background: "#10b981",
+                                      display: "inline-block",
+                                    }}
+                                  />
+                                  Active
+                                </span>
+                              )}
+                            </td>
+                            <td>
+                              {formatHoursToHoursMinutes(
+                                String(entry.totalHours || ""),
+                              )}
+                            </td>
+                            <td>
+                              {formatHoursToHoursMinutes(
+                                String(entry.totalBreakTime || ""),
+                              )}
+                            </td>
+                            <td>
+                              {formatHoursToHoursMinutes(
+                                String(entry.totalLunchTime || ""),
+                              )}
+                            </td>
+                            <td>
+                              {formatHoursToHoursMinutes(
+                                String(entry.totalSecondBreakTime || ""),
+                              )}
+                            </td>
+                            <td
+                              className={
+                                entry.overbreak1 && entry.overbreak1 > 0
+                                  ? "at-overbreak"
+                                  : ""
+                              }
+                            >
+                              {entry.overbreak1 && entry.overbreak1 > 0
+                                ? `${entry.overbreak1}m`
+                                : "—"}
+                            </td>
+                            <td
+                              className={
+                                entry.overbreak2 && entry.overbreak2 > 0
+                                  ? "at-overbreak"
+                                  : ""
+                              }
+                            >
+                              {entry.overbreak2 && entry.overbreak2 > 0
+                                ? `${entry.overbreak2}m`
+                                : "—"}
+                            </td>
+                            <td
+                              className={
+                                entry.overlunch && entry.overlunch > 0
+                                  ? "at-overbreak"
+                                  : ""
+                              }
+                            >
+                              {entry.overlunch && entry.overlunch > 0
+                                ? `${entry.overlunch}m`
+                                : "—"}
+                            </td>
+                            <td
+                              style={{
+                                maxWidth: 160,
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                              }}
                               title={entry.notes || ""}
                             >
-                              {entry.notes || "-"}
+                              {entry.notes || "—"}
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr className="at-empty-row">
+                          <td colSpan={11}>
+                            <div className="at-empty-icon">
+                              <Clock
+                                style={{
+                                  width: 20,
+                                  height: 20,
+                                  color: "#c0c0d0",
+                                }}
+                              />
                             </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={11} className="text-center py-8">
-                          <div className="flex flex-col items-center gap-2">
-                            <Clock className="h-12 w-12 text-gray-400" />
-                            <p className="text-gray-600 font-medium">
-                              No records found
-                            </p>
-                            <p className="text-sm text-gray-500">
+                            <p className="at-empty-title">No records found</p>
+                            <p className="at-empty-sub">
                               {
                                 months.find((m) => m.value === selectedMonth)
                                   ?.label
                               }{" "}
-                              {selectedYear} ({selectedCutoff} cut-off)
+                              {selectedYear} · {selectedCutoff} cut-off
                             </p>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-
-                {filteredEntries.length > 0 && (
-                  <div className="mt-4 text-sm text-gray-600">
-                    Showing {filteredEntries.length} record(s) for{" "}
-                    {months.find((m) => m.value === selectedMonth)?.label}{" "}
-                    {selectedYear} ({selectedCutoff} cut-off)
-                  </div>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                  {filteredEntries.length > 0 && (
+                    <div className="at-table-footer">
+                      Showing {filteredEntries.length} record(s) ·{" "}
+                      {months.find((m) => m.value === selectedMonth)?.label}{" "}
+                      {selectedYear} · {selectedCutoff} cut-off
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
