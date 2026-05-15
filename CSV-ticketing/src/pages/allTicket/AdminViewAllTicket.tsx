@@ -270,28 +270,51 @@ const ViewAllRaisedTickets: React.FC = () => {
   );
 
   const handleSearchSubmit = useCallback(() => {
-    if (searchTicketNumber.trim()) {
-      const foundTicket = allRaisedTickets.find(
-        (ticket) =>
-          ticket.ticketNumber.toLowerCase() ===
-          searchTicketNumber.toLowerCase(),
-      );
+    const query = searchTicketNumber.trim().toLowerCase();
+    if (!query) return;
 
-      if (foundTicket) {
-        // Navigate to ticket details without clearing URL params
-        navigate({
-          pathname: `/ticket/${foundTicket._id}`,
-          search: searchParams.toString(), // Preserve current filters in URL
-        });
-      } else {
-        toast({
-          title: "Ticket Not Found",
-          description: "Please check the ticket number and try again.",
-          variant: "destructive",
-        });
-      }
+    // Try exact ticket number match first
+    const byTicketNumber = allRaisedTickets.find(
+      (ticket) => ticket.ticketNumber.toLowerCase() === query,
+    );
+
+    if (byTicketNumber) {
+      navigate({
+        pathname: `/ticket/${byTicketNumber._id}`,
+        search: searchParams.toString(),
+      });
+      return;
     }
-  }, [searchTicketNumber, allRaisedTickets, navigate, searchParams]);
+
+    // Fall back to filtering by requester name (partial, case-insensitive)
+    const byName = allRaisedTickets.filter((ticket) =>
+      ticket.name.toLowerCase().includes(query),
+    );
+
+    if (byName.length === 1) {
+      // Single match — navigate directly
+      navigate({
+        pathname: `/ticket/${byName[0]._id}`,
+        search: searchParams.toString(),
+      });
+    } else if (byName.length > 1) {
+      // Multiple matches — show them in the table
+      setFilteredTickets(byName);
+      updateUrlParams({ page: "1" });
+    } else {
+      toast({
+        title: "No Results Found",
+        description: "No tickets matched that ticket number or requester name.",
+        variant: "destructive",
+      });
+    }
+  }, [
+    searchTicketNumber,
+    allRaisedTickets,
+    navigate,
+    searchParams,
+    updateUrlParams,
+  ]);
 
   const handleSearchKeyPress = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -473,10 +496,9 @@ const ViewAllRaisedTickets: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-6 px-4 sm:px-6 lg:px-8">
-            <BackButton />
+      <BackButton />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-        
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8">
           <div className="flex items-center gap-4">
@@ -520,7 +542,7 @@ const ViewAllRaisedTickets: React.FC = () => {
                 value={searchTicketNumber}
                 onChange={(e) => setSearchTicketNumber(e.target.value)}
                 onKeyPress={handleSearchKeyPress}
-                placeholder="Search by ticket number (e.g., INC-0001)..."
+                placeholder="Search by ticket number and name"
                 className="pl-10 w-full"
               />
             </div>
@@ -821,56 +843,84 @@ const ViewAllRaisedTickets: React.FC = () => {
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                
+
                 <div className="flex items-center gap-1 mx-2">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                    // For small number of pages, show all
-                    if (totalPages <= 7) {
-                      return (
-                        <Button
-                          key={page}
-                          variant={validCurrentPage === page ? "default" : "outline"}
-                          onClick={() => handlePageChange(page)}
-                          size="sm"
-                          className={validCurrentPage === page ? "bg-blue-600" : ""}
-                        >
-                          {page}
-                        </Button>
-                      );
-                    }
-                    
-                    // For larger number of pages, show smart pagination
-                    if (
-                      page === 1 || 
-                      page === totalPages || 
-                      (page >= validCurrentPage - 1 && page <= validCurrentPage + 1)
-                    ) {
-                      return (
-                        <Button
-                          key={page}
-                          variant={validCurrentPage === page ? "default" : "outline"}
-                          onClick={() => handlePageChange(page)}
-                          size="sm"
-                          className={validCurrentPage === page ? "bg-blue-600" : ""}
-                        >
-                          {page}
-                        </Button>
-                      );
-                    }
-                    
-                    // Show ellipsis
-                    if (page === 2 && validCurrentPage > 3) {
-                      return <span key="ellipsis-start" className="px-2 text-gray-400">...</span>;
-                    }
-                    
-                    if (page === totalPages - 1 && validCurrentPage < totalPages - 2) {
-                      return <span key="ellipsis-end" className="px-2 text-gray-400">...</span>;
-                    }
-                    
-                    return null;
-                  })}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (page) => {
+                      // For small number of pages, show all
+                      if (totalPages <= 7) {
+                        return (
+                          <Button
+                            key={page}
+                            variant={
+                              validCurrentPage === page ? "default" : "outline"
+                            }
+                            onClick={() => handlePageChange(page)}
+                            size="sm"
+                            className={
+                              validCurrentPage === page ? "bg-blue-600" : ""
+                            }
+                          >
+                            {page}
+                          </Button>
+                        );
+                      }
+
+                      // For larger number of pages, show smart pagination
+                      if (
+                        page === 1 ||
+                        page === totalPages ||
+                        (page >= validCurrentPage - 1 &&
+                          page <= validCurrentPage + 1)
+                      ) {
+                        return (
+                          <Button
+                            key={page}
+                            variant={
+                              validCurrentPage === page ? "default" : "outline"
+                            }
+                            onClick={() => handlePageChange(page)}
+                            size="sm"
+                            className={
+                              validCurrentPage === page ? "bg-blue-600" : ""
+                            }
+                          >
+                            {page}
+                          </Button>
+                        );
+                      }
+
+                      // Show ellipsis
+                      if (page === 2 && validCurrentPage > 3) {
+                        return (
+                          <span
+                            key="ellipsis-start"
+                            className="px-2 text-gray-400"
+                          >
+                            ...
+                          </span>
+                        );
+                      }
+
+                      if (
+                        page === totalPages - 1 &&
+                        validCurrentPage < totalPages - 2
+                      ) {
+                        return (
+                          <span
+                            key="ellipsis-end"
+                            className="px-2 text-gray-400"
+                          >
+                            ...
+                          </span>
+                        );
+                      }
+
+                      return null;
+                    },
+                  )}
                 </div>
-                
+
                 <Button
                   variant="outline"
                   onClick={goToNextPage}
@@ -967,7 +1017,7 @@ const ViewAllRaisedTickets: React.FC = () => {
                   </Button>
                 </div>
               ))}
-              
+
               {/* Mobile Pagination */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-between gap-2 mt-4">
