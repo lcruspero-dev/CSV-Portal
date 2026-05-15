@@ -7,13 +7,21 @@ const triggerPayrollUpdate = async (employeeId, date) => {
   try {
     // Calculate date range for the current month
     const currentDate = new Date(date);
-    const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-    const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+    const startOfMonth = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth(),
+      1,
+    );
+    const endOfMonth = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth() + 1,
+      0,
+    );
 
     // Format dates as strings (MM/DD/YYYY)
     const formatDate = (date) => {
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
       const year = date.getFullYear();
       return `${month}/${day}/${year}`;
     };
@@ -24,51 +32,54 @@ const triggerPayrollUpdate = async (employeeId, date) => {
     // Auto-update payroll
     await autoUpdatePayrollFromTimeTracker(employeeId, startDate, endDate);
   } catch (error) {
-    console.error('Error triggering payroll update:', error);
+    console.error("Error triggering payroll update:", error);
   }
 };
 
 // Helper function to calculate which break to deduct time from
 const calculateBreakDeduction = (employeeTime, bioBreakDuration) => {
   const deductionAmount = bioBreakDuration || 15; // Default to 15 minutes if not provided
-  
+
   // Check break usage and available time in order of priority
   const breakUsage = {
     break1: {
       used: employeeTime.breakStart && employeeTime.breakEnd,
       availableTime: employeeTime.totalBreakTime || 15, // Default break time
       currentTime: employeeTime.totalBreakTime || 0,
-      type: 'break1'
+      type: "break1",
     },
     break2: {
       used: employeeTime.secondBreakStart && employeeTime.secondBreakEnd,
       availableTime: employeeTime.totalSecondBreakTime || 15, // Default break time
       currentTime: employeeTime.totalSecondBreakTime || 0,
-      type: 'break2'
+      type: "break2",
     },
     lunch: {
       used: employeeTime.lunchStart && employeeTime.lunchEnd,
       availableTime: employeeTime.totalLunchTime || 30, // Default lunch time
       currentTime: employeeTime.totalLunchTime || 0,
-      type: 'lunch'
-    }
+      type: "lunch",
+    },
   };
 
   // Priority order: break1 -> break2 -> lunch
-  const priorityOrder = ['break1', 'break2', 'lunch'];
-  
+  const priorityOrder = ["break1", "break2", "lunch"];
+
   for (const breakType of priorityOrder) {
     const breakInfo = breakUsage[breakType];
-    
+
     // If this break is NOT used, deduct from it
     if (!breakInfo.used) {
-      const newBreakTime = Math.max(0, breakInfo.availableTime - deductionAmount);
-      
+      const newBreakTime = Math.max(
+        0,
+        breakInfo.availableTime - deductionAmount,
+      );
+
       return {
         deductedFrom: breakType,
         deductionAmount: deductionAmount,
         newBreakTime: newBreakTime,
-        originalBreakTime: breakInfo.availableTime
+        originalBreakTime: breakInfo.availableTime,
       };
     }
   }
@@ -76,13 +87,13 @@ const calculateBreakDeduction = (employeeTime, bioBreakDuration) => {
   // If all breaks are used, deduct from lunch by default (as it typically has the most time)
   const lunchInfo = breakUsage.lunch;
   const newLunchTime = Math.max(0, lunchInfo.availableTime - deductionAmount);
-  
+
   return {
-    deductedFrom: 'lunch',
+    deductedFrom: "lunch",
     deductionAmount: deductionAmount,
     newBreakTime: newLunchTime,
     originalBreakTime: lunchInfo.availableTime,
-    note: "All breaks were used, deducted from lunch"
+    note: "All breaks were used, deducted from lunch",
   };
 };
 
@@ -246,7 +257,7 @@ const getEmployeeTimeByEmployeeId = async (req, res) => {
   try {
     const employeeTime = await EmployeeTime.find({
       employeeId: req.user._id,
-    }).sort({ createdAt: -1 }); // Sort by createdAt in descending order
+    }).sort({ createdAt: -1 });
 
     if (!employeeTime || employeeTime.length === 0) {
       return res.status(404).json({ message: "Employee time not found" });
@@ -276,7 +287,7 @@ const updateEmployeeTimeOut = async (req, res) => {
         timeOut: null, // Ensure we only update records where timeOut is null
       },
       updateFields,
-      { new: true } // Return the updated document
+      { new: true }, // Return the updated document
     );
 
     if (!employeeTime) {
@@ -322,8 +333,9 @@ const searchByNameAndDate = async (req, res) => {
 
     // Convert the date format from 'YYYY-MM-DD' to 'MM/DD/YYYY'
     const parsedDate = new Date(date);
-    const formattedDate = `${parsedDate.getMonth() + 1
-      }/${parsedDate.getDate()}/${parsedDate.getFullYear()}`;
+    const formattedDate = `${
+      parsedDate.getMonth() + 1
+    }/${parsedDate.getDate()}/${parsedDate.getFullYear()}`;
 
     let query = { date: formattedDate };
 
@@ -345,10 +357,11 @@ const searchByNameAndDate = async (req, res) => {
       case "csv-staff":
         query.shift = "staff";
         break;
-      default:
+      default: {
         // Create a case-insensitive regex for partial name matching
-        { const nameRegex = new RegExp(name, "i");
-        query.employeeName = { $regex: nameRegex }; }
+        const nameRegex = new RegExp(name, "i");
+        query.employeeName = { $regex: nameRegex };
+      }
     }
 
     const employeeTimes = await EmployeeTime.find(query);
@@ -387,7 +400,7 @@ const updateEmployeeTimeBreak = async (req, res) => {
         dateSecondBreakStart: req.body.dateSecondBreakStart,
         dateSecondBreakEnd: req.body.dateSecondBreakEnd,
       },
-      { new: true } // Return the updated document
+      { new: true }, // Return the updated document
     );
 
     if (!employeeTime) {
@@ -421,7 +434,7 @@ const updateEmployeeTimelunch = async (req, res) => {
         dateLunchStart: req.body.dateLunchStart,
         dateLunchEnd: req.body.dateLunchEnd,
       },
-      { new: true } // Return the updated document
+      { new: true }, // Return the updated document
     );
 
     if (!employeeTime) {
@@ -470,7 +483,7 @@ const getIncompleteBreaks = async (req, res) => {
         { bioBreak: { $ne: null }, bioBreakEnd: null }, // Add bio break to incomplete checks
       ],
     }).select(
-      "employeeId employeeName date breakStart breakEnd secondBreakStart secondBreakEnd lunchStart lunchEnd bioBreak bioBreakEnd bioBreakDeductedFrom"
+      "employeeId employeeName date breakStart breakEnd secondBreakStart secondBreakEnd lunchStart lunchEnd bioBreak bioBreakEnd bioBreakDeductedFrom",
     );
 
     if (!incompleteBreaks || incompleteBreaks.length === 0) {
@@ -536,7 +549,6 @@ const getIncompleteBreaks = async (req, res) => {
       count: formattedResponse.length,
       data: formattedResponse,
     });
-    
   } catch (error) {
     console.error("Error fetching incomplete breaks:", error.message);
     res.status(500).json({ message: error.message });
@@ -548,18 +560,16 @@ const getIncompleteLogins = async (req, res) => {
     // Find all records where employee has logged in but not logged out
     const incompleteLogins = await EmployeeTime.find({
       $and: [
-        { timeIn: { $ne: null } },  // timeIn exists and is not null
-        { timeOut: null }            // timeOut is null (not logged out)
-      ]
-    }).select(
-      "employeeId employeeName date timeIn timeOut totalHours"
-    );
+        { timeIn: { $ne: null } }, // timeIn exists and is not null
+        { timeOut: null }, // timeOut is null (not logged out)
+      ],
+    }).select("employeeId employeeName date timeIn timeOut totalHours");
 
     if (!incompleteLogins || incompleteLogins.length === 0) {
-      return res.status(200).json({ 
+      return res.status(200).json({
         message: "No incomplete logins found",
         count: 0,
-        data: [] 
+        data: [],
       });
     }
 
@@ -571,20 +581,19 @@ const getIncompleteLogins = async (req, res) => {
       type: "Login",
       timeIn: record.timeIn,
       timeOut: record.timeOut,
-      totalHours: record.totalHours
+      totalHours: record.totalHours,
     }));
 
     res.status(200).json({
       message: "Incomplete logins retrieved successfully",
       count: formattedResponse.length,
-      data: formattedResponse
+      data: formattedResponse,
     });
-
   } catch (error) {
     console.error("Error fetching incomplete logins:", error.message);
-    res.status(500).json({ 
+    res.status(500).json({
       status: false,
-      message: error.message || "Internal Server Error" 
+      message: error.message || "Internal Server Error",
     });
   }
 };
@@ -606,7 +615,10 @@ const updateEmployeeBioBreak = async (req, res) => {
     }
 
     // Calculate which break to deduct time from based on usage
-    const breakDeductionInfo = calculateBreakDeduction(employeeTime, bioBreakDuration);
+    const breakDeductionInfo = calculateBreakDeduction(
+      employeeTime,
+      bioBreakDuration,
+    );
 
     // Update the employee time record
     const updatedEmployeeTime = await EmployeeTime.findOneAndUpdate(
@@ -622,17 +634,17 @@ const updateEmployeeBioBreak = async (req, res) => {
         bioBreakDeductedFrom: breakDeductionInfo.deductedFrom,
         bioBreakDeductionAmount: breakDeductionInfo.deductionAmount,
         // Update the deducted break's total time if applicable
-        ...(breakDeductionInfo.deductedFrom === 'break1' && {
-          totalBreakTime: breakDeductionInfo.newBreakTime
+        ...(breakDeductionInfo.deductedFrom === "break1" && {
+          totalBreakTime: breakDeductionInfo.newBreakTime,
         }),
-        ...(breakDeductionInfo.deductedFrom === 'break2' && {
-          totalSecondBreakTime: breakDeductionInfo.newBreakTime
+        ...(breakDeductionInfo.deductedFrom === "break2" && {
+          totalSecondBreakTime: breakDeductionInfo.newBreakTime,
         }),
-        ...(breakDeductionInfo.deductedFrom === 'lunch' && {
-          totalLunchTime: breakDeductionInfo.newBreakTime
+        ...(breakDeductionInfo.deductedFrom === "lunch" && {
+          totalLunchTime: breakDeductionInfo.newBreakTime,
         }),
       },
-      { new: true }
+      { new: true },
     );
 
     res.status(200).json({
@@ -667,54 +679,56 @@ const getBioBreakSummary = async (req, res) => {
       break1: {
         used: !!(employeeTime.breakStart && employeeTime.breakEnd),
         availableTime: employeeTime.totalBreakTime || 15,
-        timeUsed: employeeTime.totalBreakTime || 0
+        timeUsed: employeeTime.totalBreakTime || 0,
       },
       break2: {
         used: !!(employeeTime.secondBreakStart && employeeTime.secondBreakEnd),
         availableTime: employeeTime.totalSecondBreakTime || 15,
-        timeUsed: employeeTime.totalSecondBreakTime || 0
+        timeUsed: employeeTime.totalSecondBreakTime || 0,
       },
       lunch: {
         used: !!(employeeTime.lunchStart && employeeTime.lunchEnd),
         availableTime: employeeTime.totalLunchTime || 30,
-        timeUsed: employeeTime.totalLunchTime || 0
-      }
+        timeUsed: employeeTime.totalLunchTime || 0,
+      },
     };
 
     const breakSummary = {
       break1: {
         used: breakUsage.break1.used,
         availableTime: breakUsage.break1.availableTime,
-        timeUsed: breakUsage.break1.timeUsed
+        timeUsed: breakUsage.break1.timeUsed,
       },
       break2: {
         used: breakUsage.break2.used,
         availableTime: breakUsage.break2.availableTime,
-        timeUsed: breakUsage.break2.timeUsed
+        timeUsed: breakUsage.break2.timeUsed,
       },
       lunch: {
         used: breakUsage.lunch.used,
         availableTime: breakUsage.lunch.availableTime,
-        timeUsed: breakUsage.lunch.timeUsed
+        timeUsed: breakUsage.lunch.timeUsed,
       },
       bioBreak: {
-        hasBioBreak: !!(employeeTime.bioBreak),
+        hasBioBreak: !!employeeTime.bioBreak,
         bioBreakDuration: employeeTime.bioBreakDuration || 0,
-        deductedFrom: employeeTime.bioBreakDeductedFrom || 'none'
-      }
+        deductedFrom: employeeTime.bioBreakDeductedFrom || "none",
+      },
     };
 
     // Calculate which break would be deducted for a new bio break
     const potentialDeduction = calculateBreakDeduction(employeeTime, 15); // 15 minutes as example
 
     // Get available breaks for deduction
-    const availableForDeduction = ['break1', 'break2', 'lunch'].filter(breakType => !breakUsage[breakType].used);
+    const availableForDeduction = ["break1", "break2", "lunch"].filter(
+      (breakType) => !breakUsage[breakType].used,
+    );
 
     res.status(200).json({
       message: "Bio break summary retrieved successfully",
       currentStatus: breakSummary,
       nextBioBreakWouldDeductFrom: potentialDeduction.deductedFrom,
-      availableForDeduction: availableForDeduction
+      availableForDeduction: availableForDeduction,
     });
   } catch (error) {
     console.error("Error getting bio break summary:", error);
@@ -726,8 +740,7 @@ const getBioBreakSummary = async (req, res) => {
 };
 
 const getEmployeeRunningTime = async (req, res) => {
-  
-  try {   
+  try {
     const activeSession = await EmployeeTime.findOne({
       employeeId: req.user._id,
       timeOut: null,
@@ -736,7 +749,7 @@ const getEmployeeRunningTime = async (req, res) => {
     if (!activeSession) {
       return res.status(404).json({
         status: false,
-        message: "No active session found"
+        message: "No active session found",
       });
     }
 
@@ -746,13 +759,9 @@ const getEmployeeRunningTime = async (req, res) => {
     const runningMs = now - timeIn;
 
     const hours = Math.floor(runningMs / (1000 * 60 * 60));
-    const minutes = Math.floor(
-      (runningMs % (1000 * 60 * 60)) / (1000 * 60)
-    );
+    const minutes = Math.floor((runningMs % (1000 * 60 * 60)) / (1000 * 60));
 
-    const seconds = Math.floor(
-      (runningMs % (1000 * 60)) / 1000
-    );
+    const seconds = Math.floor((runningMs % (1000 * 60)) / 1000);
 
     const formattedRunningTime =
       `${hours.toString().padStart(2, "0")}:` +
@@ -764,16 +773,57 @@ const getEmployeeRunningTime = async (req, res) => {
       runningTimeMs: runningMs,
       runningTime: formattedRunningTime,
     });
-
   } catch (error) {
     console.error(error.message);
     res.status(500).json({
       status: false,
-      message: "Internal Server Error"
+      message: "Internal Server Error",
     });
-    
   }
-}
+};
+
+const adminEndTime = async (req, res) => {
+  try {
+    const activeSession = await EmployeeTime.findOne({
+      employeeId: rq.user._id,
+      timeOut: null,
+    });
+
+    if (!activeSession) {
+      return res.status(404).json({
+        status: false,
+        message: "No active session found",
+      });
+    }
+
+    const now = new Date();
+    const timeIn = new Date(activeSession.timeIn);
+
+    const runningMs = now - timeIn;
+
+    const hours = Math.floor(runningMs / (1000 * 60 * 60));
+    const minutes = Math.floor((runningMs % (1000 * 60 * 60)) / (1000 * 60));
+
+    const seconds = Math.floor((runningMs % (1000 * 60)) / 1000);
+
+    const formattedRunningTime =
+      `${hours.toString().padStart(2, "0")}:` +
+      `${minutes.toString().padStart(2, "0")}:` +
+      `${seconds.toString().padStart(2, "0")}`;
+
+    res.status(200).json({
+      session: activeSession,
+      runningTimeMs: runningMs,
+      runningTime: formattedRunningTime,
+    });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({
+      status: false,
+      message: "Internal Server Error",
+    });
+  }
+};
 
 module.exports = {
   getEmployeeTimes,
@@ -792,5 +842,5 @@ module.exports = {
   updateEmployeeBioBreak,
   getBioBreakSummary,
   getIncompleteLogins,
-  getEmployeeRunningTime
+  getEmployeeRunningTime,
 };

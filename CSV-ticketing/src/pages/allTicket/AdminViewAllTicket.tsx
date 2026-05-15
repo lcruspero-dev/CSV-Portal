@@ -202,9 +202,8 @@ const ViewAllRaisedTickets: React.FC = () => {
       }
 
       setFilteredTickets(filtered);
-      // Removed automatic page reset - now page is controlled by URL params
     },
-    [itCategories, hrCategories], // Removed searchParams and updateUrlParams from dependencies
+    [itCategories, hrCategories],
   );
 
   useEffect(() => {

@@ -1131,13 +1131,13 @@ export const AttendanceTracker: React.FC = () => {
                   {currentFormattedDate || "Loading..."}
                 </span>
               </div>
-              <ViewScheduleButton />
               {isTimeIn && (
                 <div className="at-status-pill">
                   <div className="at-status-pill-dot" />
                   Active Session
                 </div>
               )}
+              <ViewScheduleButton />
             </div>
 
             {/* CLOCK */}
