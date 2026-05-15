@@ -9,7 +9,6 @@ import {
   HeadphonesIcon,
   Ticket,
   Bell,
-  Home,
   Briefcase,
   Shield,
   ArrowUpRight,
@@ -539,10 +538,7 @@ const UserHome = () => {
                 Welcome back, {TitleCase(user?.name) || "Employee"}
               </p>
             </div>
-            <div className="uh-home-btn">
-              <Home style={{ width: 14, height: 14 }} />
-              Home
-            </div>
+          
           </div>
         </motion.div>
 

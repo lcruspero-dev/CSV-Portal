@@ -1,9 +1,6 @@
 import { ExportDatas } from "@/API/endpoint";
 import Sidebar from "@/components/ui/Sidebar";
 import Chart from "@/components/ui/charts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -57,15 +54,12 @@ const AdminHome = () => {
       const width = window.innerWidth;
       setIsMobile(width < 640);
       setIsTablet(width >= 640 && width < 1024);
-
-      // Auto-collapse sidebar on mobile/tablet
       if (width < 1024) {
         setSidebarOpen(false);
       } else {
         setSidebarOpen(true);
       }
     };
-
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -84,7 +78,6 @@ const AdminHome = () => {
         setLoading(false);
       }
     };
-
     fetchTickets();
   }, []);
 
@@ -106,504 +99,999 @@ const AdminHome = () => {
       (ticket) =>
         ticket.priority === "1-Critical" || ticket.priority === "2-High"
     ).length;
-
-    setStats({
-      total,
-      open,
-      inProgress,
-      closed,
-      highPriority,
-    });
+    setStats({ total, open, inProgress, closed, highPriority });
   };
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "open":
       case "new":
-        return "text-green-600 bg-green-50 border-green-200";
+        return "text-emerald-700 bg-emerald-50 border-emerald-200";
       case "in progress":
-        return "text-blue-600 bg-blue-50 border-blue-200";
+        return "text-blue-700 bg-blue-50 border-blue-200";
       case "closed":
       case "approved":
-        return "text-gray-600 bg-gray-50 border-gray-200";
+        return "text-slate-600 bg-slate-50 border-slate-200";
       case "rejected":
-        return "text-red-600 bg-red-50 border-red-200";
+        return "text-red-700 bg-red-50 border-red-200";
       default:
-        return "text-gray-600 bg-gray-50 border-gray-200";
+        return "text-slate-600 bg-slate-50 border-slate-200";
     }
   };
 
-  // Loading component
   const Loader = () => (
     <div className="flex items-center justify-center">
-      <div className="relative">
-        <div className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
-      </div>
+      <div className="h-8 w-8 border-2 border-indigo-200 border-t-indigo-500 rounded-full animate-spin" />
     </div>
   );
 
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
+    show: { opacity: 1, transition: { staggerChildren: 0.08 } },
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 },
+    hidden: { opacity: 0, y: 16 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.38, ease: "easeOut" } },
   };
 
+  const statCards = [
+    {
+      title: "Total Tickets",
+      value: stats.total,
+      description: "All tickets in system",
+      icon: Package,
+      accent: "#4f46e5",
+      softBg: "#eef2ff",
+      trend: "+12%",
+    },
+    {
+      title: "Open Tickets",
+      value: stats.open,
+      description: "Requiring attention",
+      icon: AlertTriangle,
+      accent: "#d97706",
+      softBg: "#fffbeb",
+      trend: "+5%",
+    },
+    {
+      title: "In Progress",
+      value: stats.inProgress,
+      description: "Being worked on",
+      icon: RefreshCw,
+      accent: "#0284c7",
+      softBg: "#f0f9ff",
+      trend: "+8%",
+    },
+    {
+      title: "High Priority",
+      value: stats.highPriority,
+      description: "Critical issues",
+      icon: Bell,
+      accent: "#dc2626",
+      softBg: "#fef2f2",
+      trend: "+3%",
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Sidebar - Fixed position */}
-      <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
-      {/* Mobile overlay when sidebar is open */}
-      {(isMobile || isTablet) && sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-30 backdrop-blur-sm lg:hidden"
-          onClick={toggleSidebar}
-        />
-      )}
+        .ah-wrap * {
+          font-family: 'Outfit', sans-serif;
+        }
 
-      {/* Main Content - Pushed right on desktop, full width on mobile */}
-      <div
-        className={cn(
-          "transition-all duration-300 ease-in-out",
-          // Desktop: Add margin to accommodate fixed sidebar
-          "lg:ml-0",
-          sidebarOpen ? "lg:ml-64" : "lg:ml-20",
-          // Mobile/Tablet: No margin needed (sidebar is overlay)
-          "ml-0"
+        /* HEADER */
+        .ah-header {
+          background: #ffffff;
+          border-bottom: 1px solid #e8e8f0;
+          padding: 1.6rem 2rem;
+          display: flex;
+          align-items: flex-end;
+          justify-content: space-between;
+          gap: 1rem;
+        }
+
+        .ah-tag {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+          background: #eef2ff;
+          border: 1px solid #c7d2fe;
+          border-radius: 100px;
+          padding: 0.22rem 0.7rem;
+          margin-bottom: 0.6rem;
+        }
+
+        .ah-tag-dot {
+          width: 5px;
+          height: 5px;
+          border-radius: 50%;
+          background: #4f46e5;
+        }
+
+        .ah-tag-text {
+          font-size: 0.63rem;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: #4f46e5;
+        }
+
+        .ah-heading {
+          font-size: 1.75rem;
+          font-weight: 800;
+          color: #0f0f1a;
+          letter-spacing: -0.03em;
+          line-height: 1;
+        }
+
+        .ah-subheading {
+          font-size: 0.85rem;
+          color: #8888a0;
+          margin-top: 0.35rem;
+          font-weight: 400;
+        }
+
+        .ah-live-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+          background: #f0fdf4;
+          border: 1px solid #bbf7d0;
+          border-radius: 100px;
+          padding: 0.3rem 0.75rem;
+          font-size: 0.68rem;
+          font-weight: 700;
+          color: #059669;
+          letter-spacing: 0.06em;
+        }
+
+        .ah-live-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: #10b981;
+          animation: ah-pulse 1.8s ease-in-out infinite;
+        }
+
+        @keyframes ah-pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.5; transform: scale(0.8); }
+        }
+
+        /* MAIN */
+        .ah-main {
+          background: #f5f5f8;
+          min-height: 100vh;
+        }
+
+        .ah-body {
+          padding: 1.75rem 2rem 3rem;
+        }
+
+        @media (max-width: 640px) {
+          .ah-header { padding: 1.25rem; }
+          .ah-body { padding: 1.25rem; }
+          .ah-heading { font-size: 1.4rem; }
+        }
+
+        /* SECTION LABEL */
+        .ah-section-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 0.9rem;
+        }
+
+        .ah-section-label {
+          font-size: 0.66rem;
+          font-weight: 700;
+          letter-spacing: 0.13em;
+          text-transform: uppercase;
+          color: #9090a8;
+        }
+
+        .ah-section-sub {
+          font-size: 0.72rem;
+          color: #c0c0d0;
+        }
+
+        /* STAT CARDS */
+        .ah-stat-card {
+          background: #ffffff;
+          border: 1px solid #e8e8f0;
+          border-radius: 16px;
+          padding: 1.3rem 1.5rem;
+          position: relative;
+          overflow: hidden;
+          transition: box-shadow 0.2s, border-color 0.2s, transform 0.18s;
+        }
+
+        .ah-stat-card:hover {
+          box-shadow: 0 6px 24px rgba(0,0,0,0.07);
+          border-color: var(--accent-light);
+          transform: translateY(-2px);
+        }
+
+        .ah-stat-card::before {
+          content: '';
+          position: absolute;
+          top: 0; left: 0; right: 0;
+          height: 3px;
+          background: var(--accent);
+          opacity: 0.6;
+          border-radius: 16px 16px 0 0;
+        }
+
+        .ah-stat-label {
+          font-size: 0.66rem;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: #9090a8;
+          margin-bottom: 0.5rem;
+        }
+
+        .ah-stat-value {
+          font-size: 2.1rem;
+          font-weight: 800;
+          color: #0f0f1a;
+          line-height: 1;
+        }
+
+        .ah-stat-desc {
+          font-size: 0.75rem;
+          color: #b0b0c8;
+          margin-top: 0.25rem;
+        }
+
+        .ah-stat-footer {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-top: 1rem;
+        }
+
+        .ah-stat-icon-wrap {
+          width: 34px;
+          height: 34px;
+          border-radius: 9px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: var(--soft-bg);
+        }
+
+        .ah-trend {
+          font-size: 0.68rem;
+          font-weight: 700;
+          color: #059669;
+          background: #f0fdf4;
+          border: 1px solid #bbf7d0;
+          border-radius: 100px;
+          padding: 0.15rem 0.5rem;
+        }
+
+        .ah-stat-watermark {
+          position: absolute;
+          bottom: -10px;
+          right: -6px;
+          opacity: 0.04;
+          pointer-events: none;
+        }
+
+        /* CHART CARD */
+        .ah-chart-card {
+          background: #ffffff;
+          border: 1px solid #e8e8f0;
+          border-radius: 18px;
+          overflow: hidden;
+        }
+
+        .ah-chart-header {
+          padding: 1.3rem 1.5rem 1rem;
+          border-bottom: 1px solid #f0f0f6;
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 1rem;
+          flex-wrap: wrap;
+        }
+
+        .ah-chart-title {
+          font-size: 0.95rem;
+          font-weight: 700;
+          color: #1a1a2e;
+        }
+
+        .ah-chart-sub {
+          font-size: 0.75rem;
+          color: #9090a8;
+          margin-top: 0.2rem;
+        }
+
+        .ah-chart-body {
+          padding: 1.25rem 1.5rem 1.5rem;
+        }
+
+        .ah-chart-inner {
+          background: #f8f8fb;
+          border-radius: 12px;
+          padding: 1rem;
+        }
+
+        /* SIDE PANEL */
+        .ah-side-card {
+          background: #ffffff;
+          border: 1px solid #e8e8f0;
+          border-radius: 18px;
+          overflow: hidden;
+        }
+
+        .ah-side-header {
+          padding: 1.2rem 1.4rem 0.9rem;
+          border-bottom: 1px solid #f0f0f6;
+        }
+
+        .ah-side-title {
+          font-size: 0.88rem;
+          font-weight: 700;
+          color: #1a1a2e;
+        }
+
+        .ah-side-body {
+          padding: 1.2rem 1.4rem;
+        }
+
+        /* PROGRESS */
+        .ah-progress-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          font-size: 0.78rem;
+          font-weight: 500;
+          color: #4a4a6a;
+          margin-bottom: 0.4rem;
+        }
+
+        .ah-progress-val {
+          font-weight: 700;
+          color: #059669;
+        }
+
+        .ah-progress-track {
+          height: 6px;
+          background: #f0f0f6;
+          border-radius: 10px;
+          overflow: hidden;
+          margin-bottom: 1rem;
+        }
+
+        .ah-progress-fill {
+          height: 100%;
+          background: linear-gradient(90deg, #4f46e5, #7c3aed);
+          border-radius: 10px;
+          transition: width 0.6s ease;
+        }
+
+        .ah-metric-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0.55rem 0;
+          border-bottom: 1px solid #f5f5fa;
+          font-size: 0.78rem;
+        }
+
+        .ah-metric-row:last-child { border-bottom: none; }
+
+        .ah-metric-label { color: #7070a0; }
+        .ah-metric-val { font-weight: 700; color: #1a1a2e; }
+
+        /* ALERT BOX */
+        .ah-alert-box {
+          background: #fff7ed;
+          border: 1px solid #fed7aa;
+          border-radius: 12px;
+          padding: 1rem 1.1rem;
+        }
+
+        .ah-alert-title {
+          font-size: 0.82rem;
+          font-weight: 700;
+          color: #c2410c;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin-bottom: 0.35rem;
+        }
+
+        .ah-alert-desc {
+          font-size: 0.76rem;
+          color: #ea580c;
+        }
+
+        .ah-all-clear {
+          text-align: center;
+          padding: 1.5rem 1rem;
+        }
+
+        .ah-all-clear-title {
+          font-size: 0.85rem;
+          font-weight: 700;
+          color: #1a1a2e;
+          margin-top: 0.75rem;
+        }
+
+        .ah-all-clear-sub {
+          font-size: 0.75rem;
+          color: #9090a8;
+          margin-top: 0.2rem;
+        }
+
+        /* RECENT TABLE */
+        .ah-table-card {
+          background: #ffffff;
+          border: 1px solid #e8e8f0;
+          border-radius: 18px;
+          overflow: hidden;
+        }
+
+        .ah-table-header {
+          padding: 1.3rem 1.5rem 1rem;
+          border-bottom: 1px solid #f0f0f6;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 0.75rem;
+        }
+
+        .ah-table-title {
+          font-size: 0.95rem;
+          font-weight: 700;
+          color: #1a1a2e;
+        }
+
+        .ah-table-sub {
+          font-size: 0.73rem;
+          color: #9090a8;
+          margin-top: 0.15rem;
+        }
+
+        .ah-view-all-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: #4f46e5;
+          background: #eef2ff;
+          border: 1px solid #c7d2fe;
+          border-radius: 9px;
+          padding: 0.4rem 0.85rem;
+          cursor: pointer;
+          transition: background 0.2s, border-color 0.2s;
+        }
+
+        .ah-view-all-btn:hover {
+          background: #e0e7ff;
+          border-color: #a5b4fc;
+        }
+
+        .ah-ticket-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0.9rem 1.5rem;
+          border-bottom: 1px solid #f5f5fa;
+          transition: background 0.15s;
+          gap: 0.75rem;
+        }
+
+        .ah-ticket-row:last-child { border-bottom: none; }
+
+        .ah-ticket-row:hover { background: #f8f8fb; }
+
+        .ah-ticket-icon {
+          width: 36px;
+          height: 36px;
+          border-radius: 10px;
+          background: #eef2ff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .ah-ticket-cat {
+          font-size: 0.82rem;
+          font-weight: 600;
+          color: #1a1a2e;
+        }
+
+        .ah-ticket-meta {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          margin-top: 0.2rem;
+          font-size: 0.7rem;
+          color: #9090a8;
+        }
+
+        .ah-ticket-meta-item {
+          display: flex;
+          align-items: center;
+          gap: 0.3rem;
+        }
+
+        .ah-eye-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          border-radius: 8px;
+          background: transparent;
+          border: 1px solid #e8e8f0;
+          color: #9090a8;
+          cursor: pointer;
+          transition: background 0.15s, color 0.15s, border-color 0.15s;
+          flex-shrink: 0;
+        }
+
+        .ah-eye-btn:hover {
+          background: #eef2ff;
+          color: #4f46e5;
+          border-color: #c7d2fe;
+        }
+
+        .ah-empty {
+          text-align: center;
+          padding: 2.5rem 1rem;
+        }
+
+        .ah-empty-icon {
+          width: 52px;
+          height: 52px;
+          background: #f5f5f8;
+          border-radius: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 0 auto 0.75rem;
+        }
+
+        .ah-empty-title {
+          font-size: 0.88rem;
+          font-weight: 700;
+          color: #1a1a2e;
+        }
+
+        .ah-empty-sub {
+          font-size: 0.75rem;
+          color: #9090a8;
+          margin-top: 0.2rem;
+        }
+
+        /* BOTTOM CARDS */
+        .ah-info-card {
+          background: #ffffff;
+          border: 1px solid #e8e8f0;
+          border-radius: 16px;
+          padding: 1.3rem 1.4rem;
+          transition: box-shadow 0.2s, transform 0.18s;
+        }
+
+        .ah-info-card:hover {
+          box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+          transform: translateY(-2px);
+        }
+
+        .ah-info-icon {
+          width: 38px;
+          height: 38px;
+          border-radius: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 1rem;
+        }
+
+        .ah-info-title {
+          font-size: 0.82rem;
+          font-weight: 700;
+          color: #1a1a2e;
+          margin-bottom: 0.15rem;
+        }
+
+        .ah-info-sub {
+          font-size: 0.7rem;
+          color: #9090a8;
+          margin-bottom: 1rem;
+        }
+
+        .ah-info-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0.45rem 0;
+          border-bottom: 1px solid #f5f5fa;
+          font-size: 0.76rem;
+        }
+
+        .ah-info-row:last-child { border-bottom: none; }
+        .ah-info-row-label { color: #8080a0; }
+        .ah-info-row-val { font-weight: 700; color: #1a1a2e; }
+
+        .ah-status-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: #10b981;
+          display: inline-block;
+          margin-right: 0.4rem;
+        }
+
+        .ah-status-badge {
+          font-size: 0.62rem;
+          font-weight: 700;
+          background: #f0fdf4;
+          color: #059669;
+          border: 1px solid #bbf7d0;
+          border-radius: 100px;
+          padding: 0.15rem 0.5rem;
+        }
+      `}</style>
+
+      <div className="ah-wrap min-h-screen bg-[#f5f5f8]">
+        <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
+
+        {(isMobile || isTablet) && sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/40 z-30 backdrop-blur-sm lg:hidden"
+            onClick={toggleSidebar}
+          />
         )}
-      >
-        {/* Main content area */}
-        <main className="w-full px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
-          {/* Header */}
+
+        <div
+          className={cn(
+            "transition-all duration-300 ease-in-out ml-0",
+            sidebarOpen ? "lg:ml-64" : "lg:ml-20"
+          )}
+        >
+          {/* HEADER */}
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
+            className="ah-header"
+            initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6"
+            transition={{ duration: 0.4 }}
           >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                  Admin Dashboard
-                </h1>
-                <p className="text-gray-600 mt-1">
-                  Welcome back, {TitleCase(user?.name)}. Here's your overview for today.
-                </p>
+            <div>
+              <div className="ah-tag">
+                <div className="ah-tag-dot" />
+                <span className="ah-tag-text">Admin Portal</span>
               </div>
+              <h1 className="ah-heading">Dashboard</h1>
+              <p className="ah-subheading">
+                Welcome back, {TitleCase(user?.name)}. Here's your overview for today.
+              </p>
+            </div>
+            <div className="ah-live-badge">
+              <div className="ah-live-dot" />
+              Live Data
             </div>
           </motion.div>
 
-          {/* Stats Grid */}
-          <motion.div
-            className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4"
-            variants={containerVariants}
-            initial="hidden"
-            animate="show"
-          >
-            {[
-              {
-                title: "Total Tickets",
-                value: stats.total,
-                description: "All tickets in system",
-                icon: <Package className="h-5 w-5 sm:h-6 sm:w-6" />,
-                trend: "+12%",
-              },
-              {
-                title: "Open Tickets",
-                value: stats.open,
-                description: "Requiring attention",
-                icon: <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6" />,
-                trend: "+5%",
-              },
-              {
-                title: "In Progress",
-                value: stats.inProgress,
-                description: "Being worked on",
-                icon: <RefreshCw className="h-5 w-5 sm:h-6 sm:w-6" />,
-                trend: "+8%",
-              },
-              {
-                title: "High Priority",
-                value: stats.highPriority,
-                description: "Critical issues",
-                icon: <Bell className="h-5 w-5 sm:h-6 sm:w-6" />,
-                trend: "+3%",
-              },
-            ].map((stat, index) => (
-              <motion.div key={index} variants={itemVariants}>
-                <Card className="relative overflow-hidden border border-gray-200 hover:border-gray-300 transition-all duration-300 h-full">
-                  <CardContent className="p-5">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-3">
-                          <span className="text-xs font-medium text-gray-500">
-                            {stat.title}
-                          </span>
-                        </div>
-                        <div className="flex items-end justify-between">
-                          <div>
-                            <p className="text-2xl font-bold text-gray-900">
-                              {stat.value}
-                            </p>
-                            <p className="text-sm text-gray-600 mt-1">
-                              {stat.description}
-                            </p>
-                          </div>
-                          <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                            {stat.trend}
-                          </span>
-                        </div>
+          <main className="ah-body space-y-5">
+            {/* STATS */}
+            <div>
+              <div className="ah-section-row">
+                <span className="ah-section-label">Overview</span>
+                <span className="ah-section-sub">Live ticket stats</span>
+              </div>
+              <motion.div
+                className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4"
+                variants={containerVariants}
+                initial="hidden"
+                animate="show"
+              >
+                {statCards.map((stat, index) => (
+                  <motion.div
+                    key={index}
+                    className="ah-stat-card"
+                    style={{
+                      "--accent": stat.accent,
+                      "--soft-bg": stat.softBg,
+                      "--accent-light": stat.softBg,
+                    } as React.CSSProperties}
+                    variants={itemVariants}
+                  >
+                    <p className="ah-stat-label">{stat.title}</p>
+                    <p className="ah-stat-value">{stat.value}</p>
+                    <p className="ah-stat-desc">{stat.description}</p>
+                    <div className="ah-stat-footer">
+                      <div className="ah-stat-icon-wrap">
+                        <stat.icon style={{ width: 16, height: 16, color: stat.accent }} />
                       </div>
+                      <span className="ah-trend">{stat.trend}</span>
                     </div>
-                  </CardContent>
-                </Card>
+                    <div className="ah-stat-watermark">
+                      <stat.icon style={{ width: 80, height: 80, color: stat.accent }} />
+                    </div>
+                  </motion.div>
+                ))}
               </motion.div>
-            ))}
-          </motion.div>
+            </div>
 
-          {/* Charts and Analytics Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Main Chart */}
-            <Card className="lg:col-span-2 border border-gray-200">
-              <CardHeader className="pb-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            {/* CHARTS + SIDE PANEL */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+              {/* Chart */}
+              <motion.div
+                className="ah-chart-card lg:col-span-2"
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.38 }}
+              >
+                <div className="ah-chart-header">
                   <div>
-                    <CardTitle className="text-lg font-semibold text-gray-900">
-                      Ticket Analytics
-                    </CardTitle>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Overview of ticket status and trends
-                    </p>
+                    <p className="ah-chart-title">Ticket Analytics</p>
+                    <p className="ah-chart-sub">Overview of ticket status and trends</p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge className="bg-purple-100 text-purple-700 border-purple-200">
-                      <Activity className="h-3 w-3 mr-1" />
-                      Live Data
-                    </Badge>
+                  <div className="ah-live-badge">
+                    <Activity style={{ width: 11, height: 11 }} />
+                    Live
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="flex items-center justify-center h-64">
-                    <Loader />
-                  </div>
-                ) : (
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <Chart tickets={tickets} />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Quick Stats Sidebar */}
-            <div className="space-y-6">
-              <Card className="border border-gray-200">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-lg font-semibold text-gray-900">
-                    Performance Metrics
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700">
-                        Resolution Rate
-                      </span>
-                      <span className="text-sm font-semibold text-green-600">
-                        {tickets.length > 0
-                          ? Math.round((stats.closed / tickets.length) * 100)
-                          : 0}%
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-gradient-to-r from-purple-600 to-indigo-600 h-2 rounded-full transition-all duration-500"
-                        style={{
-                          width: `${
-                            tickets.length > 0
-                              ? (stats.closed / tickets.length) * 100
-                              : 0
-                          }%`,
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700">
-                        Avg. Response Time
-                      </span>
-                      <span className="text-sm font-semibold text-blue-600">
-                        2.4 hrs
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-600">
-                      <TrendingUp className="h-3 w-3" />
-                      <span>Improvement of 15% this month</span>
-                    </div>
-                  </div>
-
-                  <div className="pt-4 border-t border-gray-200">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700">
-                        Team Members Active
-                      </span>
-                      <span className="text-sm font-semibold text-purple-600">
-                        12/15
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border border-gray-200">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-lg font-semibold text-gray-900">
-                    Priority Alerts
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {stats.highPriority > 0 ? (
-                    <div className="space-y-4">
-                      <div className="p-4 bg-rose-50 border border-rose-200 rounded-lg">
-                        <div className="flex items-center gap-3 mb-2">
-                          <AlertTriangle className="h-5 w-5 text-rose-600" />
-                          <span className="font-semibold text-rose-700">
-                            Attention Required
-                          </span>
-                        </div>
-                        <p className="text-sm text-rose-600">
-                          {stats.highPriority} High priority tickets need
-                          immediate attention
-                        </p>
-                      </div>
+                <div className="ah-chart-body">
+                  {loading ? (
+                    <div className="flex items-center justify-center h-56">
+                      <Loader />
                     </div>
                   ) : (
-                    <div className="text-center py-8">
-                      <CheckCircle className="h-12 w-12 text-green-400 mx-auto mb-3" />
-                      <p className="text-gray-700 font-medium">
-                        All systems operational
-                      </p>
-                      <p className="text-sm text-gray-500 mt-1">
-                        No critical issues detected
-                      </p>
+                    <div className="ah-chart-inner">
+                      <Chart tickets={tickets} />
                     </div>
                   )}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-
-          {/* Recent Activity Section */}
-          <Card className="border border-gray-200">
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <CardTitle className="text-lg font-semibold text-gray-900">
-                    Recent Activity
-                  </CardTitle>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Latest tickets and updates
-                  </p>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-gray-300"
-                  onClick={() => navigate('/all-tickets')}
+              </motion.div>
+
+              {/* Side panel */}
+              <motion.div
+                className="space-y-4"
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.28, duration: 0.38 }}
+              >
+                {/* Performance */}
+                <div className="ah-side-card">
+                  <div className="ah-side-header">
+                    <p className="ah-side-title">Performance Metrics</p>
+                  </div>
+                  <div className="ah-side-body space-y-3">
+                    <div>
+                      <div className="ah-progress-row">
+                        <span>Resolution Rate</span>
+                        <span className="ah-progress-val">
+                          {tickets.length > 0
+                            ? Math.round((stats.closed / tickets.length) * 100)
+                            : 0}%
+                        </span>
+                      </div>
+                      <div className="ah-progress-track">
+                        <div
+                          className="ah-progress-fill"
+                          style={{
+                            width: `${tickets.length > 0 ? (stats.closed / tickets.length) * 100 : 0}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className="ah-metric-row">
+                      <span className="ah-metric-label">Avg. Response Time</span>
+                      <span className="ah-metric-val" style={{ color: "#0284c7" }}>2.4 hrs</span>
+                    </div>
+                    <div className="ah-metric-row" style={{ alignItems: "flex-start" }}>
+                      <span className="ah-metric-label" style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                        <TrendingUp style={{ width: 11, height: 11, color: "#059669" }} />
+                        Improvement
+                      </span>
+                      <span className="ah-metric-val" style={{ color: "#059669" }}>+15% this month</span>
+                    </div>
+                    <div className="ah-metric-row">
+                      <span className="ah-metric-label">Team Active</span>
+                      <span className="ah-metric-val" style={{ color: "#7c3aed" }}>12 / 15</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Priority Alerts */}
+                <div className="ah-side-card">
+                  <div className="ah-side-header">
+                    <p className="ah-side-title">Priority Alerts</p>
+                  </div>
+                  <div className="ah-side-body">
+                    {stats.highPriority > 0 ? (
+                      <div className="ah-alert-box">
+                        <p className="ah-alert-title">
+                          <AlertTriangle style={{ width: 14, height: 14 }} />
+                          Attention Required
+                        </p>
+                        <p className="ah-alert-desc">
+                          {stats.highPriority} high priority tickets need immediate attention.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="ah-all-clear">
+                        <CheckCircle style={{ width: 36, height: 36, color: "#10b981", margin: "0 auto" }} />
+                        <p className="ah-all-clear-title">All systems operational</p>
+                        <p className="ah-all-clear-sub">No critical issues detected</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+
+            {/* RECENT ACTIVITY */}
+            <motion.div
+              className="ah-table-card"
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35, duration: 0.38 }}
+            >
+              <div className="ah-table-header">
+                <div>
+                  <p className="ah-table-title">Recent Activity</p>
+                  <p className="ah-table-sub">Latest tickets and updates</p>
+                </div>
+                <button
+                  className="ah-view-all-btn"
+                  onClick={() => navigate("/all-tickets")}
                 >
-                  <Ticket className="h-4 w-4 mr-2" />
+                  <Ticket style={{ width: 13, height: 13 }} />
                   View All Tickets
-                </Button>
+                </button>
               </div>
-            </CardHeader>
-            <CardContent>
+
               {loading ? (
-                <div className="flex items-center justify-center py-8">
+                <div className="flex items-center justify-center py-10">
                   <Loader />
                 </div>
               ) : tickets.length > 0 ? (
-                <div className="space-y-3">
+                <div>
                   {tickets.slice(0, isMobile ? 3 : 5).map((ticket) => (
-                    <div
-                      key={ticket._id}
-                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className="p-2 bg-white rounded-lg border border-gray-300">
-                          <Ticket className="h-4 w-4 text-purple-600" />
+                    <div key={ticket._id} className="ah-ticket-row">
+                      <div className="ah-ticket-icon">
+                        <Ticket style={{ width: 16, height: 16, color: "#4f46e5" }} />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                          <span className="ah-ticket-cat">{ticket.category}</span>
+                          <span
+                            className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${getStatusColor(ticket.status)}`}
+                            style={{ fontSize: "0.62rem" }}
+                          >
+                            {ticket.status}
+                          </span>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <p className="text-sm font-medium text-gray-900 truncate">
-                              {ticket.category}
-                            </p>
-                            <Badge
-                              className={`text-xs ${getStatusColor(
-                                ticket.status
-                              )}`}
-                            >
-                              {ticket.status}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center gap-4 text-xs text-gray-600">
-                            <span className="flex items-center gap-1">
-                              <Users className="h-3 w-3" />
-                              {ticket.assignedTo || "Unassigned"}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {new Date(ticket.createdAt).toLocaleDateString()}
-                            </span>
-                          </div>
+                        <div className="ah-ticket-meta">
+                          <span className="ah-ticket-meta-item">
+                            <Users style={{ width: 10, height: 10 }} />
+                            {ticket.assignedTo || "Unassigned"}
+                          </span>
+                          <span className="ah-ticket-meta-item">
+                            <Clock style={{ width: 10, height: 10 }} />
+                            {new Date(ticket.createdAt).toLocaleDateString()}
+                          </span>
                         </div>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-gray-600 hover:text-purple-600"
+                      <button
+                        className="ah-eye-btn"
                         onClick={() => navigate(`/ticket/${ticket._id}`)}
                       >
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                        <Eye style={{ width: 14, height: 14 }} />
+                      </button>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <div className="p-4 bg-gray-100 rounded-full inline-block mb-3">
-                    <Ticket className="h-8 w-8 text-gray-400" />
+                <div className="ah-empty">
+                  <div className="ah-empty-icon">
+                    <Ticket style={{ width: 22, height: 22, color: "#c0c0d0" }} />
                   </div>
-                  <p className="text-gray-700 font-medium">No tickets found</p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Tickets will appear here once created
-                  </p>
+                  <p className="ah-empty-title">No tickets found</p>
+                  <p className="ah-empty-sub">Tickets will appear here once created</p>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </motion.div>
 
-          {/* Additional Info Section */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="border border-gray-200">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-purple-100 rounded-lg">
-                    <Users className="h-5 w-5 text-purple-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      Team Performance
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      This week's metrics
-                    </p>
-                  </div>
+            {/* BOTTOM INFO CARDS */}
+            <motion.div
+              className="grid grid-cols-1 md:grid-cols-3 gap-4"
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.42, duration: 0.38 }}
+            >
+              {/* Team Performance */}
+              <div className="ah-info-card">
+                <div className="ah-info-icon" style={{ background: "#f3f0ff" }}>
+                  <Users style={{ width: 18, height: 18, color: "#7c3aed" }} />
                 </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Tickets Closed</span>
-                    <span className="font-medium text-gray-900">42</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Avg. Time</span>
-                    <span className="font-medium text-gray-900">4.2 hrs</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Satisfaction</span>
-                    <span className="font-medium text-green-600">94%</span>
-                  </div>
+                <p className="ah-info-title">Team Performance</p>
+                <p className="ah-info-sub">This week's metrics</p>
+                <div className="ah-info-row">
+                  <span className="ah-info-row-label">Tickets Closed</span>
+                  <span className="ah-info-row-val">42</span>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="ah-info-row">
+                  <span className="ah-info-row-label">Avg. Time</span>
+                  <span className="ah-info-row-val">4.2 hrs</span>
+                </div>
+                <div className="ah-info-row">
+                  <span className="ah-info-row-label">Satisfaction</span>
+                  <span className="ah-info-row-val" style={{ color: "#059669" }}>94%</span>
+                </div>
+              </div>
 
-            <Card className="border border-gray-200">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Clock className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      Response Time
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      Average across teams
-                    </p>
-                  </div>
+              {/* Response Time */}
+              <div className="ah-info-card">
+                <div className="ah-info-icon" style={{ background: "#f0f9ff" }}>
+                  <Clock style={{ width: 18, height: 18, color: "#0284c7" }} />
                 </div>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">IT Support</span>
-                    <span className="font-medium text-gray-900">1.8 hrs</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">HR Support</span>
-                    <span className="font-medium text-gray-900">3.1 hrs</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">General</span>
-                    <span className="font-medium text-gray-900">5.2 hrs</span>
-                  </div>
+                <p className="ah-info-title">Response Time</p>
+                <p className="ah-info-sub">Average across teams</p>
+                <div className="ah-info-row">
+                  <span className="ah-info-row-label">IT Support</span>
+                  <span className="ah-info-row-val">1.8 hrs</span>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="ah-info-row">
+                  <span className="ah-info-row-label">HR Support</span>
+                  <span className="ah-info-row-val">3.1 hrs</span>
+                </div>
+                <div className="ah-info-row">
+                  <span className="ah-info-row-label">General</span>
+                  <span className="ah-info-row-val">5.2 hrs</span>
+                </div>
+              </div>
 
-            <Card className="border border-gray-200">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      System Status
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      All services operational
-                    </p>
-                  </div>
+              {/* System Status */}
+              <div className="ah-info-card">
+                <div className="ah-info-icon" style={{ background: "#f0fdf4" }}>
+                  <CheckCircle style={{ width: 18, height: 18, color: "#059669" }} />
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                      <span className="text-sm text-gray-600">API Service</span>
-                    </div>
-                    <Badge className="bg-green-100 text-green-700">Active</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                      <span className="text-sm text-gray-600">Database</span>
-                    </div>
-                    <Badge className="bg-green-100 text-green-700">Active</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                      <span className="text-sm text-gray-600">Storage</span>
-                    </div>
-                    <Badge className="bg-green-100 text-green-700">Active</Badge>
-                  </div>
+                <p className="ah-info-title">System Status</p>
+                <p className="ah-info-sub">All services operational</p>
+                <div className="ah-info-row">
+                  <span className="ah-info-row-label">
+                    <span className="ah-status-dot" />
+                    API Service
+                  </span>
+                  <span className="ah-status-badge">Active</span>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        </main>
+                <div className="ah-info-row">
+                  <span className="ah-info-row-label">
+                    <span className="ah-status-dot" />
+                    Database
+                  </span>
+                  <span className="ah-status-badge">Active</span>
+                </div>
+                <div className="ah-info-row">
+                  <span className="ah-info-row-label">
+                    <span className="ah-status-dot" />
+                    Storage
+                  </span>
+                  <span className="ah-status-badge">Active</span>
+                </div>
+              </div>
+            </motion.div>
+          </main>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
