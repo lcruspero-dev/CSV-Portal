@@ -175,7 +175,11 @@ const UserHome = () => {
 
   const itemVariants = {
     hidden: { opacity: 0, y: 14 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.38, ease: "easeOut" } },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.38, ease: "easeOut" },
+    },
   };
 
   return (
@@ -531,14 +535,15 @@ const UserHome = () => {
             <div>
               <div className="uh-tag">
                 <div className="uh-tag-dot" />
-                <span className="uh-tag-text">Employee Portal</span>
+                <span className="uh-tag-text">
+                  Employee Portal with benefits
+                </span>
               </div>
               <h1 className="uh-heading">Dashboard</h1>
               <p className="uh-subheading">
                 Welcome back, {TitleCase(user?.name) || "Employee"}
               </p>
             </div>
-          
           </div>
         </motion.div>
 
@@ -552,7 +557,9 @@ const UserHome = () => {
           >
             <motion.div className="uh-stat-card" variants={itemVariants}>
               <p className="uh-stat-label">Pending Actions</p>
-              <p className="uh-stat-value">{unacknowledgedCount + nteNotificationCount}</p>
+              <p className="uh-stat-value">
+                {unacknowledgedCount + nteNotificationCount}
+              </p>
               <div
                 className="uh-stat-icon-pill"
                 style={{ background: "#f3f0ff", color: "#7c3aed" }}
@@ -576,13 +583,22 @@ const UserHome = () => {
                 Modules
               </div>
               <div className="uh-stat-watermark">
-                <Briefcase style={{ width: 80, height: 80, color: "#4f46e5" }} />
+                <Briefcase
+                  style={{ width: 80, height: 80, color: "#4f46e5" }}
+                />
               </div>
             </motion.div>
 
             <motion.div className="uh-stat-card" variants={itemVariants}>
               <p className="uh-stat-label">Account Status</p>
-              <p className="uh-stat-value" style={{ color: "#059669", fontSize: "1.6rem", paddingTop: "0.1rem" }}>
+              <p
+                className="uh-stat-value"
+                style={{
+                  color: "#059669",
+                  fontSize: "1.6rem",
+                  paddingTop: "0.1rem",
+                }}
+              >
                 Active
               </p>
               <div
@@ -615,11 +631,13 @@ const UserHome = () => {
               <motion.div
                 key={feature.id}
                 className="uh-feature-card"
-                style={{
-                  "--accent": feature.accent,
-                  "--soft-bg": feature.softBg,
-                  "--accent-light": feature.softBg,
-                } as any}
+                style={
+                  {
+                    "--accent": feature.accent,
+                    "--soft-bg": feature.softBg,
+                    "--accent-light": feature.softBg,
+                  } as any
+                }
                 onClick={() => navigate(feature.path)}
                 variants={itemVariants}
                 title={feature.tooltip || ""}
@@ -630,10 +648,17 @@ const UserHome = () => {
                       style={{ width: 20, height: 20, color: feature.accent }}
                     />
                     {feature.notification > 0 && (
-                      <span className="uh-icon-badge">{feature.notification}</span>
+                      <span className="uh-icon-badge">
+                        {feature.notification}
+                      </span>
                     )}
                     {feature.exclamation && !feature.notification && (
-                      <span className="uh-icon-badge" style={{ background: "#d97706" }}>!</span>
+                      <span
+                        className="uh-icon-badge"
+                        style={{ background: "#d97706" }}
+                      >
+                        !
+                      </span>
                     )}
                   </div>
                   <ArrowUpRight
@@ -654,7 +679,9 @@ const UserHome = () => {
                     <span className="uh-badge">{feature.notification} new</span>
                   )}
                   {feature.exclamation && !feature.notification && (
-                    <span className="uh-badge uh-badge-warn">Action needed</span>
+                    <span className="uh-badge uh-badge-warn">
+                      Action needed
+                    </span>
                   )}
                 </div>
               </motion.div>
