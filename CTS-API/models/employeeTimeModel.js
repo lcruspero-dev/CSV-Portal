@@ -96,6 +96,10 @@ const employeeTimeSchema = mongoose.Schema(
       type: String,
       default: null,
     },
+    overtime: {
+      type: String,
+      default: null,
+    },
     notes: {
       type: String,
       default: null,
@@ -105,8 +109,8 @@ const employeeTimeSchema = mongoose.Schema(
     },
   },
   {
-    timestamps: true, 
-  }
+    timestamps: true,
+  },
 );
 
 module.exports = mongoose.model("EmployeeTime", employeeTimeSchema);
