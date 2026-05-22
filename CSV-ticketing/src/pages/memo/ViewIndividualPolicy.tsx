@@ -91,10 +91,10 @@ const DocumentTabs = ({
   };
 
   const totalAckPages = Math.ceil(
-    (acknowledgedUsers?.length || 0) / ITEMS_PER_PAGE
+    (acknowledgedUsers?.length || 0) / ITEMS_PER_PAGE,
   );
   const totalUnackPages = Math.ceil(
-    unacknowledgedUsers.length / ITEMS_PER_PAGE
+    unacknowledgedUsers.length / ITEMS_PER_PAGE,
   );
 
   const paginatedAckUsers = acknowledgedUsers
@@ -102,13 +102,13 @@ const DocumentTabs = ({
     : [];
   const paginatedUnackUsers = paginateData(
     unacknowledgedUsers,
-    currentUnackPage
+    currentUnackPage,
   );
 
   const renderPagination = (
     currentPage: number,
     totalPages: number,
-    setPage: (page: number) => void
+    setPage: (page: number) => void,
   ) => (
     <Pagination className="my-4 text-xs">
       <PaginationContent>
@@ -249,7 +249,7 @@ const DocumentTabs = ({
             renderPagination(
               currentUnackPage,
               totalUnackPages,
-              setCurrentUnackPage
+              setCurrentUnackPage,
             )}
         </div>
       </TabsContent>
@@ -258,12 +258,16 @@ const DocumentTabs = ({
 };
 
 interface ViewIndividualDocumentProps {
-  documentType?: 'memo' | 'policy';
+  documentType?: "memo" | "policy";
 }
 
-const ViewIndividualDocument = ({ documentType = 'policy' }: ViewIndividualDocumentProps) => {
+const ViewIndividualDocument = ({
+  documentType = "policy",
+}: ViewIndividualDocumentProps) => {
   const [document, setDocument] = useState<Document | null>(null);
-  const [unacknowledgedUsers, setUnacknowledgedUsers] = useState<UnacknowledgedUser[]>([]);
+  const [unacknowledgedUsers, setUnacknowledgedUsers] = useState<
+    UnacknowledgedUser[]
+  >([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { id } = useParams<{ id: string }>();
@@ -275,7 +279,7 @@ const ViewIndividualDocument = ({ documentType = 'policy' }: ViewIndividualDocum
   const [tempChecked, setTempChecked] = useState(false);
   const [showPdfPreview, setShowPdfPreview] = useState(false);
 
-  const isPolicyRoute = documentType === 'policy';
+  const isPolicyRoute = documentType === "policy";
 
   const handleCheckboxChange = () => {
     setTempChecked(true);
@@ -287,68 +291,76 @@ const ViewIndividualDocument = ({ documentType = 'policy' }: ViewIndividualDocum
     setIsDialogOpen(false);
   };
 
-  const getIndividualDocument = useCallback(async (id: string) => {
-    try {
-      let response;
-      if (isPolicyRoute) {
-        response = await TicketAPi.getIndividualPolicy(id);
-      } else {
-        response = await TicketAPi.getIndividualMemo(id);
-      }
-      
-      if (response.data) {
-        setDocument(response.data);
-        setError(null);
-      } else {
-        throw new Error('No data received');
-      }
-    } catch (error: any) {
-      console.error('Error fetching document:', error);
-      const errorMessage = error.response?.data?.message || `Failed to load ${documentType}`;
-      setError(errorMessage);
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    }
-  }, [isPolicyRoute, toast, documentType]);
+  const getIndividualDocument = useCallback(
+    async (id: string) => {
+      try {
+        let response;
+        if (isPolicyRoute) {
+          response = await TicketAPi.getIndividualPolicy(id);
+        } else {
+          response = await TicketAPi.getIndividualMemo(id);
+        }
 
-const getUnacknowledgedUsers = useCallback(async (id: string) => {
-  try {
-    let response;
-    if (isPolicyRoute) {
-      response = await TicketAPi.getUserUnacknowledgedPol(id);
-    } else {
-      response = await TicketAPi.getUserUnacknowledged(id);
-    }
-    
-    console.log('Unacknowledged API Response:', response);
-    
-    if (response?.data) {
-      // For policies, the response should have unacknowledgedUsers array
-      if (response.data.unacknowledgedUsers && Array.isArray(response.data.unacknowledgedUsers)) {
-        setUnacknowledgedUsers(response.data.unacknowledgedUsers);
+        if (response.data) {
+          setDocument(response.data);
+          setError(null);
+        } else {
+          throw new Error("No data received");
+        }
+      } catch (error: any) {
+        console.error("Error fetching document:", error);
+        const errorMessage =
+          error.response?.data?.message || `Failed to load ${documentType}`;
+        setError(errorMessage);
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
       }
-      // For memos or other response structures
-      else if (Array.isArray(response.data)) {
-        setUnacknowledgedUsers(response.data);
-      }
-      else if (response.data.data && Array.isArray(response.data.data)) {
-        setUnacknowledgedUsers(response.data.data);
-      }
-      else {
-        console.warn('Unexpected response structure:', response.data);
+    },
+    [isPolicyRoute, toast, documentType],
+  );
+
+  const getUnacknowledgedUsers = useCallback(
+    async (id: string) => {
+      try {
+        let response;
+        if (isPolicyRoute) {
+          response = await TicketAPi.getUserUnacknowledgedPol(id);
+        } else {
+          response = await TicketAPi.getUserUnacknowledged(id);
+        }
+
+        console.log("Unacknowledged API Response:", response);
+
+        if (response?.data) {
+          // For policies, the response should have unacknowledgedUsers array
+          if (
+            response.data.unacknowledgedUsers &&
+            Array.isArray(response.data.unacknowledgedUsers)
+          ) {
+            setUnacknowledgedUsers(response.data.unacknowledgedUsers);
+          }
+          // For memos or other response structures
+          else if (Array.isArray(response.data)) {
+            setUnacknowledgedUsers(response.data);
+          } else if (response.data.data && Array.isArray(response.data.data)) {
+            setUnacknowledgedUsers(response.data.data);
+          } else {
+            console.warn("Unexpected response structure:", response.data);
+            setUnacknowledgedUsers([]);
+          }
+        } else {
+          setUnacknowledgedUsers([]);
+        }
+      } catch (error: any) {
+        console.error("Error fetching unacknowledged users:", error);
         setUnacknowledgedUsers([]);
       }
-    } else {
-      setUnacknowledgedUsers([]);
-    }
-  } catch (error: any) {
-    console.error('Error fetching unacknowledged users:', error);
-    setUnacknowledgedUsers([]);
-  }
-}, [isPolicyRoute]);
+    },
+    [isPolicyRoute],
+  );
 
   const handleAcknowledged = async (id: string) => {
     try {
@@ -358,7 +370,7 @@ const getUnacknowledgedUsers = useCallback(async (id: string) => {
       } else {
         response = await TicketAPi.acknowledgement(id);
       }
-      
+
       if (response.data) {
         await getIndividualDocument(id);
         await getUnacknowledgedUsers(id);
@@ -370,12 +382,14 @@ const getUnacknowledgedUsers = useCallback(async (id: string) => {
         setIsDialogOpen(false);
         setIsChecked(true);
       } else {
-        throw new Error('No response data');
+        throw new Error("No response data");
       }
     } catch (error: any) {
-      console.error('Acknowledgment error:', error);
+      console.error("Acknowledgment error:", error);
       setTempChecked(false);
-      const errorMessage = error.response?.data?.message || `Failed to acknowledge ${documentType}`;
+      const errorMessage =
+        error.response?.data?.message ||
+        `Failed to acknowledge ${documentType}`;
       toast({
         title: "Error",
         description: errorMessage,
@@ -396,7 +410,7 @@ const getUnacknowledgedUsers = useCallback(async (id: string) => {
             setIsLoading(false);
           });
         } catch (error) {
-          console.error('Error in fetchData:', error);
+          console.error("Error in fetchData:", error);
           setIsLoading(false);
         }
       };
@@ -431,8 +445,8 @@ const getUnacknowledgedUsers = useCallback(async (id: string) => {
           <h2 className="text-xl font-bold text-gray-900 mb-2">Error</h2>
           <p className="text-gray-600">{error}</p>
           <p className="text-sm text-gray-500 mt-2">Document ID: {id}</p>
-          <Button 
-            onClick={() => window.history.back()} 
+          <Button
+            onClick={() => window.history.back()}
             className="mt-4"
             variant="outline"
           >
@@ -450,8 +464,12 @@ const getUnacknowledgedUsers = useCallback(async (id: string) => {
           <BackButton />
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Document Not Found</h2>
-          <p className="text-gray-600">The requested {documentType} could not be found.</p>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">
+            Document Not Found
+          </h2>
+          <p className="text-gray-600">
+            The requested {documentType} could not be found.
+          </p>
           <p className="text-sm text-gray-500 mt-2">Document ID: {id}</p>
         </div>
       </div>
@@ -507,7 +525,9 @@ const getUnacknowledgedUsers = useCallback(async (id: string) => {
             </div>
 
             {/* FIXED: Added optional chaining for acknowledgedby */}
-            {!document.acknowledgedby?.some((ack) => ack.userId === user?._id) && (
+            {!document.acknowledgedby?.some(
+              (ack) => ack.userId === user?._id,
+            ) && (
               <div className="flex items-center">
                 <label className="flex items-center space-x-3 cursor-pointer">
                   <div className="relative">
@@ -563,6 +583,21 @@ const getUnacknowledgedUsers = useCallback(async (id: string) => {
               <FileText className="text-blue-600" size={20} />
               <span className="text-gray-800">{document.file}</span>
             </DialogTitle>
+            <DialogDescription>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() => {
+                  window.open(
+                    `${import.meta.env.VITE_UPLOADFILES_URL}/files/${document.file}`,
+                    "_blank",
+                  );
+                }}
+              >
+                Open in New Tab
+              </Button>
+            </DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-hidden">
             <iframe
@@ -580,46 +615,46 @@ const getUnacknowledgedUsers = useCallback(async (id: string) => {
 
       {/* Acknowledgment Dialog - FIXED DOM NESTING */}
       {/* Acknowledgment Dialog - FIXED with proper DialogDescription */}
-<Dialog open={isDialogOpen} onOpenChange={handleCancelAcknowledgment}>
-  <DialogContent className="bg-white rounded-lg max-w-md">
-    <DialogHeader>
-      <DialogTitle className="text-xl text-gray-800">
-        Confirm Acknowledgement
-      </DialogTitle>
-      <DialogDescription className="mt-4 text-gray-600">
-        By acknowledging this {documentType}, you confirm that you have received
-        and understood its contents.
-      </DialogDescription>
-    </DialogHeader>
-    
-    <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 mt-4">
-      <p className="font-medium text-blue-800">Declaration:</p>
-      <p className="mt-2 text-blue-700">
-        "I acknowledge receipt of this {documentType} and understand the
-        information provided. I will comply with any instructions or
-        requirements outlined herein."
-      </p>
-    </div>
-    
-    <DialogFooter className="mt-6">
-      <div className="flex gap-1">
-        <Button
-          variant="outline"
-          onClick={handleCancelAcknowledgment}
-          className="flex-1 text-sm scale-90"
-        >
-          Cancel
-        </Button>
-        <Button
-          onClick={() => handleAcknowledged(id as string)}
-          className="flex-1 bg-blue-600 hover:bg-blue-700 text-sm scale-90"
-        >
-          Confirm
-        </Button>
-      </div>
-    </DialogFooter>
-  </DialogContent>
-</Dialog>
+      <Dialog open={isDialogOpen} onOpenChange={handleCancelAcknowledgment}>
+        <DialogContent className="bg-white rounded-lg max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl text-gray-800">
+              Confirm Acknowledgement
+            </DialogTitle>
+            <DialogDescription className="mt-4 text-gray-600">
+              By acknowledging this {documentType}, you confirm that you have
+              received and understood its contents.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 mt-4">
+            <p className="font-medium text-blue-800">Declaration:</p>
+            <p className="mt-2 text-blue-700">
+              "I acknowledge receipt of this {documentType} and understand the
+              information provided. I will comply with any instructions or
+              requirements outlined herein."
+            </p>
+          </div>
+
+          <DialogFooter className="mt-6">
+            <div className="flex gap-1">
+              <Button
+                variant="outline"
+                onClick={handleCancelAcknowledgment}
+                className="flex-1 text-sm scale-90"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => handleAcknowledged(id as string)}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-sm scale-90"
+              >
+                Confirm
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
