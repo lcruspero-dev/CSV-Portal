@@ -43,7 +43,7 @@ const storage = multer.diskStorage({
   },
   filename: function (req, file, cb) {
     const uniqueFilename = getUniqueFilename(
-      path.join(uploadDir, file.originalname)
+      path.join(uploadDir, file.originalname),
     );
     cb(null, uniqueFilename);
   },
@@ -55,7 +55,7 @@ const formStorage = multer.diskStorage({
   },
   filename: function (req, file, cb) {
     const uniqueFilename = getUniqueFilename(
-      path.join(formUploadDir, file.originalname)
+      path.join(formUploadDir, file.originalname),
     );
     cb(null, uniqueFilename);
   },
@@ -127,7 +127,7 @@ app.get("/form-files/:filename", (req, res) => {
 app.put("/files/:filename", (req, res) => {
   const oldPath = path.join(uploadDir, req.params.filename);
   const newFilename = getUniqueFilename(
-    path.join(uploadDir, req.body.newFilename)
+    path.join(uploadDir, req.body.newFilename),
   );
   const newPath = path.join(uploadDir, newFilename);
 
@@ -189,7 +189,7 @@ app.get("/avatars/:filename", (req, res) => {
 app.put("/avatars/:filename", (req, res) => {
   const oldPath = path.join(avatarDir, req.params.filename);
   const newFilename = getUniqueFilename(
-    path.join(avatarDir, req.body.newFilename)
+    path.join(avatarDir, req.body.newFilename),
   );
   const newPath = path.join(avatarDir, newFilename);
 
