@@ -5,11 +5,7 @@ import BackButton from "@/components/kit/BackButton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -53,12 +49,12 @@ const UserViewIndividualTicket: React.FC = () => {
         const map = response.data.reduce(
           (
             acc: Record<string, string>,
-            curr: { userId: string; avatar: string }
+            curr: { userId: string; avatar: string },
           ) => {
             acc[curr.userId] = curr.avatar;
             return acc;
           },
-          {}
+          {},
         );
         setAvatarMap(map);
       } catch (error) {
@@ -154,12 +150,13 @@ const UserViewIndividualTicket: React.FC = () => {
   const handleFileDownload = (file: string) => {
     window.open(
       `${import.meta.env.VITE_UPLOADFILES_URL}/files/${file}`,
-      "_blank"
+      "_blank",
     );
   };
 
   const getStatusInfo = (status: string | undefined) => {
-    if (!status) return { color: "bg-gray-500", icon: <Clock className="h-4 w-4" /> };
+    if (!status)
+      return { color: "bg-gray-500", icon: <Clock className="h-4 w-4" /> };
 
     switch (status.toLowerCase()) {
       case "new":
@@ -189,7 +186,8 @@ const UserViewIndividualTicket: React.FC = () => {
   };
 
   const getPriorityInfo = (priority: string | undefined) => {
-    if (!priority) return { color: "bg-gray-500", icon: <Clock className="h-4 w-4" /> };
+    if (!priority)
+      return { color: "bg-gray-500", icon: <Clock className="h-4 w-4" /> };
 
     if (priority.includes("Critical") || priority.includes("1-")) {
       return {
@@ -246,19 +244,28 @@ const UserViewIndividualTicket: React.FC = () => {
             <span>Tickets #{details?.ticketNumber}</span>
             <span className="font-medium"></span>
           </div>
-          
+
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">My Support Ticket</h1>
-              <p className="text-gray-600 mt-1">View and manage your support request</p>
+              <h1 className="text-2xl font-bold text-gray-900">
+                My Support Ticket
+              </h1>
+              <p className="text-gray-600 mt-1">
+                View and manage your support request
+              </p>
             </div>
-            
+
             <div className="flex items-center gap-3">
-              <Badge className={`${statusInfo.color} text-white flex items-center gap-1`}>
+              <Badge
+                className={`${statusInfo.color} text-white flex items-center gap-1`}
+              >
                 {statusInfo.icon}
                 <span>{details?.status || "Unknown"}</span>
               </Badge>
-              <Badge variant="outline" className={`border ${priorityInfo.color.replace('bg-', 'border-')} ${priorityInfo.color.replace('bg-', 'text-')} flex items-center gap-1`}>
+              <Badge
+                variant="outline"
+                className={`border ${priorityInfo.color.replace("bg-", "border-")} ${priorityInfo.color.replace("bg-", "text-")} flex items-center gap-1`}
+              >
                 {priorityInfo.icon}
                 <span>{details?.priority?.replace(/^\d-/, "") || "Unset"}</span>
               </Badge>
@@ -273,8 +280,12 @@ const UserViewIndividualTicket: React.FC = () => {
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-3 border-b">
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${statusInfo.color} bg-opacity-10`}>
-                    <div className={`${statusInfo.color.replace('bg-', 'text-')}`}>
+                  <div
+                    className={`p-2 rounded-lg ${statusInfo.color} bg-opacity-10`}
+                  >
+                    <div
+                      className={`${statusInfo.color.replace("bg-", "text-")}`}
+                    >
                       {statusInfo.icon}
                     </div>
                   </div>
@@ -292,7 +303,9 @@ const UserViewIndividualTicket: React.FC = () => {
               <CardContent className="pt-6">
                 {/* Description */}
                 <div className="mb-6">
-                  <h3 className="font-medium text-gray-900 mb-3">Description</h3>
+                  <h3 className="font-medium text-gray-900 mb-3">
+                    Description
+                  </h3>
                   <div className="bg-gray-50 rounded-lg p-4">
                     <pre className="whitespace-pre-wrap font-sans text-gray-700">
                       {details?.description || "No description provided."}
@@ -310,7 +323,9 @@ const UserViewIndividualTicket: React.FC = () => {
                     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <p className="text-sm text-gray-600">Current Balance</p>
+                          <p className="text-sm text-gray-600">
+                            Current Balance
+                          </p>
                           <p className="text-2xl font-bold text-blue-700">
                             {leaveCredit ? (
                               <>{leaveCredit.currentBalance} days</>
@@ -320,8 +335,12 @@ const UserViewIndividualTicket: React.FC = () => {
                           </p>
                         </div>
                         <div className="space-y-2">
-                          <p className="text-sm text-gray-600">After Approval</p>
-                          <p className={`text-2xl font-bold ${balanceAfterApproval !== null && balanceAfterApproval < 5 ? "text-orange-600" : "text-emerald-700"}`}>
+                          <p className="text-sm text-gray-600">
+                            After Approval
+                          </p>
+                          <p
+                            className={`text-2xl font-bold ${balanceAfterApproval !== null && balanceAfterApproval < 5 ? "text-orange-600" : "text-emerald-700"}`}
+                          >
                             {balanceAfterApproval !== null ? (
                               <>{balanceAfterApproval} days</>
                             ) : (
@@ -333,7 +352,10 @@ const UserViewIndividualTicket: React.FC = () => {
                       {details?.leaveDays && (
                         <div className="mt-4 pt-4 border-t border-blue-100">
                           <p className="text-sm text-gray-600">
-                            Requested Leave: <span className="font-medium">{details.leaveDays} days</span>
+                            Requested Leave:{" "}
+                            <span className="font-medium">
+                              {details.leaveDays} days
+                            </span>
                           </p>
                         </div>
                       )}
@@ -358,7 +380,10 @@ const UserViewIndividualTicket: React.FC = () => {
                               src={`https://ui-avatars.com/api/?background=2563EB&color=fff&name=${details?.name || "?"}`}
                               alt={details?.name}
                             />
-                            <AvatarFallback>{details?.name?.substring(0, 2).toUpperCase() || "?"}</AvatarFallback>
+                            <AvatarFallback>
+                              {details?.name?.substring(0, 2).toUpperCase() ||
+                                "?"}
+                            </AvatarFallback>
                           </Avatar>
                           <div className="flex-1">
                             <form onSubmit={submitNote}>
@@ -402,7 +427,9 @@ const UserViewIndividualTicket: React.FC = () => {
                       <div className="text-center py-8">
                         <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-3" />
                         <p className="text-gray-500">No messages yet</p>
-                        <p className="text-sm text-gray-400 mt-1">Start the conversation</p>
+                        <p className="text-sm text-gray-400 mt-1">
+                          Start the conversation
+                        </p>
                       </div>
                     ) : (
                       notes
@@ -430,10 +457,11 @@ const UserViewIndividualTicket: React.FC = () => {
                                   className="object-cover"
                                 />
                                 <AvatarFallback>
-                                  {note.name?.substring(0, 2).toUpperCase() || "?"}
+                                  {note.name?.substring(0, 2).toUpperCase() ||
+                                    "?"}
                                 </AvatarFallback>
                               </Avatar>
-                              
+
                               <div className="flex-1 bg-white rounded-lg p-4 shadow-sm border border-gray-200">
                                 <div className="flex justify-between items-start mb-2">
                                   <div className="flex items-center gap-2">
@@ -472,7 +500,9 @@ const UserViewIndividualTicket: React.FC = () => {
             {/* Ticket Information */}
             <Card className="border-0 shadow-sm">
               <CardHeader>
-                <h3 className="font-semibold text-gray-900">Ticket Information</h3>
+                <h3 className="font-semibold text-gray-900">
+                  Ticket Information
+                </h3>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-3">
@@ -531,7 +561,9 @@ const UserViewIndividualTicket: React.FC = () => {
                       </div>
                       <div>
                         <p className="text-xs text-gray-500">Leave Days</p>
-                        <p className="font-medium text-gray-900">{details.leaveDays}</p>
+                        <p className="font-medium text-gray-900">
+                          {details.leaveDays}
+                        </p>
                       </div>
                     </div>
                   )}
@@ -544,11 +576,15 @@ const UserViewIndividualTicket: React.FC = () => {
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <FileText className="h-4 w-4 text-gray-700" />
-                        <p className="text-sm font-medium text-gray-900">Attachment</p>
+                        <p className="text-sm font-medium text-gray-900">
+                          Attachment
+                        </p>
                       </div>
                       <Button
                         variant="outline"
-                        onClick={() => handleFileDownload(details.file as string)}
+                        onClick={() =>
+                          handleFileDownload(details.file as string)
+                        }
                         className="w-full justify-start gap-2 border-gray-300 hover:border-gray-400"
                       >
                         <Download className="h-4 w-4" />
@@ -571,12 +607,17 @@ const UserViewIndividualTicket: React.FC = () => {
                     <span className="text-sm text-gray-600">Status</span>
                     <Badge className={`${statusInfo.color} text-white`}>
                       {statusInfo.icon}
-                      <span className="ml-1">{details?.status || "Unknown"}</span>
+                      <span className="ml-1">
+                        {details?.status || "Unknown"}
+                      </span>
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Priority</span>
-                    <Badge variant="outline" className={`border ${priorityInfo.color.replace('bg-', 'border-')} ${priorityInfo.color.replace('bg-', 'text-')}`}>
+                    <Badge
+                      variant="outline"
+                      className={`border ${priorityInfo.color.replace("bg-", "border-")} ${priorityInfo.color.replace("bg-", "text-")}`}
+                    >
                       {priorityInfo.icon}
                       <span className="ml-1">
                         {details?.priority?.replace(/^\d-/, "") || "Unset"}
@@ -586,8 +627,6 @@ const UserViewIndividualTicket: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
-
-          
           </div>
         </div>
       </div>

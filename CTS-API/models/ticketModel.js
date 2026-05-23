@@ -61,7 +61,7 @@ const ticketSchema = mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 ticketSchema.pre("save", async function (next) {
@@ -87,7 +87,7 @@ ticketSchema.pre("save", async function (next) {
       const counter = await Counter.findByIdAndUpdate(
         { _id: prefix },
         { $inc: { seq: 1 } },
-        { new: true, upsert: true }
+        { new: true, upsert: true },
       );
 
       this.ticketNumber = `${prefix}-${String(counter.seq).padStart(4, "0")}`;
