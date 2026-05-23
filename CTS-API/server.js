@@ -1,8 +1,10 @@
 const express = require("express");
 const { errorHandler } = require("./middleware/errorMiddleware");
 const connectDB = require("./config/db");
-const PORT = process.env.PORT;
+require("dotenv").config();
 const cors = require("cors");
+
+const PORT = process.env.PORT;
 
 connectDB();
 
@@ -12,7 +14,7 @@ const app = express();
 app.use(express.json());
 
 const corsOptions = {
-  origin: "*",
+  origin: [process.env.CSVPORTAL_END_PORT, process.env.CSVDMS_END_PORT],
   credentials: true,
   optionsSuccessStatus: 200,
 };
@@ -30,7 +32,7 @@ app.use("/api/categories", require("./routes/categoryRoutes"));
 app.use("/api/employeeTimes", require("./routes/employeeTimeRoutes"));
 app.use(
   "/api/ScheduleAndAttendanceRoutes",
-  require("./routes/ScheduleAndAttendanceRoutes")
+  require("./routes/ScheduleAndAttendanceRoutes"),
 );
 app.use("/api/surveys", require("./routes/surveyRoutes"));
 app.use("/api/ntes", require("./routes/nteRoutes"));
@@ -38,7 +40,6 @@ app.use("/api/coaching", require("./routes/coachingRoutes"));
 app.use("/api/userprofiles", require("./routes/userProfileRoutes"));
 app.use("/api/leave", require("./routes/leaveRoutes"));
 app.use("/api/payroll", require("./routes/payrollRoute.js"));
-
 
 app.get("/api/current-time", (_req, res) => {
   const currentTime = new Date();

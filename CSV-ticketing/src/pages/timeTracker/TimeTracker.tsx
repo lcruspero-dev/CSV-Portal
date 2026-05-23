@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable prefer-const */
@@ -21,15 +22,15 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import {
-  Filter,
-  Clock,
-  Home,
-  Coffee,
-  Utensils,
   AlertCircle,
   Calendar,
+  Clock,
+  Coffee,
+  Filter,
+  Home,
   RefreshCw,
   TrendingUp,
+  Utensils,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 

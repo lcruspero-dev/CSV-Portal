@@ -121,7 +121,7 @@ const adminResetPassword = asyncHandler(async (req, res) => {
   if (!passwordRegex.test(password)) {
     res.status(400);
     throw new Error(
-      "Password must be at least 12 characters, and can include letters, numbers, and special characters."
+      "Password must be at least 12 characters, and can include letters, numbers, and special characters.",
     );
   }
 
@@ -193,7 +193,7 @@ const searchUsers = asyncHandler(async (req, res) => {
   } else {
     users = await User.find(
       { name: { $regex: `.*${query}.*`, $options: "i" } },
-      { password: 0 } // Excludes password field
+      { password: 0 }, // Excludes password field
     );
   }
 
@@ -257,13 +257,7 @@ const updateLoginLimit = asyncHandler(async (req, res) => {
 });
 
 const addUser = asyncHandler(async (req, res) => {
-  const { 
-    name, 
-    email, 
-    password, 
-    isAdmin, 
-    role 
-  } = req.body;
+  const { name, email, password, isAdmin, role } = req.body;
 
   // Validation
   if (!name || !email || !password) {
@@ -318,5 +312,5 @@ module.exports = {
   setUserToActive,
   changePassword,
   updateLoginLimit,
-  addUser
+  addUser,
 };
