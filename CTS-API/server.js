@@ -1,10 +1,8 @@
 const express = require("express");
 const { errorHandler } = require("./middleware/errorMiddleware");
 const connectDB = require("./config/db");
-require("dotenv").config();
-const cors = require("cors");
-
 const PORT = process.env.PORT;
+const cors = require("cors");
 
 connectDB();
 
@@ -14,7 +12,7 @@ const app = express();
 app.use(express.json());
 
 const corsOptions = {
-  origin: [process.env.CSVPORTAL_END_PORT, process.env.CSVDMS_END_PORT],
+  origin: "*",
   credentials: true,
   optionsSuccessStatus: 200,
 };

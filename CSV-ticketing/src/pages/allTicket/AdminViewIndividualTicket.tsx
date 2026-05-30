@@ -262,7 +262,7 @@ const AdminViewIndividualTicket: React.FC = () => {
       // Update leave credit history only for paid leave requests
       if (
         (status?.status === "Approved" || status?.status === "Rejected") &&
-        details?.category === "Leave Request" &&
+        details?.category === "Leave Request" && 
         leaveCredit &&
         isPaidLeave() // Only proceed if it's paid leave
       ) {
@@ -500,7 +500,7 @@ const AdminViewIndividualTicket: React.FC = () => {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
-                          {details?.category === "Leave Request" ? (
+                          {details?.category === "Leave Request" || details?.category === "Overtime" ? (
                             <>
                               <SelectItem value="Approved">Approved</SelectItem>
                               <SelectItem value="Rejected">Rejected</SelectItem>

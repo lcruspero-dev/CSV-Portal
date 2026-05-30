@@ -21,6 +21,7 @@ interface FormData {
   endDate: string;
   department: string;
   status: string;
+  category: string;
 }
 
 interface User {
@@ -72,12 +73,13 @@ const ExportData: React.FC = () => {
       endDate: "",
       department: "",
       status: "",
+      category: "",
     },
   });
 
   const calculateResolutionTime = (
     createdAt: string,
-    updatedAt: string
+    updatedAt: string,
   ): number => {
     const start = new Date(createdAt).getTime();
     const end = new Date(updatedAt).getTime();
@@ -138,7 +140,7 @@ const ExportData: React.FC = () => {
         closedTickets++;
         const resolutionTime = calculateResolutionTime(
           ticket.createdAt,
-          ticket.updatedAt
+          ticket.updatedAt,
         );
         totalResolutionTime += resolutionTime;
 
@@ -169,7 +171,7 @@ const ExportData: React.FC = () => {
       // Calculate average resolution time by department
       Object.entries(resolutionTimesByDepartment).forEach(([dept, times]) => {
         const avgTime = Math.round(
-          times.reduce((sum, time) => sum + time, 0) / times.length
+          times.reduce((sum, time) => sum + time, 0) / times.length,
         );
         summary.averageResolutionTimeByDepartment[dept] =
           formatDuration(avgTime);
@@ -178,7 +180,7 @@ const ExportData: React.FC = () => {
       // Calculate average resolution time by priority
       Object.entries(resolutionTimesByPriority).forEach(([priority, times]) => {
         const avgTime = Math.round(
-          times.reduce((sum, time) => sum + time, 0) / times.length
+          times.reduce((sum, time) => sum + time, 0) / times.length,
         );
         summary.averageResolutionTimeByPriority[priority] =
           formatDuration(avgTime);
@@ -256,7 +258,7 @@ const ExportData: React.FC = () => {
 
   const filterAndEnrichData = async (
     data: Ticket[],
-    filters: FormData
+    filters: FormData,
   ): Promise<Ticket[]> => {
     const normalizeDate = (date: Date) =>
       new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -274,7 +276,8 @@ const ExportData: React.FC = () => {
         return false;
       if (filters.status !== "ALL" && ticket.status !== filters.status)
         return false;
-
+      if (filters.category !== "ALL" && ticket.category !== filters.category)
+        return false;
       return true;
     });
   };
@@ -307,7 +310,7 @@ const ExportData: React.FC = () => {
           "Has Attachment": ticket.file ? "Yes" : "No",
           "Created Date": formattedDate(ticket.createdAt),
           "Updated Date": formattedDate(ticket.updatedAt),
-        }))
+        })),
       );
 
       XLSX.utils.book_append_sheet(workbook, detailsSheet, "Ticket Details");
@@ -333,7 +336,11 @@ const ExportData: React.FC = () => {
       ];
 
       // Generate filename and trigger download
-      const fileName = `Ticket_Report_${
+      const categoryLabel =
+        formData.category === "ALL"
+          ? "All"
+          : formData.category.replace(" ", "_");
+      const fileName = `Ticket_Report_${categoryLabel}_${
         new Date().toISOString().split("T")[0]
       }.xlsx`;
       XLSX.writeFile(workbook, fileName);
@@ -439,6 +446,32 @@ const ExportData: React.FC = () => {
         />
         {errors.status && (
           <p className="text-red-500">{errors.status.message}</p>
+        )}
+
+        <Label htmlFor="category" className="text-base font-bold">
+          Category
+        </Label>
+        <Controller
+          name="category"
+          control={control}
+          rules={{ required: "Category is required" }}
+          render={({ field }) => (
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <SelectTrigger className="mb-2">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="Overtime">Overtime</SelectItem>
+                  <SelectItem value="Leave Request">Leave Request</SelectItem>
+                  <SelectItem value="ALL">All Categories</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          )}
+        />
+        {errors.category && (
+          <p className="text-red-500">{errors.category.message}</p>
         )}
 
         <Button className="w-full mt-2" type="submit" disabled={isLoading}>
