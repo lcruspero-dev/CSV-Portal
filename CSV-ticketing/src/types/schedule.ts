@@ -28,6 +28,7 @@ export type Employee = {
 
 export type AttendanceStatus =
   | "Present"
+  | "WFH"
   | "NCNS"
   | "Call In"
   | "Rest Day"

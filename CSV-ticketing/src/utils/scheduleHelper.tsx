@@ -1,8 +1,8 @@
 import type {
   ShiftType,
   ShiftTypeValue,
-  AttendanceStatus
-} from '@/types/schedule';
+  AttendanceStatus,
+} from "@/types/schedule";
 
 export const getShiftColor = (shiftType: ShiftType): string => {
   if (!shiftType || !shiftType.type)
@@ -117,12 +117,12 @@ export const displayShiftInfo = (
   };
 };
 
-export const getAttendanceColor = (
-  status: AttendanceStatus,
-): string => {
+export const getAttendanceColor = (status: AttendanceStatus): string => {
   switch (status) {
     case "Present":
       return "bg-green-100 text-green-800 border-green-200";
+    case "WFH":
+      return "bg-stone-100 text-stone-800 border-stone-200";
     case "NCNS":
       return "bg-red-100 text-red-800 border-red-200";
     case "Tardy":

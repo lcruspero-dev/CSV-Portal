@@ -29,6 +29,8 @@ import {
   Home,
   RefreshCw,
   Eye,
+  LayoutGrid,
+  List,
 } from "lucide-react";
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -53,6 +55,187 @@ interface Category {
 
 const ITEMS_PER_PAGE = 10;
 
+// ─── Kanban Column Config ────────────────────────────────────────────────────
+const KANBAN_COLUMNS: {
+  key: string;
+  label: string;
+  statuses: string[];
+  colorClass: string;
+  headerBg: string;
+  dotColor: string;
+  icon: React.ReactNode;
+}[] = [
+  {
+    key: "open",
+    label: "Open",
+    statuses: ["open", "new"],
+    colorClass: "border-blue-200",
+    headerBg: "bg-blue-50",
+    dotColor: "bg-blue-500",
+    icon: <Clock className="h-4 w-4 text-blue-500" />,
+  },
+  {
+    key: "inprogress",
+    label: "In Progress",
+    statuses: ["In Progress"],
+    colorClass: "border-amber-200",
+    headerBg: "bg-amber-50",
+    dotColor: "bg-amber-500",
+    icon: <AlertCircle className="h-4 w-4 text-amber-500" />,
+  },
+  {
+    key: "closed",
+    label: "Closed / Approved",
+    statuses: ["closed", "Approved"],
+    colorClass: "border-emerald-200",
+    headerBg: "bg-emerald-50",
+    dotColor: "bg-emerald-500",
+    icon: <CheckCircle className="h-4 w-4 text-emerald-500" />,
+  },
+  {
+    key: "rejected",
+    label: "Rejected",
+    statuses: ["Rejected"],
+    colorClass: "border-red-200",
+    headerBg: "bg-red-50",
+    dotColor: "bg-red-500",
+    icon: <XCircle className="h-4 w-4 text-red-500" />,
+  },
+];
+
+// ─── Kanban Card ─────────────────────────────────────────────────────────────
+const KanbanCard: React.FC<{
+  ticket: Ticket;
+  onView: (id: string) => void;
+  getPriorityColor: (p: string) => string;
+  getPriorityIcon: (p: string) => string;
+  getStatusColor: (s: string) => string;
+  getStatusIcon: (s: string) => React.ReactNode;
+}> = ({ ticket, onView, getPriorityColor, getPriorityIcon }) => (
+  <div
+    className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 hover:shadow-md transition-shadow cursor-pointer group"
+    onClick={() => onView(ticket._id)}
+  >
+    {/* Header row */}
+    <div className="flex justify-between items-start mb-2 gap-2">
+      <div className="flex items-center gap-1.5 min-w-0">
+        <Ticket className="h-3.5 w-3.5 text-blue-400 flex-shrink-0" />
+        <span className="text-xs font-semibold text-blue-600 truncate">
+          {ticket.ticketNumber}
+        </span>
+      </div>
+      <span
+        className={`text-xs flex-shrink-0 ${getPriorityColor(ticket.priority)}`}
+      >
+        {getPriorityIcon(ticket.priority)} {ticket.priority}
+      </span>
+    </div>
+
+    {/* Category */}
+    <p className="text-xs text-gray-500 mb-1">{ticket.category}</p>
+
+    {/* Description */}
+    <p className="text-sm text-gray-700 line-clamp-2 mb-3 leading-snug">
+      {ticket.description}
+    </p>
+
+    {/* Footer */}
+    <div className="flex items-center justify-between gap-2 pt-2 border-t border-gray-100">
+      <div className="flex items-center gap-1.5 min-w-0">
+        <User className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+        <span className="text-xs text-gray-600 truncate">{ticket.name}</span>
+      </div>
+      <div className="flex items-center gap-1 text-xs text-gray-400 flex-shrink-0">
+        <Calendar className="h-3 w-3" />
+        {formattedDate(ticket.createdAt)}
+      </div>
+    </div>
+
+    {ticket.assignedTo && (
+      <div className="flex items-center gap-1.5 mt-2">
+        <Home className="h-3.5 w-3.5 text-gray-300" />
+        <span className="text-xs text-gray-400 truncate">
+          {ticket.assignedTo}
+        </span>
+      </div>
+    )}
+
+    <Button
+      onClick={(e) => {
+        e.stopPropagation();
+        onView(ticket._id);
+      }}
+      variant="ghost"
+      size="sm"
+      className="w-full mt-3 text-blue-600 hover:bg-blue-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 h-7 text-xs"
+    >
+      <Eye className="h-3.5 w-3.5" />
+      View Details
+    </Button>
+  </div>
+);
+
+// ─── Kanban Column ────────────────────────────────────────────────────────────
+const KanbanColumn: React.FC<{
+  column: (typeof KANBAN_COLUMNS)[number];
+  tickets: Ticket[];
+  onView: (id: string) => void;
+  getPriorityColor: (p: string) => string;
+  getPriorityIcon: (p: string) => string;
+  getStatusColor: (s: string) => string;
+  getStatusIcon: (s: string) => React.ReactNode;
+}> = ({
+  column,
+  tickets,
+  onView,
+  getPriorityColor,
+  getPriorityIcon,
+  getStatusColor,
+  getStatusIcon,
+}) => (
+  <div
+    className={`flex flex-col rounded-xl border-2 ${column.colorClass} min-w-[280px] flex-1 max-w-sm`}
+  >
+    {/* Column Header */}
+    <div
+      className={`${column.headerBg} px-4 py-3 rounded-t-xl flex items-center justify-between`}
+    >
+      <div className="flex items-center gap-2">
+        {column.icon}
+        <span className="font-semibold text-gray-800 text-sm">
+          {column.label}
+        </span>
+      </div>
+      <span className="bg-white text-gray-700 text-xs font-bold px-2 py-0.5 rounded-full border border-gray-200 shadow-sm">
+        {tickets.length}
+      </span>
+    </div>
+
+    {/* Cards */}
+    <div className="flex-1 p-3 space-y-3 overflow-y-auto max-h-[calc(100vh-340px)] min-h-[200px]">
+      {tickets.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-10 text-gray-300">
+          <Ticket className="h-8 w-8 mb-2" />
+          <span className="text-xs">No tickets</span>
+        </div>
+      ) : (
+        tickets.map((ticket) => (
+          <KanbanCard
+            key={ticket._id}
+            ticket={ticket}
+            onView={onView}
+            getPriorityColor={getPriorityColor}
+            getPriorityIcon={getPriorityIcon}
+            getStatusColor={getStatusColor}
+            getStatusIcon={getStatusIcon}
+          />
+        ))
+      )}
+    </div>
+  </div>
+);
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 const ViewAllRaisedTickets: React.FC = () => {
   const [allRaisedTickets, setAllRaisedTickets] = useState<Ticket[]>([]);
   const [filteredTickets, setFilteredTickets] = useState<Ticket[]>([]);
@@ -64,12 +247,12 @@ const ViewAllRaisedTickets: React.FC = () => {
   const [hrCategories, setHrCatergories] = useState<string[]>([]);
   const [assign, setAssign] = useState<Assigned[]>([]);
   const [showFilters, setShowFilters] = useState(true);
+  // NEW: view mode state — "table" | "kanban"
+  const [viewMode, setViewMode] = useState<"table" | "kanban">("table");
 
-  // Use URL search params for persistent state
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  // Get filter values from URL params or use defaults
   const statusFilter = searchParams.get("status") || "open";
   const assignedToFilter = searchParams.get("assignedTo") || "all";
   const currentPage = parseInt(searchParams.get("page") || "1");
@@ -77,7 +260,6 @@ const ViewAllRaisedTickets: React.FC = () => {
   const logInUser = JSON.parse(localStorage.getItem("user")!);
   const loginUserRole = logInUser.role;
 
-  // Update URL params when filters change
   const updateUrlParams = useCallback(
     (updates: Record<string, string>) => {
       const newParams = new URLSearchParams(searchParams);
@@ -97,9 +279,7 @@ const ViewAllRaisedTickets: React.FC = () => {
     try {
       const response = await Category.getHrCategories();
       const categories: Category[] = response.data.categories;
-      const categoryNames = categories.map(
-        (category: Category) => category.category,
-      );
+      const categoryNames = categories.map((c: Category) => c.category);
       setHrCatergories(categoryNames);
     } catch (error) {
       console.error(error);
@@ -110,9 +290,7 @@ const ViewAllRaisedTickets: React.FC = () => {
     try {
       const response = await Category.getItCategories();
       const categories: Category[] = response.data.categories;
-      const categoryNames = categories.map(
-        (category: Category) => category.category,
-      );
+      const categoryNames = categories.map((c: Category) => c.category);
       setItCategories(categoryNames);
     } catch (error) {
       console.error(error);
@@ -154,50 +332,36 @@ const ViewAllRaisedTickets: React.FC = () => {
     (tickets: Ticket[], status: string, assignedTo: string, role: string) => {
       let filtered = tickets;
 
-      // Role-based filtering
       if (role === "IT") {
-        filtered = filtered.filter((ticket) =>
-          itCategories.includes(ticket.category),
-        );
+        filtered = filtered.filter((t) => itCategories.includes(t.category));
       } else if (role === "HR") {
-        filtered = filtered.filter((ticket) =>
-          hrCategories.includes(ticket.category),
-        );
+        filtered = filtered.filter((t) => hrCategories.includes(t.category));
       }
 
-      // AssignedTo filtering
       if (assignedTo === "ALL IT") {
-        filtered = filtered.filter((ticket) =>
-          itCategories.includes(ticket.category),
-        );
+        filtered = filtered.filter((t) => itCategories.includes(t.category));
       } else if (assignedTo === "ALL HR") {
-        filtered = filtered.filter((ticket) =>
-          hrCategories.includes(ticket.category),
-        );
+        filtered = filtered.filter((t) => hrCategories.includes(t.category));
       } else if (assignedTo !== "all" && assignedTo !== "Not Assigned") {
-        filtered = filtered.filter(
-          (ticket) => ticket.assignedTo === assignedTo,
-        );
+        filtered = filtered.filter((t) => t.assignedTo === assignedTo);
       } else if (assignedTo === "Not Assigned") {
-        filtered = filtered.filter((ticket) => !ticket.assignedTo);
+        filtered = filtered.filter((t) => !t.assignedTo);
       }
 
-      // Status filtering
       if (status !== "all") {
         if (status === "open") {
           filtered = filtered.filter(
-            (ticket) =>
-              ticket.status === "open" || ticket.status === "In Progress",
+            (t) => t.status === "open" || t.status === "In Progress",
           );
         } else if (status === "closed") {
           filtered = filtered.filter(
-            (ticket) =>
-              ticket.status === "closed" ||
-              ticket.status === "Approved" ||
-              ticket.status === "Rejected",
+            (t) =>
+              t.status === "closed" ||
+              t.status === "Approved" ||
+              t.status === "Rejected",
           );
         } else {
-          filtered = filtered.filter((ticket) => ticket.status === status);
+          filtered = filtered.filter((t) => t.status === status);
         }
       }
 
@@ -218,18 +382,14 @@ const ViewAllRaisedTickets: React.FC = () => {
           setUserRole("");
         }
       } else {
-        console.error("User data not found in localStorage");
         setUserRole("");
       }
     };
-
     getUserRole();
   }, []);
 
   useEffect(() => {
-    if (userRole) {
-      getAllRaisedTickets();
-    }
+    if (userRole) getAllRaisedTickets();
   }, [userRole, getAllRaisedTickets]);
 
   const getAssigns = useCallback(async () => {
@@ -247,7 +407,6 @@ const ViewAllRaisedTickets: React.FC = () => {
     getAssigns();
   }, [getAssigns]);
 
-  // Apply filters whenever URL params change
   useEffect(() => {
     filterTickets(allRaisedTickets, statusFilter, assignedToFilter, userRole);
   }, [
@@ -260,9 +419,7 @@ const ViewAllRaisedTickets: React.FC = () => {
 
   const getFilteredAssign = useCallback(
     (assign: Assigned[], loginUserRole: string): Assigned[] => {
-      if (loginUserRole === "SUPERADMIN") {
-        return assign;
-      }
+      if (loginUserRole === "SUPERADMIN") return assign;
       return assign.filter((item) => item.role === loginUserRole);
     },
     [],
@@ -272,9 +429,8 @@ const ViewAllRaisedTickets: React.FC = () => {
     const query = searchTicketNumber.trim().toLowerCase();
     if (!query) return;
 
-    // Try exact ticket number match first
     const byTicketNumber = allRaisedTickets.find(
-      (ticket) => ticket.ticketNumber.toLowerCase() === query,
+      (t) => t.ticketNumber.toLowerCase() === query,
     );
 
     if (byTicketNumber) {
@@ -285,19 +441,16 @@ const ViewAllRaisedTickets: React.FC = () => {
       return;
     }
 
-    // Fall back to filtering by requester name (partial, case-insensitive)
-    const byName = allRaisedTickets.filter((ticket) =>
-      ticket.name.toLowerCase().includes(query),
+    const byName = allRaisedTickets.filter((t) =>
+      t.name.toLowerCase().includes(query),
     );
 
     if (byName.length === 1) {
-      // Single match — navigate directly
       navigate({
         pathname: `/ticket/${byName[0]._id}`,
         search: searchParams.toString(),
       });
     } else if (byName.length > 1) {
-      // Multiple matches — show them in the table
       setFilteredTickets(byName);
       updateUrlParams({ page: "1" });
     } else {
@@ -317,9 +470,7 @@ const ViewAllRaisedTickets: React.FC = () => {
 
   const handleSearchKeyPress = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Enter") {
-        handleSearchSubmit();
-      }
+      if (e.key === "Enter") handleSearchSubmit();
     },
     [handleSearchSubmit],
   );
@@ -389,13 +540,12 @@ const ViewAllRaisedTickets: React.FC = () => {
     [assign, loginUserRole, getFilteredAssign],
   );
 
-  // Ensure current page is within valid range
+  // ── Pagination (table only) ──────────────────────────────────────────────
   const totalPages = useMemo(
     () => Math.ceil(filteredTickets.length / ITEMS_PER_PAGE),
     [filteredTickets.length],
   );
 
-  // Validate and adjust current page if it's out of bounds
   const validCurrentPage = useMemo(() => {
     if (totalPages === 0) return 1;
     if (currentPage < 1) return 1;
@@ -403,7 +553,6 @@ const ViewAllRaisedTickets: React.FC = () => {
     return currentPage;
   }, [currentPage, totalPages]);
 
-  // Update URL if page is invalid
   useEffect(() => {
     if (validCurrentPage !== currentPage && totalPages > 0) {
       updateUrlParams({ page: validCurrentPage.toString() });
@@ -414,51 +563,72 @@ const ViewAllRaisedTickets: React.FC = () => {
     () => (validCurrentPage - 1) * ITEMS_PER_PAGE,
     [validCurrentPage],
   );
-
   const endIndex = useMemo(() => startIndex + ITEMS_PER_PAGE, [startIndex]);
-
   const currentTickets = useMemo(
     () => filteredTickets.slice(startIndex, endIndex),
     [filteredTickets, startIndex, endIndex],
   );
 
+  // ── Kanban data (groups filteredTickets into columns) ────────────────────
+  const kanbanTickets = useMemo(() => {
+    // When Kanban is active, show ALL statuses regardless of statusFilter so the
+    // board always displays all four columns.  The assignedTo filter still applies
+    // (already baked into filteredTickets if we switch statusFilter to "all").
+    // We derive this from allRaisedTickets with only the assignedTo / role filter.
+    const base = allRaisedTickets.filter((t) => {
+      // role filter
+      if (userRole === "IT" && !itCategories.includes(t.category)) return false;
+      if (userRole === "HR" && !hrCategories.includes(t.category)) return false;
+      // assignedTo filter
+      if (assignedToFilter === "ALL IT")
+        return itCategories.includes(t.category);
+      if (assignedToFilter === "ALL HR")
+        return hrCategories.includes(t.category);
+      if (assignedToFilter === "Not Assigned") return !t.assignedTo;
+      if (assignedToFilter !== "all") return t.assignedTo === assignedToFilter;
+      return true;
+    });
+
+    return KANBAN_COLUMNS.map((col) => ({
+      ...col,
+      tickets: base.filter((t) =>
+        col.statuses.some((s) => t.status.toLowerCase() === s.toLowerCase()),
+      ),
+    }));
+  }, [
+    allRaisedTickets,
+    userRole,
+    itCategories,
+    hrCategories,
+    assignedToFilter,
+  ]);
+
   const goToNextPage = useCallback(() => {
-    if (validCurrentPage < totalPages) {
+    if (validCurrentPage < totalPages)
       updateUrlParams({ page: (validCurrentPage + 1).toString() });
-    }
   }, [validCurrentPage, totalPages, updateUrlParams]);
 
   const goToPreviousPage = useCallback(() => {
-    if (validCurrentPage > 1) {
+    if (validCurrentPage > 1)
       updateUrlParams({ page: (validCurrentPage - 1).toString() });
-    }
   }, [validCurrentPage, updateUrlParams]);
 
   const handleStatusFilterChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const newStatus = e.target.value;
-      updateUrlParams({ status: newStatus });
-      // Don't reset page here - let the URL handle it
+      updateUrlParams({ status: e.target.value });
     },
     [updateUrlParams],
   );
 
   const handleAssignedToFilterChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const newAssignedTo = e.target.value;
-      updateUrlParams({ assignedTo: newAssignedTo });
-      // Don't reset page here - let the URL handle it
+      updateUrlParams({ assignedTo: e.target.value });
     },
     [updateUrlParams],
   );
 
   const handleClearFilters = useCallback(() => {
-    // Reset all filters to defaults
-    updateUrlParams({
-      status: "open",
-      assignedTo: "all",
-      page: "1", // Reset to page 1 only when clearing filters
-    });
+    updateUrlParams({ status: "open", assignedTo: "all", page: "1" });
     setSearchTicketNumber("");
   }, [updateUrlParams]);
 
@@ -468,7 +638,6 @@ const ViewAllRaisedTickets: React.FC = () => {
 
   const handleViewTicket = useCallback(
     (ticketId: string) => {
-      // Navigate to ticket details while preserving current filters in URL
       navigate({
         pathname: `/ticket/${ticketId}`,
         search: searchParams.toString(),
@@ -498,7 +667,7 @@ const ViewAllRaisedTickets: React.FC = () => {
       <BackButton />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-        {/* Header */}
+        {/* ── Header ── */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8">
           <div className="flex items-center gap-4">
             <div>
@@ -531,7 +700,7 @@ const ViewAllRaisedTickets: React.FC = () => {
           </div>
         </div>
 
-        {/* Search and Filters */}
+        {/* ── Search & Filters ── */}
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 mb-6">
           <div className="flex flex-col lg:flex-row gap-4 mb-4">
             <div className="flex-1 relative">
@@ -545,7 +714,7 @@ const ViewAllRaisedTickets: React.FC = () => {
                 className="pl-10 w-full"
               />
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button
                 onClick={handleSearchSubmit}
                 className="bg-blue-600 hover:bg-blue-700 px-6"
@@ -560,10 +729,37 @@ const ViewAllRaisedTickets: React.FC = () => {
                 <Filter className="h-4 w-4" />
                 {showFilters ? "Hide Filters" : "Show Filters"}
               </Button>
+
+              {/* ── VIEW MODE TOGGLE ── */}
+              <div className="flex items-center rounded-md border border-gray-200 overflow-hidden">
+                <button
+                  onClick={() => setViewMode("table")}
+                  className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors ${
+                    viewMode === "table"
+                      ? "bg-blue-600 text-white"
+                      : "bg-white text-gray-600 hover:bg-gray-50"
+                  }`}
+                  title="Table View"
+                >
+                  <List className="h-4 w-4" />
+                  <span className="hidden sm:inline">Table</span>
+                </button>
+                <button
+                  onClick={() => setViewMode("kanban")}
+                  className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors ${
+                    viewMode === "kanban"
+                      ? "bg-blue-600 text-white"
+                      : "bg-white text-gray-600 hover:bg-gray-50"
+                  }`}
+                  title="Kanban View"
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                  <span className="hidden sm:inline">Kanban</span>
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Filters Panel */}
           {showFilters && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t border-gray-200">
               <div className="space-y-2">
@@ -606,9 +802,9 @@ const ViewAllRaisedTickets: React.FC = () => {
                       <option value="ALL HR">All HR Department</option>
                     </>
                   )}
-                  {filteredAssign.map((assign) => (
-                    <option key={assign._id} value={assign.name}>
-                      {assign.name}
+                  {filteredAssign.map((a) => (
+                    <option key={a._id} value={a.name}>
+                      {a.name}
                     </option>
                   ))}
                   <option value="Not Assigned">Unassigned</option>
@@ -628,7 +824,7 @@ const ViewAllRaisedTickets: React.FC = () => {
           )}
         </div>
 
-        {/* Stats Cards */}
+        {/* ── Stats Cards ── */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
             <div className="flex items-center justify-between">
@@ -687,367 +883,402 @@ const ViewAllRaisedTickets: React.FC = () => {
           </div>
         </div>
 
-        {/* Tickets Table */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader className="bg-gray-50">
-                <TableRow>
-                  <TableHead className="font-semibold text-gray-700">
-                    Ticket #
-                  </TableHead>
-                  <TableHead className="font-semibold text-gray-700">
-                    Date
-                  </TableHead>
-                  <TableHead className="font-semibold text-gray-700">
-                    Category
-                  </TableHead>
-                  <TableHead className="font-semibold text-gray-700">
-                    Requester
-                  </TableHead>
-                  <TableHead className="font-semibold text-gray-700">
-                    Description
-                  </TableHead>
-                  <TableHead className="font-semibold text-gray-700">
-                    Priority
-                  </TableHead>
-                  <TableHead className="font-semibold text-gray-700">
-                    Status
-                  </TableHead>
-                  <TableHead className="font-semibold text-gray-700">
-                    Assignee
-                  </TableHead>
-                  <TableHead className="font-semibold text-gray-700">
-                    Actions
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {currentTickets.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={9} className="text-center py-12">
-                      <div className="flex flex-col items-center">
-                        <Ticket className="h-12 w-12 text-gray-300 mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900">
-                          No tickets found
-                        </h3>
-                        <p className="text-gray-600 mt-2">
-                          Try adjusting your filters or search criteria.
-                        </p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  currentTickets.map((ticket) => (
-                    <TableRow
-                      key={ticket._id}
-                      className="hover:bg-gray-50 transition-colors"
+        {/* ═══════════════════════════════════════════════════════════════════
+            KANBAN VIEW
+        ═══════════════════════════════════════════════════════════════════ */}
+        {viewMode === "kanban" && (
+          <div className="overflow-x-auto pb-4">
+            <div className="flex gap-4 min-w-max">
+              {kanbanTickets.map((col) => (
+                <KanbanColumn
+                  key={col.key}
+                  column={col}
+                  tickets={col.tickets}
+                  onView={handleViewTicket}
+                  getPriorityColor={getPriorityColor}
+                  getPriorityIcon={getPriorityIcon}
+                  getStatusColor={getStatusColor}
+                  getStatusIcon={getStatusIcon}
+                />
+              ))}
+            </div>
+            {/* Kanban legend */}
+            <p className="text-xs text-gray-400 mt-4 text-center">
+              Showing tickets based on the <strong>Assigned To</strong> filter
+              above. Click any card to view details.
+            </p>
+          </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════════
+            TABLE VIEW
+        ═══════════════════════════════════════════════════════════════════ */}
+        {viewMode === "table" && (
+          <>
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-gray-50">
+                    <TableRow>
+                      <TableHead className="font-semibold text-gray-700">
+                        Ticket #
+                      </TableHead>
+                      <TableHead className="font-semibold text-gray-700">
+                        Date
+                      </TableHead>
+                      <TableHead className="font-semibold text-gray-700">
+                        Category
+                      </TableHead>
+                      <TableHead className="font-semibold text-gray-700">
+                        Requester
+                      </TableHead>
+                      <TableHead className="font-semibold text-gray-700">
+                        Description
+                      </TableHead>
+                      <TableHead className="font-semibold text-gray-700">
+                        Priority
+                      </TableHead>
+                      <TableHead className="font-semibold text-gray-700">
+                        Status
+                      </TableHead>
+                      <TableHead className="font-semibold text-gray-700">
+                        Assignee
+                      </TableHead>
+                      <TableHead className="font-semibold text-gray-700">
+                        Actions
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {currentTickets.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center py-12">
+                          <div className="flex flex-col items-center">
+                            <Ticket className="h-12 w-12 text-gray-300 mb-4" />
+                            <h3 className="text-lg font-medium text-gray-900">
+                              No tickets found
+                            </h3>
+                            <p className="text-gray-600 mt-2">
+                              Try adjusting your filters or search criteria.
+                            </p>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      currentTickets.map((ticket) => (
+                        <TableRow
+                          key={ticket._id}
+                          className="hover:bg-gray-50 transition-colors"
+                        >
+                          <TableCell className="font-medium text-gray-900">
+                            <div className="flex items-center gap-2">
+                              <Ticket className="h-4 w-4 text-blue-500" />
+                              {ticket.ticketNumber}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2 text-gray-600">
+                              <Calendar className="h-4 w-4" />
+                              {formattedDate(ticket.createdAt)}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-gray-700">
+                            {ticket.category}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <User className="h-4 w-4 text-gray-400" />
+                              <span className="font-medium text-gray-900">
+                                {ticket.name}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="max-w-xs">
+                            <div className="flex items-center gap-2">
+                              <FileText className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                              <span className="text-gray-600 line-clamp-1">
+                                {ticket.description}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm">
+                                {getPriorityIcon(ticket.priority)}
+                              </span>
+                              <span
+                                className={getPriorityColor(ticket.priority)}
+                              >
+                                {ticket.priority}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div
+                              className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm border ${getStatusColor(ticket.status)}`}
+                            >
+                              {getStatusIcon(ticket.status)}
+                              {ticket.status}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {ticket.assignedTo ? (
+                              <div className="flex items-center gap-2">
+                                <Home className="h-4 w-4 text-gray-400" />
+                                <span className="text-gray-700">
+                                  {ticket.assignedTo}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-gray-400 text-sm">
+                                Unassigned
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              onClick={() => handleViewTicket(ticket._id)}
+                              variant="ghost"
+                              size="sm"
+                              className="flex items-center gap-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            >
+                              <Eye className="h-4 w-4" />
+                              View
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Pagination */}
+              {currentTickets.length > 0 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-gray-200 bg-gray-50">
+                  <div className="text-sm text-gray-600">
+                    Showing {startIndex + 1} to{" "}
+                    {Math.min(endIndex, filteredTickets.length)} of{" "}
+                    {filteredTickets.length} tickets
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={goToPreviousPage}
+                      disabled={validCurrentPage === 1}
+                      className="flex items-center gap-2"
+                      size="sm"
                     >
-                      <TableCell className="font-medium text-gray-900">
-                        <div className="flex items-center gap-2">
-                          <Ticket className="h-4 w-4 text-blue-500" />
-                          {ticket.ticketNumber}
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+
+                    <div className="flex items-center gap-1 mx-2">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                        (page) => {
+                          if (totalPages <= 7) {
+                            return (
+                              <Button
+                                key={page}
+                                variant={
+                                  validCurrentPage === page
+                                    ? "default"
+                                    : "outline"
+                                }
+                                onClick={() => handlePageChange(page)}
+                                size="sm"
+                                className={
+                                  validCurrentPage === page ? "bg-blue-600" : ""
+                                }
+                              >
+                                {page}
+                              </Button>
+                            );
+                          }
+
+                          if (
+                            page === 1 ||
+                            page === totalPages ||
+                            (page >= validCurrentPage - 1 &&
+                              page <= validCurrentPage + 1)
+                          ) {
+                            return (
+                              <Button
+                                key={page}
+                                variant={
+                                  validCurrentPage === page
+                                    ? "default"
+                                    : "outline"
+                                }
+                                onClick={() => handlePageChange(page)}
+                                size="sm"
+                                className={
+                                  validCurrentPage === page ? "bg-blue-600" : ""
+                                }
+                              >
+                                {page}
+                              </Button>
+                            );
+                          }
+
+                          if (page === 2 && validCurrentPage > 3) {
+                            return (
+                              <span
+                                key="ellipsis-start"
+                                className="px-2 text-gray-400"
+                              >
+                                ...
+                              </span>
+                            );
+                          }
+
+                          if (
+                            page === totalPages - 1 &&
+                            validCurrentPage < totalPages - 2
+                          ) {
+                            return (
+                              <span
+                                key="ellipsis-end"
+                                className="px-2 text-gray-400"
+                              >
+                                ...
+                              </span>
+                            );
+                          }
+
+                          return null;
+                        },
+                      )}
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      onClick={goToNextPage}
+                      disabled={validCurrentPage === totalPages}
+                      className="flex items-center gap-2"
+                      size="sm"
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Mobile View */}
+            <div className="lg:hidden mt-6">
+              {currentTickets.length === 0 ? (
+                <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+                  <Ticket className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900">
+                    No tickets found
+                  </h3>
+                  <p className="text-gray-600 mt-2">
+                    Try adjusting your filters or search criteria.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {currentTickets.map((ticket) => (
+                    <div
+                      key={ticket._id}
+                      className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm"
+                    >
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Ticket className="h-4 w-4 text-blue-500" />
+                            <span className="font-medium text-gray-900">
+                              {ticket.ticketNumber}
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {formattedDate(ticket.createdAt)}
+                          </div>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <Calendar className="h-4 w-4" />
-                          {formattedDate(ticket.createdAt)}
+                        <div
+                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${getStatusColor(ticket.status)}`}
+                        >
+                          {getStatusIcon(ticket.status)}
+                          {ticket.status}
                         </div>
-                      </TableCell>
-                      <TableCell className="text-gray-700">
-                        {ticket.category}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
+                      </div>
+
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-center gap-2 text-sm">
                           <User className="h-4 w-4 text-gray-400" />
                           <span className="font-medium text-gray-900">
                             {ticket.name}
                           </span>
                         </div>
-                      </TableCell>
-                      <TableCell className="max-w-xs">
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                          <span className="text-gray-600 line-clamp-1">
-                            {ticket.description}
+                        <div className="flex items-center gap-2 text-sm">
+                          <FileText className="h-4 w-4 text-gray-400" />
+                          <span className="text-gray-600 truncate">
+                            {ticket.category}
                           </span>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm">
-                            {getPriorityIcon(ticket.priority)}
-                          </span>
-                          <span className={getPriorityColor(ticket.priority)}>
-                            {ticket.priority}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div
-                          className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm border ${getStatusColor(ticket.status)}`}
-                        >
-                          {getStatusIcon(ticket.status)}
-                          {ticket.status}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {ticket.assignedTo ? (
+                        <div className="flex justify-between items-center">
                           <div className="flex items-center gap-2">
-                            <Home className="h-4 w-4 text-gray-400" />
-                            <span className="text-gray-700">
-                              {ticket.assignedTo}
+                            <span className="text-xs">
+                              {getPriorityIcon(ticket.priority)}
+                            </span>
+                            <span className={getPriorityColor(ticket.priority)}>
+                              {ticket.priority}
                             </span>
                           </div>
-                        ) : (
-                          <span className="text-gray-400 text-sm">
-                            Unassigned
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          onClick={() => handleViewTicket(ticket._id)}
-                          variant="ghost"
-                          size="sm"
-                          className="flex items-center gap-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                        >
-                          <Eye className="h-4 w-4" />
-                          View
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                          <div className="text-sm text-gray-500">
+                            {ticket.assignedTo || "Unassigned"}
+                          </div>
+                        </div>
+                      </div>
 
-          {/* Pagination */}
-          {currentTickets.length > 0 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-gray-200 bg-gray-50">
-              <div className="text-sm text-gray-600">
-                Showing {startIndex + 1} to{" "}
-                {Math.min(endIndex, filteredTickets.length)} of{" "}
-                {filteredTickets.length} tickets
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  onClick={goToPreviousPage}
-                  disabled={validCurrentPage === 1}
-                  className="flex items-center gap-2"
-                  size="sm"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
+                      <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                        {ticket.description}
+                      </p>
 
-                <div className="flex items-center gap-1 mx-2">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                    (page) => {
-                      // For small number of pages, show all
-                      if (totalPages <= 7) {
-                        return (
-                          <Button
-                            key={page}
-                            variant={
-                              validCurrentPage === page ? "default" : "outline"
-                            }
-                            onClick={() => handlePageChange(page)}
-                            size="sm"
-                            className={
-                              validCurrentPage === page ? "bg-blue-600" : ""
-                            }
-                          >
-                            {page}
-                          </Button>
-                        );
-                      }
+                      <Button
+                        onClick={() => handleViewTicket(ticket._id)}
+                        className="w-full flex items-center justify-center gap-2"
+                        size="sm"
+                      >
+                        <Eye className="h-4 w-4" />
+                        View Details
+                      </Button>
+                    </div>
+                  ))}
 
-                      // For larger number of pages, show smart pagination
-                      if (
-                        page === 1 ||
-                        page === totalPages ||
-                        (page >= validCurrentPage - 1 &&
-                          page <= validCurrentPage + 1)
-                      ) {
-                        return (
-                          <Button
-                            key={page}
-                            variant={
-                              validCurrentPage === page ? "default" : "outline"
-                            }
-                            onClick={() => handlePageChange(page)}
-                            size="sm"
-                            className={
-                              validCurrentPage === page ? "bg-blue-600" : ""
-                            }
-                          >
-                            {page}
-                          </Button>
-                        );
-                      }
-
-                      // Show ellipsis
-                      if (page === 2 && validCurrentPage > 3) {
-                        return (
-                          <span
-                            key="ellipsis-start"
-                            className="px-2 text-gray-400"
-                          >
-                            ...
-                          </span>
-                        );
-                      }
-
-                      if (
-                        page === totalPages - 1 &&
-                        validCurrentPage < totalPages - 2
-                      ) {
-                        return (
-                          <span
-                            key="ellipsis-end"
-                            className="px-2 text-gray-400"
-                          >
-                            ...
-                          </span>
-                        );
-                      }
-
-                      return null;
-                    },
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between gap-2 mt-4">
+                      <Button
+                        variant="outline"
+                        onClick={goToPreviousPage}
+                        disabled={validCurrentPage === 1}
+                        size="sm"
+                        className="flex items-center gap-1"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        Prev
+                      </Button>
+                      <span className="text-sm text-gray-600">
+                        Page {validCurrentPage} of {totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        onClick={goToNextPage}
+                        disabled={validCurrentPage === totalPages}
+                        size="sm"
+                        className="flex items-center gap-1"
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
                   )}
-                </div>
-
-                <Button
-                  variant="outline"
-                  onClick={goToNextPage}
-                  disabled={validCurrentPage === totalPages}
-                  className="flex items-center gap-2"
-                  size="sm"
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Mobile View */}
-        <div className="lg:hidden mt-6">
-          {currentTickets.length === 0 ? (
-            <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-              <Ticket className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900">
-                No tickets found
-              </h3>
-              <p className="text-gray-600 mt-2">
-                Try adjusting your filters or search criteria.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {currentTickets.map((ticket) => (
-                <div
-                  key={ticket._id}
-                  className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm"
-                >
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <Ticket className="h-4 w-4 text-blue-500" />
-                        <span className="font-medium text-gray-900">
-                          {ticket.ticketNumber}
-                        </span>
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {formattedDate(ticket.createdAt)}
-                      </div>
-                    </div>
-                    <div
-                      className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${getStatusColor(ticket.status)}`}
-                    >
-                      {getStatusIcon(ticket.status)}
-                      {ticket.status}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center gap-2 text-sm">
-                      <User className="h-4 w-4 text-gray-400" />
-                      <span className="font-medium text-gray-900">
-                        {ticket.name}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <FileText className="h-4 w-4 text-gray-400" />
-                      <span className="text-gray-600 truncate">
-                        {ticket.category}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs">
-                          {getPriorityIcon(ticket.priority)}
-                        </span>
-                        <span className={getPriorityColor(ticket.priority)}>
-                          {ticket.priority}
-                        </span>
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {ticket.assignedTo || "Unassigned"}
-                      </div>
-                    </div>
-                  </div>
-
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                    {ticket.description}
-                  </p>
-
-                  <Button
-                    onClick={() => handleViewTicket(ticket._id)}
-                    className="w-full flex items-center justify-center gap-2"
-                    size="sm"
-                  >
-                    <Eye className="h-4 w-4" />
-                    View Details
-                  </Button>
-                </div>
-              ))}
-
-              {/* Mobile Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between gap-2 mt-4">
-                  <Button
-                    variant="outline"
-                    onClick={goToPreviousPage}
-                    disabled={validCurrentPage === 1}
-                    size="sm"
-                    className="flex items-center gap-1"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    Prev
-                  </Button>
-                  <span className="text-sm text-gray-600">
-                    Page {validCurrentPage} of {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    onClick={goToNextPage}
-                    disabled={validCurrentPage === totalPages}
-                    size="sm"
-                    className="flex items-center gap-1"
-                  >
-                    Next
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
                 </div>
               )}
             </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
     </div>
   );
