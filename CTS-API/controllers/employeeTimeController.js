@@ -719,7 +719,7 @@ const getBioBreakSummary = async (req, res) => {
     // Calculate which break would be deducted for a new bio break
     const potentialDeduction = calculateBreakDeduction(employeeTime, 15); // 15 minutes as example
 
-    // Get available breaks for deduction
+    // Get available breaks for deduction.3.
     const availableForDeduction = ["break1", "break2", "lunch"].filter(
       (breakType) => !breakUsage[breakType].used,
     );
@@ -785,7 +785,7 @@ const getEmployeeRunningTime = async (req, res) => {
 const adminEndTime = async (req, res) => {
   try {
     const activeSession = await EmployeeTime.findOne({
-      employeeId: rq.user._id,
+      employeeId: req.user._id,
       timeOut: null,
     });
 
@@ -843,4 +843,5 @@ module.exports = {
   getBioBreakSummary,
   getIncompleteLogins,
   getEmployeeRunningTime,
+  adminEndTime,
 };
