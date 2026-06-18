@@ -51,19 +51,26 @@ export const TicketAPi = {
 
   // MEMO
   createMemo: (body: object) => apiHelper("/api/memos/create", "POST", body),
-  updateMemo: (id: string, body: object) => apiHelper(`/api/memos/${id}`, "PUT", body),
+  updateMemo: (id: string, body: object) =>
+    apiHelper(`/api/memos/${id}`, "PUT", body),
   getAllMemos: () => apiHelper("/api/memos", "GET"),
   getIndividualMemo: (id: any) => apiHelper(`/api/memos/${id}`, "GET"),
-  acknowledgement: (id: any) => apiHelper(`/api/memos/${id}/acknowledged`, "PUT"),
-  getUserUnacknowledged: (id: any) => apiHelper(`/api/memos/unacknowledged/${id}`, "GET"),
+  acknowledgement: (id: any) =>
+    apiHelper(`/api/memos/${id}/acknowledged`, "PUT"),
+  getUserUnacknowledged: (id: any) =>
+    apiHelper(`/api/memos/unacknowledged/${id}`, "GET"),
 
   // Policies
-  createPolicies: (body: object) => apiHelper("/api/policies/create", "POST", body),
-  updatePolicy: (id: string, body: object) => apiHelper(`/api/memos/${id}`, "PUT", body),
+  createPolicies: (body: object) =>
+    apiHelper("/api/policies/create", "POST", body),
+  updatePolicy: (id: string, body: object) =>
+    apiHelper(`/api/memos/${id}`, "PUT", body),
   getAllPolicies: () => apiHelper("/api/policies", "GET"),
   getIndividualPolicy: (id: any) => apiHelper(`/api/policies/${id}`, "GET"),
-  acknowledgementPolicy: (id: any) => apiHelper(`/api/policies/${id}/acknowledged`, "PUT"),
-  getUserUnacknowledgedPol: (id: any) => apiHelper(`/api/policies/unacknowledged/${id}`, "GET"),
+  acknowledgementPolicy: (id: any) =>
+    apiHelper(`/api/policies/${id}/acknowledged`, "PUT"),
+  getUserUnacknowledgedPol: (id: any) =>
+    apiHelper(`/api/policies/unacknowledged/${id}`, "GET"),
 };
 
 export const Category = {
@@ -144,10 +151,10 @@ export const SurveyAPI = {
   updateSurvey: (id: any, body: object) =>
     apiHelper(`/api/surveys/${id}`, "PUT", body),
   deleteSurvey: (id: any) => apiHelper(`/api/surveys/${id}`, "DELETE"),
-  
+
   // FIXED: Changed from /active to just get all surveys
   getAllActiveSurveys: () => apiHelper(`/api/surveys`, "GET"),
-  
+
   submitResponse: (id: any, body: object) =>
     apiHelper(`/api/surveys/${id}/respond`, "POST", body),
   getAllSurveyTitle: () => apiHelper(`/api/surveys/titles`, "GET"),
@@ -173,6 +180,8 @@ export const NteAPI = {
   getNtesByUser: () => apiHelper(`/api/ntes/my/nte`, "GET"),
 };
 
+export const TeaAPI = {};
+
 export const UserProfileAPI = {
   createProfile: (body: object) => apiHelper("/api/userprofiles", "POST", body),
   getProfile: () => apiHelper("/api/userprofiles", "GET"),
@@ -193,13 +202,13 @@ export const ScheduleAndAttendanceAPI = {
     apiHelper(
       "/api/ScheduleAndAttendanceRoutes/schedule-entries",
       "POST",
-      body
+      body,
     ),
   updateScheduleEntry: (id: string, body: object) =>
     apiHelper(
       `/api/ScheduleAndAttendanceRoutes/schedule-entries/${id}`,
       "PUT",
-      body
+      body,
     ),
   // Attendance Entries
   getAttendanceEntries: () =>
@@ -208,13 +217,13 @@ export const ScheduleAndAttendanceAPI = {
     apiHelper(
       "/api/ScheduleAndAttendanceRoutes/attendance-entries",
       "POST",
-      body
+      body,
     ),
   updateAttendanceEntry: (id: string, _formattedDate: string, body: object) =>
     apiHelper(
       `/api/ScheduleAndAttendanceRoutes/attendance-entries/${id}`,
       "PUT",
-      body
+      body,
     ),
 
   getTeamLeader: () =>
@@ -224,19 +233,19 @@ export const ScheduleAndAttendanceAPI = {
     apiHelper(
       "/api/ScheduleAndAttendanceRoutes/check-existing-entry",
       "POST",
-      body
+      body,
     ),
 
   getSchedulePerEmployeeByDate: (employeeId: string, date: string) =>
     apiHelper(
       `/api/ScheduleAndAttendanceRoutes/schedule-per-employee-by-date?employeeId=${employeeId}&date=${date}`,
-      "GET"
+      "GET",
     ),
 
   getSchedulePerEmployee: (employeeId: string) =>
     apiHelper(
       `/api/ScheduleAndAttendanceRoutes/schedule/employee?employeeId=${employeeId}`,
-      "GET"
+      "GET",
     ),
 };
 
@@ -267,19 +276,19 @@ export const payrollAPI = {
     body: {
       startDate: string;
       endDate: string;
-    }
+    },
   ) => apiHelper(`/api/payroll/auto-calculate/${userId}`, "POST", body),
   sendPayroll: (
     userId: string,
     body: {
       payrollId: string;
-    }
+    },
   ) => apiHelper(`/api/payroll/send/${userId}`, "POST", body),
   getEmployeePayslips: (userId: string) =>
     apiHelper(`/api/payroll/payslips/${userId}`, "GET"),
   generatePayslipForRange: (
     userId: string,
-    body: { startDate: string; endDate: string }
+    body: { startDate: string; endDate: string },
   ) => apiHelper(`/api/payroll/payslips/generate/${userId}`, "POST", body),
   getAllArchivedPayslips: (startDate?: string, endDate?: string) => {
     const params = new URLSearchParams();
@@ -288,7 +297,7 @@ export const payrollAPI = {
     const queryString = params.toString();
     return apiHelper(
       `/api/payroll/payslips/archive${queryString ? `?${queryString}` : ""}`,
-      "GET"
+      "GET",
     );
   },
 };
