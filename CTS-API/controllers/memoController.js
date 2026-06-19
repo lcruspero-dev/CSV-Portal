@@ -10,7 +10,13 @@ const getMemos = asyncHandler(async (_req, res) => {
 
     let memos;
     if (user.isAdmin) {
-      memos = await Memo.find().sort({ createdAt: -1 }); // Admins see all memos
+      memos = await Memo.find({
+        $or: [
+          { isPinned: true },
+          { isPinned: false },
+          { isPinned: { $exists: false } },
+        ],
+      }).sort({ createdAt: -1 }); // Admins see all memos
     } else {
       memos = await Memo.find({
         $or: [
@@ -100,7 +106,7 @@ const updateAcknowledged = asyncHandler(async (req, res) => {
   }
 
   const alreadyAcknowledged = memo.acknowledgedby.some(
-    (acknowledged) => acknowledged.userId === userId
+    (acknowledged) => acknowledged.userId === userId,
   );
 
   if (alreadyAcknowledged) {
@@ -119,7 +125,7 @@ const updateAcknowledged = asyncHandler(async (req, res) => {
     {
       $push: { acknowledgedby: newAcknowledgment },
     },
-    { new: true }
+    { new: true },
   );
 
   res.status(200).json(updatedMemo);
@@ -145,7 +151,7 @@ const getUserUnacknowledged = asyncHandler(async (req, res) => {
         status: { $ne: "inactive" },
         createdAt: { $lte: memo.createdAt },
       },
-      "name _id"
+      "name _id",
     );
 
     return res.status(200).json({
