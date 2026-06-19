@@ -21,8 +21,13 @@ const getMemos = asyncHandler(async (_req, res) => {
       memos = await Memo.find({
         $or: [
           { isPinned: true }, // Always include pinned memos
-          { isPinned: false }, // Include unpinned memos
-          { isPinned: { $exists: false } }, // Include memos without isPinned field
+          {
+            $or: [
+              { isPinned: false }, // Explicitly unpinned
+              { isPinned: { $exists: false } }, // Or field doesn't exist
+            ],
+            createdAt: { $gte: user.createdAt }, // Only newer memos
+          },
         ],
       }).sort({ createdAt: -1 });
     }
