@@ -14,10 +14,6 @@ const teaSchema = new Schema({
     type: String,
     required: true,
   },
-  manager: {
-    type: String,
-    required: true,
-  },
   signature: {
     type: String,
     required: true,

@@ -59,13 +59,12 @@ const get = async (req, res) => {
 // CREATE TEA RECORD
 const create = async (req, res) => {
   try {
-    const { employeeId, name, position, manager, signature, date } = req.body;
+    const { employeeId, name, position, signature, date } = req.body;
 
     const tea = await Tea.create({
       employeeId,
       name,
       position,
-      manager,
       signature,
       date,
     });
