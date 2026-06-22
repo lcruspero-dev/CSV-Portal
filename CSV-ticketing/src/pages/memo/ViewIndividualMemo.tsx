@@ -93,10 +93,14 @@ const DocumentTabs = ({
     return data.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   };
 
-  const totalAckPages = Math.ceil((acknowledgedUsers?.length || 0) / ITEMS_PER_PAGE);
-  const totalUnackPages = Math.ceil((unacknowledgedUsers.length || 0) / ITEMS_PER_PAGE);
+  const totalAckPages = Math.ceil(
+    (acknowledgedUsers?.length || 0) / ITEMS_PER_PAGE,
+  );
+  const totalUnackPages = Math.ceil(
+    (unacknowledgedUsers.length || 0) / ITEMS_PER_PAGE,
+  );
 
-  const paginatedAckUsers = acknowledgedUsers 
+  const paginatedAckUsers = acknowledgedUsers
     ? paginateData(acknowledgedUsers, currentAckPage)
     : [];
   const paginatedUnackUsers = unacknowledgedUsers
@@ -106,7 +110,7 @@ const DocumentTabs = ({
   const renderPagination = (
     currentPage: number,
     totalPages: number,
-    setPage: (page: number) => void
+    setPage: (page: number) => void,
   ) => (
     <Pagination className="my-4 text-xs">
       <PaginationContent>
@@ -201,7 +205,8 @@ const DocumentTabs = ({
               )}
             </TableBody>
           </Table>
-          {acknowledgedUsers && acknowledgedUsers.length > ITEMS_PER_PAGE &&
+          {acknowledgedUsers &&
+            acknowledgedUsers.length > ITEMS_PER_PAGE &&
             renderPagination(currentAckPage, totalAckPages, setCurrentAckPage)}
         </div>
       </TabsContent>
@@ -243,11 +248,12 @@ const DocumentTabs = ({
               )}
             </TableBody>
           </Table>
-          {unacknowledgedUsers && unacknowledgedUsers.length > ITEMS_PER_PAGE &&
+          {unacknowledgedUsers &&
+            unacknowledgedUsers.length > ITEMS_PER_PAGE &&
             renderPagination(
               currentUnackPage,
               totalUnackPages,
-              setCurrentUnackPage
+              setCurrentUnackPage,
             )}
         </div>
       </TabsContent>
@@ -256,14 +262,14 @@ const DocumentTabs = ({
 };
 
 // Update Document Component
-const UpdateDocumentDialog = ({ 
-  document, 
-  documentType, 
-  onUpdateSuccess 
-}: { 
-  document: Document, 
-  documentType: string,
-  onUpdateSuccess: () => void 
+const UpdateDocumentDialog = ({
+  document,
+  documentType,
+  onUpdateSuccess,
+}: {
+  document: Document;
+  documentType: string;
+  onUpdateSuccess: () => void;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [subject, setSubject] = useState("");
@@ -281,7 +287,9 @@ const UpdateDocumentDialog = ({
     }
   }, [document, isOpen]);
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
     setNewFile(file);
@@ -294,18 +302,18 @@ const UpdateDocumentDialog = ({
     setIsSaving(true);
     try {
       let fileUrl = document.file;
-      
+
       // Upload new file if selected
       if (newFile) {
         const formData = new FormData();
         formData.append("file", newFile);
-        
+
         const uploadResponse = await axios.post(
           `${import.meta.env.VITE_UPLOADFILES_URL}/upload`,
           formData,
           {
             headers: { "Content-Type": "multipart/form-data" },
-          }
+          },
         );
         fileUrl = uploadResponse.data.filename;
       }
@@ -317,7 +325,7 @@ const UpdateDocumentDialog = ({
       };
 
       // Call appropriate API based on document type
-      if (documentType === 'memo') {
+      if (documentType === "memo") {
         await TicketAPi.updateMemo(document._id, body);
       } else {
         await TicketAPi.updatePolicy(document._id, body);
@@ -354,7 +362,8 @@ const UpdateDocumentDialog = ({
       <DialogContent className="w-[900px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">
-            Update {documentType.charAt(0).toUpperCase() + documentType.slice(1)}
+            Update{" "}
+            {documentType.charAt(0).toUpperCase() + documentType.slice(1)}
           </DialogTitle>
           <DialogDescription>
             Edit the {documentType} details below
@@ -416,7 +425,9 @@ import { Input } from "@/components/ui/input";
 
 const ViewIndividualDocument = () => {
   const [document, setDocument] = useState<Document | null>(null);
-  const [unacknowledgedUsers, setUnacknowledgedUsers] = useState<UnacknowledgedUser[]>([]);
+  const [unacknowledgedUsers, setUnacknowledgedUsers] = useState<
+    UnacknowledgedUser[]
+  >([]);
   const [isLoading, setIsLoading] = useState(true);
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
@@ -430,8 +441,8 @@ const ViewIndividualDocument = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Determine if this is a memo or policy based on the route
-  const isPolicyRoute = location.pathname.includes('/policies/');
-  const documentType = isPolicyRoute ? 'policy' : 'memo';
+  const isPolicyRoute = location.pathname.includes("/policies/");
+  const documentType = isPolicyRoute ? "policy" : "memo";
 
   const handleCheckboxChange = () => {
     if (!id || !user) {
@@ -451,45 +462,53 @@ const ViewIndividualDocument = () => {
     setIsDialogOpen(false);
   };
 
-  const getIndividualDocument = useCallback(async (docId: string) => {
-    if (!docId) return;
-    
-    try {
-      let response;
-      if (isPolicyRoute) {
-        response = await TicketAPi.getIndividualPolicy(docId);
-      } else {
-        response = await TicketAPi.getIndividualMemo(docId);
-      }
-      setDocument(response.data);
-    } catch (error) {
-      console.error(error);
-      toast({
-        title: "Error",
-        description: `Failed to load ${documentType}`,
-        variant: "destructive",
-      });
-    }
-  }, [isPolicyRoute, documentType, toast]);
+  const getIndividualDocument = useCallback(
+    async (docId: string) => {
+      if (!docId) return;
 
-  const getUnacknowledgedUsers = useCallback(async (docId: string) => {
-    if (!docId) return;
-    
-    try {
-      let response;
-      if (isPolicyRoute) {
-        response = await TicketAPi.getUserUnacknowledgedPol(docId);
-      } else {
-        response = await TicketAPi.getUserUnacknowledged(docId);
+      try {
+        let response;
+        if (isPolicyRoute) {
+          response = await TicketAPi.getIndividualPolicy(docId);
+        } else {
+          response = await TicketAPi.getIndividualMemo(docId);
+        }
+        setDocument(response.data);
+      } catch (error) {
+        console.error(error);
+        toast({
+          title: "Error",
+          description: `Failed to load ${documentType}`,
+          variant: "destructive",
+        });
       }
-      setUnacknowledgedUsers(response.data?.unacknowledgedUsers || response.data || []);
-    } catch (error) {
-      console.error(error);
-      setUnacknowledgedUsers([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isPolicyRoute]);
+    },
+    [isPolicyRoute, documentType, toast],
+  );
+
+  const getUnacknowledgedUsers = useCallback(
+    async (docId: string) => {
+      if (!docId) return;
+
+      try {
+        let response;
+        if (isPolicyRoute) {
+          response = await TicketAPi.getUserUnacknowledgedPol(docId);
+        } else {
+          response = await TicketAPi.getUserUnacknowledged(docId);
+        }
+        setUnacknowledgedUsers(
+          response.data?.unacknowledgedUsers || response.data || [],
+        );
+      } catch (error) {
+        console.error(error);
+        setUnacknowledgedUsers([]);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [isPolicyRoute],
+  );
 
   const handleAcknowledged = async (docId: string) => {
     if (!docId || !user) {
@@ -508,12 +527,12 @@ const ViewIndividualDocument = () => {
       } else {
         response = await TicketAPi.acknowledgement(docId);
       }
-      
+
       if (response.data) {
         // Refresh data
         await getIndividualDocument(docId);
         await getUnacknowledgedUsers(docId);
-        
+
         toast({
           title: "Success",
           description: `Your acknowledgement of this ${documentType} has been recorded`,
@@ -537,7 +556,7 @@ const ViewIndividualDocument = () => {
     if (id) {
       await getIndividualDocument(id);
       await getUnacknowledgedUsers(id);
-      setRefreshTrigger(prev => prev + 1);
+      setRefreshTrigger((prev) => prev + 1);
     }
   }, [id, getIndividualDocument, getUnacknowledgedUsers]);
 
@@ -553,7 +572,7 @@ const ViewIndividualDocument = () => {
     // Check if user has already acknowledged this document
     if (document?.acknowledgedby && user) {
       const hasAcknowledged = document.acknowledgedby.some(
-        (ack) => ack.userId === user._id
+        (ack) => ack.userId === user._id,
       );
       setIsChecked(hasAcknowledged);
     }
@@ -584,7 +603,8 @@ const ViewIndividualDocument = () => {
             Document Not Found
           </h2>
           <p className="text-gray-500">
-            The {documentType} you are looking for does not exist or has been removed.
+            The {documentType} you are looking for does not exist or has been
+            removed.
           </p>
         </div>
       </div>
@@ -592,7 +612,7 @@ const ViewIndividualDocument = () => {
   }
 
   const isAcknowledged = document.acknowledgedby?.some(
-    (ack) => ack.userId === user?._id
+    (ack) => ack.userId === user?._id,
   );
 
   return (
@@ -602,10 +622,10 @@ const ViewIndividualDocument = () => {
           <div className="flex items-center mt-1 scale-90 origin-left">
             <BackButton />
           </div>
-          
+
           {/* Admin Edit Button */}
           {user?.isAdmin && (
-            <UpdateDocumentDialog 
+            <UpdateDocumentDialog
               document={document}
               documentType={documentType}
               onUpdateSuccess={handleDocumentUpdate}
@@ -644,7 +664,9 @@ const ViewIndividualDocument = () => {
                           className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1 hover:underline"
                         >
                           <FileText size={16} />
-                          <span className="truncate max-w-xs">{document.file}</span>
+                          <span className="truncate max-w-xs">
+                            {document.file}
+                          </span>
                         </button>
                       </div>
                     </div>
@@ -726,7 +748,7 @@ const ViewIndividualDocument = () => {
                 onClick={() => {
                   window.open(
                     `${import.meta.env.VITE_UPLOADFILES_URL}/files/${document.file}`,
-                    '_blank'
+                    "_blank",
                   );
                 }}
               >
@@ -757,15 +779,15 @@ const ViewIndividualDocument = () => {
             <DialogDescription className="mt-4 text-gray-600">
               <div className="space-y-4">
                 <p>
-                  By acknowledging this {documentType}, you confirm that you have received
-                  and understood its contents.
+                  By acknowledging this {documentType}, you confirm that you
+                  have received and understood its contents.
                 </p>
                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
                   <p className="font-medium text-blue-800">Declaration:</p>
                   <p className="mt-2 text-blue-700 text-sm">
-                    "I acknowledge receipt of this {documentType} and understand the
-                    information provided. I will comply with any instructions or
-                    requirements outlined herein."
+                    "I acknowledge receipt of this {documentType} and understand
+                    the information provided. I will comply with any
+                    instructions or requirements outlined herein."
                   </p>
                 </div>
               </div>

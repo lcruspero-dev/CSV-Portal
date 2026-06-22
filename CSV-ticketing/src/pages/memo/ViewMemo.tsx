@@ -40,7 +40,12 @@ interface SummaryCardProps {
   onClick?: () => void;
 }
 
-const SummaryCard: React.FC<SummaryCardProps> = ({ label, value, highlight, onClick }) => (
+const SummaryCard: React.FC<SummaryCardProps> = ({
+  label,
+  value,
+  highlight,
+  onClick,
+}) => (
   <div
     onClick={onClick}
     className={`
@@ -49,9 +54,11 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ label, value, highlight, onCl
       border backdrop-blur-md
       transition-all duration-300
       hover:-translate-y-1 hover:shadow-xl
-      ${highlight 
-        ? "bg-yellow-50/80 border-yellow-300 shadow-md" 
-        : "bg-white/80 border-gray-200 shadow-sm"}
+      ${
+        highlight
+          ? "bg-yellow-50/80 border-yellow-300 shadow-md"
+          : "bg-white/80 border-gray-200 shadow-sm"
+      }
     `}
   >
     <p className="text-sm text-gray-500">{label}</p>
@@ -91,7 +98,7 @@ function ViewMemo() {
     let data = memos;
     if (showPendingOnly) {
       data = memos.filter(
-        (memo) => !memo.acknowledgedby.some((ack) => ack.userId === user?._id)
+        (memo) => !memo.acknowledgedby.some((ack) => ack.userId === user?._id),
       );
     }
     setFilteredMemos(data);
@@ -105,7 +112,7 @@ function ViewMemo() {
 
   const paginatedMemos = filteredMemos.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    currentPage * itemsPerPage,
   );
 
   if (loading) return <LoadingComponent />;
@@ -113,7 +120,6 @@ function ViewMemo() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 px-6 py-8">
       <div className="max-w-7xl mx-auto">
-        
         {/* HEADER */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-10">
           <div className="flex items-center gap-4">
@@ -127,16 +133,21 @@ function ViewMemo() {
               </p>
             </div>
           </div>
-
           {user?.isAdmin && (
             <CreateMemo setMemos={setMemos} setLoading={setLoading} />
           )}
+          {user?.isAdmin && (
+            <Button onClick={() => navigate("/tea")}>Draft</Button>
+          )}{" "}
         </div>
 
         {/* SUMMARY CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
           <SummaryCard label="Total Memoranda" value={memos.length} />
-          <SummaryCard label="Acknowledged" value={memos.filter(isAcknowledged).length} />
+          <SummaryCard
+            label="Acknowledged"
+            value={memos.filter(isAcknowledged).length}
+          />
           <SummaryCard
             label="Pending"
             value={pendingCount}
@@ -147,7 +158,6 @@ function ViewMemo() {
 
         {/* TABLE CONTAINER */}
         <div className="bg-white/80 backdrop-blur rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
-          
           {/* FILTER BAR */}
           {showPendingOnly && (
             <div className="flex items-center justify-between px-6 py-3 bg-yellow-50 border-b border-yellow-200">
@@ -199,9 +209,11 @@ function ViewMemo() {
                     <span
                       className={`
                         px-3 py-1 text-xs font-medium rounded-full
-                        ${isAcknowledged(memo)
-                          ? "bg-green-100 text-green-700"
-                          : "bg-yellow-100 text-yellow-800"}
+                        ${
+                          isAcknowledged(memo)
+                            ? "bg-green-100 text-green-700"
+                            : "bg-yellow-100 text-yellow-800"
+                        }
                       `}
                     >
                       {isAcknowledged(memo) ? "Acknowledged" : "Pending"}
