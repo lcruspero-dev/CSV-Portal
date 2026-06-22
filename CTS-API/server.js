@@ -34,7 +34,7 @@ app.use(
 );
 app.use("/api/surveys", require("./routes/surveyRoutes"));
 app.use("/api/ntes", require("./routes/nteRoutes"));
-app.use("/api/teas", require("/routes/teaRoutes"));
+app.use("/api/teas", require("./routes/teaRoutes"));
 app.use("/api/coaching", require("./routes/coachingRoutes"));
 app.use("/api/userprofiles", require("./routes/userProfileRoutes"));
 app.use("/api/leave", require("./routes/leaveRoutes"));
