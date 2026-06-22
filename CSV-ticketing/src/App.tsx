@@ -38,9 +38,10 @@ import ProtectedRoute2 from "./utils/protectedRoutes";
 import Payroll from "./pages/payroll/payroll";
 import PayslipPage from "./pages/payslip/PayslipPage";
 import ApiDocumentation from "./pages/apiDocumentation";
-import Help from './pages/quickLinks/help';
+import Help from "./pages/quickLinks/help";
 import Feedback from "./pages/quickLinks/feedback";
 import Manual from "./pages/quickLinks/manual";
+import Tea from "./pages/tea/userTea";
 
 function App() {
   return (
@@ -51,6 +52,7 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/api-documentaion" element={<ApiDocumentation />} />
+          <Route path="/tea" element={<Tea />} />
 
           <Route element={<Layout />}>
             <Route path="/sign-in" element={<Login />} />

@@ -449,7 +449,7 @@ const PdfNteViewer: React.FC<PdfNteViewerProps> = ({
                         "record keeping",
                         "safety and security",
                       ].some((type) =>
-                        nteData?.nte.offenseType.toLowerCase().includes(type)
+                        nteData?.nte.offenseType.toLowerCase().includes(type),
                       )
                         ? "border-[#534292]"
                         : "border-gray-400"
@@ -465,7 +465,7 @@ const PdfNteViewer: React.FC<PdfNteViewerProps> = ({
                       "record keeping",
                       "safety and security",
                     ].some((type) =>
-                      nteData?.nte.offenseType.toLowerCase().includes(type)
+                      nteData?.nte.offenseType.toLowerCase().includes(type),
                     ) && (
                       <svg
                         width="12"
@@ -511,7 +511,7 @@ const PdfNteViewer: React.FC<PdfNteViewerProps> = ({
                     "record keeping",
                     "safety and security",
                   ].some((type) =>
-                    nteData?.nte.offenseType.toLowerCase().includes(type)
+                    nteData?.nte.offenseType.toLowerCase().includes(type),
                   ) && (
                     <p className="font-medium text-sm italic pb-2">
                       {nteData?.nte.offenseType}
