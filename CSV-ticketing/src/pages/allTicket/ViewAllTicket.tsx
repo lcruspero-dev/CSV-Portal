@@ -108,14 +108,14 @@ const ViewAllTicket: React.FC = () => {
           ticket.ticketNumber.toLowerCase().includes(term) ||
           ticket.description.toLowerCase().includes(term) ||
           ticket.category.toLowerCase().includes(term) ||
-          ticket.assignedTo.toLowerCase().includes(term)
+          ticket.assignedTo.toLowerCase().includes(term),
       );
     }
 
     // Apply status filter
     if (statusFilter !== "all") {
       filtered = filtered.filter(
-        (ticket) => ticket.status.toLowerCase() === statusFilter.toLowerCase()
+        (ticket) => ticket.status.toLowerCase() === statusFilter.toLowerCase(),
       );
     }
 
@@ -130,7 +130,7 @@ const ViewAllTicket: React.FC = () => {
   // Memoized pagination values
   const totalPages = useMemo(
     () => Math.ceil(filteredTickets.length / ITEMS_PER_PAGE) || 1,
-    [filteredTickets.length]
+    [filteredTickets.length],
   );
 
   const currentPageTickets = useMemo(() => {
@@ -216,11 +216,11 @@ const ViewAllTicket: React.FC = () => {
       closed: allTickets.filter((t) => t.status.toLowerCase() === "closed")
         .length,
       inProgress: allTickets.filter(
-        (t) => t.status.toLowerCase() === "in progress"
+        (t) => t.status.toLowerCase() === "in progress",
       ).length,
       total: allTickets.length,
     }),
-    [allTickets]
+    [allTickets],
   );
 
   if (loading && !refreshing) {
@@ -261,7 +261,6 @@ const ViewAllTicket: React.FC = () => {
             <BackButton />
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2">
-               
                 View All Tickets
               </h1>
               <p className="text-gray-600 text-sm mt-1">
@@ -513,7 +512,7 @@ const ViewAllTicket: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <div
                         className={`w-2 h-2 rounded-full ${getPriorityColor(
-                          ticket.priority
+                          ticket.priority,
                         )}`}
                       />
                       <span className="text-xs text-gray-600">
@@ -615,7 +614,7 @@ const ViewAllTicket: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <div
                           className={`w-2 h-2 rounded-full ${getPriorityColor(
-                            ticket.priority
+                            ticket.priority,
                           )}`}
                         />
                         <span className="text-sm text-gray-600">
