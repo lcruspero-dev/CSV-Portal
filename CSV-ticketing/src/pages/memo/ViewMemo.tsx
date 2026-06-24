@@ -136,11 +136,7 @@ function ViewMemo() {
           {user?.isAdmin && (
             <CreateMemo setMemos={setMemos} setLoading={setLoading} />
           )}
-          {user?.isAdmin && (
-            <Button onClick={() => navigate("/tea")}>Draft</Button>
-          )}{" "}
         </div>
-
         {/* SUMMARY CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
           <SummaryCard label="Total Memoranda" value={memos.length} />
@@ -155,7 +151,6 @@ function ViewMemo() {
             onClick={() => setShowPendingOnly(true)}
           />
         </div>
-
         {/* TABLE CONTAINER */}
         <div className="bg-white/80 backdrop-blur rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
           {/* FILTER BAR */}
@@ -176,6 +171,18 @@ function ViewMemo() {
               </Button>
             </div>
           )}
+
+          {/* TABLE TOOLBAR */}
+          <div className="flex items-center justify-between px-6 py-4 border-b bg-white">
+            <div>
+              <h2 className="font-semibold text-gray-900">Memoranda List</h2>
+              <p className="text-sm text-gray-500">
+                View and manage company memoranda
+              </p>
+            </div>
+
+            <Button onClick={() => navigate("/tea")}>TEA</Button>
+          </div>
 
           <Table>
             {/* STICKY HEADER */}
@@ -207,14 +214,11 @@ function ViewMemo() {
 
                   <TableCell>
                     <span
-                      className={`
-                        px-3 py-1 text-xs font-medium rounded-full
-                        ${
-                          isAcknowledged(memo)
-                            ? "bg-green-100 text-green-700"
-                            : "bg-yellow-100 text-yellow-800"
-                        }
-                      `}
+                      className={`px-3 py-1 text-xs font-medium rounded-full ${
+                        isAcknowledged(memo)
+                          ? "bg-green-100 text-green-700"
+                          : "bg-yellow-100 text-yellow-800"
+                      }`}
                     >
                       {isAcknowledged(memo) ? "Acknowledged" : "Pending"}
                     </span>

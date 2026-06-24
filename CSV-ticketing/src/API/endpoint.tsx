@@ -180,7 +180,31 @@ export const NteAPI = {
   getNtesByUser: () => apiHelper(`/api/ntes/my/nte`, "GET"),
 };
 
-export const TeaAPI = {};
+export const TeaAPI = {
+  // Submit Team Expectations Acknowledgement
+  createTea: (body: {
+    employeeId: string;
+    employeeName: string;
+    signature: string;
+  }) => apiHelper("/api/teas", "POST", body),
+
+  // Get all acknowledgements (Admin)
+  getAllTea: () => apiHelper("/api/teas", "GET"),
+
+  // Get single acknowledgement
+  getTea: (id: string) => apiHelper(`/api/teas/${id}`, "GET"),
+
+  // Check if employee already signed
+  checkEmployeeAcknowledgement: (employeeId: string) =>
+    apiHelper(`/api/teas/employee/${employeeId}`, "GET"),
+
+  // Update acknowledgement
+  updateTea: (id: string, body: object) =>
+    apiHelper(`/api/teas/${id}`, "PUT", body),
+
+  // Delete acknowledgement
+  deleteTea: (id: string) => apiHelper(`/api/teas/${id}`, "DELETE"),
+};
 
 export const UserProfileAPI = {
   createProfile: (body: object) => apiHelper("/api/userprofiles", "POST", body),
