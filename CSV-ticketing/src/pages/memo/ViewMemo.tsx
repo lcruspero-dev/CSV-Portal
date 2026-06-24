@@ -180,8 +180,9 @@ function ViewMemo() {
                 View and manage company memoranda
               </p>
             </div>
-
-            <Button onClick={() => navigate("/tea")}>TEA</Button>
+            {user?.isAdmin && (
+              <Button onClick={() => navigate("/tea")}>Draft</Button>
+            )}{" "}
           </div>
 
           <Table>

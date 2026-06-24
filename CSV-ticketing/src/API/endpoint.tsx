@@ -187,7 +187,6 @@ export const TeaAPI = {
     employeeName: string;
     signature: string;
   }) => apiHelper("/api/teas", "POST", body),
-
   // Get all acknowledgements (Admin)
   getAllTea: () => apiHelper("/api/teas", "GET"),
 
