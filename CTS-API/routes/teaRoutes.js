@@ -1,19 +1,22 @@
 const express = require("express");
 const router = express.Router();
+
 const {
   index,
   get,
   create,
   update,
   remove,
+  checkAcknowledgement,
 } = require("../controllers/teaController");
+
 const { protect } = require("../middleware/authMiddleware");
 
-//Crud operations
-router.get("/", index, protect);
-router.get("/:id", get, protect);
-router.post("/", create, protect);
-router.put("/:id", update, protect);
-router.delete("/:id", remove, protect);
+router.get("/", protect, index);
+router.get("/:id", protect, get);
+router.get("/employee/:employeeId", protect, checkAcknowledgement);
+router.post("/", protect, create);
+router.put("/:id", protect, update);
+router.delete("/:id", protect, remove);
 
 module.exports = router;

@@ -1,27 +1,41 @@
 const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
 
-const teaSchema = new Schema({
-  employeeId: {
-    type: String,
-    required: true,
-  },
-  name: {
-    type: String,
-    required: true,
-  },
-  position: {
-    type: String,
-    required: true,
-  },
-  signature: {
-    type: String,
-    required: true,
-  },
-  date: {
-    type: Date,
-    required: true,
-  },
-});
+const teaSchema = new mongoose.Schema(
+  {
+    employeeId: {
+      type: String,
+      required: true,
+      unique: true,
+    },
 
-module.exports = mongoose.model("TEA", teaSchema);
+    employeeName: {
+      type: String,
+      required: true,
+    },
+
+    position: {
+      type: String,
+      default: "Customer Service",
+    },
+
+    signature: {
+      type: String,
+      required: true,
+    },
+
+    manager: {
+      type: String,
+      default: "Ronalyn Booc",
+    },
+
+    dateSigned: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  {
+    timestamps: true,
+  },
+);
+
+module.exports = mongoose.model("TeamExpectationsAcknowledgement", teaSchema);

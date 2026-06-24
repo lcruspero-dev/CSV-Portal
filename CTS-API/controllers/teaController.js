@@ -59,27 +59,44 @@ const get = async (req, res) => {
 // CREATE TEA RECORD
 const create = async (req, res) => {
   try {
-    const { employeeId, name, position, signature, date } = req.body;
+    const { employeeId, employeeName, signature } = req.body;
+
+    if (!employeeId || !employeeName || !signature) {
+      return res.status(400).json({
+        status: "Error",
+        message: "Missing required fields",
+      });
+    }
+
+    const existing = await Tea.findOne({ employeeId });
+
+    if (existing) {
+      return res.status(409).json({
+        status: "Error",
+        message: "You have already signed this acknowledgement.",
+      });
+    }
 
     const tea = await Tea.create({
       employeeId,
-      name,
-      position,
+      employeeName,
+      position: "Customer Service",
       signature,
-      date,
+      manager: "Ronalyn Booc",
+      dateSigned: new Date(),
     });
 
     res.status(201).json({
       status: "Success",
-      message: "Record created successfully",
+      message: "Acknowledgement submitted successfully",
       data: tea,
     });
   } catch (error) {
-    console.error("Failed to create", error);
+    console.error(error);
 
     res.status(500).json({
       status: "Error",
-      message: "Internal Server Error",
+      message: error.message,
     });
   }
 };
@@ -158,10 +175,29 @@ const remove = async (req, res) => {
   }
 };
 
+const checkAcknowledgement = async (req, res) => {
+  try {
+    const { employeeId } = req.params;
+
+    const record = await Tea.findOne({ employeeId });
+
+    res.status(200).json({
+      signed: !!record,
+      data: record,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "Error",
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
   index,
   get,
   create,
   update,
   remove,
+  checkAcknowledgement,
 };
