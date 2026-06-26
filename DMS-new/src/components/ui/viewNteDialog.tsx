@@ -526,7 +526,7 @@ const PdfNteViewer: React.FC<PdfNteViewerProps> = ({
             <div className="mt-6 space-y-4 text-sm">
               <p>
                 In view of the above offense/s, please explain in writing not
-                more than five (5) days from receipt of this notice as to:
+                more than three (3) days from receipt of this notice as to:
               </p>
               <div className="space-y-2 pl-6">
                 <div className="flex items-center gap-2">
