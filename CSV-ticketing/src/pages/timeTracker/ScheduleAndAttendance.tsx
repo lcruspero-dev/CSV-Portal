@@ -329,6 +329,23 @@ const ScheduleAndAttendance: React.FC = () => {
     }
   };
 
+  const formatBreakDuration = (
+    value?: string,
+  ): { text: string; isOver: boolean } | null => {
+    if (!value) return null;
+    const totalHours = parseFloat(value);
+    if (isNaN(totalHours)) return null;
+
+    const totalSeconds = Math.round(totalHours * 3600);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    return {
+      text: `${minutes} minute${minutes !== 1 ? "s" : ""} ${seconds} second${seconds !== 1 ? "s" : ""}`,
+      isOver: minutes >= 16,
+    };
+  };
+
   const fetchAttendance = async () => {
     try {
       const response = await ScheduleAndAttendanceAPI.getAttendanceEntries();
@@ -1403,18 +1420,40 @@ const ScheduleAndAttendance: React.FC = () => {
                                                 {attendanceEntry.totalHours}
                                               </p>
                                             )}
-                                            {attendanceEntry.break1 && (
-                                              <p className="text-xs">
-                                                Break 1:{" "}
-                                                {attendanceEntry.break1}
-                                              </p>
-                                            )}
-                                            {attendanceEntry.break2 && (
-                                              <p className="text-xs">
-                                                Break 2:{" "}
-                                                {attendanceEntry.break2}
-                                              </p>
-                                            )}
+                                            {attendanceEntry.break1 &&
+                                              (() => {
+                                                const b1 = formatBreakDuration(
+                                                  attendanceEntry.break1,
+                                                );
+                                                return b1 ? (
+                                                  <p
+                                                    className={`text-xs ${
+                                                      b1.isOver
+                                                        ? "text-red-400 font-semibold"
+                                                        : ""
+                                                    }`}
+                                                  >
+                                                    Break 1: {b1.text}
+                                                  </p>
+                                                ) : null;
+                                              })()}
+                                            {attendanceEntry.break2 &&
+                                              (() => {
+                                                const b2 = formatBreakDuration(
+                                                  attendanceEntry.break2,
+                                                );
+                                                return b2 ? (
+                                                  <p
+                                                    className={`text-xs ${
+                                                      b2.isOver
+                                                        ? "text-red-400 font-semibold"
+                                                        : ""
+                                                    }`}
+                                                  >
+                                                    Break 2: {b2.text}
+                                                  </p>
+                                                ) : null;
+                                              })()}
                                           </div>
                                         </TooltipContent>
                                       </Tooltip>

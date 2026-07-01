@@ -70,8 +70,8 @@ interface FormValues {
   otherDescription: string;
   description: string;
   offenseDescription: string;
-  employeeSignatureDate: string | null; // Add this property
-  authorizedSignatureDate: string | null; // Add this property
+  employeeSignatureDate: string | null;
+  authorizedSignatureDate: string | null;
 }
 
 type PolicyType = "attendance" | "cocd" | "other";
