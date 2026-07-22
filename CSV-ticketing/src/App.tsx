@@ -42,6 +42,7 @@ import Help from "./pages/quickLinks/help";
 import Feedback from "./pages/quickLinks/feedback";
 import Manual from "./pages/quickLinks/manual";
 import Tea from "./pages/tea/userTea";
+import Lea from "./pages/tea/leaderTea";
 
 function App() {
   return (
@@ -52,7 +53,7 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/api-documentaion" element={<ApiDocumentation />} />
-          <Route path="/tea" element={<Tea />} />
+          <Route path="/lea" element={<Lea />} />
 
           <Route element={<Layout />}>
             <Route path="/sign-in" element={<Login />} />
@@ -67,6 +68,9 @@ function App() {
             <Route path="/request-something" element={<Request />} />
             <Route path="/ticket/:id" element={<ViewIndividualTicket />} />
             <Route path="/all-tickets" element={<ViewAllRaisedTickets />} />
+            <Route path="/tea" element={<Tea />} />
+            <Route path="/lea" element={<Lea />} />
+
             <Route path="/all-memo" element={<ViewMemo />} />
             <Route path="/all-policies" element={<ViewPolicies />} />
             <Route path="/view-polMemo" element={<ViewPolociesMemo />} />
