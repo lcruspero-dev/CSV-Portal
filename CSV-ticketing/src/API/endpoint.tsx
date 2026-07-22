@@ -205,6 +205,31 @@ export const TeaAPI = {
   deleteTea: (id: string) => apiHelper(`/api/teas/${id}`, "DELETE"),
 };
 
+export const LeaAPI = {
+  // Submit Team Expectations Acknowledgement
+  createTea: (body: {
+    employeeId: string;
+    employeeName: string;
+    signature: string;
+  }) => apiHelper("/api/leas", "POST", body),
+  // Get all acknowledgements (Admin)
+  getAllTea: () => apiHelper("/api/leas", "GET"),
+
+  // Get single acknowledgement
+  getTea: (id: string) => apiHelper(`/api/leas/${id}`, "GET"),
+
+  // Check if employee already signed
+  checkEmployeeAcknowledgement: (employeeId: string) =>
+    apiHelper(`/api/leas/employee/${employeeId}`, "GET"),
+
+  // Update acknowledgement
+  updateTea: (id: string, body: object) =>
+    apiHelper(`/api/leas/${id}`, "PUT", body),
+
+  // Delete acknowledgement
+  deleteTea: (id: string) => apiHelper(`/api/leas/${id}`, "DELETE"),
+};
+
 export const UserProfileAPI = {
   createProfile: (body: object) => apiHelper("/api/userprofiles", "POST", body),
   getProfile: () => apiHelper("/api/userprofiles", "GET"),

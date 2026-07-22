@@ -30,6 +30,7 @@ export interface User {
   _id: string;
   name: string;
   isAdmin: boolean;
+  role: string;
   email: string;
 }
 
@@ -137,7 +138,7 @@ function ViewMemo() {
             <CreateMemo setMemos={setMemos} setLoading={setLoading} />
           )}
         </div>
-        {/* SUMMARY CARDS */}
+        {/* SUMMARY CARDS */}+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
           <SummaryCard label="Total Memoranda" value={memos.length} />
           <SummaryCard
@@ -180,9 +181,26 @@ function ViewMemo() {
                 View and manage company memoranda
               </p>
             </div>
-            {user?.isAdmin && (
-              <Button onClick={() => navigate("/tea")}>Draft</Button>
-            )}{" "}
+            <div className="flex items-center gap-3">
+              {user?.isAdmin && (
+                <>
+                  <CreateMemo setMemos={setMemos} setLoading={setLoading} />
+
+                  <Button variant="outline" onClick={() => navigate("/tea")}>
+                    Draft Documents
+                  </Button>
+                </>
+              )}
+
+              {(user?.isAdmin || user?.role === "TL") && (
+                <Button
+                  className="bg-[#5602FF] hover:bg-[#4700d4]"
+                  onClick={() => navigate("/lea")}
+                >
+                  Team Lead Acknowledgement
+                </Button>
+              )}
+            </div>
           </div>
 
           <Table>
