@@ -13,6 +13,10 @@ const memoSchema = mongoose.Schema(
       type: String,
       required: [true, "Please add a description"],
     },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
     acknowledgedby: [
       {
         name: {
@@ -34,7 +38,7 @@ const memoSchema = mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 module.exports = mongoose.model("Memo", memoSchema);
