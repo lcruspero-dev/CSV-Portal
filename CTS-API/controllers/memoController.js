@@ -9,32 +9,29 @@ const getMemos = asyncHandler(async (_req, res) => {
     const user = await User.findById(_req.user._id);
 
     let memos;
-    if (user.isAdmin) {
-      memos = await Memo.find({
-        $or: [
-          { isPinned: true },
-          { isPinned: false },
-          { isPinned: { $exists: false } },
-        ],
-      }).sort({ createdAt: -1 }); // Admins see all memos
+
+    if (user?.isAdmin) {
+      // Admins can see all memos
+      memos = await Memo.find().sort({
+        isPinned: -1,
+        createdAt: -1,
+      });
     } else {
+      // Non-admins can only see active memos
       memos = await Memo.find({
         $or: [
-          { isPinned: true }, // Always include pinned memos
-          {
-            $or: [
-              { isPinned: false }, // Explicitly unpinned
-              { isPinned: { $exists: false } }, // Or field doesn't exist
-            ],
-            createdAt: { $gte: user.createdAt }, // Only newer memos
-          },
+          { isActive: true },
+          { isActive: { $exists: false } }, // Optional: supports older documents
         ],
-      }).sort({ createdAt: -1 });
+      }).sort({
+        isPinned: -1,
+        createdAt: -1,
+      });
     }
 
     res.status(200).json(memos);
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(404);
     throw new Error("Memos not found");
   }
