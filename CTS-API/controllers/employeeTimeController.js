@@ -36,67 +36,6 @@ const triggerPayrollUpdate = async (employeeId, date) => {
   }
 };
 
-// Helper function to calculate which break to deduct time from
-const calculateBreakDeduction = (employeeTime, bioBreakDuration) => {
-  const deductionAmount = bioBreakDuration || 15; // Default to 15 minutes if not provided
-
-  // Check break usage and available time in order of priority
-  const breakUsage = {
-    break1: {
-      used: employeeTime.breakStart && employeeTime.breakEnd,
-      availableTime: employeeTime.totalBreakTime || 15, // Default break time
-      currentTime: employeeTime.totalBreakTime || 0,
-      type: "break1",
-    },
-    break2: {
-      used: employeeTime.secondBreakStart && employeeTime.secondBreakEnd,
-      availableTime: employeeTime.totalSecondBreakTime || 15, // Default break time
-      currentTime: employeeTime.totalSecondBreakTime || 0,
-      type: "break2",
-    },
-    lunch: {
-      used: employeeTime.lunchStart && employeeTime.lunchEnd,
-      availableTime: employeeTime.totalLunchTime || 30, // Default lunch time
-      currentTime: employeeTime.totalLunchTime || 0,
-      type: "lunch",
-    },
-  };
-
-  // Priority order: break1 -> break2 -> lunch
-  const priorityOrder = ["break1", "break2", "lunch"];
-
-  for (const breakType of priorityOrder) {
-    const breakInfo = breakUsage[breakType];
-
-    // If this break is NOT used, deduct from it
-    if (!breakInfo.used) {
-      const newBreakTime = Math.max(
-        0,
-        breakInfo.availableTime - deductionAmount,
-      );
-
-      return {
-        deductedFrom: breakType,
-        deductionAmount: deductionAmount,
-        newBreakTime: newBreakTime,
-        originalBreakTime: breakInfo.availableTime,
-      };
-    }
-  }
-
-  // If all breaks are used, deduct from lunch by default (as it typically has the most time)
-  const lunchInfo = breakUsage.lunch;
-  const newLunchTime = Math.max(0, lunchInfo.availableTime - deductionAmount);
-
-  return {
-    deductedFrom: "lunch",
-    deductionAmount: deductionAmount,
-    newBreakTime: newLunchTime,
-    originalBreakTime: lunchInfo.availableTime,
-    note: "All breaks were used, deducted from lunch",
-  };
-};
-
 const getEmployeeTimes = async (_req, res) => {
   try {
     const employeeTimes = await EmployeeTime.find();
@@ -185,11 +124,6 @@ const updateEmployeeTime = async (req, res) => {
       overBreak1,
       overBreak2,
       overLunch,
-      bioBreakStart,
-      bioBreakEnd,
-      bioBreakDuration,
-      bioBreakDeductedFrom,
-      bioBreakDeductionAmount,
     } = req.body;
 
     // Validate secret key from environment variable
@@ -225,11 +159,6 @@ const updateEmployeeTime = async (req, res) => {
     employeeTime.overBreak1 = overBreak1;
     employeeTime.overBreak2 = overBreak2;
     employeeTime.overLunch = overLunch;
-    employeeTime.bioBreak = bioBreakStart;
-    employeeTime.bioBreakEnd = bioBreakEnd;
-    employeeTime.bioBreakDuration = bioBreakDuration;
-    employeeTime.bioBreakDeductedFrom = bioBreakDeductedFrom;
-    employeeTime.bioBreakDeductionAmount = bioBreakDeductionAmount;
 
     const updatedEmployeeTime = await employeeTime.save();
     res.status(200).json(updatedEmployeeTime);
@@ -480,10 +409,9 @@ const getIncompleteBreaks = async (req, res) => {
         { breakStart: { $ne: null }, breakEnd: null },
         { secondBreakStart: { $ne: null }, secondBreakEnd: null },
         { lunchStart: { $ne: null }, lunchEnd: null },
-        { bioBreak: { $ne: null }, bioBreakEnd: null }, // Add bio break to incomplete checks
       ],
     }).select(
-      "employeeId employeeName date breakStart breakEnd secondBreakStart secondBreakEnd lunchStart lunchEnd bioBreak bioBreakEnd bioBreakDeductedFrom",
+      "employeeId employeeName date breakStart breakEnd secondBreakStart secondBreakEnd lunchStart lunchEnd",
     );
 
     if (!incompleteBreaks || incompleteBreaks.length === 0) {
@@ -527,19 +455,6 @@ const getIncompleteBreaks = async (req, res) => {
           type: "Lunch",
           start: record.lunchStart,
           end: record.lunchEnd,
-        });
-      }
-
-      // Check and add bio break if incomplete
-      if (record.bioBreak && !record.bioBreakEnd) {
-        formattedResponse.push({
-          employeeId: record.employeeId,
-          employeeName: record.employeeName,
-          date: record.date,
-          type: "Bio Break",
-          start: record.bioBreak,
-          end: record.bioBreakEnd,
-          deductedFrom: record.bioBreakDeductedFrom,
         });
       }
     });
@@ -594,147 +509,6 @@ const getIncompleteLogins = async (req, res) => {
     res.status(500).json({
       status: false,
       message: error.message || "Internal Server Error",
-    });
-  }
-};
-
-const updateEmployeeBioBreak = async (req, res) => {
-  try {
-    const { bioBreak, bioBreakEnd, bioBreakDuration } = req.body;
-
-    // Find the active employee time record
-    const employeeTime = await EmployeeTime.findOne({
-      employeeId: req.user._id,
-      timeOut: null,
-    });
-
-    if (!employeeTime) {
-      return res.status(404).json({
-        message: "No active time record found for the employee",
-      });
-    }
-
-    // Calculate which break to deduct time from based on usage
-    const breakDeductionInfo = calculateBreakDeduction(
-      employeeTime,
-      bioBreakDuration,
-    );
-
-    // Update the employee time record
-    const updatedEmployeeTime = await EmployeeTime.findOneAndUpdate(
-      {
-        employeeId: req.user._id,
-        timeOut: null,
-      },
-      {
-        bioBreak,
-        bioBreakEnd,
-        bioBreakDuration,
-        // Store which break was deducted for tracking
-        bioBreakDeductedFrom: breakDeductionInfo.deductedFrom,
-        bioBreakDeductionAmount: breakDeductionInfo.deductionAmount,
-        // Update the deducted break's total time if applicable
-        ...(breakDeductionInfo.deductedFrom === "break1" && {
-          totalBreakTime: breakDeductionInfo.newBreakTime,
-        }),
-        ...(breakDeductionInfo.deductedFrom === "break2" && {
-          totalSecondBreakTime: breakDeductionInfo.newBreakTime,
-        }),
-        ...(breakDeductionInfo.deductedFrom === "lunch" && {
-          totalLunchTime: breakDeductionInfo.newBreakTime,
-        }),
-      },
-      { new: true },
-    );
-
-    res.status(200).json({
-      message: "Bio break updated successfully",
-      bioBreakDeductedFrom: breakDeductionInfo.deductedFrom,
-      bioBreakDeductionAmount: breakDeductionInfo.deductionAmount,
-      data: updatedEmployeeTime,
-    });
-  } catch (error) {
-    console.error("Error updating bio break:", error);
-    res.status(500).json({
-      message: "Failed to update bio break",
-      error: error.message,
-    });
-  }
-};
-
-const getBioBreakSummary = async (req, res) => {
-  try {
-    const employeeTime = await EmployeeTime.findOne({
-      employeeId: req.user._id,
-      timeOut: null,
-    });
-
-    if (!employeeTime) {
-      return res.status(404).json({
-        message: "No active time record found",
-      });
-    }
-
-    const breakUsage = {
-      break1: {
-        used: !!(employeeTime.breakStart && employeeTime.breakEnd),
-        availableTime: employeeTime.totalBreakTime || 15,
-        timeUsed: employeeTime.totalBreakTime || 0,
-      },
-      break2: {
-        used: !!(employeeTime.secondBreakStart && employeeTime.secondBreakEnd),
-        availableTime: employeeTime.totalSecondBreakTime || 15,
-        timeUsed: employeeTime.totalSecondBreakTime || 0,
-      },
-      lunch: {
-        used: !!(employeeTime.lunchStart && employeeTime.lunchEnd),
-        availableTime: employeeTime.totalLunchTime || 30,
-        timeUsed: employeeTime.totalLunchTime || 0,
-      },
-    };
-
-    const breakSummary = {
-      break1: {
-        used: breakUsage.break1.used,
-        availableTime: breakUsage.break1.availableTime,
-        timeUsed: breakUsage.break1.timeUsed,
-      },
-      break2: {
-        used: breakUsage.break2.used,
-        availableTime: breakUsage.break2.availableTime,
-        timeUsed: breakUsage.break2.timeUsed,
-      },
-      lunch: {
-        used: breakUsage.lunch.used,
-        availableTime: breakUsage.lunch.availableTime,
-        timeUsed: breakUsage.lunch.timeUsed,
-      },
-      bioBreak: {
-        hasBioBreak: !!employeeTime.bioBreak,
-        bioBreakDuration: employeeTime.bioBreakDuration || 0,
-        deductedFrom: employeeTime.bioBreakDeductedFrom || "none",
-      },
-    };
-
-    // Calculate which break would be deducted for a new bio break
-    const potentialDeduction = calculateBreakDeduction(employeeTime, 15); // 15 minutes as example
-
-    // Get available breaks for deduction.3.
-    const availableForDeduction = ["break1", "break2", "lunch"].filter(
-      (breakType) => !breakUsage[breakType].used,
-    );
-
-    res.status(200).json({
-      message: "Bio break summary retrieved successfully",
-      currentStatus: breakSummary,
-      nextBioBreakWouldDeductFrom: potentialDeduction.deductedFrom,
-      availableForDeduction: availableForDeduction,
-    });
-  } catch (error) {
-    console.error("Error getting bio break summary:", error);
-    res.status(500).json({
-      message: "Failed to get bio break summary",
-      error: error.message,
     });
   }
 };
@@ -839,8 +613,6 @@ module.exports = {
   updateEmployeeTimelunch,
   getEmployeeTimeByEmployeeIdandDate,
   getIncompleteBreaks,
-  updateEmployeeBioBreak,
-  getBioBreakSummary,
   getIncompleteLogins,
   getEmployeeRunningTime,
   adminEndTime,
