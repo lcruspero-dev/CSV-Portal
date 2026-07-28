@@ -535,9 +535,7 @@ const UserHome = () => {
             <div>
               <div className="uh-tag">
                 <div className="uh-tag-dot" />
-                <span className="uh-tag-text">
-                  Employee Portal with benefits
-                </span>
+                <span className="uh-tag-text">Employee Portal</span>
               </div>
               <h1 className="uh-heading">Dashboard</h1>
               <p className="uh-subheading">

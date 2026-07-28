@@ -138,7 +138,7 @@ function ViewMemo() {
             <CreateMemo setMemos={setMemos} setLoading={setLoading} />
           )}
         </div>
-        {/* SUMMARY CARDS */}+
+        {/* SUMMARY CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
           <SummaryCard label="Total Memoranda" value={memos.length} />
           <SummaryCard
