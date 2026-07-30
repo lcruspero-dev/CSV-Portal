@@ -138,7 +138,7 @@ router.put("/:id", async (req, res) => {
       {
         new: true, // Return the updated document
         runValidators: true, // Ensure updates follow schema validation
-      }
+      },
     );
 
     if (!updatedLeave) {
@@ -147,7 +147,7 @@ router.put("/:id", async (req, res) => {
 
     // Log the update for audit purposes
     console.log(
-      `Leave credit updated for ${updatedLeave.employeeId}: New balance ${updatedLeave.currentBalance}`
+      `Leave credit updated for ${updatedLeave.employeeId}: New balance ${updatedLeave.currentBalance}`,
     );
 
     res.json({
