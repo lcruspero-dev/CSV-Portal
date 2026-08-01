@@ -103,24 +103,30 @@ const ResetPassword: React.FC = () => {
   };
 
   return (
-    <div className="flex justify-center  bg-gradient-to-br from-gray-50 to-gray-100 p-4 mt-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-gray-50 to-blue-50 flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
         {/* Reset Password Card */}
-        <Card className="w-full shadow-lg rounded-xl overflow-hidden border-0">
-          <div className="bg-gradient-to-r from-blue-700 to-blue-400">
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-4">
-                <Button
-                  onClick={() => navigate(-1)}
-                  variant="link"
-                  className="flex items-center gap-2 text-gray-200 hover:text-white transition-colors p-0"
-                >
-                  <ArrowLeft size={18} />
-                  <span className="text-xs">Back</span>
-                </Button>
-                <CardTitle className="text-white text-2xl font-semibold">
-                  Reset User Password
+        <Card className="overflow-hidden rounded-3xl border border-slate-200 shadow-2xl backdrop-blur-sm bg-white/90">
+          <div className="bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-600">
+            <CardHeader className="space-y-6 py-8">
+              <Button
+                variant="ghost"
+                onClick={() => navigate(-1)}
+                className="w-fit text-white hover:bg-white/20 rounded-full px-3"
+              >
+                <ArrowLeft size={18} />
+                <span className="ml-2">Back</span>
+              </Button>
+
+              <div>
+                <CardTitle className="text-3xl font-bold text-white">
+                  Reset Password
                 </CardTitle>
+
+                <p className="text-blue-100 mt-2">
+                  Reset a user's password securely using their email and
+                  security key.
+                </p>
               </div>
             </CardHeader>
           </div>
@@ -176,7 +182,9 @@ const ResetPassword: React.FC = () => {
                   </button>
                 </div>
                 {errors.password && (
-                  <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+                  <p className="text-red-500 text-xs font-medium flex items-center gap-1 mt-1">
+                    {errors.password}
+                  </p>
                 )}
               </div>
 

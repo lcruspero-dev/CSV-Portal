@@ -43,6 +43,7 @@ import {
   FileCheck,
   PlusCircle,
   Trash2,
+  Clock,
 } from "lucide-react";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
@@ -77,6 +78,15 @@ interface FormData {
   overtimeStartTime: string;
   overtimeEndTime: string;
   overtimeReason: string;
+  // Schedule change fields
+  scheduleChangeType: "permanent" | "temporary" | "swap";
+  currentShift: string;
+  requestedShift: string;
+  effectiveDate: string;
+  requestedWorkDays: string[];
+  scheduleReason: string;
+  coveragePlan: string;
+  schedulePriority: string;
 }
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -87,6 +97,19 @@ const ALLOWED_FILE_TYPES = [
   "image/jpg",
   "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+];
+
+const WORK_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+const SHIFT_OPTIONS = [
+  "Morning Shift (8:00 AM - 5:00 PM)",
+  "Day Shift (9:00 AM - 6:00 PM)",
+  "Night Shift (8:00 PM - 5:00 AM)",
+  "Night Shift (9:00 PM - 6:00 AM)",
+  "Night Shift (10:00 PM - 7:00 AM)",
+  "Night Shift (11:00 PM - 7:00 AM)",
+  "Flexible Hours",
+  "Compressed Work Week (4x10)",
 ];
 
 const Request = () => {
@@ -106,7 +129,7 @@ const Request = () => {
     startDate: "",
     endDate: "",
     delegatedTasks: "",
-    formDepartment: "Marketing",
+    formDepartment: "",
     leaveDays: 0,
     selectedDates: [],
     isPaidLeave: true,
@@ -114,15 +137,25 @@ const Request = () => {
     overtimeStartTime: "",
     overtimeEndTime: "",
     overtimeReason: "",
+    scheduleChangeType: "permanent",
+    currentShift: "",
+    requestedShift: "",
+    effectiveDate: "",
+    requestedWorkDays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    scheduleReason: "",
+    coveragePlan: "",
+    schedulePriority: "Normal",
   });
 
   const [categories, setCategories] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [leaveBalance, setLeaveBalance] = useState<LeaveBalance | null>(null);
-  const [selectedFileName, setSelectedFileName] = useState<string>("");
+  const [selectedFileNames, setSelectedFileNames] = useState<string[]>([]);
   const [showLeaveTypeDialog, setShowLeaveTypeDialog] = useState(false);
   const [isFileUploading, setIsFileUploading] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [validationErrors, setValidationErrors] = useState<
+    Record<string, string>
+  >({});
   const [showDatePicker, setShowDatePicker] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -161,7 +194,10 @@ const Request = () => {
     (dates: Date[] | undefined) => {
       if (!dates) return;
       if (form.isPaidLeave && leaveBalance) {
-        const maxSelectableDates = Math.min(dates.length, leaveBalance.currentBalance);
+        const maxSelectableDates = Math.min(
+          dates.length,
+          leaveBalance.currentBalance,
+        );
         const cappedDates = dates.slice(0, maxSelectableDates);
         setForm((prev) => ({ ...prev, selectedDates: cappedDates }));
         if (dates.length > leaveBalance.currentBalance) {
@@ -176,7 +212,7 @@ const Request = () => {
       }
       setShowDatePicker(false);
     },
-    [form.isPaidLeave, leaveBalance, toast]
+    [form.isPaidLeave, leaveBalance, toast],
   );
 
   const isDateDisabled = useCallback(
@@ -185,15 +221,15 @@ const Request = () => {
       return (
         form.selectedDates.length >= leaveBalance.currentBalance &&
         !form.selectedDates.some(
-          (selectedDate) => selectedDate.getTime() === date.getTime()
+          (selectedDate) => selectedDate.getTime() === date.getTime(),
         )
       );
     },
-    [form.selectedDates, form.isPaidLeave, leaveBalance]
+    [form.selectedDates, form.isPaidLeave, leaveBalance],
   );
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -202,7 +238,9 @@ const Request = () => {
     }
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const fileInput = event.target;
     const file = fileInput.files && fileInput.files[0];
     if (!file) return;
@@ -213,6 +251,7 @@ const Request = () => {
         description: "Please select a file smaller than 5MB",
         variant: "destructive",
       });
+      fileInput.value = "";
       return;
     }
 
@@ -222,10 +261,10 @@ const Request = () => {
         description: "Please upload PDF, Word, or image files only",
         variant: "destructive",
       });
+      fileInput.value = "";
       return;
     }
 
-    setSelectedFileName(file.name);
     setIsFileUploading(true);
 
     const formData = new FormData();
@@ -235,10 +274,21 @@ const Request = () => {
       const response = await axios.post(
         `${import.meta.env.VITE_UPLOADFILES_URL}/upload`,
         formData,
-        { headers: { "Content-Type": "multipart/form-data" }, timeout: 30000 }
+        { headers: { "Content-Type": "multipart/form-data" }, timeout: 30000 },
       );
       const newFilename = response.data.filename;
-      setForm((prevForm) => ({ ...prevForm, file: newFilename }));
+
+      // Store multiple files
+      setForm((prevForm) => {
+        const existingFiles = prevForm.file
+          ? prevForm.file.split(",").filter(Boolean)
+          : [];
+        const updatedFiles = [...existingFiles, newFilename];
+        return { ...prevForm, file: updatedFiles.join(",") };
+      });
+
+      setSelectedFileNames((prev) => [...prev, file.name]);
+
       toast({
         title: "File uploaded successfully",
         description: "Attachment has been added to your request",
@@ -246,7 +296,6 @@ const Request = () => {
       });
     } catch (error) {
       console.error("Error uploading file:", error);
-      setSelectedFileName("");
       toast({
         title: "File upload failed",
         description: "Could not upload attachment. Please try again.",
@@ -258,9 +307,19 @@ const Request = () => {
     }
   };
 
-  const removeFile = () => {
-    setSelectedFileName("");
-    setForm((prev) => ({ ...prev, file: null }));
+  const removeFile = (index: number) => {
+    setSelectedFileNames((prev) => prev.filter((_, i) => i !== index));
+
+    setForm((prev) => {
+      const existingFiles = prev.file
+        ? prev.file.split(",").filter(Boolean)
+        : [];
+      const updatedFiles = existingFiles.filter((_, i) => i !== index);
+      return {
+        ...prev,
+        file: updatedFiles.length > 0 ? updatedFiles.join(",") : null,
+      };
+    });
   };
 
   const handleCategoryChange = (value: string) => {
@@ -299,7 +358,9 @@ const Request = () => {
 
   const formatSelectedDates = () => {
     if (form.selectedDates.length === 0) return "No dates selected";
-    return form.selectedDates.map((date) => format(date, "MMM dd, yyyy")).join(", ");
+    return form.selectedDates
+      .map((date) => format(date, "MMM dd, yyyy"))
+      .join(", ");
   };
 
   const validateForm = () => {
@@ -311,9 +372,12 @@ const Request = () => {
 
     if (form.category === "Leave Request") {
       if (!form.leaveType) errors.leaveType = "Please select leave type";
-      if (!form.leaveCategory) errors.leaveCategory = "Please select leave category";
-      if (!form.leaveReason.trim()) errors.leaveReason = "Please provide a reason for leave";
-      if (!form.formDepartment) errors.formDepartment = "Please select department";
+      if (!form.leaveCategory)
+        errors.leaveCategory = "Please select leave category";
+      if (!form.leaveReason.trim())
+        errors.leaveReason = "Please provide a reason for leave";
+      if (!form.formDepartment)
+        errors.formDepartment = "Please select department";
       if (form.leaveCategory === "Full-Day Leave") {
         if (form.selectedDates.length === 0) {
           errors.selectedDates = "Please select at least one date";
@@ -322,9 +386,12 @@ const Request = () => {
         errors.startDate = "Please select a leave date";
       }
     } else if (form.category === "Overtime") {
-      if (!form.overtimeDate) errors.overtimeDate = "Please select the overtime date";
-      if (!form.overtimeStartTime) errors.overtimeStartTime = "Please enter start time";
-      if (!form.overtimeEndTime) errors.overtimeEndTime = "Please enter end time";
+      if (!form.overtimeDate)
+        errors.overtimeDate = "Please select the overtime date";
+      if (!form.overtimeStartTime)
+        errors.overtimeStartTime = "Please enter start time";
+      if (!form.overtimeEndTime)
+        errors.overtimeEndTime = "Please enter end time";
       if (form.overtimeStartTime && form.overtimeEndTime) {
         const [sh, sm] = form.overtimeStartTime.split(":").map(Number);
         const [eh, em] = form.overtimeEndTime.split(":").map(Number);
@@ -332,12 +399,29 @@ const Request = () => {
           errors.overtimeEndTime = "End time must be after start time";
         }
       }
-      if (!form.overtimeReason.trim()) errors.overtimeReason = "Please provide a reason for overtime";
+      if (!form.overtimeReason.trim())
+        errors.overtimeReason = "Please provide a reason for overtime";
     } else if (form.category === "Certificate of Employment") {
       if (!form.purpose.trim()) errors.purpose = "Please specify purpose";
-      if (!form.description.trim()) errors.description = "Please provide details";
+      if (!form.description.trim())
+        errors.description = "Please provide details";
+    } else if (form.category === "Schedule Change") {
+      if (!form.requestedShift)
+        errors.requestedShift = "Please select the requested shift";
+      if (!form.effectiveDate)
+        errors.effectiveDate = "Please select an effective date";
+      if (!form.scheduleReason.trim())
+        errors.scheduleReason =
+          "Please provide a reason for the schedule change";
+      if (form.scheduleChangeType === "temporary" && !form.endDate) {
+        errors.endDate = "End date is required for temporary schedule changes";
+      }
+      if (form.requestedWorkDays.length === 0) {
+        errors.requestedWorkDays = "Please select at least one work day";
+      }
     } else if (form.category) {
-      if (!form.description.trim()) errors.description = "Please describe your request";
+      if (!form.description.trim())
+        errors.description = "Please describe your request";
     }
 
     setValidationErrors(errors);
@@ -377,7 +461,7 @@ const Request = () => {
 - ${dateRange}
 - Days Requested: ${form.leaveDays} ${form.leaveDays <= 1 ? "day" : "days"}
 - Reason: ${form.leaveReason}
-- Tasks to be Delegated: ${form.delegatedTasks}`;
+- Tasks to be Delegated: ${form.delegatedTasks || "Not specified"}`;
       } else if (form.category === "Overtime") {
         const [sh, sm] = form.overtimeStartTime.split(":").map(Number);
         const [eh, em] = form.overtimeEndTime.split(":").map(Number);
@@ -394,6 +478,17 @@ const Request = () => {
 - Reason for Overtime: ${form.overtimeReason}`;
       } else if (form.category === "Certificate of Employment") {
         description = `Purpose: ${form.purpose}\nDetails: ${form.description}`;
+      } else if (form.category === "Schedule Change") {
+        description = `Schedule Change Request Details:
+- Change Type: ${form.scheduleChangeType}
+- Current Shift: ${form.currentShift}
+- Requested Shift: ${form.requestedShift}
+- Effective Date: ${form.effectiveDate}
+- End Date: ${form.endDate || "N/A (Permanent)"}
+- Work Days: ${form.requestedWorkDays.join(", ")}
+- Priority: ${form.schedulePriority}
+- Reason: ${form.scheduleReason}
+- Coverage/Handover Plan: ${form.coveragePlan || "Not specified"}`;
       } else {
         description = form.description;
       }
@@ -402,12 +497,17 @@ const Request = () => {
         ...form,
         description,
         startDate:
-          form.leaveCategory === "Full-Day Leave" && form.selectedDates.length > 0
+          form.leaveCategory === "Full-Day Leave" &&
+          form.selectedDates.length > 0
             ? format(form.selectedDates[0], "yyyy-MM-dd")
             : form.startDate,
         endDate:
-          form.leaveCategory === "Full-Day Leave" && form.selectedDates.length > 0
-            ? format(form.selectedDates[form.selectedDates.length - 1], "yyyy-MM-dd")
+          form.leaveCategory === "Full-Day Leave" &&
+          form.selectedDates.length > 0
+            ? format(
+                form.selectedDates[form.selectedDates.length - 1],
+                "yyyy-MM-dd",
+              )
             : form.startDate,
       });
 
@@ -439,8 +539,16 @@ const Request = () => {
         overtimeStartTime: "",
         overtimeEndTime: "",
         overtimeReason: "",
+        scheduleChangeType: "permanent",
+        currentShift: "Morning Shift (8:00 AM - 5:00 PM)",
+        requestedShift: "",
+        effectiveDate: "",
+        requestedWorkDays: ["Mon", "Tue", "Wed", "Thu", "Fri"],
+        scheduleReason: "",
+        coveragePlan: "",
+        schedulePriority: "Normal",
       });
-      setSelectedFileName("");
+      setSelectedFileNames([]);
       setValidationErrors({});
 
       setTimeout(() => navigate("/view-ticket"), 1500);
@@ -489,6 +597,75 @@ const Request = () => {
     }
   };
 
+  // Render file upload component (reusable)
+  const renderFileUpload = (uploadId: string) => {
+    return (
+      <div className="space-y-2">
+        <Label className="text-sm font-semibold text-gray-700">
+          Supporting Documents (Optional)
+        </Label>
+        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors duration-200 bg-gray-50">
+          <Input
+            id={uploadId}
+            name="attachment"
+            type="file"
+            onChange={handleFileUpload}
+            className="hidden"
+            disabled={isSubmitting || isFileUploading}
+            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+          />
+          <label htmlFor={uploadId} className="cursor-pointer block">
+            {isFileUploading ? (
+              <div className="flex flex-col items-center">
+                <Loader2 className="h-8 w-8 text-blue-500 animate-spin mb-2" />
+                <p className="text-sm text-gray-600">Uploading...</p>
+              </div>
+            ) : (
+              <>
+                <UploadCloud className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                <p className="text-sm text-gray-600 mb-1">
+                  Click to upload or drag and drop
+                </p>
+                <p className="text-xs text-gray-500">
+                  PDF, Word, JPG, PNG up to 5MB (Multiple files supported)
+                </p>
+              </>
+            )}
+          </label>
+        </div>
+        {selectedFileNames.length > 0 && (
+          <div className="space-y-2">
+            {selectedFileNames.map((fileName, index) => (
+              <div
+                key={index}
+                className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2"
+              >
+                <div className="flex items-center min-w-0">
+                  <Paperclip className="h-3 w-3 text-green-600 mr-2 flex-shrink-0" />
+                  <span className="text-sm text-green-700 truncate">
+                    {fileName}
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeFile(index)}
+                    className="h-6 w-6 p-0"
+                    type="button"
+                  >
+                    <Trash2 className="h-3 w-3 text-gray-500" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderOvertimeContent = () => {
     const calcHours = () => {
       if (!form.overtimeStartTime || !form.overtimeEndTime) return null;
@@ -509,7 +686,8 @@ const Request = () => {
           <div className="flex items-center">
             <AlertCircle className="h-4 w-4 text-amber-600 mr-2 flex-shrink-0" />
             <p className="text-sm text-amber-700 font-medium">
-              Please fill in all overtime details accurately. This request will be subject to manager approval.
+              Please fill in all overtime details accurately. This request will
+              be subject to manager approval.
             </p>
           </div>
         </div>
@@ -616,50 +794,7 @@ const Request = () => {
         </div>
 
         {/* File Attachment */}
-        <div className="space-y-2">
-          <Label className="text-sm font-semibold text-gray-700">
-            Supporting Documents (Optional)
-          </Label>
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-amber-400 transition-colors duration-200 bg-gray-50">
-            <Input
-              id="overtime-attachment"
-              name="attachment"
-              type="file"
-              onChange={handleFileUpload}
-              className="hidden"
-              disabled={isSubmitting || isFileUploading}
-              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-            />
-            <label htmlFor="overtime-attachment" className="cursor-pointer block">
-              {isFileUploading ? (
-                <div className="flex flex-col items-center">
-                  <Loader2 className="h-8 w-8 text-amber-500 animate-spin mb-2" />
-                  <p className="text-sm text-gray-600">Uploading...</p>
-                </div>
-              ) : (
-                <>
-                  <UploadCloud className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-600 mb-1">Click to upload or drag and drop</p>
-                  <p className="text-xs text-gray-500">PDF, Word, JPG, PNG up to 5MB</p>
-                </>
-              )}
-            </label>
-          </div>
-          {selectedFileName && (
-            <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-              <div className="flex items-center min-w-0">
-                <Paperclip className="h-3 w-3 text-green-600 mr-2 flex-shrink-0" />
-                <span className="text-sm text-green-700 truncate">{selectedFileName}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
-                <Button variant="ghost" size="sm" onClick={removeFile} className="h-6 w-6 p-0">
-                  <Trash2 className="h-3 w-3 text-gray-500" />
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
+        {renderFileUpload("overtime-attachment")}
       </div>
     );
   };
@@ -673,24 +808,34 @@ const Request = () => {
               <div className="flex-1">
                 <div className="flex items-center mb-2">
                   <Briefcase className="h-4 w-4 text-blue-600 mr-2" />
-                  <span className="text-sm font-semibold text-gray-700">Leave Balance</span>
+                  <span className="text-sm font-semibold text-gray-700">
+                    Leave Balance
+                  </span>
                 </div>
                 <div className="flex items-baseline">
-                  <span className="text-2xl font-bold text-blue-700">{leaveBalance.currentBalance}</span>
+                  <span className="text-2xl font-bold text-blue-700">
+                    {leaveBalance.currentBalance}
+                  </span>
                   <span className="ml-2 text-sm text-gray-600">
                     day{leaveBalance.currentBalance !== 1 ? "s" : ""}
                   </span>
                 </div>
                 <div className="mt-1 text-xs text-blue-600">
                   <CalendarIcon className="h-3 w-3 inline mr-1" />
-                  Next accrual: {formatNextAccrualDate(leaveBalance.nextAccrualDate)}
+                  Next accrual:{" "}
+                  {formatNextAccrualDate(leaveBalance.nextAccrualDate)}
                 </div>
               </div>
               {updatedBalance !== null && (
                 <div className="bg-white px-4 py-3 rounded-lg border border-blue-200 min-w-[160px]">
-                  <div className="text-xs font-medium text-gray-500 mb-1">Balance After Leave</div>
-                  <div className={`text-lg font-bold ${updatedBalance < 0 ? "text-red-600" : "text-green-600"}`}>
-                    {updatedBalance.toFixed(1)} day{Math.abs(updatedBalance) !== 1 ? "s" : ""}
+                  <div className="text-xs font-medium text-gray-500 mb-1">
+                    Balance After Leave
+                  </div>
+                  <div
+                    className={`text-lg font-bold ${updatedBalance < 0 ? "text-red-600" : "text-green-600"}`}
+                  >
+                    {updatedBalance.toFixed(1)} day
+                    {Math.abs(updatedBalance) !== 1 ? "s" : ""}
                   </div>
                   {updatedBalance < 0 && (
                     <div className="text-xs text-red-500 mt-1 flex items-center">
@@ -708,7 +853,9 @@ const Request = () => {
           <div className="flex items-center justify-between">
             <div>
               <span className="font-semibold text-gray-700">Leave Type: </span>
-              <span className={`font-bold ml-2 ${form.isPaidLeave ? "text-green-600" : "text-blue-600"}`}>
+              <span
+                className={`font-bold ml-2 ${form.isPaidLeave ? "text-green-600" : "text-blue-600"}`}
+              >
                 {form.isPaidLeave ? "Paid Leave" : "Unpaid Leave"}
               </span>
             </div>
@@ -730,7 +877,10 @@ const Request = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="leaveType" className="text-sm font-semibold text-gray-700">
+            <Label
+              htmlFor="leaveType"
+              className="text-sm font-semibold text-gray-700"
+            >
               Leave Type *
             </Label>
             <Select
@@ -743,17 +893,27 @@ const Request = () => {
               }}
               required
             >
-              <SelectTrigger className={`h-11 ${validationErrors.leaveType ? "border-red-500" : "border-gray-300"}`}>
+              <SelectTrigger
+                className={`h-11 ${validationErrors.leaveType ? "border-red-500" : "border-gray-300"}`}
+              >
                 <SelectValue placeholder="Select leave type" />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
                   <SelectItem value="Vacation Leave">Vacation Leave</SelectItem>
                   <SelectItem value="Sick Leave">Sick Leave</SelectItem>
-                  <SelectItem value="Maternity Leave">Maternity Leave</SelectItem>
-                  <SelectItem value="Paternity Leave">Paternity Leave</SelectItem>
-                  <SelectItem value="Emergency Leave">Emergency Leave</SelectItem>
-                  <SelectItem value="Bereavement Leave">Bereavement Leave</SelectItem>
+                  <SelectItem value="Maternity Leave">
+                    Maternity Leave
+                  </SelectItem>
+                  <SelectItem value="Paternity Leave">
+                    Paternity Leave
+                  </SelectItem>
+                  <SelectItem value="Emergency Leave">
+                    Emergency Leave
+                  </SelectItem>
+                  <SelectItem value="Bereavement Leave">
+                    Bereavement Leave
+                  </SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
@@ -766,20 +926,34 @@ const Request = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="leaveCategory" className="text-sm font-semibold text-gray-700">
+            <Label
+              htmlFor="leaveCategory"
+              className="text-sm font-semibold text-gray-700"
+            >
               Duration *
             </Label>
             <Select
               value={form.leaveCategory}
               onValueChange={(value) => {
-                setForm({ ...form, leaveCategory: value, startDate: "", endDate: "", selectedDates: [] });
+                setForm({
+                  ...form,
+                  leaveCategory: value,
+                  startDate: "",
+                  endDate: "",
+                  selectedDates: [],
+                });
                 if (validationErrors.leaveCategory) {
-                  setValidationErrors((prev) => ({ ...prev, leaveCategory: "" }));
+                  setValidationErrors((prev) => ({
+                    ...prev,
+                    leaveCategory: "",
+                  }));
                 }
               }}
               required
             >
-              <SelectTrigger className={`h-11 ${validationErrors.leaveCategory ? "border-red-500" : "border-gray-300"}`}>
+              <SelectTrigger
+                className={`h-11 ${validationErrors.leaveCategory ? "border-red-500" : "border-gray-300"}`}
+              >
                 <SelectValue placeholder="Select duration" />
               </SelectTrigger>
               <SelectContent>
@@ -800,7 +974,10 @@ const Request = () => {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="department" className="text-sm font-semibold text-gray-700">
+          <Label
+            htmlFor="department"
+            className="text-sm font-semibold text-gray-700"
+          >
             Department *
           </Label>
           <Select
@@ -808,12 +985,17 @@ const Request = () => {
             onValueChange={(value) => {
               setForm({ ...form, formDepartment: value });
               if (validationErrors.formDepartment) {
-                setValidationErrors((prev) => ({ ...prev, formDepartment: "" }));
+                setValidationErrors((prev) => ({
+                  ...prev,
+                  formDepartment: "",
+                }));
               }
             }}
             required
           >
-            <SelectTrigger className={`h-11 ${validationErrors.formDepartment ? "border-red-500" : "border-gray-300"}`}>
+            <SelectTrigger
+              className={`h-11 ${validationErrors.formDepartment ? "border-red-500" : "border-gray-300"}`}
+            >
               <SelectValue placeholder="Select department" />
             </SelectTrigger>
             <SelectContent>
@@ -839,7 +1021,9 @@ const Request = () => {
 
         {form.leaveCategory === "Full-Day Leave" ? (
           <div className="space-y-2">
-            <Label className="text-sm font-semibold text-gray-700">Select Leave Dates *</Label>
+            <Label className="text-sm font-semibold text-gray-700">
+              Select Leave Dates *
+            </Label>
             <Popover open={showDatePicker} onOpenChange={setShowDatePicker}>
               <PopoverTrigger asChild>
                 <Button
@@ -877,7 +1061,10 @@ const Request = () => {
                 <div className="font-medium mb-1">Selected dates:</div>
                 <div className="flex flex-wrap gap-1">
                   {form.selectedDates.map((date, index) => (
-                    <span key={index} className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
+                    <span
+                      key={index}
+                      className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs"
+                    >
                       {format(date, "MMM dd")}
                     </span>
                   ))}
@@ -894,9 +1081,13 @@ const Request = () => {
             )}
           </div>
         ) : (
-          (form.leaveCategory === "AM Leave" || form.leaveCategory === "PM Leave") && (
+          (form.leaveCategory === "AM Leave" ||
+            form.leaveCategory === "PM Leave") && (
             <div className="space-y-2">
-              <Label htmlFor="startDate" className="text-sm font-semibold text-gray-700">
+              <Label
+                htmlFor="startDate"
+                className="text-sm font-semibold text-gray-700"
+              >
                 Leave Date *
               </Label>
               <Input
@@ -924,7 +1115,9 @@ const Request = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <CalendarIcon className="h-5 w-5 text-green-600 mr-2" />
-                <span className="text-sm font-semibold text-gray-700">Total Leave Duration:</span>
+                <span className="text-sm font-semibold text-gray-700">
+                  Total Leave Duration:
+                </span>
               </div>
               <span className="text-lg font-bold text-green-700">
                 {form.leaveDays} {form.leaveDays <= 1 ? "day" : "days"}
@@ -935,7 +1128,10 @@ const Request = () => {
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="leaveReason" className="text-sm font-semibold text-gray-700">
+            <Label
+              htmlFor="leaveReason"
+              className="text-sm font-semibold text-gray-700"
+            >
               Reason for Leave *
             </Label>
             <Textarea
@@ -956,7 +1152,10 @@ const Request = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="delegatedTasks" className="text-sm font-semibold text-gray-700">
+            <Label
+              htmlFor="delegatedTasks"
+              className="text-sm font-semibold text-gray-700"
+            >
               Tasks to be Delegated
             </Label>
             <Textarea
@@ -970,50 +1169,336 @@ const Request = () => {
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="attachment" className="text-sm font-semibold text-gray-700">
-            Supporting Documents (Optional)
-          </Label>
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors duration-200 bg-gray-50">
-            <Input
-              id="attachment"
-              name="attachment"
-              type="file"
-              onChange={handleFileUpload}
-              className="hidden"
-              disabled={isSubmitting || isFileUploading}
-              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-            />
-            <label htmlFor="attachment" className="cursor-pointer block">
-              {isFileUploading ? (
-                <div className="flex flex-col items-center">
-                  <Loader2 className="h-8 w-8 text-blue-500 animate-spin mb-2" />
-                  <p className="text-sm text-gray-600">Uploading...</p>
-                </div>
-              ) : (
-                <>
-                  <UploadCloud className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-600 mb-1">Click to upload or drag and drop</p>
-                  <p className="text-xs text-gray-500">PDF, Word, JPG, PNG up to 5MB</p>
-                </>
-              )}
-            </label>
-          </div>
-          {selectedFileName && (
-            <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-              <div className="flex items-center min-w-0">
-                <Paperclip className="h-3 w-3 text-green-600 mr-2 flex-shrink-0" />
-                <span className="text-sm text-green-700 truncate">{selectedFileName}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
-                <Button variant="ghost" size="sm" onClick={removeFile} className="h-6 w-6 p-0">
-                  <Trash2 className="h-3 w-3 text-gray-500" />
-                </Button>
-              </div>
+        {/* File Attachment */}
+        {renderFileUpload("leave-attachment")}
+      </div>
+    );
+  };
+
+  const toggleWorkDay = (day: string) => {
+    setForm((prev) => ({
+      ...prev,
+      requestedWorkDays: prev.requestedWorkDays.includes(day)
+        ? prev.requestedWorkDays.filter((d) => d !== day)
+        : [...prev.requestedWorkDays, day],
+    }));
+    if (validationErrors.requestedWorkDays) {
+      setValidationErrors((prev) => ({ ...prev, requestedWorkDays: "" }));
+    }
+  };
+
+  const renderScheduleChangeContent = () => {
+    return (
+      <div className="space-y-6 mt-6 animate-in fade-in duration-300">
+        {/* Info Banner */}
+        <div className="p-4 border border-amber-100 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 shadow-sm">
+          <div className="flex items-start">
+            <AlertCircle className="h-4 w-4 text-amber-600 mr-2 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm text-amber-700 font-medium">
+                Manager Approval Required
+              </p>
+              <p className="text-xs text-amber-600 mt-1">
+                Your direct manager and HR will be notified automatically.
+                Schedule changes require at least 5 business days notice for
+                processing.
+              </p>
             </div>
-          )}
+          </div>
         </div>
+
+        {/* Change Type Selector */}
+        <div className="space-y-2">
+          <Label className="text-sm font-semibold text-gray-700">
+            Change Type *
+          </Label>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[
+              { value: "permanent", label: "Permanent", icon: CalendarIcon },
+              { value: "temporary", label: "Temporary", icon: CalendarIcon },
+              { value: "swap", label: "Shift Swap", icon: Briefcase },
+            ].map((type) => (
+              <button
+                key={type.value}
+                type="button"
+                onClick={() => {
+                  setForm((prev) => ({
+                    ...prev,
+                    scheduleChangeType: type.value as any,
+                  }));
+                  if (type.value !== "temporary") {
+                    setForm((prev) => ({ ...prev, endDate: "" }));
+                  }
+                }}
+                className={`flex items-center justify-center gap-2 px-4 py-3 border-2 rounded-xl font-semibold text-sm transition-all ${
+                  form.scheduleChangeType === type.value
+                    ? "border-violet-500 bg-violet-50 text-violet-700"
+                    : "border-gray-200 text-gray-600 hover:border-violet-300 hover:bg-violet-50/50"
+                }`}
+              >
+                <type.icon className="h-4 w-4" />
+                {type.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Current Schedule Card */}
+        <div className="p-5 bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200 rounded-xl">
+          <div className="flex items-center gap-2 mb-4">
+            <Clock className="h-4 w-4 text-gray-500" />
+            <h3 className="font-semibold text-gray-800">Current Schedule</h3>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Current Shift — Editable Select */}
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                Current Shift *
+              </Label>
+              <Select
+                value={form.currentShift}
+                onValueChange={(value) =>
+                  setForm((prev) => ({ ...prev, currentShift: value }))
+                }
+              >
+                <SelectTrigger className="h-10 bg-white">
+                  <SelectValue placeholder="Select current shift" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {SHIFT_OPTIONS.map((shift) => (
+                      <SelectItem key={shift} value={shift}>
+                        {shift}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Department — Editable Select */}
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                Department *
+              </Label>
+              <Select
+                value={form.formDepartment}
+                onValueChange={(value) =>
+                  setForm((prev) => ({ ...prev, formDepartment: value }))
+                }
+              >
+                <SelectTrigger className="h-10 bg-white">
+                  <SelectValue placeholder="Select department" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="IT">IT</SelectItem>
+                    <SelectItem value="Operations">Operations</SelectItem>
+                    <SelectItem value="HR">HR</SelectItem>
+                    <SelectItem value="Marketing">Marketing</SelectItem>
+                    <SelectItem value="Finance">Finance</SelectItem>
+                    <SelectItem value="Sales">Sales</SelectItem>
+                    <SelectItem value="Engineering">Engineering</SelectItem>
+                    <SelectItem value="Admin">Admin</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+
+        {/* Requested Schedule Card */}
+        <div className="p-5 bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-200 rounded-xl">
+          <div className="flex items-center gap-2 mb-4">
+            <FileCheck className="h-4 w-4 text-violet-600" />
+            <h3 className="font-semibold text-gray-800">Requested Schedule</h3>
+          </div>
+
+          {/* Requested Shift + Effective Date */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-gray-700">
+                Requested Shift *
+              </Label>
+              <Select
+                value={form.requestedShift}
+                onValueChange={(value) => {
+                  setForm((prev) => ({ ...prev, requestedShift: value }));
+                  if (validationErrors.requestedShift) {
+                    setValidationErrors((prev) => ({
+                      ...prev,
+                      requestedShift: "",
+                    }));
+                  }
+                }}
+              >
+                <SelectTrigger
+                  className={`h-11 ${validationErrors.requestedShift ? "border-red-500" : "border-gray-300"}`}
+                >
+                  <SelectValue placeholder="Select new shift..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {SHIFT_OPTIONS.map((shift) => (
+                      <SelectItem key={shift} value={shift}>
+                        {shift}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              {validationErrors.requestedShift && (
+                <p className="text-xs text-red-500 flex items-center mt-1">
+                  <AlertCircle className="h-3 w-3 mr-1" />
+                  {validationErrors.requestedShift}
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-gray-700">
+                Effective Date *
+              </Label>
+              <Input
+                name="effectiveDate"
+                type="date"
+                value={form.effectiveDate}
+                onChange={handleChange}
+                min={new Date().toISOString().split("T")[0]}
+                className={`h-11 ${validationErrors.effectiveDate ? "border-red-500" : "border-gray-300"}`}
+              />
+              {validationErrors.effectiveDate && (
+                <p className="text-xs text-red-500 flex items-center mt-1">
+                  <AlertCircle className="h-3 w-3 mr-1" />
+                  {validationErrors.effectiveDate}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Work Days Toggle */}
+          <div className="space-y-2 mb-4">
+            <Label className="text-sm font-semibold text-gray-700">
+              Requested Work Days *
+            </Label>
+            <div className="flex flex-wrap gap-2">
+              {WORK_DAYS.map((day) => {
+                const isSelected = form.requestedWorkDays.includes(day);
+                return (
+                  <button
+                    key={day}
+                    type="button"
+                    onClick={() => toggleWorkDay(day)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                      isSelected
+                        ? "bg-violet-600 text-white shadow-sm"
+                        : "bg-gray-200 text-gray-500 hover:bg-gray-300"
+                    }`}
+                  >
+                    {day}
+                  </button>
+                );
+              })}
+            </div>
+            {validationErrors.requestedWorkDays && (
+              <p className="text-xs text-red-500 flex items-center mt-1">
+                <AlertCircle className="h-3 w-3 mr-1" />
+                {validationErrors.requestedWorkDays}
+              </p>
+            )}
+          </div>
+
+          {/* End Date (Temporary only) + Priority */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-gray-700">
+                End Date{" "}
+                {form.scheduleChangeType === "temporary" && (
+                  <span className="text-red-500">*</span>
+                )}
+                {form.scheduleChangeType !== "temporary" && (
+                  <span className="text-gray-400 font-normal">
+                    (if temporary)
+                  </span>
+                )}
+              </Label>
+              <Input
+                name="endDate"
+                type="date"
+                value={form.endDate}
+                onChange={handleChange}
+                disabled={form.scheduleChangeType !== "temporary"}
+                min={
+                  form.effectiveDate || new Date().toISOString().split("T")[0]
+                }
+                className={`h-11 ${
+                  validationErrors.endDate
+                    ? "border-red-500"
+                    : "border-gray-300"
+                } ${form.scheduleChangeType !== "temporary" ? "bg-gray-100 text-gray-400" : ""}`}
+              />
+              {validationErrors.endDate && (
+                <p className="text-xs text-red-500 flex items-center mt-1">
+                  <AlertCircle className="h-3 w-3 mr-1" />
+                  {validationErrors.endDate}
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-gray-700">
+                Priority
+              </Label>
+              <Select
+                value={form.schedulePriority}
+                onValueChange={(value) =>
+                  setForm((prev) => ({ ...prev, schedulePriority: value }))
+                }
+              >
+                <SelectTrigger className="h-11 border-gray-300">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="Normal">Normal</SelectItem>
+                    <SelectItem value="High - Urgent business need">
+                      High - Urgent business need
+                    </SelectItem>
+                    <SelectItem value="High - Personal emergency">
+                      High - Personal emergency
+                    </SelectItem>
+                    <SelectItem value="Low - Flexible timing">
+                      Low - Flexible timing
+                    </SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+
+        {/* Reason for Schedule Change + Coverage Plan */}
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold text-gray-700">
+              Reason for Schedule Change *
+            </Label>
+            <Textarea
+              name="scheduleReason"
+              placeholder="Explain why you need this schedule change (e.g., childcare needs, medical appointments, transportation issues, course schedule...)"
+              value={form.scheduleReason}
+              onChange={handleChange}
+              className={`min-h-[120px] resize-none ${validationErrors.scheduleReason ? "border-red-500" : "border-gray-300"}`}
+            />
+            {validationErrors.scheduleReason && (
+              <p className="text-xs text-red-500 flex items-center mt-1">
+                <AlertCircle className="h-3 w-3 mr-1" />
+                {validationErrors.scheduleReason}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* File Upload */}
+        {renderFileUpload("schedule-attachment")}
       </div>
     );
   };
@@ -1030,7 +1515,9 @@ const Request = () => {
             <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
               <FileText className="h-8 w-8 text-white" />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">HR Request Form</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+              HR Request Form
+            </h1>
             <p className="text-blue-100 text-sm sm:text-base">
               Submit your HR-related requests and leave applications
             </p>
@@ -1040,7 +1527,10 @@ const Request = () => {
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name" className="text-sm font-semibold text-gray-700">
+                  <Label
+                    htmlFor="name"
+                    className="text-sm font-semibold text-gray-700"
+                  >
                     Name
                   </Label>
                   <div className="relative">
@@ -1057,7 +1547,10 @@ const Request = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-semibold text-gray-700">
+                  <Label
+                    htmlFor="email"
+                    className="text-sm font-semibold text-gray-700"
+                  >
                     Email
                   </Label>
                   <div className="relative">
@@ -1075,17 +1568,29 @@ const Request = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="category" className="text-sm font-semibold text-gray-700">
+                <Label
+                  htmlFor="category"
+                  className="text-sm font-semibold text-gray-700"
+                >
                   Request Type *
                 </Label>
-                <Select value={form.category} onValueChange={handleCategoryChange} required>
-                  <SelectTrigger className={`h-11 ${validationErrors.category ? "border-red-500" : "border-gray-300"}`}>
+                <Select
+                  value={form.category}
+                  onValueChange={handleCategoryChange}
+                  required
+                >
+                  <SelectTrigger
+                    className={`h-11 ${validationErrors.category ? "border-red-500" : "border-gray-300"}`}
+                  >
                     <SelectValue placeholder="Select request type" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
                       {categories.map((category: any) => (
-                        <SelectItem key={category.category} value={category.category}>
+                        <SelectItem
+                          key={category.category}
+                          value={category.category}
+                        >
                           {category.category}
                         </SelectItem>
                       ))}
@@ -1103,11 +1608,15 @@ const Request = () => {
               {/* Dynamic Content — general categories */}
               {form.category &&
                 form.category !== "Leave Request" &&
-                form.category !== "Overtime" && (
+                form.category !== "Overtime" &&
+                form.category !== "Schedule Change" && (
                   <div className="space-y-4 animate-in fade-in duration-300">
                     {form.category === "Certificate of Employment" && (
                       <div className="space-y-2">
-                        <Label htmlFor="purpose" className="text-sm font-semibold text-gray-700">
+                        <Label
+                          htmlFor="purpose"
+                          className="text-sm font-semibold text-gray-700"
+                        >
                           Purpose *
                         </Label>
                         <Input
@@ -1130,7 +1639,10 @@ const Request = () => {
                     )}
 
                     <div className="space-y-2">
-                      <Label htmlFor="description" className="text-sm font-semibold text-gray-700">
+                      <Label
+                        htmlFor="description"
+                        className="text-sm font-semibold text-gray-700"
+                      >
                         Description *
                       </Label>
                       <Textarea
@@ -1150,50 +1662,8 @@ const Request = () => {
                       )}
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="attachment" className="text-sm font-semibold text-gray-700">
-                        Supporting Documents (Optional)
-                      </Label>
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors duration-200 bg-gray-50">
-                        <Input
-                          id="general-attachment"
-                          name="attachment"
-                          type="file"
-                          onChange={handleFileUpload}
-                          className="hidden"
-                          disabled={isSubmitting || isFileUploading}
-                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                        />
-                        <label htmlFor="general-attachment" className="cursor-pointer block">
-                          {isFileUploading ? (
-                            <div className="flex flex-col items-center">
-                              <Loader2 className="h-8 w-8 text-blue-500 animate-spin mb-2" />
-                              <p className="text-sm text-gray-600">Uploading...</p>
-                            </div>
-                          ) : (
-                            <>
-                              <UploadCloud className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                              <p className="text-sm text-gray-600 mb-1">Click to upload or drag and drop</p>
-                              <p className="text-xs text-gray-500">PDF, Word, JPG, PNG up to 5MB</p>
-                            </>
-                          )}
-                        </label>
-                      </div>
-                      {selectedFileName && (
-                        <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-                          <div className="flex items-center min-w-0">
-                            <Paperclip className="h-3 w-3 text-green-600 mr-2 flex-shrink-0" />
-                            <span className="text-sm text-green-700 truncate">{selectedFileName}</span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <CheckCircle2 className="h-4 w-4 text-green-500" />
-                            <Button variant="ghost" size="sm" onClick={removeFile} className="h-6 w-6 p-0">
-                              <Trash2 className="h-3 w-3 text-gray-500" />
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                    {/* File upload for general categories */}
+                    {renderFileUpload("general-attachment")}
                   </div>
                 )}
 
@@ -1202,6 +1672,10 @@ const Request = () => {
 
               {/* Overtime Content */}
               {form.category === "Overtime" && renderOvertimeContent()}
+
+              {/* Schedule Change Content */}
+              {form.category === "Schedule Change" &&
+                renderScheduleChangeContent()}
 
               <Button
                 type="submit"
@@ -1214,12 +1688,19 @@ const Request = () => {
                     {form.category === "Leave Request"
                       ? "Submitting Leave Request..."
                       : form.category === "Overtime"
-                      ? "Submitting Overtime Request..."
-                      : "Creating Request..."}
+                        ? "Submitting Overtime Request..."
+                        : form.category === "Schedule Change"
+                          ? "Submitting Schedule Change..."
+                          : "Creating Request..."}
                   </span>
                 ) : (
                   <span className="flex items-center justify-center">
-                    {form.category === "Leave Request" ? (
+                    {form.category === "Schedule Change" ? (
+                      <>
+                        <FileCheck className="mr-2 h-5 w-5" />
+                        Submit Schedule Change Request
+                      </>
+                    ) : form.category === "Leave Request" ? (
                       <>
                         <FileCheck className="mr-2 h-5 w-5" />
                         Submit Leave Request
@@ -1248,7 +1729,9 @@ const Request = () => {
           <div className="absolute -top-2 -right-2 w-16 h-16 bg-blue-100 rounded-full opacity-10" />
           <div className="absolute -bottom-2 -left-2 w-20 h-20 bg-indigo-100 rounded-full opacity-10" />
           <DialogHeader>
-            <DialogTitle className="text-center text-xl text-gray-900">Select Leave Type</DialogTitle>
+            <DialogTitle className="text-center text-xl text-gray-900">
+              Select Leave Type
+            </DialogTitle>
             <DialogDescription className="text-center text-gray-600">
               Choose between paid or unpaid leave
             </DialogDescription>
@@ -1262,9 +1745,13 @@ const Request = () => {
               <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-20 transition-opacity" />
               <div className="text-center relative z-10">
                 <div className="font-bold text-lg">Paid Leave</div>
-                <div className="text-sm font-normal opacity-90 mt-1">Uses Leave Credits</div>
+                <div className="text-sm font-normal opacity-90 mt-1">
+                  Uses Leave Credits
+                </div>
                 {!isRegularEmployee && (
-                  <div className="text-xs text-green-200 mt-2">Available for regular employees only</div>
+                  <div className="text-xs text-green-200 mt-2">
+                    Available for regular employees only
+                  </div>
                 )}
               </div>
             </Button>
@@ -1275,7 +1762,9 @@ const Request = () => {
               <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-20 transition-opacity" />
               <div className="text-center relative z-10">
                 <div className="font-bold text-lg">Unpaid Leave</div>
-                <div className="text-sm font-normal opacity-90 mt-1">No leave credits required</div>
+                <div className="text-sm font-normal opacity-90 mt-1">
+                  No leave credits required
+                </div>
               </div>
             </Button>
           </div>
