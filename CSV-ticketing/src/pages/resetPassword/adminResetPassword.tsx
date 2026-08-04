@@ -241,10 +241,30 @@ const ResetPassword: React.FC = () => {
 
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-2 px-4 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
                 disabled={isSubmitting}
+                className="
+    h-12
+    rounded-xl
+    text-base
+    font-semibold
+    bg-gradient-to-r
+    from-blue-600
+    via-blue-700
+    to-indigo-700
+    hover:scale-[1.02]
+    hover:shadow-xl
+    transition-all
+    duration-300
+    "
               >
-                {isSubmitting ? "Processing..." : "Reset Password"}
+                {isSubmitting ? (
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Processing...
+                  </div>
+                ) : (
+                  "Reset Password"
+                )}
               </Button>
             </form>
           </CardContent>
