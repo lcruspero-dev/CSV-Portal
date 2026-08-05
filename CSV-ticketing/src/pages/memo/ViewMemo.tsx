@@ -12,7 +12,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import CreateMemo from "@/pages/memo/CreateMemo";
-import { Eye, Calendar, Filter } from "lucide-react";
+import {
+  Calendar,
+  Eye,
+  FileCheck2,
+  FilePlus2,
+  FileText,
+  Filter,
+  PenLine,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { formattedDate } from "../../API/helper";
@@ -23,7 +31,11 @@ export interface Memo {
   file: string;
   description: string;
   createdAt: string;
-  acknowledgedby: { userId: string | undefined; _id: string; name: string }[];
+  acknowledgedby: {
+    userId: string | undefined;
+    _id: string;
+    name: string;
+  }[];
 }
 
 export interface User {
@@ -41,32 +53,41 @@ interface SummaryCardProps {
   onClick?: () => void;
 }
 
+interface DocumentAction {
+  title: string;
+  description: string;
+  buttonLabel: string;
+  route: string;
+  icon: React.ElementType;
+  allowed: boolean;
+}
+
 const SummaryCard: React.FC<SummaryCardProps> = ({
   label,
   value,
   highlight,
   onClick,
 }) => (
-  <div
+  <button
+    type="button"
     onClick={onClick}
     className={`
-      group cursor-pointer
-      p-5 rounded-2xl
-      border backdrop-blur-md
-      transition-all duration-300
+      group w-full rounded-2xl border p-5 text-left
+      backdrop-blur-md transition-all duration-300
       hover:-translate-y-1 hover:shadow-xl
       ${
         highlight
-          ? "bg-yellow-50/80 border-yellow-300 shadow-md"
-          : "bg-white/80 border-gray-200 shadow-sm"
+          ? "border-yellow-300 bg-yellow-50/80 shadow-md"
+          : "border-gray-200 bg-white/80 shadow-sm"
       }
     `}
   >
     <p className="text-sm text-gray-500">{label}</p>
-    <p className="text-2xl font-bold text-gray-900 mt-1 group-hover:text-[#5602FF]">
+
+    <p className="mt-1 text-2xl font-bold text-gray-900 group-hover:text-[#5602FF]">
       {value}
     </p>
-  </div>
+  </button>
 );
 
 function ViewMemo() {
@@ -78,14 +99,19 @@ function ViewMemo() {
 
   const itemsPerPage = 8;
   const navigate = useNavigate();
+
   const userString = localStorage.getItem("user");
+
   const user: User | null = userString ? JSON.parse(userString) : null;
 
   const fetchMemos = async () => {
     try {
       const response = await TicketAPi.getAllMemos();
+
       setMemos(response.data);
       setFilteredMemos(response.data);
+    } catch (error) {
+      console.error("Failed to fetch memoranda:", error);
     } finally {
       setLoading(false);
     }
@@ -97,11 +123,13 @@ function ViewMemo() {
 
   useEffect(() => {
     let data = memos;
+
     if (showPendingOnly) {
       data = memos.filter(
         (memo) => !memo.acknowledgedby.some((ack) => ack.userId === user?._id),
       );
     }
+
     setFilteredMemos(data);
     setCurrentPage(1);
   }, [showPendingOnly, memos, user?._id]);
@@ -111,40 +139,89 @@ function ViewMemo() {
 
   const pendingCount = memos.filter((memo) => !isAcknowledged(memo)).length;
 
+  const totalPages = Math.ceil(filteredMemos.length / itemsPerPage);
+
   const paginatedMemos = filteredMemos.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage,
   );
 
-  if (loading) return <LoadingComponent />;
+  const documentActions: DocumentAction[] = [
+    {
+      title: "Draft Documents",
+      description:
+        "View and manage internal draft documents and acknowledgement forms.",
+      buttonLabel: "Open Drafts",
+      route: "/tea",
+      icon: FileText,
+      allowed: Boolean(user?.isAdmin),
+    },
+    {
+      title: "Team Lead Expectations",
+      description: "RMEMO_UNAUTHORIZED HANDLING OF IT AND NETWORK EQUIPMENT",
+      buttonLabel: "Open Form",
+      route: "/lea",
+      icon: FileCheck2,
+      allowed: Boolean(user?.isAdmin),
+    },
+    {
+      title: "IT Equipment Memo",
+      description: "MEMO_UNAUTHORIZED HANDLING OF IT AND NETWORK EQUIPMENT",
+      buttonLabel: "Open Memo",
+      route: "/itmemo",
+      icon: PenLine,
+      allowed: Boolean(user),
+    },
+  ];
+
+  const visibleDocumentActions = documentActions.filter(
+    (action) => action.allowed,
+  );
+
+  if (loading) {
+    return <LoadingComponent />;
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 px-6 py-8">
-      <div className="max-w-7xl mx-auto">
-        {/* HEADER */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-10">
+    <main className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 px-4 py-8 sm:px-6">
+      <div className="mx-auto max-w-7xl">
+        {/* PAGE HEADER */}
+
+        <div className="mb-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-4">
             <BackButton />
+
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900">
                 Company Memoranda
               </h1>
-              <p className="text-gray-500 text-sm">
-                Controlled internal communications
+
+              <p className="text-sm text-gray-500">
+                Controlled internal communications and acknowledgement records
               </p>
             </div>
           </div>
+
           {user?.isAdmin && (
             <CreateMemo setMemos={setMemos} setLoading={setLoading} />
           )}
         </div>
+
         {/* SUMMARY CARDS */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-          <SummaryCard label="Total Memoranda" value={memos.length} />
+
+        <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-3">
+          <SummaryCard
+            label="Total Memoranda"
+            value={memos.length}
+            onClick={() => setShowPendingOnly(false)}
+          />
+
           <SummaryCard
             label="Acknowledged"
             value={memos.filter(isAcknowledged).length}
+            onClick={() => setShowPendingOnly(false)}
           />
+
           <SummaryCard
             label="Pending"
             value={pendingCount}
@@ -152,160 +229,244 @@ function ViewMemo() {
             onClick={() => setShowPendingOnly(true)}
           />
         </div>
-        {/* TABLE CONTAINER */}
-        <div className="bg-white/80 backdrop-blur rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
-          {/* FILTER BAR */}
+
+        {/* DOCUMENTS AND FORMS TABLE */}
+
+        {visibleDocumentActions.length > 0 && (
+          <section className="mb-10 overflow-hidden rounded-2xl border border-gray-200 bg-white/80 shadow-lg backdrop-blur">
+            <div className="flex flex-col gap-4 border-b bg-white px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <FilePlus2 className="h-5 w-5 text-[#5602FF]" />
+
+                  <h2 className="font-semibold text-gray-900">
+                    Documents and Forms
+                  </h2>
+                </div>
+
+                <p className="mt-1 text-sm text-gray-500">
+                  Access available acknowledgement forms and internal documents
+                </p>
+              </div>
+            </div>
+
+            <Table>
+              <TableHeader className="bg-gray-50">
+                <TableRow>
+                  <TableHead>Document</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead className="w-[180px] text-center">
+                    Action
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+
+              <TableBody>
+                {visibleDocumentActions.map((action) => {
+                  const Icon = action.icon;
+
+                  return (
+                    <TableRow
+                      key={action.title}
+                      className="transition hover:bg-gray-50"
+                    >
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-[#5602FF]">
+                            <Icon className="h-5 w-5" />
+                          </div>
+
+                          <div>
+                            <p className="font-medium text-gray-900">
+                              {action.title}
+                            </p>
+
+                            <p className="text-xs text-gray-500">
+                              Internal document
+                            </p>
+                          </div>
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="max-w-xl text-sm leading-6 text-gray-600">
+                        {action.description}
+                      </TableCell>
+
+                      <TableCell className="text-center">
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="min-w-[120px] bg-[#5602FF] hover:bg-[#4700d4]"
+                          onClick={() => navigate(action.route)}
+                        >
+                          {action.buttonLabel}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </section>
+        )}
+
+        {/* MEMORANDA TABLE */}
+
+        <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white/80 shadow-lg backdrop-blur">
+          {/* ACTIVE FILTER */}
+
           {showPendingOnly && (
-            <div className="flex items-center justify-between px-6 py-3 bg-yellow-50 border-b border-yellow-200">
-              <div className="flex items-center gap-2 text-yellow-800 text-sm">
+            <div className="flex flex-col gap-3 border-b border-yellow-200 bg-yellow-50 px-6 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2 text-sm text-yellow-800">
                 <Filter className="h-4 w-4" />
                 Pending acknowledgement filter active
               </div>
 
               <Button
+                type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => setShowPendingOnly(false)}
                 className="border-yellow-400 text-yellow-700 hover:bg-yellow-100"
               >
-                Clear
+                Clear Filter
               </Button>
             </div>
           )}
 
-          {/* TABLE TOOLBAR */}
-          <div className="flex items-center justify-between px-6 py-4 border-b bg-white">
+          {/* TABLE HEADER */}
+
+          <div className="flex flex-col gap-4 border-b bg-white px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="font-semibold text-gray-900">Memoranda List</h2>
+
               <p className="text-sm text-gray-500">
-                View and manage company memoranda
+                View company memoranda and acknowledgement status
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              {user?.isAdmin && (
-                <>
-                  <CreateMemo setMemos={setMemos} setLoading={setLoading} />
 
-                  <Button variant="outline" onClick={() => navigate("/tea")}>
-                    Draft Documents
-                  </Button>
-                </>
-              )}
-
-              {(user?.isAdmin || user?.role === "TL") && (
-                <Button
-                  className="bg-[#5602FF] hover:bg-[#4700d4]"
-                  onClick={() => navigate("/lea")}
-                >
-                  Team Lead Acknowledgement
-                </Button>
-              )}
-            </div>
+            <p className="text-sm text-gray-500">
+              Showing {paginatedMemos.length} of {filteredMemos.length}
+            </p>
           </div>
 
-          <Table>
-            {/* STICKY HEADER */}
-            <TableHeader className="bg-gray-50 sticky top-0 z-10">
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Subject</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-center">Action</TableHead>
-              </TableRow>
-            </TableHeader>
-
-            <TableBody>
-              {paginatedMemos.map((memo) => (
-                <TableRow
-                  key={memo._id}
-                  className="hover:bg-gray-50 transition"
-                >
-                  <TableCell>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Calendar className="h-4 w-4" />
-                      {formattedDate(memo.createdAt)}
-                    </div>
-                  </TableCell>
-
-                  <TableCell className="font-medium text-gray-900">
-                    {memo.subject}
-                  </TableCell>
-
-                  <TableCell>
-                    <span
-                      className={`px-3 py-1 text-xs font-medium rounded-full ${
-                        isAcknowledged(memo)
-                          ? "bg-green-100 text-green-700"
-                          : "bg-yellow-100 text-yellow-800"
-                      }`}
-                    >
-                      {isAcknowledged(memo) ? "Acknowledged" : "Pending"}
-                    </span>
-                  </TableCell>
-
-                  <TableCell className="text-center">
-                    <Button
-                      size="sm"
-                      className="gap-1"
-                      variant="outline"
-                      onClick={() => navigate(`/memo/${memo._id}`)}
-                    >
-                      <Eye className="h-4 w-4" />
-                      View
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-
-            {filteredMemos.length > itemsPerPage && (
-              <TableFooter>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader className="sticky top-0 z-10 bg-gray-50">
                 <TableRow>
-                  <TableCell colSpan={4}>
-                    <div className="flex justify-center py-4">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={currentPage === 1}
-                        onClick={() => setCurrentPage((p) => p - 1)}
-                      >
-                        Previous
-                      </Button>
-
-                      <span className="px-4 text-sm text-gray-600">
-                        Page {currentPage} of{" "}
-                        {Math.ceil(filteredMemos.length / itemsPerPage)}
-                      </span>
-
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={
-                          currentPage ===
-                          Math.ceil(filteredMemos.length / itemsPerPage)
-                        }
-                        onClick={() => setCurrentPage((p) => p + 1)}
-                      >
-                        Next
-                      </Button>
-                    </div>
-                  </TableCell>
+                  <TableHead className="min-w-[160px]">Date</TableHead>
+                  <TableHead className="min-w-[280px]">Subject</TableHead>
+                  <TableHead className="min-w-[130px]">Status</TableHead>
+                  <TableHead className="w-[140px] text-center">
+                    Action
+                  </TableHead>
                 </TableRow>
-              </TableFooter>
-            )}
-          </Table>
+              </TableHeader>
+
+              <TableBody>
+                {paginatedMemos.map((memo) => (
+                  <TableRow
+                    key={memo._id}
+                    className="transition hover:bg-gray-50"
+                  >
+                    <TableCell>
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Calendar className="h-4 w-4 shrink-0" />
+
+                        <span>{formattedDate(memo.createdAt)}</span>
+                      </div>
+                    </TableCell>
+
+                    <TableCell className="font-medium text-gray-900">
+                      {memo.subject}
+                    </TableCell>
+
+                    <TableCell>
+                      <span
+                        className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
+                          isAcknowledged(memo)
+                            ? "bg-green-100 text-green-700"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}
+                      >
+                        {isAcknowledged(memo) ? "Acknowledged" : "Pending"}
+                      </span>
+                    </TableCell>
+
+                    <TableCell className="text-center">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="gap-1"
+                        onClick={() => navigate(`/memo/${memo._id}`)}
+                      >
+                        <Eye className="h-4 w-4" />
+                        View
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+
+              {filteredMemos.length > itemsPerPage && (
+                <TableFooter>
+                  <TableRow>
+                    <TableCell colSpan={4}>
+                      <div className="flex flex-col items-center justify-center gap-3 py-4 sm:flex-row">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={currentPage === 1}
+                          onClick={() => setCurrentPage((page) => page - 1)}
+                        >
+                          Previous
+                        </Button>
+
+                        <span className="px-4 text-sm text-gray-600">
+                          Page {currentPage} of {totalPages}
+                        </span>
+
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={currentPage === totalPages}
+                          onClick={() => setCurrentPage((page) => page + 1)}
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                </TableFooter>
+              )}
+            </Table>
+          </div>
 
           {/* EMPTY STATE */}
+
           {filteredMemos.length === 0 && (
-            <div className="text-center py-16 text-gray-500">
-              {showPendingOnly
-                ? "No pending memoranda 🎉"
-                : "No memoranda available"}
+            <div className="px-6 py-16 text-center text-gray-500">
+              <FileText className="mx-auto mb-4 h-10 w-10 text-gray-300" />
+
+              <p className="font-medium text-gray-700">
+                {showPendingOnly
+                  ? "No pending memoranda"
+                  : "No memoranda available"}
+              </p>
+
+              <p className="mt-1 text-sm">
+                {showPendingOnly
+                  ? "You have acknowledged all available memoranda."
+                  : "New memoranda will appear here once created."}
+              </p>
             </div>
           )}
-        </div>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }
 
