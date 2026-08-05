@@ -73,6 +73,39 @@ export const TicketAPi = {
     apiHelper(`/api/policies/unacknowledged/${id}`, "GET"),
 };
 
+export interface MemoBuilderQuery {
+  search?: string;
+  status?: "all" | "draft" | "published" | "archived";
+  page?: number;
+  limit?: number;
+}
+
+export interface MemoBuilderPayload {
+  title: string;
+  subject: string;
+  content: string;
+  status?: "draft" | "published" | "archived";
+}
+
+export const MemoBuilderAPI = {
+  list: (query: MemoBuilderQuery = {}) => {
+    const params = new URLSearchParams();
+    if (query.search) params.set("search", query.search);
+    if (query.status && query.status !== "all") params.set("status", query.status);
+    if (query.page) params.set("page", String(query.page));
+    if (query.limit) params.set("limit", String(query.limit));
+    const suffix = params.toString();
+    return apiHelper(`/api/memo-builder${suffix ? `?${suffix}` : ""}`, "GET");
+  },
+  get: (id: string) => apiHelper(`/api/memo-builder/${id}`, "GET"),
+  create: (body: MemoBuilderPayload) => apiHelper("/api/memo-builder", "POST", body),
+  update: (id: string, body: MemoBuilderPayload) =>
+    apiHelper(`/api/memo-builder/${id}`, "PUT", body),
+  setStatus: (id: string, status: "draft" | "published" | "archived") =>
+    apiHelper(`/api/memo-builder/${id}/status`, "PATCH", { status }),
+  delete: (id: string) => apiHelper(`/api/memo-builder/${id}`, "DELETE"),
+};
+
 export const Category = {
   CreateCategory: (body: object) => apiHelper("/api/categories/", "POST", body),
   getCategory: () => apiHelper("/api/categories/", "GET"),
