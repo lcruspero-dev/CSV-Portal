@@ -168,7 +168,7 @@ const getMemos = asyncHandler(async (req, res) => {
     acknowledgedBy: canManage
       ? memo.acknowledgedBy || []
       : (memo.acknowledgedBy || []).filter(
-          (entry) => entry.userId === requesterId,
+          (entry) => String(entry.userId) === requesterId,
         ),
   }));
 
