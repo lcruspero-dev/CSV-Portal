@@ -166,17 +166,6 @@ const UserHome = () => {
       exclamation: showExclamation,
       tooltip: nteTooltip,
     },
-    {
-      id: 7,
-      title: "Memo Builder",
-      description: "Browse published and internal memos",
-      icon: FileText,
-      path: "/memo-builder",
-      accent: "#7c3aed",
-      softBg: "#f5f3ff",
-      label: "Communications",
-      notification: 0,
-    },
   ];
 
   const containerVariants = {
