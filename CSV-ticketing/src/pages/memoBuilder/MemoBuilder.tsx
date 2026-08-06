@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/context/useAuth";
 import {
   AlertCircle,
   Archive,
@@ -85,15 +86,12 @@ export default function MemoBuilder() {
   const [saving, setSaving] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  const canManage = useMemo(() => {
-    try {
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
-      return Boolean(user.isAdmin || ["SUPERADMIN", "TL", "TM"].includes(user.role));
-    } catch {
-      return false;
-    }
-  }, []);
+  const canManage = useMemo(
+    () => Boolean(user?.isAdmin || (user && ["TL", "TM"].includes(user.role))),
+    [user],
+  );
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedSearch(search.trim()), 350);
