@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import LoadingComponent from "@/components/ui/loading";
+import { useToast } from "@/components/ui/use-toast";
 import {
   Table,
   TableBody,
@@ -21,12 +22,15 @@ import {
 import CreateMemo from "@/pages/memo/CreateMemo";
 import {
   Calendar,
+  CheckCircle2,
   Eye,
   FileCheck2,
   FilePlus2,
   FileText,
   Filter,
   PenLine,
+  Loader2,
+  Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -56,6 +60,31 @@ interface PublishedBuilderMemo {
   createdBy?: {
     name?: string;
     email?: string;
+  };
+  acknowledgedBy?: MemoAcknowledgement[];
+}
+
+interface MemoAcknowledgement {
+  userId: string;
+  name: string;
+  email?: string;
+  acknowledgedAt: string;
+}
+
+interface UnsignedEmployee {
+  userId: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+interface AcknowledgementReport {
+  signed: MemoAcknowledgement[];
+  unsigned: UnsignedEmployee[];
+  summary: {
+    signed: number;
+    unsigned: number;
+    total: number;
   };
 }
 
@@ -121,12 +150,18 @@ function ViewMemo() {
   >([]);
   const [selectedPublishedMemo, setSelectedPublishedMemo] =
     useState<PublishedBuilderMemo | null>(null);
+  const [acknowledgementReport, setAcknowledgementReport] =
+    useState<AcknowledgementReport | null>(null);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
+  const [signing, setSigning] = useState(false);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [showPendingOnly, setShowPendingOnly] = useState(false);
 
   const itemsPerPage = 8;
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const userString = localStorage.getItem("user");
 
@@ -175,10 +210,16 @@ function ViewMemo() {
     );
 
     if (showPendingOnly) {
-      data = memos.filter(
-        (memo) =>
-          !memo.acknowledgedby.some((ack) => ack.userId === user?._id),
-      );
+      data = [
+        ...publishedMemos.filter(
+          (memo) =>
+            !memo.acknowledgedBy?.some((ack) => ack.userId === user?._id),
+        ),
+        ...memos.filter(
+          (memo) =>
+            !memo.acknowledgedby.some((ack) => ack.userId === user?._id),
+        ),
+      ];
     }
 
     setFilteredMemos(data);
@@ -192,7 +233,73 @@ function ViewMemo() {
   const isAcknowledged = (memo: Memo) =>
     memo.acknowledgedby.some((ack) => ack.userId === user?._id);
 
-  const pendingCount = memos.filter((memo) => !isAcknowledged(memo)).length;
+  const isBuilderAcknowledged = (memo: PublishedBuilderMemo) =>
+    Boolean(memo.acknowledgedBy?.some((ack) => ack.userId === user?._id));
+
+  const acknowledgedCount =
+    memos.filter(isAcknowledged).length +
+    publishedMemos.filter(isBuilderAcknowledged).length;
+
+  const pendingCount =
+    memos.filter((memo) => !isAcknowledged(memo)).length +
+    publishedMemos.filter((memo) => !isBuilderAcknowledged(memo)).length;
+
+  const openPublishedMemo = async (memo: PublishedBuilderMemo) => {
+    setSelectedPublishedMemo(memo);
+    setAcknowledgementReport(null);
+    setReportError(null);
+
+    if (!user?.isAdmin) return;
+
+    setReportLoading(true);
+    try {
+      const response = await MemoBuilderAPI.getAcknowledgements(memo._id);
+      setAcknowledgementReport(response.data);
+    } catch (error) {
+      const message =
+        error && typeof error === "object" && "message" in error
+          ? String(error.message)
+          : "Unable to load acknowledgement details.";
+      setReportError(message);
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
+  const acknowledgePublishedMemo = async () => {
+    if (!selectedPublishedMemo || !user) return;
+    setSigning(true);
+    try {
+      const response = await MemoBuilderAPI.acknowledge(
+        selectedPublishedMemo._id,
+      );
+      const acknowledgedBy: MemoAcknowledgement[] =
+        response.data.acknowledgedBy;
+      const updatedMemo = { ...selectedPublishedMemo, acknowledgedBy };
+      setSelectedPublishedMemo(updatedMemo);
+      setPublishedMemos((current) =>
+        current.map((memo) =>
+          memo._id === updatedMemo._id ? updatedMemo : memo,
+        ),
+      );
+      toast({
+        title: "Memo signed",
+        description: "Your acknowledgement has been recorded.",
+      });
+    } catch (error) {
+      const message =
+        error && typeof error === "object" && "message" in error
+          ? String(error.message)
+          : "Unable to sign the memo.";
+      toast({
+        title: "Unable to sign memo",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setSigning(false);
+    }
+  };
 
   const totalPages = Math.ceil(filteredMemos.length / itemsPerPage);
 
@@ -273,7 +380,7 @@ function ViewMemo() {
 
           <SummaryCard
             label="Acknowledged"
-            value={memos.filter(isAcknowledged).length}
+            value={acknowledgedCount}
             onClick={() => setShowPendingOnly(false)}
           />
 
@@ -438,8 +545,16 @@ function ViewMemo() {
 
                     <TableCell>
                       {isPublishedBuilderMemo(memo) ? (
-                        <span className="inline-flex rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-700">
-                          Published
+                        <span
+                          className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
+                            isBuilderAcknowledged(memo)
+                              ? "bg-green-100 text-green-700"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
+                        >
+                          {isBuilderAcknowledged(memo)
+                            ? "Acknowledged"
+                            : "Pending"}
                         </span>
                       ) : (
                         <span
@@ -462,7 +577,7 @@ function ViewMemo() {
                         className="gap-1"
                         onClick={() => {
                           if (isPublishedBuilderMemo(memo)) {
-                            setSelectedPublishedMemo(memo);
+                            void openPublishedMemo(memo);
                           } else {
                             navigate(`/memo/${memo._id}`);
                           }
@@ -536,7 +651,11 @@ function ViewMemo() {
         <Dialog
           open={Boolean(selectedPublishedMemo)}
           onOpenChange={(open) => {
-            if (!open) setSelectedPublishedMemo(null);
+            if (!open) {
+              setSelectedPublishedMemo(null);
+              setAcknowledgementReport(null);
+              setReportError(null);
+            }
           }}
         >
           <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
@@ -574,6 +693,138 @@ function ViewMemo() {
                         {selectedPublishedMemo.createdBy.name}
                       </span>
                     </p>
+                  )}
+
+                  {!user?.isAdmin && (
+                    <div className="flex items-center justify-between gap-4 rounded-xl border border-purple-200 bg-purple-50 p-4">
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {isBuilderAcknowledged(selectedPublishedMemo)
+                            ? "Memo acknowledged"
+                            : "Acknowledgement required"}
+                        </p>
+                        <p className="mt-1 text-sm text-gray-600">
+                          {isBuilderAcknowledged(selectedPublishedMemo)
+                            ? "Your signature has been recorded."
+                            : "Confirm that you have read and understood this memo."}
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        onClick={() => void acknowledgePublishedMemo()}
+                        disabled={
+                          signing ||
+                          isBuilderAcknowledged(selectedPublishedMemo)
+                        }
+                        className="shrink-0 bg-[#5602FF] hover:bg-[#4700d4]"
+                      >
+                        {signing ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <CheckCircle2 className="mr-2 h-4 w-4" />
+                        )}
+                        {isBuilderAcknowledged(selectedPublishedMemo)
+                          ? "Signed"
+                          : "Sign memo"}
+                      </Button>
+                    </div>
+                  )}
+
+                  {user?.isAdmin && (
+                    <section className="space-y-4 border-t pt-5">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-5 w-5 text-[#5602FF]" />
+                        <h3 className="font-semibold text-gray-900">
+                          Employee acknowledgements
+                        </h3>
+                      </div>
+
+                      {reportLoading ? (
+                        <div className="flex items-center justify-center py-8 text-sm text-gray-500">
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Loading acknowledgement report…
+                        </div>
+                      ) : reportError ? (
+                        <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                          {reportError}
+                        </p>
+                      ) : acknowledgementReport ? (
+                        <>
+                          <div className="grid grid-cols-3 gap-3">
+                            <div className="rounded-lg bg-gray-100 p-3 text-center">
+                              <p className="text-xl font-bold text-gray-900">
+                                {acknowledgementReport.summary.total}
+                              </p>
+                              <p className="text-xs text-gray-500">Employees</p>
+                            </div>
+                            <div className="rounded-lg bg-green-50 p-3 text-center">
+                              <p className="text-xl font-bold text-green-700">
+                                {acknowledgementReport.summary.signed}
+                              </p>
+                              <p className="text-xs text-green-600">Signed</p>
+                            </div>
+                            <div className="rounded-lg bg-yellow-50 p-3 text-center">
+                              <p className="text-xl font-bold text-yellow-700">
+                                {acknowledgementReport.summary.unsigned}
+                              </p>
+                              <p className="text-xs text-yellow-600">
+                                Not signed
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <div className="overflow-hidden rounded-lg border">
+                              <div className="border-b bg-green-50 px-4 py-2 text-sm font-medium text-green-800">
+                                Signed ({acknowledgementReport.summary.signed})
+                              </div>
+                              <div className="max-h-52 divide-y overflow-y-auto">
+                                {acknowledgementReport.signed.length ? (
+                                  acknowledgementReport.signed.map((entry) => (
+                                    <div key={entry.userId} className="px-4 py-3">
+                                      <p className="text-sm font-medium text-gray-900">
+                                        {entry.name}
+                                      </p>
+                                      <p className="text-xs text-gray-500">
+                                        {formattedDate(entry.acknowledgedAt)}
+                                      </p>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <p className="px-4 py-5 text-sm text-gray-500">
+                                    No signatures yet.
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="overflow-hidden rounded-lg border">
+                              <div className="border-b bg-yellow-50 px-4 py-2 text-sm font-medium text-yellow-800">
+                                Not signed ({acknowledgementReport.summary.unsigned})
+                              </div>
+                              <div className="max-h-52 divide-y overflow-y-auto">
+                                {acknowledgementReport.unsigned.length ? (
+                                  acknowledgementReport.unsigned.map((entry) => (
+                                    <div key={entry.userId} className="px-4 py-3">
+                                      <p className="text-sm font-medium text-gray-900">
+                                        {entry.name}
+                                      </p>
+                                      <p className="text-xs text-gray-500">
+                                        {entry.email}
+                                      </p>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <p className="px-4 py-5 text-sm text-gray-500">
+                                    Everyone has signed.
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      ) : null}
+                    </section>
                   )}
                 </article>
               </>

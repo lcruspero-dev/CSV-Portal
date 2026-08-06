@@ -103,6 +103,10 @@ export const MemoBuilderAPI = {
     apiHelper(`/api/memo-builder/${id}`, "PUT", body),
   setStatus: (id: string, status: "draft" | "published" | "archived") =>
     apiHelper(`/api/memo-builder/${id}/status`, "PATCH", { status }),
+  acknowledge: (id: string) =>
+    apiHelper(`/api/memo-builder/${id}/acknowledge`, "PUT"),
+  getAcknowledgements: (id: string) =>
+    apiHelper(`/api/memo-builder/${id}/acknowledgements`, "GET"),
   delete: (id: string) => apiHelper(`/api/memo-builder/${id}`, "DELETE"),
 };
 

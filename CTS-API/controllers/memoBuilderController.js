@@ -1,6 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const mongoose = require("mongoose");
 const MemoBuilder = require("../models/memoBuilderModel");
+const User = require("../models/userModel");
 
 const VALID_STATUSES = ["draft", "published", "archived"];
 
@@ -42,8 +43,20 @@ const getMemos = asyncHandler(async (req, res) => {
     MemoBuilder.countDocuments(filter),
   ]);
 
+  const canManage =
+    req.user.isAdmin || ["TL", "TM"].includes(req.user.role);
+  const requesterId = req.user._id.toString();
+  const visibleMemos = memos.map((memo) => ({
+    ...memo,
+    acknowledgedBy: canManage
+      ? memo.acknowledgedBy || []
+      : (memo.acknowledgedBy || []).filter(
+          (entry) => entry.userId === requesterId,
+        ),
+  }));
+
   res.json({
-    data: memos,
+    data: visibleMemos,
     pagination: { page, limit, total, pages: Math.max(Math.ceil(total / limit), 1) },
   });
 });
@@ -139,4 +152,94 @@ const deleteMemo = asyncHandler(async (req, res) => {
   res.json({ id: req.params.id, message: "Memo deleted successfully" });
 });
 
-module.exports = { getMemos, getMemo, createMemo, updateMemo, updateMemoStatus, deleteMemo };
+const acknowledgeMemo = asyncHandler(async (req, res) => {
+  validateId(req.params.id, res);
+  const memo = await MemoBuilder.findById(req.params.id);
+  if (!memo) {
+    res.status(404);
+    throw new Error("Memo not found");
+  }
+  if (memo.status !== "published") {
+    res.status(409);
+    throw new Error("Only published memos can be acknowledged");
+  }
+
+  const userId = req.user._id.toString();
+  const existingAcknowledgement = memo.acknowledgedBy.some(
+    (entry) => entry.userId === userId,
+  );
+  if (!existingAcknowledgement) {
+    memo.acknowledgedBy.push({
+      userId,
+      name: req.user.name,
+      email: req.user.email || "",
+      acknowledgedAt: new Date(),
+    });
+    await memo.save();
+  }
+
+  res.json({
+    message: existingAcknowledgement
+      ? "Memo already acknowledged"
+      : "Memo acknowledged successfully",
+    acknowledged: true,
+    acknowledgedBy: memo.acknowledgedBy,
+  });
+});
+
+const getMemoAcknowledgements = asyncHandler(async (req, res) => {
+  validateId(req.params.id, res);
+  const memo = await MemoBuilder.findById(req.params.id).lean();
+  if (!memo) {
+    res.status(404);
+    throw new Error("Memo not found");
+  }
+
+  const acknowledgements = memo.acknowledgedBy || [];
+  const signedUserIds = acknowledgements.map((entry) => entry.userId);
+  const eligibleBefore = memo.publishedAt || memo.createdAt;
+  const unsignedUsers = await User.find(
+    {
+      _id: { $nin: signedUserIds },
+      isAdmin: false,
+      status: { $ne: "inactive" },
+      createdAt: { $lte: eligibleBefore },
+    },
+    "name email role",
+  )
+    .sort({ name: 1 })
+    .lean();
+
+  const signed = [...acknowledgements].sort(
+    (first, second) =>
+      new Date(second.acknowledgedAt).getTime() -
+      new Date(first.acknowledgedAt).getTime(),
+  );
+
+  res.json({
+    memoId: memo._id,
+    signed,
+    unsigned: unsignedUsers.map((user) => ({
+      userId: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    })),
+    summary: {
+      signed: signed.length,
+      unsigned: unsignedUsers.length,
+      total: signed.length + unsignedUsers.length,
+    },
+  });
+});
+
+module.exports = {
+  getMemos,
+  getMemo,
+  createMemo,
+  updateMemo,
+  updateMemoStatus,
+  deleteMemo,
+  acknowledgeMemo,
+  getMemoAcknowledgements,
+};

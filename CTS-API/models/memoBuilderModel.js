@@ -15,6 +15,14 @@ const memoBuilderSchema = mongoose.Schema(
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     publishedAt: { type: Date, default: null },
     archivedAt: { type: Date, default: null },
+    acknowledgedBy: [
+      {
+        userId: { type: String, required: true },
+        name: { type: String, required: true },
+        email: { type: String, default: "" },
+        acknowledgedAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   { timestamps: true },
 );
