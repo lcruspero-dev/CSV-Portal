@@ -1,6 +1,13 @@
-import { TicketAPi } from "@/API/endpoint";
+import { MemoBuilderAPI, TicketAPi } from "@/API/endpoint";
 import BackButton from "@/components/kit/BackButton";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import LoadingComponent from "@/components/ui/loading";
 import {
   Table,
@@ -36,6 +43,20 @@ export interface Memo {
     _id: string;
     name: string;
   }[];
+}
+
+interface PublishedBuilderMemo {
+  _id: string;
+  title: string;
+  subject: string;
+  content: string;
+  status: "published";
+  createdAt: string;
+  publishedAt: string | null;
+  createdBy?: {
+    name?: string;
+    email?: string;
+  };
 }
 
 export interface User {
@@ -92,7 +113,14 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
 
 function ViewMemo() {
   const [memos, setMemos] = useState<Memo[]>([]);
-  const [filteredMemos, setFilteredMemos] = useState<Memo[]>([]);
+  const [publishedMemos, setPublishedMemos] = useState<PublishedBuilderMemo[]>(
+    [],
+  );
+  const [filteredMemos, setFilteredMemos] = useState<
+    Array<Memo | PublishedBuilderMemo>
+  >([]);
+  const [selectedPublishedMemo, setSelectedPublishedMemo] =
+    useState<PublishedBuilderMemo | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [showPendingOnly, setShowPendingOnly] = useState(false);
@@ -106,10 +134,25 @@ function ViewMemo() {
 
   const fetchMemos = async () => {
     try {
-      const response = await TicketAPi.getAllMemos();
+      const [legacyResult, builderResult] = await Promise.allSettled([
+        TicketAPi.getAllMemos(),
+        MemoBuilderAPI.list({ status: "published", page: 1, limit: 100 }),
+      ]);
 
-      setMemos(response.data);
-      setFilteredMemos(response.data);
+      if (legacyResult.status === "fulfilled") {
+        setMemos(legacyResult.value.data);
+      } else {
+        console.error("Failed to fetch legacy memoranda:", legacyResult.reason);
+      }
+
+      if (builderResult.status === "fulfilled") {
+        setPublishedMemos(builderResult.value.data.data);
+      } else {
+        console.error(
+          "Failed to fetch published builder memos:",
+          builderResult.reason,
+        );
+      }
     } catch (error) {
       console.error("Failed to fetch memoranda:", error);
     } finally {
@@ -122,17 +165,29 @@ function ViewMemo() {
   }, []);
 
   useEffect(() => {
-    let data = memos;
+    let data: Array<Memo | PublishedBuilderMemo> = [
+      ...publishedMemos,
+      ...memos,
+    ].sort(
+      (first, second) =>
+        new Date(second.createdAt).getTime() -
+        new Date(first.createdAt).getTime(),
+    );
 
     if (showPendingOnly) {
       data = memos.filter(
-        (memo) => !memo.acknowledgedby.some((ack) => ack.userId === user?._id),
+        (memo) =>
+          !memo.acknowledgedby.some((ack) => ack.userId === user?._id),
       );
     }
 
     setFilteredMemos(data);
     setCurrentPage(1);
-  }, [showPendingOnly, memos, user?._id]);
+  }, [showPendingOnly, memos, publishedMemos, user?._id]);
+
+  const isPublishedBuilderMemo = (
+    memo: Memo | PublishedBuilderMemo,
+  ): memo is PublishedBuilderMemo => "content" in memo;
 
   const isAcknowledged = (memo: Memo) =>
     memo.acknowledgedby.some((ack) => ack.userId === user?._id);
@@ -212,7 +267,7 @@ function ViewMemo() {
         <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-3">
           <SummaryCard
             label="Total Memoranda"
-            value={memos.length}
+            value={memos.length + publishedMemos.length}
             onClick={() => setShowPendingOnly(false)}
           />
 
@@ -382,15 +437,21 @@ function ViewMemo() {
                     </TableCell>
 
                     <TableCell>
-                      <span
-                        className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
-                          isAcknowledged(memo)
-                            ? "bg-green-100 text-green-700"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
-                      >
-                        {isAcknowledged(memo) ? "Acknowledged" : "Pending"}
-                      </span>
+                      {isPublishedBuilderMemo(memo) ? (
+                        <span className="inline-flex rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-700">
+                          Published
+                        </span>
+                      ) : (
+                        <span
+                          className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
+                            isAcknowledged(memo)
+                              ? "bg-green-100 text-green-700"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
+                        >
+                          {isAcknowledged(memo) ? "Acknowledged" : "Pending"}
+                        </span>
+                      )}
                     </TableCell>
 
                     <TableCell className="text-center">
@@ -399,7 +460,13 @@ function ViewMemo() {
                         size="sm"
                         variant="outline"
                         className="gap-1"
-                        onClick={() => navigate(`/memo/${memo._id}`)}
+                        onClick={() => {
+                          if (isPublishedBuilderMemo(memo)) {
+                            setSelectedPublishedMemo(memo);
+                          } else {
+                            navigate(`/memo/${memo._id}`);
+                          }
+                        }}
                       >
                         <Eye className="h-4 w-4" />
                         View
@@ -465,6 +532,54 @@ function ViewMemo() {
             </div>
           )}
         </section>
+
+        <Dialog
+          open={Boolean(selectedPublishedMemo)}
+          onOpenChange={(open) => {
+            if (!open) setSelectedPublishedMemo(null);
+          }}
+        >
+          <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+            {selectedPublishedMemo && (
+              <>
+                <DialogHeader className="space-y-3 border-b pb-5 text-left">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-700">
+                      Published
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {formattedDate(
+                        selectedPublishedMemo.publishedAt ||
+                          selectedPublishedMemo.createdAt,
+                      )}
+                    </span>
+                  </div>
+                  <DialogTitle className="text-2xl leading-tight text-gray-900">
+                    {selectedPublishedMemo.title}
+                  </DialogTitle>
+                  <DialogDescription className="text-base font-medium text-gray-700">
+                    {selectedPublishedMemo.subject}
+                  </DialogDescription>
+                </DialogHeader>
+
+                <article className="space-y-6 py-2">
+                  <div className="whitespace-pre-wrap rounded-xl border border-gray-200 bg-gray-50/70 p-5 text-sm leading-7 text-gray-800">
+                    {selectedPublishedMemo.content}
+                  </div>
+
+                  {selectedPublishedMemo.createdBy?.name && (
+                    <p className="text-sm text-gray-500">
+                      Published by{" "}
+                      <span className="font-medium text-gray-700">
+                        {selectedPublishedMemo.createdBy.name}
+                      </span>
+                    </p>
+                  )}
+                </article>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </main>
   );

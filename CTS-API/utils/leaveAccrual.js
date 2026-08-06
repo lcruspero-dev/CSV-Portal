@@ -73,12 +73,12 @@ const calculateAccrual = (employee) => {
   for (let i = 0; i < monthsPassed; i++) {
     newLastAccrualPHT = getSameDayNextMonth(
       newLastAccrualPHT,
-      employee.startDate
+      employee.startDate,
     );
   }
   const newNextAccrualPHT = getSameDayNextMonth(
     newLastAccrualPHT,
-    employee.startDate
+    employee.startDate,
   );
 
   // Convert back to UTC for storage
