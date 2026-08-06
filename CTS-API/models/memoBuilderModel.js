@@ -1,24 +1,102 @@
 const mongoose = require("mongoose");
 
-const memoBuilderSchema = mongoose.Schema(
+const memoSchema = new mongoose.Schema(
   {
-    title: { type: String, required: [true, "Please add a title"], trim: true, maxlength: 160 },
-    subject: { type: String, required: [true, "Please add a subject"], trim: true, maxlength: 240 },
-    content: { type: String, required: [true, "Please add memo content"], trim: true },
+    memoCode: {
+      type: String,
+      required: [true, "Please add a memo code"],
+      unique: true,
+      uppercase: true,
+      trim: true,
+      index: true,
+    },
+
+    recipientLabel: {
+      type: String,
+      required: [true, "Please add the recipient label"],
+      trim: true,
+    },
+
+    senderLabel: {
+      type: String,
+      required: [true, "Please add the sender"],
+      trim: true,
+    },
+
+    subject: {
+      type: String,
+      required: [true, "Please add the memo subject"],
+      trim: true,
+      maxlength: 300,
+    },
+
+    content: {
+      type: String,
+      required: [true, "Please add the memo content"],
+      trim: true,
+      maxlength: 50000,
+    },
+
+    memoDate: {
+      type: Date,
+      required: [true, "Please add the memo date"],
+    },
+
+    issuedByLabel: {
+      type: String,
+      default: "TOP MANAGEMENT",
+      trim: true,
+    },
+
+    confidentialityNotice: {
+      type: String,
+      trim: true,
+      maxlength: 1000,
+    },
+
+    acknowledgementDeadline: {
+      type: Date,
+      default: null,
+    },
+
     status: {
       type: String,
       enum: ["draft", "published", "archived"],
       default: "draft",
       index: true,
     },
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    publishedAt: { type: Date, default: null },
-    archivedAt: { type: Date, default: null },
+
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+
+    publishedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    publishedAt: {
+      type: Date,
+      default: null,
+    },
+
+    archivedAt: {
+      type: Date,
+      default: null,
+    },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+  },
 );
 
-memoBuilderSchema.index({ title: "text", subject: "text", content: "text" });
+memoSchema.index({
+  memoCode: "text",
+  subject: "text",
+  content: "text",
+});
 
-module.exports = mongoose.model("MemoBuilder", memoBuilderSchema);
+module.exports = mongoose.model("Memo", memoSchema);
