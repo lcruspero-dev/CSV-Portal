@@ -45,7 +45,7 @@ import {
   Key,
   Shield,
   Home,
-  CreditCard,
+  // CreditCard,
   Database,
   Lock,
   FileBarChart,
@@ -90,7 +90,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
     "Team Management": true,
   });
 
-// Nav gorup links
+  // Nav gorup links
   const navGroups: NavGroup[] = [
     {
       name: "Actions",
@@ -106,12 +106,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
           path: "/timetracker",
           icon: <Clock className="h-5 w-5" />,
         },
-        {
-          title: "Payroll",
-          path: "/payroll",
-          icon: <CreditCard className="h-5 w-5" />,
-          badge: "New",
-        },
+        // {
+        //   title: "Payroll",
+        //   path: "/payroll",
+        //   icon: <CreditCard className="h-5 w-5" />,
+        //   badge: "New",
+        // },
         {
           title: "Memo Builder",
           path: "/memo-builder",
@@ -257,7 +257,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
 
   // Function to close mobile sheet
   const closeMobileSheet = () => {
-    const closeButton = document.querySelector('[data-radix-collection-item]');
+    const closeButton = document.querySelector("[data-radix-collection-item]");
     if (closeButton) {
       (closeButton as HTMLElement).click();
     }
@@ -265,7 +265,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
 
   return (
     <>
-    
       {/* Password Dialog */}
       <Dialog
         open={isPasswordDialogOpen}
@@ -351,7 +350,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                     <h2 className="text-lg font-semibold text-gray-900">
                       Admin Panel
                     </h2>
-                    <p className="text-sm text-gray-600">Management Dashboard</p>
+                    <p className="text-sm text-gray-600">
+                      Management Dashboard
+                    </p>
                   </div>
                 </div>
               </div>
@@ -377,7 +378,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                         <ChevronDown
                           className={cn(
                             "h-4 w-4 text-gray-400 transition-transform duration-200",
-                            openDropdowns[group.name] ? "rotate-180" : ""
+                            openDropdowns[group.name] ? "rotate-180" : "",
                           )}
                         />
                       </Button>
@@ -398,7 +399,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                                   "w-full justify-start gap-3 px-2 py-2.5 rounded-lg transition-colors",
                                   isActive
                                     ? "bg-purple-50 text-purple-700 border border-purple-200"
-                                    : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                                    : "text-gray-700 hover:bg-gray-50 hover:text-gray-900",
                                 )}
                               >
                                 <div
@@ -406,7 +407,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                                     "p-1.5 rounded-md",
                                     isActive
                                       ? "bg-gradient-to-br from-purple-600 to-indigo-600 text-white"
-                                      : "bg-gray-100 text-gray-600"
+                                      : "bg-gray-100 text-gray-600",
                                   )}
                                 >
                                   {item.icon}
@@ -444,14 +445,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
           className={cn(
             "flex flex-col transition-all duration-300 ease-in-out h-full bg-white border-r border-gray-200 shadow-sm",
             isOpen ? "w-64" : "w-20",
-            isMounted ? "opacity-100" : "opacity-0"
+            isMounted ? "opacity-100" : "opacity-0",
           )}
         >
           {/* Header */}
           <div
             className={cn(
               "flex items-center border-b border-gray-200 transition-all duration-300 flex-shrink-0",
-              isOpen ? "justify-between p-6" : "justify-center p-4"
+              isOpen ? "justify-between p-6" : "justify-center p-4",
             )}
           >
             {isOpen && (
@@ -469,7 +470,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
               size="icon"
               className={cn(
                 "rounded-lg transition-all duration-200 hover:bg-gray-100 border border-gray-300",
-                isOpen ? "h-8 w-8" : "h-9 w-9"
+                isOpen ? "h-8 w-8" : "h-9 w-9",
               )}
               onClick={handleToggle}
             >
@@ -502,7 +503,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                                     "w-full p-2 justify-center rounded-lg mb-1 transition-colors",
                                     isActive
                                       ? "bg-purple-50 text-purple-700"
-                                      : "text-gray-600 hover:text-purple-700 hover:bg-gray-50"
+                                      : "text-gray-600 hover:text-purple-700 hover:bg-gray-50",
                                   )}
                                 >
                                   <div
@@ -510,7 +511,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                                       "p-1.5 rounded-md",
                                       isActive
                                         ? "bg-gradient-to-br from-purple-600 to-indigo-600 text-white"
-                                        : "bg-gray-100 text-gray-600"
+                                        : "bg-gray-100 text-gray-600",
                                     )}
                                   >
                                     {item.icon}
@@ -540,7 +541,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                         onClick={() => toggleDropdown(group.name)}
                         className={cn(
                           "w-full justify-between px-3 py-3 rounded-lg hover:bg-gray-50 transition-colors",
-                          openDropdowns[group.name] ? "bg-gray-50" : ""
+                          openDropdowns[group.name] ? "bg-gray-50" : "",
                         )}
                       >
                         <div className="flex items-center gap-3">
@@ -554,7 +555,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                         <ChevronDown
                           className={cn(
                             "h-4 w-4 text-gray-400 transition-transform duration-200",
-                            openDropdowns[group.name] ? "rotate-180" : ""
+                            openDropdowns[group.name] ? "rotate-180" : "",
                           )}
                         />
                       </Button>
@@ -572,7 +573,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                                   "w-full justify-start gap-3 px-3 py-2.5 rounded-lg transition-colors",
                                   isActive
                                     ? "bg-purple-50 text-purple-700 border border-purple-200"
-                                    : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                                    : "text-gray-700 hover:bg-gray-50 hover:text-gray-900",
                                 )}
                               >
                                 <div
@@ -580,7 +581,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                                     "p-1.5 rounded-md",
                                     isActive
                                       ? "bg-gradient-to-br from-purple-600 to-indigo-600 text-white"
-                                      : "bg-gray-100 text-gray-600"
+                                      : "bg-gray-100 text-gray-600",
                                   )}
                                 >
                                   {item.icon}
@@ -602,8 +603,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
               </nav>
             </TooltipProvider>
           </div>
-
-    
         </div>
       </div>
     </>

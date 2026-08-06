@@ -7,12 +7,21 @@ const {
   updateMemo,
   updateMemoStatus,
   deleteMemo,
+  acknowledgeMemo,
+  getMemoAcknowledgements,
 } = require("../controllers/memoBuilderController");
 
 const router = express.Router();
 
 router.route("/").get(protect, getMemos).post(protect, verifyAdmin, createMemo);
 router.patch("/:id/status", protect, verifyAdmin, updateMemoStatus);
+router.put("/:id/acknowledge", protect, acknowledgeMemo);
+router.get(
+  "/:id/acknowledgements",
+  protect,
+  verifyAdmin,
+  getMemoAcknowledgements,
+);
 router
   .route("/:id")
   .get(protect, getMemo)
