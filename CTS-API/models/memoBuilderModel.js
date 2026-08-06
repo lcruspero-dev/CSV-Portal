@@ -11,6 +11,22 @@ const memoBuilderSchema = mongoose.Schema(
       default: "draft",
       index: true,
     },
+    targetType: {
+      type: String,
+      enum: ["all", "group", "employee"],
+      default: "all",
+      index: true,
+    },
+    targetGroup: { type: String, default: null, trim: true },
+    targetEmployee: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    audienceUserIds: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    ],
+    audienceResolvedAt: { type: Date, default: null },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     publishedAt: { type: Date, default: null },

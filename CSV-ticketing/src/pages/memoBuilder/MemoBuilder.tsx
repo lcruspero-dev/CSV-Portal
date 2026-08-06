@@ -19,6 +19,8 @@ import {
   Search,
   Send,
   Trash2,
+  Users,
+  UserRound,
   X,
 } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
@@ -43,6 +45,21 @@ interface MemoRecord {
   archivedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  targetType?: "all" | "group" | "employee";
+  targetGroup?: string | null;
+  targetEmployee?: UserSummary | string | null;
+}
+
+interface TargetEmployee {
+  _id: string;
+  name: string;
+  email: string;
+  group: string | null;
+}
+
+interface TargetOptions {
+  groups: string[];
+  employees: TargetEmployee[];
 }
 
 interface Pagination {
@@ -57,6 +74,9 @@ const EMPTY_FORM: MemoBuilderPayload = {
   subject: "",
   content: "",
   status: "draft",
+  targetType: "all",
+  targetGroup: null,
+  targetEmployee: null,
 };
 
 const errorMessage = (error: unknown) => {
@@ -99,6 +119,12 @@ export default function MemoBuilder() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
+  const [targetOptions, setTargetOptions] = useState<TargetOptions>({
+    groups: [],
+    employees: [],
+  });
+  const [targetsLoading, setTargetsLoading] = useState(false);
+  const [targetsError, setTargetsError] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -106,6 +132,23 @@ export default function MemoBuilder() {
     () => Boolean(user?.isAdmin || (user && ["TL", "TM"].includes(user.role))),
     [user],
   );
+
+  useEffect(() => {
+    if (!canManage) return;
+    const loadTargets = async () => {
+      setTargetsLoading(true);
+      setTargetsError(null);
+      try {
+        const response = await MemoBuilderAPI.getTargets();
+        setTargetOptions(response.data);
+      } catch (requestError) {
+        setTargetsError(errorMessage(requestError));
+      } finally {
+        setTargetsLoading(false);
+      }
+    };
+    void loadTargets();
+  }, [canManage]);
 
   useEffect(() => {
     const timer = window.setTimeout(
@@ -155,6 +198,12 @@ export default function MemoBuilder() {
       subject: memo.subject,
       content: memo.content,
       status: memo.status,
+      targetType: memo.targetType || "all",
+      targetGroup: memo.targetGroup || null,
+      targetEmployee:
+        typeof memo.targetEmployee === "string"
+          ? memo.targetEmployee
+          : memo.targetEmployee?._id || null,
     });
     setDialog("form");
   };
@@ -180,6 +229,22 @@ export default function MemoBuilder() {
       toast({
         title: "Missing information",
         description: "Title, subject, and content are required.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (form.targetType === "group" && !form.targetGroup) {
+      toast({
+        title: "Group required",
+        description: "Select a valid group before saving the memo.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (form.targetType === "employee" && !form.targetEmployee) {
+      toast({
+        title: "Employee required",
+        description: "Select an employee before saving the memo.",
         variant: "destructive",
       });
       return;
@@ -251,6 +316,20 @@ export default function MemoBuilder() {
       setActionId(null);
     }
   };
+
+  const targetLabel = (memo: MemoRecord) => {
+    if (memo.targetType === "group") return memo.targetGroup || "Group";
+    if (memo.targetType === "employee") {
+      return typeof memo.targetEmployee === "string"
+        ? "Individual employee"
+        : memo.targetEmployee?.name || "Individual employee";
+    }
+    return "All employees";
+  };
+
+  const targetLocked = Boolean(
+    editingId && memos.find((memo) => memo._id === editingId)?.status !== "draft",
+  );
 
   return (
     <main className="mx-auto w-full max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
@@ -339,6 +418,14 @@ export default function MemoBuilder() {
                 <p className="line-clamp-2 text-sm font-medium text-muted-foreground">
                   {memo.subject}
                 </p>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  {memo.targetType === "employee" ? (
+                    <UserRound className="h-3.5 w-3.5" />
+                  ) : (
+                    <Users className="h-3.5 w-3.5" />
+                  )}
+                  {targetLabel(memo)}
+                </div>
               </CardHeader>
               <CardContent className="flex flex-1 flex-col gap-4">
                 <p className="line-clamp-3 whitespace-pre-wrap text-sm">
@@ -537,6 +624,116 @@ export default function MemoBuilder() {
                       required
                     />
                   </div>
+                  <div className="space-y-3 rounded-lg border bg-muted/20 p-4">
+                    <div>
+                      <label
+                        htmlFor="memo-target-type"
+                        className="text-sm font-medium"
+                      >
+                        Publish to
+                      </label>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Choose all employees, one group, or one employee.
+                      </p>
+                    </div>
+
+                    {targetsError && (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>{targetsError}</AlertDescription>
+                      </Alert>
+                    )}
+
+                    <select
+                      id="memo-target-type"
+                      value={form.targetType || "all"}
+                      disabled={targetLocked || targetsLoading}
+                      onChange={(event) => {
+                        const targetType = event.target.value as
+                          | "all"
+                          | "group"
+                          | "employee";
+                        setForm({
+                          ...form,
+                          targetType,
+                          targetGroup:
+                            targetType === "group" ? form.targetGroup : null,
+                          targetEmployee:
+                            targetType === "employee"
+                              ? form.targetEmployee
+                              : null,
+                        });
+                      }}
+                      className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm disabled:opacity-60"
+                    >
+                      <option value="all">All employees</option>
+                      <option value="group">Specific group/team</option>
+                      <option value="employee">Specific employee</option>
+                    </select>
+
+                    {form.targetType === "group" && (
+                      <div className="space-y-2">
+                        <label htmlFor="memo-target-group" className="text-sm font-medium">
+                          Group
+                        </label>
+                        <select
+                          id="memo-target-group"
+                          value={form.targetGroup || ""}
+                          required
+                          disabled={targetLocked || targetsLoading || Boolean(targetsError)}
+                          onChange={(event) =>
+                            setForm({ ...form, targetGroup: event.target.value })
+                          }
+                          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm disabled:opacity-60"
+                        >
+                          <option value="" disabled>
+                            {targetsLoading ? "Loading groups…" : "Select a group"}
+                          </option>
+                          {targetOptions.groups.map((group) => (
+                            <option key={group.toLocaleLowerCase()} value={group}>
+                              {group}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    {form.targetType === "employee" && (
+                      <div className="space-y-2">
+                        <label htmlFor="memo-target-employee" className="text-sm font-medium">
+                          Employee
+                        </label>
+                        <select
+                          id="memo-target-employee"
+                          value={form.targetEmployee || ""}
+                          required
+                          disabled={targetLocked || targetsLoading || Boolean(targetsError)}
+                          onChange={(event) =>
+                            setForm({ ...form, targetEmployee: event.target.value })
+                          }
+                          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm disabled:opacity-60"
+                        >
+                          <option value="" disabled>
+                            {targetsLoading
+                              ? "Loading employees…"
+                              : "Select an employee"}
+                          </option>
+                          {targetOptions.employees.map((employee) => (
+                            <option key={employee._id} value={employee._id}>
+                              {employee.name}
+                              {employee.group ? ` — ${employee.group}` : ""}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    {targetLocked && (
+                      <p className="text-xs text-amber-700">
+                        Audience targeting is locked after publication.
+                      </p>
+                    )}
+                  </div>
                   {!editingId && (
                     <div className="space-y-2">
                       <label
@@ -590,6 +787,15 @@ export default function MemoBuilder() {
                         ? ` by ${selected.createdBy.name}`
                         : ""}
                     </span>
+                  </div>
+                  <div className="flex items-center gap-2 rounded-md border bg-muted/20 px-3 py-2 text-sm">
+                    {selected.targetType === "employee" ? (
+                      <UserRound className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    <span className="text-muted-foreground">Audience:</span>
+                    <span className="font-medium">{targetLabel(selected)}</span>
                   </div>
                   <div className="whitespace-pre-wrap rounded-md border bg-muted/30 p-4 text-sm leading-6">
                     {selected.content}

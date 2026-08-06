@@ -85,9 +85,13 @@ export interface MemoBuilderPayload {
   subject: string;
   content: string;
   status?: "draft" | "published" | "archived";
+  targetType?: "all" | "group" | "employee";
+  targetGroup?: string | null;
+  targetEmployee?: string | null;
 }
 
 export const MemoBuilderAPI = {
+  getTargets: () => apiHelper("/api/memo-builder/targets", "GET"),
   list: (query: MemoBuilderQuery = {}) => {
     const params = new URLSearchParams();
     if (query.search) params.set("search", query.search);
