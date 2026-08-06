@@ -42,7 +42,6 @@ app.use("/api/coaching", require("./routes/coachingRoutes"));
 app.use("/api/userprofiles", require("./routes/userProfileRoutes"));
 app.use("/api/leave", require("./routes/leaveRoutes"));
 app.use("/api/payroll", require("./routes/payrollRoute.js"));
-app.use("/api/memoBuilder", require("./routes/memoBuilderRoutes.js"));
 
 app.get("/api/current-time", (_req, res) => {
   const currentTime = new Date();
