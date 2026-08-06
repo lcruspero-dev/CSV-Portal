@@ -21,7 +21,6 @@ import {
   UserCog,
   Receipt,
   Ticket,
-  FilePenLine,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -44,7 +43,7 @@ const Header: React.FC = () => {
           setAvatarUrl(
             `${import.meta.env.VITE_UPLOADFILES_URL}/avatars/${
               response.data.avatar
-            }`
+            }`,
           );
         }
       } catch (error) {
@@ -99,7 +98,6 @@ const Header: React.FC = () => {
             <div className="hidden md:block">
               <RealTimeClock />
             </div>
-
           </div>
 
           {/* Right Section */}
@@ -181,11 +179,6 @@ const Header: React.FC = () => {
                             label: "My Payslips",
                             path: "/payslip",
                           },
-                          {
-                            icon: FilePenLine,
-                            label: "Memo Builder",
-                            path: "/memo-builder",
-                          },
                           (user.isAdmin ||
                             ["TM", "TL"].includes(user.role)) && {
                             icon: NotebookPenIcon,
@@ -208,13 +201,12 @@ const Header: React.FC = () => {
                             label: "Export Time",
                             path: "/exporttimetracker",
                           },
-                            (user.isAdmin || 
+                          (user.isAdmin ||
                             ["TM", "TL"].includes(user.role)) && {
-                              icon: Ticket,
-                              label: "Ticket Management",
-                              path: "/all-tickets"
-                            }
-                          ,
+                            icon: Ticket,
+                            label: "Ticket Management",
+                            path: "/all-tickets",
+                          },
                         ]
                           .filter(Boolean)
                           .map((item: any, index) => (
