@@ -154,6 +154,14 @@ const deleteMemo = asyncHandler(async (req, res) => {
 
 const acknowledgeMemo = asyncHandler(async (req, res) => {
   validateId(req.params.id, res);
+  const signature = String(req.body.signature || "");
+  if (
+    !/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(signature) ||
+    signature.length > 500000
+  ) {
+    res.status(400);
+    throw new Error("A valid PNG employee signature is required");
+  }
   const memo = await MemoBuilder.findById(req.params.id);
   if (!memo) {
     res.status(404);
@@ -173,6 +181,7 @@ const acknowledgeMemo = asyncHandler(async (req, res) => {
       userId,
       name: req.user.name,
       email: req.user.email || "",
+      signature,
       acknowledgedAt: new Date(),
     });
     await memo.save();

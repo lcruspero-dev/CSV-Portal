@@ -20,6 +20,7 @@ const memoBuilderSchema = mongoose.Schema(
         userId: { type: String, required: true },
         name: { type: String, required: true },
         email: { type: String, default: "" },
+        signature: { type: String, required: true },
         acknowledgedAt: { type: Date, default: Date.now },
       },
     ],

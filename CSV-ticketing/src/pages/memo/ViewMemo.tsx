@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import LoadingComponent from "@/components/ui/loading";
 import { useToast } from "@/components/ui/use-toast";
+import SignatureCanvas from "react-signature-canvas";
 import {
   Table,
   TableBody,
@@ -32,7 +33,7 @@ import {
   Loader2,
   Users,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { formattedDate } from "../../API/helper";
 
@@ -68,6 +69,7 @@ interface MemoAcknowledgement {
   userId: string;
   name: string;
   email?: string;
+  signature: string;
   acknowledgedAt: string;
 }
 
@@ -155,6 +157,7 @@ function ViewMemo() {
   const [reportLoading, setReportLoading] = useState(false);
   const [reportError, setReportError] = useState<string | null>(null);
   const [signing, setSigning] = useState(false);
+  const signatureRef = useRef<SignatureCanvas>(null);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [showPendingOnly, setShowPendingOnly] = useState(false);
@@ -268,10 +271,23 @@ function ViewMemo() {
 
   const acknowledgePublishedMemo = async () => {
     if (!selectedPublishedMemo || !user) return;
+    if (!signatureRef.current || signatureRef.current.isEmpty()) {
+      toast({
+        title: "Signature required",
+        description: "Please draw your signature before submitting.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const signature = signatureRef.current
+      .getTrimmedCanvas()
+      .toDataURL("image/png");
     setSigning(true);
     try {
       const response = await MemoBuilderAPI.acknowledge(
         selectedPublishedMemo._id,
+        signature,
       );
       const acknowledgedBy: MemoAcknowledgement[] =
         response.data.acknowledgedBy;
@@ -282,6 +298,7 @@ function ViewMemo() {
           memo._id === updatedMemo._id ? updatedMemo : memo,
         ),
       );
+      signatureRef.current?.clear();
       toast({
         title: "Memo signed",
         description: "Your acknowledgement has been recorded.",
@@ -696,7 +713,7 @@ function ViewMemo() {
                   )}
 
                   {!user?.isAdmin && (
-                    <div className="flex items-center justify-between gap-4 rounded-xl border border-purple-200 bg-purple-50 p-4">
+                    <div className="space-y-4 rounded-xl border border-purple-200 bg-purple-50 p-4">
                       <div>
                         <p className="font-medium text-gray-900">
                           {isBuilderAcknowledged(selectedPublishedMemo)
@@ -709,24 +726,52 @@ function ViewMemo() {
                             : "Confirm that you have read and understood this memo."}
                         </p>
                       </div>
-                      <Button
-                        type="button"
-                        onClick={() => void acknowledgePublishedMemo()}
-                        disabled={
-                          signing ||
-                          isBuilderAcknowledged(selectedPublishedMemo)
-                        }
-                        className="shrink-0 bg-[#5602FF] hover:bg-[#4700d4]"
-                      >
-                        {signing ? (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                          <CheckCircle2 className="mr-2 h-4 w-4" />
-                        )}
-                        {isBuilderAcknowledged(selectedPublishedMemo)
-                          ? "Signed"
-                          : "Sign memo"}
-                      </Button>
+                      {isBuilderAcknowledged(selectedPublishedMemo) ? (
+                        <div className="flex items-center gap-2 text-sm font-medium text-green-700">
+                          <CheckCircle2 className="h-5 w-5" />
+                          Your signed acknowledgement is on record.
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <div className="overflow-hidden rounded-lg border border-gray-300 bg-white">
+                            <SignatureCanvas
+                              ref={signatureRef}
+                              penColor="#111827"
+                              canvasProps={{
+                                width: 620,
+                                height: 170,
+                                className: "h-[170px] w-full touch-none",
+                              }}
+                            />
+                          </div>
+                          <p className="text-xs text-gray-500">
+                            Draw your signature in the box. Your signature confirms receipt and understanding of this memo.
+                          </p>
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => signatureRef.current?.clear()}
+                              disabled={signing}
+                            >
+                              Clear
+                            </Button>
+                            <Button
+                              type="button"
+                              onClick={() => void acknowledgePublishedMemo()}
+                              disabled={signing}
+                              className="bg-[#5602FF] hover:bg-[#4700d4]"
+                            >
+                              {signing ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              ) : (
+                                <CheckCircle2 className="mr-2 h-4 w-4" />
+                              )}
+                              Submit signature
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -782,12 +827,23 @@ function ViewMemo() {
                                 {acknowledgementReport.signed.length ? (
                                   acknowledgementReport.signed.map((entry) => (
                                     <div key={entry.userId} className="px-4 py-3">
-                                      <p className="text-sm font-medium text-gray-900">
-                                        {entry.name}
-                                      </p>
-                                      <p className="text-xs text-gray-500">
-                                        {formattedDate(entry.acknowledgedAt)}
-                                      </p>
+                                      <div className="flex items-center justify-between gap-3">
+                                        <div>
+                                          <p className="text-sm font-medium text-gray-900">
+                                            {entry.name}
+                                          </p>
+                                          <p className="text-xs text-gray-500">
+                                            {formattedDate(entry.acknowledgedAt)}
+                                          </p>
+                                        </div>
+                                        {entry.signature && (
+                                          <img
+                                            src={entry.signature}
+                                            alt={`${entry.name} signature`}
+                                            className="h-10 w-24 rounded border bg-white object-contain"
+                                          />
+                                        )}
+                                      </div>
                                     </div>
                                   ))
                                 ) : (

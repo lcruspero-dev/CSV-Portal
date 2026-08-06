@@ -9,7 +9,7 @@ connectDB();
 require("./jobs/leaveAccrualJob.js");
 const app = express();
 
-app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
 
 const corsOptions = {
   origin: "*",
@@ -18,7 +18,7 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: false, limit: "1mb" }));
 
 // Routes endpoints
 app.use("/api/users", require("./routes/userRoutes"));
