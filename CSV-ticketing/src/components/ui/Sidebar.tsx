@@ -112,6 +112,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
           icon: <CreditCard className="h-5 w-5" />,
           badge: "New",
         },
+        {
+          title: "Memo Builder",
+          path: "/memo-builder",
+          icon: <FileText className="h-5 w-5" />,
+        },
       ],
     },
     {

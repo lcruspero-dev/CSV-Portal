@@ -73,6 +73,39 @@ export const TicketAPi = {
     apiHelper(`/api/policies/unacknowledged/${id}`, "GET"),
 };
 
+export interface MemoBuilderQuery {
+  search?: string;
+  status?: "all" | "draft" | "published" | "archived";
+  page?: number;
+  limit?: number;
+}
+
+export interface MemoBuilderPayload {
+  title: string;
+  subject: string;
+  content: string;
+  status?: "draft" | "published" | "archived";
+}
+
+export const MemoBuilderAPI = {
+  list: (query: MemoBuilderQuery = {}) => {
+    const params = new URLSearchParams();
+    if (query.search) params.set("search", query.search);
+    if (query.status && query.status !== "all") params.set("status", query.status);
+    if (query.page) params.set("page", String(query.page));
+    if (query.limit) params.set("limit", String(query.limit));
+    const suffix = params.toString();
+    return apiHelper(`/api/memo-builder${suffix ? `?${suffix}` : ""}`, "GET");
+  },
+  get: (id: string) => apiHelper(`/api/memo-builder/${id}`, "GET"),
+  create: (body: MemoBuilderPayload) => apiHelper("/api/memo-builder", "POST", body),
+  update: (id: string, body: MemoBuilderPayload) =>
+    apiHelper(`/api/memo-builder/${id}`, "PUT", body),
+  setStatus: (id: string, status: "draft" | "published" | "archived") =>
+    apiHelper(`/api/memo-builder/${id}/status`, "PATCH", { status }),
+  delete: (id: string) => apiHelper(`/api/memo-builder/${id}`, "DELETE"),
+};
+
 export const Category = {
   CreateCategory: (body: object) => apiHelper("/api/categories/", "POST", body),
   getCategory: () => apiHelper("/api/categories/", "GET"),
@@ -229,74 +262,6 @@ export const ItMemoAPI = {
 
   // Delete acknowledgement
   deleteItMemo: (id: string) => apiHelper(`/api/itmemos/${id}`, "DELETE"),
-};
-
-export const MemoBuilderAPI = {
-  // Create Memo Draft
-  createMemo: (body: {
-    memoCode: string;
-    recipientLabel: string;
-    senderLabel: string;
-    subject: string;
-    content: string;
-    memoDate: string;
-    issuedByLabel?: string;
-    confidentialityNotice?: string;
-    acknowledgementDeadline?: string | null;
-  }) => apiHelper("/api/memoBuilder", "POST", body),
-
-  // Get all memos
-  getAllMemos: (params?: {
-    page?: number;
-    limit?: number;
-    status?: "draft" | "published" | "archived";
-    search?: string;
-    createdByMe?: boolean;
-  }) => {
-    const query = new URLSearchParams();
-
-    if (params?.page) query.append("page", String(params.page));
-    if (params?.limit) query.append("limit", String(params.limit));
-    if (params?.status) query.append("status", params.status);
-    if (params?.search) query.append("search", params.search);
-    if (params?.createdByMe) query.append("createdByMe", "true");
-
-    return apiHelper(
-      `/api/memoBuilder${query.toString() ? `?${query.toString()}` : ""}`,
-      "GET",
-    );
-  },
-
-  // Get single memo
-  getMemo: (memoId: string) => apiHelper(`/api/memoBuilder/${memoId}`, "GET"),
-
-  // Update draft memo
-  updateMemo: (
-    memoId: string,
-    body: {
-      memoCode?: string;
-      recipientLabel?: string;
-      senderLabel?: string;
-      subject?: string;
-      content?: string;
-      memoDate?: string;
-      issuedByLabel?: string;
-      confidentialityNotice?: string;
-      acknowledgementDeadline?: string | null;
-    },
-  ) => apiHelper(`/api/memoBuilder/${memoId}`, "PATCH", body),
-
-  // Publish memo
-  publishMemo: (memoId: string) =>
-    apiHelper(`/api/memoBuilder/${memoId}/publish`, "PATCH"),
-
-  // Archive memo
-  archiveMemo: (memoId: string) =>
-    apiHelper(`/api/memoBuilder/${memoId}/archive`, "PATCH"),
-
-  // Delete draft memo
-  deleteMemo: (memoId: string) =>
-    apiHelper(`/api/memoBuilder/${memoId}`, "DELETE"),
 };
 
 export const LeaAPI = {

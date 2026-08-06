@@ -1,7 +1,6 @@
 import { Route, Routes } from "react-router-dom";
 import Header from "./components/kit/Header";
 import { Toaster } from "./components/ui/toaster";
-import { AuthProvider } from "./context/AuthProvider";
 import "./index.css";
 import ViewAllRaisedTickets from "./pages/allTicket/AdminViewAllTicket";
 import ViewAllTicket from "./pages/allTicket/ViewAllTicket";
@@ -44,11 +43,11 @@ import Manual from "./pages/quickLinks/manual";
 import Tea from "./pages/tea/userTea";
 import Lea from "./pages/tea/leaderTea";
 import ItMemo from "./pages/tea/itMemo";
+import MemoBuilder from "./pages/memoBuilder/MemoBuilder";
 
 function App() {
   return (
-    <AuthProvider>
-      <>
+    <>
         <Header />
 
         <Routes>
@@ -73,6 +72,7 @@ function App() {
             <Route path="/itmemo" element={<ItMemo />} />
 
             <Route path="/all-memo" element={<ViewMemo />} />
+            <Route path="/memo-builder" element={<MemoBuilder />} />
             <Route path="/all-policies" element={<ViewPolicies />} />
             <Route path="/view-polMemo" element={<ViewPolociesMemo />} />
             <Route path="/memo/:id" element={<ViewIndividualMemo />} />
@@ -111,8 +111,7 @@ function App() {
           </Route>
         </Routes>
         <Toaster />
-      </>
-    </AuthProvider>
+    </>
   );
 }
 

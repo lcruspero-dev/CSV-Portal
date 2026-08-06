@@ -1,458 +1,142 @@
 const asyncHandler = require("express-async-handler");
 const mongoose = require("mongoose");
-const memoBuilderSchema = require("../models/memoBuilderModel");
+const MemoBuilder = require("../models/memoBuilderModel");
 
-/**
- * @desc    Create a memo draft
- * @route   POST /api/memos
- * @access  Private - HR, IT, SUPERADMIN
- */
-const createMemo = asyncHandler(async (req, res) => {
-  const {
-    memoCode,
-    recipientLabel,
-    senderLabel,
-    subject,
-    content,
-    memoDate,
-    issuedByLabel,
-    confidentialityNotice,
-    acknowledgementDeadline,
-  } = req.body;
+const VALID_STATUSES = ["draft", "published", "archived"];
 
-  if (
-    !memoCode ||
-    !recipientLabel ||
-    !senderLabel ||
-    !subject ||
-    !content ||
-    !memoDate
-  ) {
+const validateId = (id, res) => {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
     res.status(400);
-    throw new Error("Please complete all required memo fields.");
+    throw new Error("Invalid memo ID");
   }
+};
 
-  const normalizedMemoCode = memoCode.trim().toUpperCase();
-
-  const existingMemo = await memoBuilderSchema.findOne({
-    memoCode: normalizedMemoCode,
-  });
-
-  if (existingMemo) {
-    res.status(409);
-    throw new Error("Memo code already exists.");
-  }
-
-  const parsedMemoDate = new Date(memoDate);
-
-  if (Number.isNaN(parsedMemoDate.getTime())) {
-    res.status(400);
-    throw new Error("Invalid memo date.");
-  }
-
-  let parsedDeadline = null;
-
-  if (acknowledgementDeadline) {
-    parsedDeadline = new Date(acknowledgementDeadline);
-
-    if (Number.isNaN(parsedDeadline.getTime())) {
-      res.status(400);
-      throw new Error("Invalid acknowledgement deadline.");
-    }
-
-    if (parsedDeadline < parsedMemoDate) {
-      res.status(400);
-      throw new Error(
-        "Acknowledgement deadline cannot be earlier than the memo date.",
-      );
-    }
-  }
-
-  const memo = await memoBuilderSchema.create({
-    memoCode: normalizedMemoCode,
-    recipientLabel: recipientLabel.trim(),
-    senderLabel: senderLabel.trim(),
-    subject: subject.trim(),
-    content: content.trim(),
-    memoDate: parsedMemoDate,
-    issuedByLabel: issuedByLabel?.trim() || "TOP MANAGEMENT",
-    confidentialityNotice: confidentialityNotice?.trim() || null,
-    acknowledgementDeadline: parsedDeadline,
-    status: "draft",
-
-    // Never accept createdBy from req.body
-    createdBy: req.user._id,
-  });
-
-  const populatedMemo = await memoBuilderSchema
-    .findById(memo._id)
-    .populate("createdBy", "name email role");
-
-  res.status(201).json({
-    success: true,
-    message: "Memo draft created successfully.",
-    data: populatedMemo,
-  });
-});
-
-/**
- * @desc    Get all memos
- * @route   GET /api/memos
- * @access  Private - HR, IT, SUPERADMIN
- */
 const getMemos = asyncHandler(async (req, res) => {
-  const page = Math.max(Number(req.query.page) || 1, 1);
-  const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 100);
+  const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
+  const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 10, 1), 100);
+  const search = String(req.query.search || "").trim();
+  const status = String(req.query.status || "all").toLowerCase();
 
-  const skip = (page - 1) * limit;
+  if (status !== "all" && !VALID_STATUSES.includes(status)) {
+    res.status(400);
+    throw new Error("Invalid memo status");
+  }
 
   const filter = {};
-
-  if (
-    req.query.status &&
-    ["draft", "published", "archived"].includes(req.query.status)
-  ) {
-    filter.status = req.query.status;
-  }
-
-  if (req.query.createdByMe === "true") {
-    filter.createdBy = req.user._id;
-  }
-
-  if (typeof req.query.search === "string" && req.query.search.trim()) {
-    filter.$text = {
-      $search: req.query.search.trim(),
-    };
+  if (status !== "all") filter.status = status;
+  if (search) {
+    const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    filter.$or = ["title", "subject", "content"].map((field) => ({
+      [field]: { $regex: escaped, $options: "i" },
+    }));
   }
 
   const [memos, total] = await Promise.all([
-    memoBuilderSchema
-      .find(filter)
-      .populate("createdBy", "name email role")
-      .populate("publishedBy", "name email role")
-      .sort({ createdAt: -1 })
-      .skip(skip)
+    MemoBuilder.find(filter)
+      .populate("createdBy", "name email")
+      .populate("updatedBy", "name email")
+      .sort({ updatedAt: -1 })
+      .skip((page - 1) * limit)
       .limit(limit)
       .lean(),
-
-    memoBuilderSchema.countDocuments(filter),
+    MemoBuilder.countDocuments(filter),
   ]);
 
-  res.status(200).json({
-    success: true,
-    count: memos.length,
+  res.json({
     data: memos,
-    pagination: {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-    },
+    pagination: { page, limit, total, pages: Math.max(Math.ceil(total / limit), 1) },
   });
 });
 
-/**
- * @desc    Get one memo
- * @route   GET /api/memos/:memoId
- * @access  Private
- */
-const getMemoById = asyncHandler(async (req, res) => {
-  const { memoId } = req.params;
-
-  if (!mongoose.Types.ObjectId.isValid(memoId)) {
-    res.status(400);
-    throw new Error("Invalid memo ID.");
-  }
-
-  const memo = await memoBuilderSchema
-    .findById(memoId)
-    .populate("createdBy", "name email role")
-    .populate("publishedBy", "name email role");
-
+const getMemo = asyncHandler(async (req, res) => {
+  validateId(req.params.id, res);
+  const memo = await MemoBuilder.findById(req.params.id)
+    .populate("createdBy", "name email")
+    .populate("updatedBy", "name email");
   if (!memo) {
     res.status(404);
-    throw new Error("Memo not found.");
+    throw new Error("Memo not found");
   }
-
-  res.status(200).json({
-    success: true,
-    data: memo,
-  });
+  res.json(memo);
 });
 
-/**
- * @desc    Update a memo draft
- * @route   PATCH /api/memos/:memoId
- * @access  Private - HR, IT, SUPERADMIN
- */
-const updateMemo = asyncHandler(async (req, res) => {
-  const { memoId } = req.params;
-
-  if (!mongoose.Types.ObjectId.isValid(memoId)) {
+const createMemo = asyncHandler(async (req, res) => {
+  const title = String(req.body.title || "").trim();
+  const subject = String(req.body.subject || "").trim();
+  const content = String(req.body.content || "").trim();
+  const status = String(req.body.status || "draft").toLowerCase();
+  if (!title || !subject || !content) {
     res.status(400);
-    throw new Error("Invalid memo ID.");
+    throw new Error("Title, subject, and content are required");
+  }
+  if (!VALID_STATUSES.includes(status)) {
+    res.status(400);
+    throw new Error("Invalid memo status");
   }
 
-  const memo = await memoBuilderSchema.findById(memoId);
-
-  if (!memo) {
-    res.status(404);
-    throw new Error("Memo not found.");
-  }
-
-  if (memo.status !== "draft") {
-    res.status(409);
-    throw new Error("Only draft memos can be edited.");
-  }
-
-  const {
-    memoCode,
-    recipientLabel,
-    senderLabel,
+  const now = new Date();
+  const memo = await MemoBuilder.create({
+    title,
     subject,
     content,
-    memoDate,
-    issuedByLabel,
-    confidentialityNotice,
-    acknowledgementDeadline,
-  } = req.body;
-
-  if (memoCode !== undefined) {
-    const normalizedMemoCode = memoCode.trim().toUpperCase();
-
-    if (!normalizedMemoCode) {
-      res.status(400);
-      throw new Error("Memo code cannot be empty.");
-    }
-
-    const existingMemo = await memoBuilderSchema.findOne({
-      _id: { $ne: memo._id },
-      memoCode: normalizedMemoCode,
-    });
-
-    if (existingMemo) {
-      res.status(409);
-      throw new Error("Memo code already exists.");
-    }
-
-    memo.memoCode = normalizedMemoCode;
-  }
-
-  if (recipientLabel !== undefined) {
-    if (!recipientLabel.trim()) {
-      res.status(400);
-      throw new Error("Recipient label cannot be empty.");
-    }
-
-    memo.recipientLabel = recipientLabel.trim();
-  }
-
-  if (senderLabel !== undefined) {
-    if (!senderLabel.trim()) {
-      res.status(400);
-      throw new Error("Sender label cannot be empty.");
-    }
-
-    memo.senderLabel = senderLabel.trim();
-  }
-
-  if (subject !== undefined) {
-    if (!subject.trim()) {
-      res.status(400);
-      throw new Error("Subject cannot be empty.");
-    }
-
-    memo.subject = subject.trim();
-  }
-
-  if (content !== undefined) {
-    if (!content.trim()) {
-      res.status(400);
-      throw new Error("Memo content cannot be empty.");
-    }
-
-    memo.content = content.trim();
-  }
-
-  if (memoDate !== undefined) {
-    const parsedMemoDate = new Date(memoDate);
-
-    if (Number.isNaN(parsedMemoDate.getTime())) {
-      res.status(400);
-      throw new Error("Invalid memo date.");
-    }
-
-    memo.memoDate = parsedMemoDate;
-  }
-
-  if (issuedByLabel !== undefined) {
-    memo.issuedByLabel = issuedByLabel.trim() || "TOP MANAGEMENT";
-  }
-
-  if (confidentialityNotice !== undefined) {
-    memo.confidentialityNotice = confidentialityNotice?.trim() || null;
-  }
-
-  if (acknowledgementDeadline !== undefined) {
-    if (!acknowledgementDeadline) {
-      memo.acknowledgementDeadline = null;
-    } else {
-      const parsedDeadline = new Date(acknowledgementDeadline);
-
-      if (Number.isNaN(parsedDeadline.getTime())) {
-        res.status(400);
-        throw new Error("Invalid acknowledgement deadline.");
-      }
-
-      memo.acknowledgementDeadline = parsedDeadline;
-    }
-  }
-
-  if (
-    memo.acknowledgementDeadline &&
-    memo.acknowledgementDeadline < memo.memoDate
-  ) {
-    res.status(400);
-    throw new Error(
-      "Acknowledgement deadline cannot be earlier than the memo date.",
-    );
-  }
-
-  await memo.save();
-
-  const updatedMemo = await memoBuilderSchema
-    .findById(memo._id)
-    .populate("createdBy", "name email role");
-
-  res.status(200).json({
-    success: true,
-    message: "Memo draft updated successfully.",
-    data: updatedMemo,
+    status,
+    createdBy: req.user._id,
+    updatedBy: req.user._id,
+    publishedAt: status === "published" ? now : null,
+    archivedAt: status === "archived" ? now : null,
   });
+  res.status(201).json(await memo.populate("createdBy updatedBy", "name email"));
 });
 
-/**
- * @desc    Delete a memo draft
- * @route   DELETE /api/memos/:memoId
- * @access  Private - HR, IT, SUPERADMIN
- */
+const updateMemo = asyncHandler(async (req, res) => {
+  validateId(req.params.id, res);
+  const memo = await MemoBuilder.findById(req.params.id);
+  if (!memo) {
+    res.status(404);
+    throw new Error("Memo not found");
+  }
+  ["title", "subject", "content"].forEach((field) => {
+    if (req.body[field] !== undefined) memo[field] = String(req.body[field]).trim();
+  });
+  if (!memo.title || !memo.subject || !memo.content) {
+    res.status(400);
+    throw new Error("Title, subject, and content are required");
+  }
+  memo.updatedBy = req.user._id;
+  await memo.save();
+  res.json(await memo.populate("createdBy updatedBy", "name email"));
+});
+
+const updateMemoStatus = asyncHandler(async (req, res) => {
+  validateId(req.params.id, res);
+  const status = String(req.body.status || "").toLowerCase();
+  if (!VALID_STATUSES.includes(status)) {
+    res.status(400);
+    throw new Error("Invalid memo status");
+  }
+  const memo = await MemoBuilder.findById(req.params.id);
+  if (!memo) {
+    res.status(404);
+    throw new Error("Memo not found");
+  }
+  memo.status = status;
+  memo.updatedBy = req.user._id;
+  if (status === "published" && !memo.publishedAt) memo.publishedAt = new Date();
+  if (status === "archived") memo.archivedAt = new Date();
+  if (status !== "archived") memo.archivedAt = null;
+  await memo.save();
+  res.json(await memo.populate("createdBy updatedBy", "name email"));
+});
+
 const deleteMemo = asyncHandler(async (req, res) => {
-  const { memoId } = req.params;
-
-  if (!mongoose.Types.ObjectId.isValid(memoId)) {
-    res.status(400);
-    throw new Error("Invalid memo ID.");
-  }
-
-  const memo = await memoBuilderSchema.findById(memoId);
-
+  validateId(req.params.id, res);
+  const memo = await MemoBuilder.findById(req.params.id);
   if (!memo) {
     res.status(404);
-    throw new Error("Memo not found.");
+    throw new Error("Memo not found");
   }
-
-  if (memo.status !== "draft") {
-    res.status(409);
-    throw new Error("Published or archived memos cannot be deleted.");
-  }
-
   await memo.deleteOne();
-
-  res.status(200).json({
-    success: true,
-    message: "Memo draft deleted successfully.",
-    data: {
-      id: memo._id,
-    },
-  });
+  res.json({ id: req.params.id, message: "Memo deleted successfully" });
 });
 
-/**
- * @desc    Publish a memo
- * @route   PATCH /api/memos/:memoId/publish
- * @access  Private - HR, IT, SUPERADMIN
- */
-const publishMemo = asyncHandler(async (req, res) => {
-  const { memoId } = req.params;
-
-  if (!mongoose.Types.ObjectId.isValid(memoId)) {
-    res.status(400);
-    throw new Error("Invalid memo ID.");
-  }
-
-  const memo = await memoBuilderSchema.findById(memoId);
-
-  if (!memo) {
-    res.status(404);
-    throw new Error("Memo not found.");
-  }
-
-  if (memo.status !== "draft") {
-    res.status(409);
-    throw new Error("Only draft memos can be published.");
-  }
-
-  memo.status = "published";
-  memo.publishedBy = req.user._id;
-  memo.publishedAt = new Date();
-
-  await memo.save();
-
-  const publishedMemo = await memoBuilderSchema
-    .findById(memo._id)
-    .populate("createdBy", "name email role")
-    .populate("publishedBy", "name email role");
-
-  res.status(200).json({
-    success: true,
-    message: "Memo published successfully.",
-    data: publishedMemo,
-  });
-});
-
-/**
- * @desc    Archive a published memo
- * @route   PATCH /api/memos/:memoId/archive
- * @access  Private - HR, IT, SUPERADMIN
- */
-const archiveMemo = asyncHandler(async (req, res) => {
-  const { memoId } = req.params;
-
-  if (!mongoose.Types.ObjectId.isValid(memoId)) {
-    res.status(400);
-    throw new Error("Invalid memo ID.");
-  }
-
-  const memo = await memoBuilderSchema.findById(memoId);
-
-  if (!memo) {
-    res.status(404);
-    throw new Error("Memo not found.");
-  }
-
-  if (memo.status !== "published") {
-    res.status(409);
-    throw new Error("Only published memos can be archived.");
-  }
-
-  memo.status = "archived";
-  memo.archivedAt = new Date();
-
-  await memo.save();
-
-  res.status(200).json({
-    success: true,
-    message: "Memo archived successfully.",
-    data: memo,
-  });
-});
-
-module.exports = {
-  createMemo,
-  getMemos,
-  getMemoById,
-  updateMemo,
-  deleteMemo,
-  publishMemo,
-  archiveMemo,
-};
+module.exports = { getMemos, getMemo, createMemo, updateMemo, updateMemoStatus, deleteMemo };

@@ -24,6 +24,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/tickets", require("./routes/ticketRoutes"));
 app.use("/api/memos", require("./routes/memoRoutes"));
+app.use("/api/memo-builder", require("./routes/memoBuilderRoutes"));
 app.use("/api/policies", require("./routes/policiesRoute"));
 app.use("/api/assigns", require("./routes/assignRoutes"));
 app.use("/api/categories", require("./routes/categoryRoutes"));
@@ -41,7 +42,6 @@ app.use("/api/coaching", require("./routes/coachingRoutes"));
 app.use("/api/userprofiles", require("./routes/userProfileRoutes"));
 app.use("/api/leave", require("./routes/leaveRoutes"));
 app.use("/api/payroll", require("./routes/payrollRoute.js"));
-app.use("/api/memoBuilder", require("./routes/memoBuilderRoutes.js"));
 
 app.get("/api/current-time", (_req, res) => {
   const currentTime = new Date();

@@ -1,43 +1,22 @@
 const express = require("express");
-
+const { protect, verifyAdmin } = require("../middleware/authMiddleware");
 const {
-  createMemo,
   getMemos,
-  getMemoById,
+  getMemo,
+  createMemo,
   updateMemo,
+  updateMemoStatus,
   deleteMemo,
-  publishMemo,
-  archiveMemo,
 } = require("../controllers/memoBuilderController");
-
-const protect = require("../middleware/authMiddleware");
-const authorizeRoles = require("../middleware/roleMiddleware");
 
 const router = express.Router();
 
-router.use(protect);
-
+router.route("/").get(protect, getMemos).post(protect, verifyAdmin, createMemo);
+router.patch("/:id/status", protect, verifyAdmin, updateMemoStatus);
 router
-  .route("/")
-  .get(authorizeRoles("SUPERADMIN", "HR", "IT"), getMemos)
-  .post(authorizeRoles("SUPERADMIN", "HR", "IT"), createMemo);
-
-router
-  .route("/:memoId")
-  .get(getMemoById)
-  .patch(authorizeRoles("SUPERADMIN", "HR", "IT"), updateMemo)
-  .delete(authorizeRoles("SUPERADMIN", "HR", "IT"), deleteMemo);
-
-router.patch(
-  "/:memoId/publish",
-  authorizeRoles("SUPERADMIN", "HR", "IT"),
-  publishMemo,
-);
-
-router.patch(
-  "/:memoId/archive",
-  authorizeRoles("SUPERADMIN", "HR", "IT"),
-  archiveMemo,
-);
+  .route("/:id")
+  .get(protect, getMemo)
+  .put(protect, verifyAdmin, updateMemo)
+  .delete(protect, verifyAdmin, deleteMemo);
 
 module.exports = router;

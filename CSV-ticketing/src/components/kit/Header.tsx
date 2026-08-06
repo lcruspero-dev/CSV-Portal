@@ -20,7 +20,8 @@ import {
   User,
   UserCog,
   Receipt,
-  Ticket
+  Ticket,
+  FilePenLine,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -179,6 +180,11 @@ const Header: React.FC = () => {
                             icon: Receipt,
                             label: "My Payslips",
                             path: "/payslip",
+                          },
+                          {
+                            icon: FilePenLine,
+                            label: "Memo Builder",
+                            path: "/memo-builder",
                           },
                           (user.isAdmin ||
                             ["TM", "TL"].includes(user.role)) && {
