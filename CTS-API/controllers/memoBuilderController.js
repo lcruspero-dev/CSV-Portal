@@ -1,6 +1,6 @@
 const asyncHandler = require("express-async-handler");
 const mongoose = require("mongoose");
-const Memo = require("../models/memoBuilderModel");
+const memoBuilderSchema = require("../models/memoBuilderModel");
 
 /**
  * @desc    Create a memo draft
@@ -34,7 +34,7 @@ const createMemo = asyncHandler(async (req, res) => {
 
   const normalizedMemoCode = memoCode.trim().toUpperCase();
 
-  const existingMemo = await Memo.findOne({
+  const existingMemo = await memoBuilderSchema.findOne({
     memoCode: normalizedMemoCode,
   });
 
@@ -68,7 +68,7 @@ const createMemo = asyncHandler(async (req, res) => {
     }
   }
 
-  const memo = await Memo.create({
+  const memo = await memoBuilderSchema.create({
     memoCode: normalizedMemoCode,
     recipientLabel: recipientLabel.trim(),
     senderLabel: senderLabel.trim(),
@@ -84,10 +84,9 @@ const createMemo = asyncHandler(async (req, res) => {
     createdBy: req.user._id,
   });
 
-  const populatedMemo = await Memo.findById(memo._id).populate(
-    "createdBy",
-    "name email role",
-  );
+  const populatedMemo = await memoBuilderSchema
+    .findById(memo._id)
+    .populate("createdBy", "name email role");
 
   res.status(201).json({
     success: true,
@@ -127,7 +126,8 @@ const getMemos = asyncHandler(async (req, res) => {
   }
 
   const [memos, total] = await Promise.all([
-    Memo.find(filter)
+    memoBuilderSchema
+      .find(filter)
       .populate("createdBy", "name email role")
       .populate("publishedBy", "name email role")
       .sort({ createdAt: -1 })
@@ -135,7 +135,7 @@ const getMemos = asyncHandler(async (req, res) => {
       .limit(limit)
       .lean(),
 
-    Memo.countDocuments(filter),
+    memoBuilderSchema.countDocuments(filter),
   ]);
 
   res.status(200).json({
@@ -164,7 +164,8 @@ const getMemoById = asyncHandler(async (req, res) => {
     throw new Error("Invalid memo ID.");
   }
 
-  const memo = await Memo.findById(memoId)
+  const memo = await memoBuilderSchema
+    .findById(memoId)
     .populate("createdBy", "name email role")
     .populate("publishedBy", "name email role");
 
@@ -192,7 +193,7 @@ const updateMemo = asyncHandler(async (req, res) => {
     throw new Error("Invalid memo ID.");
   }
 
-  const memo = await Memo.findById(memoId);
+  const memo = await memoBuilderSchema.findById(memoId);
 
   if (!memo) {
     res.status(404);
@@ -224,7 +225,7 @@ const updateMemo = asyncHandler(async (req, res) => {
       throw new Error("Memo code cannot be empty.");
     }
 
-    const existingMemo = await Memo.findOne({
+    const existingMemo = await memoBuilderSchema.findOne({
       _id: { $ne: memo._id },
       memoCode: normalizedMemoCode,
     });
@@ -319,10 +320,9 @@ const updateMemo = asyncHandler(async (req, res) => {
 
   await memo.save();
 
-  const updatedMemo = await Memo.findById(memo._id).populate(
-    "createdBy",
-    "name email role",
-  );
+  const updatedMemo = await memoBuilderSchema
+    .findById(memo._id)
+    .populate("createdBy", "name email role");
 
   res.status(200).json({
     success: true,
@@ -344,7 +344,7 @@ const deleteMemo = asyncHandler(async (req, res) => {
     throw new Error("Invalid memo ID.");
   }
 
-  const memo = await Memo.findById(memoId);
+  const memo = await memoBuilderSchema.findById(memoId);
 
   if (!memo) {
     res.status(404);
@@ -380,7 +380,7 @@ const publishMemo = asyncHandler(async (req, res) => {
     throw new Error("Invalid memo ID.");
   }
 
-  const memo = await Memo.findById(memoId);
+  const memo = await memoBuilderSchema.findById(memoId);
 
   if (!memo) {
     res.status(404);
@@ -398,7 +398,8 @@ const publishMemo = asyncHandler(async (req, res) => {
 
   await memo.save();
 
-  const publishedMemo = await Memo.findById(memo._id)
+  const publishedMemo = await memoBuilderSchema
+    .findById(memo._id)
     .populate("createdBy", "name email role")
     .populate("publishedBy", "name email role");
 
@@ -422,7 +423,7 @@ const archiveMemo = asyncHandler(async (req, res) => {
     throw new Error("Invalid memo ID.");
   }
 
-  const memo = await Memo.findById(memoId);
+  const memo = await memoBuilderSchema.findById(memoId);
 
   if (!memo) {
     res.status(404);
