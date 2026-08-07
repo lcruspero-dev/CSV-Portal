@@ -59,9 +59,11 @@ interface PublishedBuilderMemo {
   createdAt: string;
   publishedAt: string | null;
   createdBy?: {
+    _id?: string;
     name?: string;
     email?: string;
   };
+  audienceUserIds?: string[];
   acknowledgedBy?: MemoAcknowledgement[];
 }
 
@@ -216,6 +218,7 @@ function ViewMemo() {
       data = [
         ...publishedMemos.filter(
           (memo) =>
+            isBuilderSignatureRequired(memo) &&
             !memo.acknowledgedBy?.some((ack) => ack.userId === user?._id),
         ),
         ...memos.filter(
@@ -239,13 +242,21 @@ function ViewMemo() {
   const isBuilderAcknowledged = (memo: PublishedBuilderMemo) =>
     Boolean(memo.acknowledgedBy?.some((ack) => ack.userId === user?._id));
 
+  const isBuilderSignatureRequired = (memo: PublishedBuilderMemo) =>
+    !user?.isAdmin ||
+    Boolean(memo.audienceUserIds?.some((id) => id === user?._id)) ||
+    (!memo.audienceUserIds?.length && memo.createdBy?._id === user?._id);
+
   const acknowledgedCount =
     memos.filter(isAcknowledged).length +
     publishedMemos.filter(isBuilderAcknowledged).length;
 
   const pendingCount =
     memos.filter((memo) => !isAcknowledged(memo)).length +
-    publishedMemos.filter((memo) => !isBuilderAcknowledged(memo)).length;
+    publishedMemos.filter(
+      (memo) =>
+        isBuilderSignatureRequired(memo) && !isBuilderAcknowledged(memo),
+    ).length;
 
   const openPublishedMemo = async (memo: PublishedBuilderMemo) => {
     setSelectedPublishedMemo(memo);
@@ -298,6 +309,12 @@ function ViewMemo() {
           memo._id === updatedMemo._id ? updatedMemo : memo,
         ),
       );
+      if (user.isAdmin) {
+        const reportResponse = await MemoBuilderAPI.getAcknowledgements(
+          updatedMemo._id,
+        );
+        setAcknowledgementReport(reportResponse.data);
+      }
       signatureRef.current?.clear();
       toast({
         title: "Memo signed",
@@ -571,7 +588,9 @@ function ViewMemo() {
                         >
                           {isBuilderAcknowledged(memo)
                             ? "Acknowledged"
-                            : "Pending"}
+                            : isBuilderSignatureRequired(memo)
+                              ? "Pending"
+                              : "Not required"}
                         </span>
                       ) : (
                         <span
@@ -712,7 +731,7 @@ function ViewMemo() {
                     </p>
                   )}
 
-                  {!user?.isAdmin && (
+                  {isBuilderSignatureRequired(selectedPublishedMemo) && (
                     <div className="space-y-4 rounded-xl border border-purple-200 bg-purple-50 p-4">
                       <div>
                         <p className="font-medium text-gray-900">
@@ -780,7 +799,7 @@ function ViewMemo() {
                       <div className="flex items-center gap-2">
                         <Users className="h-5 w-5 text-[#5602FF]" />
                         <h3 className="font-semibold text-gray-900">
-                          Employee acknowledgements
+                          Recipient acknowledgements
                         </h3>
                       </div>
 
@@ -800,7 +819,7 @@ function ViewMemo() {
                               <p className="text-xl font-bold text-gray-900">
                                 {acknowledgementReport.summary.total}
                               </p>
-                              <p className="text-xs text-gray-500">Employees</p>
+                              <p className="text-xs text-gray-500">Recipients</p>
                             </div>
                             <div className="rounded-lg bg-green-50 p-3 text-center">
                               <p className="text-xl font-bold text-green-700">

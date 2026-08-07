@@ -110,6 +110,13 @@ const throwTargetError = (error, res) => {
   throw error;
 };
 
+const includePublisherInAudience = (audienceUserIds, publisherId) => {
+  const ids = new Map(
+    [...audienceUserIds, publisherId].map((id) => [String(id), id]),
+  );
+  return [...ids.values()];
+};
+
 const getMemos = asyncHandler(async (req, res) => {
   const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
   const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 10, 1), 100);
@@ -253,6 +260,10 @@ const createMemo = asyncHandler(async (req, res) => {
   if (status === "published") {
     try {
       audienceUserIds = await resolveAudienceUserIds(target);
+      audienceUserIds = includePublisherInAudience(
+        audienceUserIds,
+        req.user._id,
+      );
     } catch (error) {
       throwTargetError(error, res);
     }
@@ -334,7 +345,10 @@ const updateMemoStatus = asyncHandler(async (req, res) => {
       memo.targetType = target.targetType;
       memo.targetGroup = target.targetGroup;
       memo.targetEmployee = target.targetEmployee;
-      memo.audienceUserIds = await resolveAudienceUserIds(target);
+      memo.audienceUserIds = includePublisherInAudience(
+        await resolveAudienceUserIds(target),
+        req.user._id,
+      );
       memo.audienceResolvedAt = new Date();
     } catch (error) {
       throwTargetError(error, res);
@@ -390,7 +404,11 @@ const acknowledgeMemo = asyncHandler(async (req, res) => {
   const isTargeted = memo.audienceUserIds.some((targetedId) =>
     targetedId.equals(req.user._id),
   );
-  if (!isLegacyAllEmployees && !isTargeted) {
+  const isLegacyPublisher =
+    isLegacyAllEmployees && memo.createdBy.equals(req.user._id);
+  const isEligibleLegacyRecipient =
+    isLegacyAllEmployees && (!req.user.isAdmin || isLegacyPublisher);
+  if (!isEligibleLegacyRecipient && !isTargeted) {
     res.status(403);
     throw new Error("This memo is not assigned to you");
   }
@@ -437,9 +455,14 @@ const getMemoAcknowledgements = asyncHandler(async (req, res) => {
     ? { _id: { $in: memo.audienceUserIds || [], $nin: signedUserIds } }
     : {
         _id: { $nin: signedUserIds },
-        isAdmin: false,
-        status: { $ne: "inactive" },
-        createdAt: { $lte: eligibleBefore },
+        $or: [
+          {
+            isAdmin: false,
+            status: { $ne: "inactive" },
+            createdAt: { $lte: eligibleBefore },
+          },
+          { _id: memo.createdBy },
+        ],
       };
   const unsignedUsers = await User.find(
     unsignedUserFilter,
