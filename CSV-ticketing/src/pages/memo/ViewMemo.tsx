@@ -245,7 +245,7 @@ function ViewMemo() {
   const isBuilderSignatureRequired = (memo: PublishedBuilderMemo) =>
     !user?.isAdmin ||
     Boolean(memo.audienceUserIds?.some((id) => id === user?._id)) ||
-    (!memo.audienceUserIds?.length && memo.createdBy?._id === user?._id);
+    !memo.audienceUserIds?.length;
 
   const acknowledgedCount =
     memos.filter(isAcknowledged).length +

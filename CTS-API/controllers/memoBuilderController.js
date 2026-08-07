@@ -110,9 +110,17 @@ const throwTargetError = (error, res) => {
   throw error;
 };
 
-const includePublisherInAudience = (audienceUserIds, publisherId) => {
+const includeAdminsInAudience = async (audienceUserIds, publisherId) => {
+  const admins = await User.find({
+    isAdmin: true,
+    status: { $ne: "inactive" },
+  })
+    .select("_id")
+    .lean();
   const ids = new Map(
-    [...audienceUserIds, publisherId].map((id) => [String(id), id]),
+    [...audienceUserIds, ...admins.map((admin) => admin._id), publisherId].map(
+      (id) => [String(id), id],
+    ),
   );
   return [...ids.values()];
 };
@@ -260,7 +268,7 @@ const createMemo = asyncHandler(async (req, res) => {
   if (status === "published") {
     try {
       audienceUserIds = await resolveAudienceUserIds(target);
-      audienceUserIds = includePublisherInAudience(
+      audienceUserIds = await includeAdminsInAudience(
         audienceUserIds,
         req.user._id,
       );
@@ -345,7 +353,7 @@ const updateMemoStatus = asyncHandler(async (req, res) => {
       memo.targetType = target.targetType;
       memo.targetGroup = target.targetGroup;
       memo.targetEmployee = target.targetEmployee;
-      memo.audienceUserIds = includePublisherInAudience(
+      memo.audienceUserIds = await includeAdminsInAudience(
         await resolveAudienceUserIds(target),
         req.user._id,
       );
@@ -404,10 +412,7 @@ const acknowledgeMemo = asyncHandler(async (req, res) => {
   const isTargeted = memo.audienceUserIds.some((targetedId) =>
     targetedId.equals(req.user._id),
   );
-  const isLegacyPublisher =
-    isLegacyAllEmployees && memo.createdBy.equals(req.user._id);
-  const isEligibleLegacyRecipient =
-    isLegacyAllEmployees && (!req.user.isAdmin || isLegacyPublisher);
+  const isEligibleLegacyRecipient = isLegacyAllEmployees;
   if (!isEligibleLegacyRecipient && !isTargeted) {
     res.status(403);
     throw new Error("This memo is not assigned to you");
@@ -461,7 +466,10 @@ const getMemoAcknowledgements = asyncHandler(async (req, res) => {
             status: { $ne: "inactive" },
             createdAt: { $lte: eligibleBefore },
           },
-          { _id: memo.createdBy },
+          {
+            isAdmin: true,
+            status: { $ne: "inactive" },
+          },
         ],
       };
   const unsignedUsers = await User.find(
