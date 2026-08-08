@@ -18,11 +18,15 @@ const memoBuilderSchema = mongoose.Schema(
       index: true,
     },
     targetGroup: { type: String, default: null, trim: true },
+    targetGroups: [{ type: String, trim: true }],
     targetEmployee: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       default: null,
     },
+    targetEmployees: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    ],
     audienceUserIds: [
       { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     ],

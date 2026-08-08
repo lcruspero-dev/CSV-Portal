@@ -87,7 +87,9 @@ export interface MemoBuilderPayload {
   status?: "draft" | "published" | "archived";
   targetType?: "all" | "group" | "employee";
   targetGroup?: string | null;
+  targetGroups?: string[];
   targetEmployee?: string | null;
+  targetEmployees?: string[];
 }
 
 export const MemoBuilderAPI = {
