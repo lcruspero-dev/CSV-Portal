@@ -44,52 +44,115 @@ const resolveTarget = async (body) => {
   }
 
   if (targetType === "group") {
-    const requestedGroup = String(body.targetGroup || "").trim();
+    const requestedGroups = (
+      Array.isArray(body.targetGroups) && body.targetGroups.length
+        ? body.targetGroups
+        : [body.targetGroup]
+    )
+      .map((group) => String(group || "").trim())
+      .filter(Boolean);
     const groups = await getCanonicalGroups();
-    const targetGroup = groups.find(
-      (group) => group.toLowerCase() === requestedGroup.toLowerCase(),
+    const canonicalByKey = new Map(
+      groups.map((group) => [group.toLowerCase(), group]),
     );
-    if (!targetGroup) {
+    const targetGroups = [
+      ...new Map(
+        requestedGroups.map((group) => [
+          group.toLowerCase(),
+          canonicalByKey.get(group.toLowerCase()),
+        ]),
+      ).values(),
+    ].filter(Boolean);
+    if (
+      targetGroups.length === 0 ||
+      targetGroups.length !==
+        new Set(requestedGroups.map((group) => group.toLowerCase())).size
+    ) {
       const error = new Error("The selected group is invalid or no longer exists");
       error.statusCode = 400;
       throw error;
     }
-    return { targetType, targetGroup, targetEmployee: null };
+    return {
+      targetType,
+      targetGroup: targetGroups[0],
+      targetGroups,
+      targetEmployee: null,
+      targetEmployees: [],
+    };
   }
 
   if (targetType === "employee") {
-    const employeeId = String(body.targetEmployee || "");
-    if (!mongoose.Types.ObjectId.isValid(employeeId)) {
+    const requestedEmployeeIds = [
+      ...new Set(
+        (Array.isArray(body.targetEmployees) && body.targetEmployees.length
+          ? body.targetEmployees
+          : [body.targetEmployee]
+        )
+          .map((id) => String(id || ""))
+          .filter(Boolean),
+      ),
+    ];
+    if (
+      requestedEmployeeIds.length === 0 ||
+      requestedEmployeeIds.some((id) => !mongoose.Types.ObjectId.isValid(id))
+    ) {
       const error = new Error("A valid target employee is required");
       error.statusCode = 400;
       throw error;
     }
-    const employee = await User.findOne({
-      _id: employeeId,
+    const employees = await User.find({
+      _id: { $in: requestedEmployeeIds },
       isAdmin: false,
       status: { $ne: "inactive" },
     }).select("_id");
-    if (!employee) {
+    if (employees.length !== requestedEmployeeIds.length) {
       const error = new Error("The selected employee is invalid or inactive");
       error.statusCode = 400;
       throw error;
     }
-    return { targetType, targetGroup: null, targetEmployee: employee._id };
+    const employeeById = new Map(
+      employees.map((employee) => [String(employee._id).toLowerCase(), employee._id]),
+    );
+    const targetEmployees = requestedEmployeeIds.map((id) =>
+      employeeById.get(id.toLowerCase()),
+    );
+    return {
+      targetType,
+      targetGroup: null,
+      targetGroups: [],
+      targetEmployee: targetEmployees[0],
+      targetEmployees,
+    };
   }
 
-  return { targetType: "all", targetGroup: null, targetEmployee: null };
+  return {
+    targetType: "all",
+    targetGroup: null,
+    targetGroups: [],
+    targetEmployee: null,
+    targetEmployees: [],
+  };
 };
 
 const resolveAudienceUserIds = async (target) => {
-  if (target.targetType === "employee") return [target.targetEmployee];
+  if (target.targetType === "employee") {
+    return target.targetEmployees?.length
+      ? target.targetEmployees
+      : [target.targetEmployee];
+  }
 
   const userFilter = { isAdmin: false, status: { $ne: "inactive" } };
   if (target.targetType === "group") {
+    const targetGroups = target.targetGroups?.length
+      ? target.targetGroups
+      : [target.targetGroup];
     const employeeIds = await ScheduleEntry.distinct("employeeId", {
-      teamLeader: {
-        $regex: `^${escapeRegex(target.targetGroup)}$`,
-        $options: "i",
-      },
+      $or: targetGroups.map((group) => ({
+        teamLeader: {
+          $regex: `^${escapeRegex(group)}$`,
+          $options: "i",
+        },
+      })),
     });
     userFilter._id = {
       $in: employeeIds.filter((id) => mongoose.Types.ObjectId.isValid(id)),
@@ -171,6 +234,7 @@ const getMemos = asyncHandler(async (req, res) => {
       .populate("createdBy", "name email")
       .populate("updatedBy", "name email")
       .populate("targetEmployee", "name email")
+      .populate("targetEmployees", "name email")
       .sort({ updatedAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit)
@@ -198,7 +262,8 @@ const getMemo = asyncHandler(async (req, res) => {
   const memo = await MemoBuilder.findById(req.params.id)
     .populate("createdBy", "name email")
     .populate("updatedBy", "name email")
-    .populate("targetEmployee", "name email");
+    .populate("targetEmployee", "name email")
+    .populate("targetEmployees", "name email");
   if (!memo) {
     res.status(404);
     throw new Error("Memo not found");
@@ -311,7 +376,9 @@ const updateMemo = asyncHandler(async (req, res) => {
   if (
     req.body.targetType !== undefined ||
     req.body.targetGroup !== undefined ||
-    req.body.targetEmployee !== undefined
+    req.body.targetGroups !== undefined ||
+    req.body.targetEmployee !== undefined ||
+    req.body.targetEmployees !== undefined
   ) {
     if (memo.status !== "draft") {
       res.status(409);
@@ -321,7 +388,9 @@ const updateMemo = asyncHandler(async (req, res) => {
       const target = await resolveTarget(req.body);
       memo.targetType = target.targetType;
       memo.targetGroup = target.targetGroup;
+      memo.targetGroups = target.targetGroups;
       memo.targetEmployee = target.targetEmployee;
+      memo.targetEmployees = target.targetEmployees;
     } catch (error) {
       throwTargetError(error, res);
     }
@@ -348,11 +417,15 @@ const updateMemoStatus = asyncHandler(async (req, res) => {
       const target = await resolveTarget({
         targetType: memo.targetType || "all",
         targetGroup: memo.targetGroup,
+        targetGroups: memo.targetGroups,
         targetEmployee: memo.targetEmployee,
+        targetEmployees: memo.targetEmployees,
       });
       memo.targetType = target.targetType;
       memo.targetGroup = target.targetGroup;
+      memo.targetGroups = target.targetGroups;
       memo.targetEmployee = target.targetEmployee;
+      memo.targetEmployees = target.targetEmployees;
       memo.audienceUserIds = await includeAdminsInAudience(
         await resolveAudienceUserIds(target),
         req.user._id,

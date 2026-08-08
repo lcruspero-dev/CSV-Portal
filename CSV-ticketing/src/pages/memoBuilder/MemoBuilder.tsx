@@ -47,7 +47,9 @@ interface MemoRecord {
   updatedAt: string;
   targetType?: "all" | "group" | "employee";
   targetGroup?: string | null;
+  targetGroups?: string[];
   targetEmployee?: UserSummary | string | null;
+  targetEmployees?: Array<UserSummary | string>;
 }
 
 interface TargetEmployee {
@@ -76,7 +78,9 @@ const EMPTY_FORM: MemoBuilderPayload = {
   status: "draft",
   targetType: "all",
   targetGroup: null,
+  targetGroups: [],
   targetEmployee: null,
+  targetEmployees: [],
 };
 
 const errorMessage = (error: unknown) => {
@@ -125,6 +129,7 @@ export default function MemoBuilder() {
   });
   const [targetsLoading, setTargetsLoading] = useState(false);
   const [targetsError, setTargetsError] = useState<string | null>(null);
+  const [employeeTargetSearch, setEmployeeTargetSearch] = useState("");
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -188,6 +193,7 @@ export default function MemoBuilder() {
   const openCreate = () => {
     setEditingId(null);
     setForm(EMPTY_FORM);
+    setEmployeeTargetSearch("");
     setDialog("form");
   };
 
@@ -200,11 +206,30 @@ export default function MemoBuilder() {
       status: memo.status,
       targetType: memo.targetType || "all",
       targetGroup: memo.targetGroup || null,
+      targetGroups:
+        memo.targetGroups?.length
+          ? memo.targetGroups
+          : memo.targetGroup
+            ? [memo.targetGroup]
+            : [],
       targetEmployee:
         typeof memo.targetEmployee === "string"
           ? memo.targetEmployee
           : memo.targetEmployee?._id || null,
+      targetEmployees:
+        memo.targetEmployees?.length
+          ? memo.targetEmployees.map((employee) =>
+              typeof employee === "string" ? employee : employee._id,
+            )
+          : memo.targetEmployee
+            ? [
+                typeof memo.targetEmployee === "string"
+                  ? memo.targetEmployee
+                  : memo.targetEmployee._id,
+              ]
+            : [],
     });
+    setEmployeeTargetSearch("");
     setDialog("form");
   };
 
@@ -233,7 +258,7 @@ export default function MemoBuilder() {
       });
       return;
     }
-    if (form.targetType === "group" && !form.targetGroup) {
+    if (form.targetType === "group" && !form.targetGroups?.length) {
       toast({
         title: "Group required",
         description: "Select a valid group before saving the memo.",
@@ -241,7 +266,7 @@ export default function MemoBuilder() {
       });
       return;
     }
-    if (form.targetType === "employee" && !form.targetEmployee) {
+    if (form.targetType === "employee" && !form.targetEmployees?.length) {
       toast({
         title: "Employee required",
         description: "Select an employee before saving the memo.",
@@ -318,8 +343,22 @@ export default function MemoBuilder() {
   };
 
   const targetLabel = (memo: MemoRecord) => {
-    if (memo.targetType === "group") return memo.targetGroup || "Group";
+    if (memo.targetType === "group") {
+      const groups = memo.targetGroups?.length
+        ? memo.targetGroups
+        : memo.targetGroup
+          ? [memo.targetGroup]
+          : [];
+      return groups.length ? groups.join(", ") : "Group";
+    }
     if (memo.targetType === "employee") {
+      if (memo.targetEmployees?.length) {
+        return memo.targetEmployees
+          .map((employee) =>
+            typeof employee === "string" ? "Employee" : employee.name,
+          )
+          .join(", ");
+      }
       return typeof memo.targetEmployee === "string"
         ? "Individual employee"
         : memo.targetEmployee?.name || "Individual employee";
@@ -330,6 +369,16 @@ export default function MemoBuilder() {
   const targetLocked = Boolean(
     editingId && memos.find((memo) => memo._id === editingId)?.status !== "draft",
   );
+
+  const filteredTargetEmployees = targetOptions.employees.filter((employee) => {
+    const query = employeeTargetSearch.trim().toLowerCase();
+    return (
+      !query ||
+      employee.name.toLowerCase().includes(query) ||
+      employee.email.toLowerCase().includes(query) ||
+      employee.group?.toLowerCase().includes(query)
+    );
+  });
 
   return (
     <main className="mx-auto w-full max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
@@ -633,7 +682,7 @@ export default function MemoBuilder() {
                         Publish to
                       </label>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        Choose all employees, one group, or one employee.
+                        Choose all employees, multiple groups, or multiple employees.
                       </p>
                     </div>
 
@@ -658,73 +707,122 @@ export default function MemoBuilder() {
                           targetType,
                           targetGroup:
                             targetType === "group" ? form.targetGroup : null,
+                          targetGroups:
+                            targetType === "group" ? form.targetGroups : [],
                           targetEmployee:
                             targetType === "employee"
                               ? form.targetEmployee
                               : null,
+                          targetEmployees:
+                            targetType === "employee"
+                              ? form.targetEmployees
+                              : [],
                         });
                       }}
                       className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm disabled:opacity-60"
                     >
                       <option value="all">All employees</option>
-                      <option value="group">Specific group/team</option>
-                      <option value="employee">Specific employee</option>
+                      <option value="group">Specific groups/teams</option>
+                      <option value="employee">Specific employees</option>
                     </select>
 
                     {form.targetType === "group" && (
                       <div className="space-y-2">
-                        <label htmlFor="memo-target-group" className="text-sm font-medium">
-                          Group
-                        </label>
-                        <select
-                          id="memo-target-group"
-                          value={form.targetGroup || ""}
-                          required
-                          disabled={targetLocked || targetsLoading || Boolean(targetsError)}
-                          onChange={(event) =>
-                            setForm({ ...form, targetGroup: event.target.value })
-                          }
-                          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm disabled:opacity-60"
-                        >
-                          <option value="" disabled>
-                            {targetsLoading ? "Loading groups…" : "Select a group"}
-                          </option>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Groups</span>
+                          <span className="text-xs text-muted-foreground">
+                            {form.targetGroups?.length || 0} selected
+                          </span>
+                        </div>
+                        <div className="max-h-52 space-y-1 overflow-y-auto rounded-md border bg-background p-2">
+                          {targetsLoading && (
+                            <p className="p-2 text-sm text-muted-foreground">Loading groups…</p>
+                          )}
                           {targetOptions.groups.map((group) => (
-                            <option key={group.toLocaleLowerCase()} value={group}>
+                            <label
+                              key={group.toLocaleLowerCase()}
+                              className="flex cursor-pointer items-center gap-3 rounded px-2 py-2 text-sm hover:bg-muted"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={form.targetGroups?.includes(group) || false}
+                                disabled={targetLocked || Boolean(targetsError)}
+                                onChange={() => {
+                                  const selectedGroups = form.targetGroups || [];
+                                  const targetGroups = selectedGroups.includes(group)
+                                    ? selectedGroups.filter((item) => item !== group)
+                                    : [...selectedGroups, group];
+                                  setForm({
+                                    ...form,
+                                    targetGroups,
+                                    targetGroup: targetGroups[0] || null,
+                                  });
+                                }}
+                                className="h-4 w-4"
+                              />
                               {group}
-                            </option>
+                            </label>
                           ))}
-                        </select>
+                          {!targetsLoading && targetOptions.groups.length === 0 && (
+                            <p className="p-2 text-sm text-muted-foreground">No groups available.</p>
+                          )}
+                        </div>
                       </div>
                     )}
 
                     {form.targetType === "employee" && (
                       <div className="space-y-2">
-                        <label htmlFor="memo-target-employee" className="text-sm font-medium">
-                          Employee
-                        </label>
-                        <select
-                          id="memo-target-employee"
-                          value={form.targetEmployee || ""}
-                          required
-                          disabled={targetLocked || targetsLoading || Boolean(targetsError)}
-                          onChange={(event) =>
-                            setForm({ ...form, targetEmployee: event.target.value })
-                          }
-                          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm disabled:opacity-60"
-                        >
-                          <option value="" disabled>
-                            {targetsLoading
-                              ? "Loading employees…"
-                              : "Select an employee"}
-                          </option>
-                          {targetOptions.employees.map((employee) => (
-                            <option key={employee._id} value={employee._id}>
-                              {employee.name}
-                              {employee.group ? ` — ${employee.group}` : ""}
-                            </option>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Employees</span>
+                          <span className="text-xs text-muted-foreground">
+                            {form.targetEmployees?.length || 0} selected
+                          </span>
+                        </div>
+                        <Input
+                          value={employeeTargetSearch}
+                          onChange={(event) => setEmployeeTargetSearch(event.target.value)}
+                          placeholder="Search employees"
+                          disabled={targetLocked || targetsLoading}
+                        />
+                        <div className="max-h-60 space-y-1 overflow-y-auto rounded-md border bg-background p-2">
+                          {targetsLoading && (
+                            <p className="p-2 text-sm text-muted-foreground">Loading employees…</p>
+                          )}
+                          {filteredTargetEmployees.map((employee) => (
+                            <label
+                              key={employee._id}
+                              className="flex cursor-pointer items-start gap-3 rounded px-2 py-2 text-sm hover:bg-muted"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={form.targetEmployees?.includes(employee._id) || false}
+                                disabled={targetLocked || Boolean(targetsError)}
+                                onChange={() => {
+                                  const selectedEmployees = form.targetEmployees || [];
+                                  const targetEmployees = selectedEmployees.includes(employee._id)
+                                    ? selectedEmployees.filter((id) => id !== employee._id)
+                                    : [...selectedEmployees, employee._id];
+                                  setForm({
+                                    ...form,
+                                    targetEmployees,
+                                    targetEmployee: targetEmployees[0] || null,
+                                  });
+                                }}
+                                className="mt-0.5 h-4 w-4"
+                              />
+                              <span>
+                                <span className="block font-medium">{employee.name}</span>
+                                <span className="block text-xs text-muted-foreground">
+                                  {employee.email}
+                                  {employee.group ? ` — ${employee.group}` : ""}
+                                </span>
+                              </span>
+                            </label>
                           ))}
-                        </select>
+                          {!targetsLoading && filteredTargetEmployees.length === 0 && (
+                            <p className="p-2 text-sm text-muted-foreground">No employees found.</p>
+                          )}
+                        </div>
                       </div>
                     )}
 
