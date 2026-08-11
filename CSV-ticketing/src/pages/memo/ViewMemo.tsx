@@ -55,6 +55,7 @@ interface PublishedBuilderMemo {
   title: string;
   subject: string;
   content: string;
+  file?: string | null;
   status: "published";
   createdAt: string;
   publishedAt: string | null;
@@ -722,6 +723,33 @@ function ViewMemo() {
                     {selectedPublishedMemo.content}
                   </div>
 
+                  {selectedPublishedMemo.file ? (
+                    <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+                      <p className="mb-2 text-sm font-semibold text-blue-900">
+                        Attachment
+                      </p>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <span className="rounded-full bg-white px-3 py-1 text-sm text-gray-700">
+                          {selectedPublishedMemo.file}
+                        </span>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            window.open(
+                              `${import.meta.env.VITE_UPLOADFILES_URL}/files/${selectedPublishedMemo.file}`,
+                              "_blank",
+                              "noopener,noreferrer",
+                            );
+                          }}
+                        >
+                          Open file
+                        </Button>
+                      </div>
+                    </div>
+                  ) : null}
+
                   {selectedPublishedMemo.createdBy?.name && (
                     <p className="text-sm text-gray-500">
                       Published by{" "}
@@ -764,7 +792,8 @@ function ViewMemo() {
                             />
                           </div>
                           <p className="text-xs text-gray-500">
-                            Draw your signature in the box. Your signature confirms receipt and understanding of this memo.
+                            Draw your signature in the box. Your signature
+                            confirms receipt and understanding of this memo.
                           </p>
                           <div className="flex justify-end gap-2">
                             <Button
@@ -819,7 +848,9 @@ function ViewMemo() {
                               <p className="text-xl font-bold text-gray-900">
                                 {acknowledgementReport.summary.total}
                               </p>
-                              <p className="text-xs text-gray-500">Recipients</p>
+                              <p className="text-xs text-gray-500">
+                                Recipients
+                              </p>
                             </div>
                             <div className="rounded-lg bg-green-50 p-3 text-center">
                               <p className="text-xl font-bold text-green-700">
@@ -845,14 +876,19 @@ function ViewMemo() {
                               <div className="max-h-52 divide-y overflow-y-auto">
                                 {acknowledgementReport.signed.length ? (
                                   acknowledgementReport.signed.map((entry) => (
-                                    <div key={entry.userId} className="px-4 py-3">
+                                    <div
+                                      key={entry.userId}
+                                      className="px-4 py-3"
+                                    >
                                       <div className="flex items-center justify-between gap-3">
                                         <div>
                                           <p className="text-sm font-medium text-gray-900">
                                             {entry.name}
                                           </p>
                                           <p className="text-xs text-gray-500">
-                                            {formattedDate(entry.acknowledgedAt)}
+                                            {formattedDate(
+                                              entry.acknowledgedAt,
+                                            )}
                                           </p>
                                         </div>
                                         {entry.signature && (
@@ -875,20 +911,26 @@ function ViewMemo() {
 
                             <div className="overflow-hidden rounded-lg border">
                               <div className="border-b bg-yellow-50 px-4 py-2 text-sm font-medium text-yellow-800">
-                                Not signed ({acknowledgementReport.summary.unsigned})
+                                Not signed (
+                                {acknowledgementReport.summary.unsigned})
                               </div>
                               <div className="max-h-52 divide-y overflow-y-auto">
                                 {acknowledgementReport.unsigned.length ? (
-                                  acknowledgementReport.unsigned.map((entry) => (
-                                    <div key={entry.userId} className="px-4 py-3">
-                                      <p className="text-sm font-medium text-gray-900">
-                                        {entry.name}
-                                      </p>
-                                      <p className="text-xs text-gray-500">
-                                        {entry.email}
-                                      </p>
-                                    </div>
-                                  ))
+                                  acknowledgementReport.unsigned.map(
+                                    (entry) => (
+                                      <div
+                                        key={entry.userId}
+                                        className="px-4 py-3"
+                                      >
+                                        <p className="text-sm font-medium text-gray-900">
+                                          {entry.name}
+                                        </p>
+                                        <p className="text-xs text-gray-500">
+                                          {entry.email}
+                                        </p>
+                                      </div>
+                                    ),
+                                  )
                                 ) : (
                                   <p className="px-4 py-5 text-sm text-gray-500">
                                     Everyone has signed.

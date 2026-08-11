@@ -68,7 +68,9 @@ const resolveTarget = async (body) => {
       targetGroups.length !==
         new Set(requestedGroups.map((group) => group.toLowerCase())).size
     ) {
-      const error = new Error("The selected group is invalid or no longer exists");
+      const error = new Error(
+        "The selected group is invalid or no longer exists",
+      );
       error.statusCode = 400;
       throw error;
     }
@@ -111,7 +113,10 @@ const resolveTarget = async (body) => {
       throw error;
     }
     const employeeById = new Map(
-      employees.map((employee) => [String(employee._id).toLowerCase(), employee._id]),
+      employees.map((employee) => [
+        String(employee._id).toLowerCase(),
+        employee._id,
+      ]),
     );
     const targetEmployees = requestedEmployeeIds.map((id) =>
       employeeById.get(id.toLowerCase()),
@@ -190,7 +195,10 @@ const includeAdminsInAudience = async (audienceUserIds, publisherId) => {
 
 const getMemos = asyncHandler(async (req, res) => {
   const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
-  const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 10, 1), 100);
+  const limit = Math.min(
+    Math.max(Number.parseInt(req.query.limit, 10) || 10, 1),
+    100,
+  );
   const search = String(req.query.search || "").trim();
   const status = String(req.query.status || "all").toLowerCase();
 
@@ -208,8 +216,7 @@ const getMemos = asyncHandler(async (req, res) => {
     }));
   }
 
-  const canManage =
-    req.user.isAdmin || ["TL", "TM"].includes(req.user.role);
+  const canManage = req.user.isAdmin || ["TL", "TM"].includes(req.user.role);
   const requesterId = req.user._id.toString();
   if (!canManage) {
     filter.status = "published";
@@ -219,10 +226,7 @@ const getMemos = asyncHandler(async (req, res) => {
           { audienceUserIds: req.user._id },
           {
             audienceResolvedAt: null,
-            $or: [
-              { targetType: "all" },
-              { targetType: { $exists: false } },
-            ],
+            $or: [{ targetType: "all" }, { targetType: { $exists: false } }],
           },
         ],
       },
@@ -253,7 +257,12 @@ const getMemos = asyncHandler(async (req, res) => {
 
   res.json({
     data: visibleMemos,
-    pagination: { page, limit, total, pages: Math.max(Math.ceil(total / limit), 1) },
+    pagination: {
+      page,
+      limit,
+      total,
+      pages: Math.max(Math.ceil(total / limit), 1),
+    },
   });
 });
 
@@ -268,14 +277,16 @@ const getMemo = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error("Memo not found");
   }
-  const canManage =
-    req.user.isAdmin || ["TL", "TM"].includes(req.user.role);
+  const canManage = req.user.isAdmin || ["TL", "TM"].includes(req.user.role);
   const isLegacyAllEmployees =
     !memo.audienceResolvedAt && (!memo.targetType || memo.targetType === "all");
   const isTargeted = memo.audienceUserIds.some((userId) =>
     userId.equals(req.user._id),
   );
-  if (!canManage && (memo.status !== "published" || (!isLegacyAllEmployees && !isTargeted))) {
+  if (
+    !canManage &&
+    (memo.status !== "published" || (!isLegacyAllEmployees && !isTargeted))
+  ) {
     res.status(404);
     throw new Error("Memo not found");
   }
@@ -313,6 +324,7 @@ const createMemo = asyncHandler(async (req, res) => {
   const subject = String(req.body.subject || "").trim();
   const content = String(req.body.content || "").trim();
   const status = String(req.body.status || "draft").toLowerCase();
+  const file = String(req.body.file || "").trim();
   if (!title || !subject || !content) {
     res.status(400);
     throw new Error("Title, subject, and content are required");
@@ -348,6 +360,7 @@ const createMemo = asyncHandler(async (req, res) => {
     subject,
     content,
     status,
+    file,
     ...target,
     audienceUserIds,
     audienceResolvedAt: status === "published" ? now : null,
@@ -356,7 +369,9 @@ const createMemo = asyncHandler(async (req, res) => {
     publishedAt: status === "published" ? now : null,
     archivedAt: status === "archived" ? now : null,
   });
-  res.status(201).json(await memo.populate("createdBy updatedBy", "name email"));
+  res
+    .status(201)
+    .json(await memo.populate("createdBy updatedBy", "name email"));
 });
 
 const updateMemo = asyncHandler(async (req, res) => {
@@ -367,8 +382,11 @@ const updateMemo = asyncHandler(async (req, res) => {
     throw new Error("Memo not found");
   }
   ["title", "subject", "content"].forEach((field) => {
-    if (req.body[field] !== undefined) memo[field] = String(req.body[field]).trim();
+    if (req.body[field] !== undefined)
+      memo[field] = String(req.body[field]).trim();
   });
+  if (req.body.file !== undefined)
+    memo.file = String(req.body.file || "").trim();
   if (!memo.title || !memo.subject || !memo.content) {
     res.status(400);
     throw new Error("Title, subject, and content are required");
@@ -382,7 +400,9 @@ const updateMemo = asyncHandler(async (req, res) => {
   ) {
     if (memo.status !== "draft") {
       res.status(409);
-      throw new Error("Memo targeting can only be changed while the memo is a draft");
+      throw new Error(
+        "Memo targeting can only be changed while the memo is a draft",
+      );
     }
     try {
       const target = await resolveTarget(req.body);
@@ -437,7 +457,8 @@ const updateMemoStatus = asyncHandler(async (req, res) => {
   }
   memo.status = status;
   memo.updatedBy = req.user._id;
-  if (status === "published" && !memo.publishedAt) memo.publishedAt = new Date();
+  if (status === "published" && !memo.publishedAt)
+    memo.publishedAt = new Date();
   if (status === "archived") memo.archivedAt = new Date();
   if (status !== "archived") memo.archivedAt = null;
   if (status === "draft") {
@@ -545,10 +566,7 @@ const getMemoAcknowledgements = asyncHandler(async (req, res) => {
           },
         ],
       };
-  const unsignedUsers = await User.find(
-    unsignedUserFilter,
-    "name email role",
-  )
+  const unsignedUsers = await User.find(unsignedUserFilter, "name email role")
     .sort({ name: 1 })
     .lean();
 

@@ -90,6 +90,7 @@ export interface MemoBuilderPayload {
   targetGroups?: string[];
   targetEmployee?: string | null;
   targetEmployees?: string[];
+  file?: string | null;
 }
 
 export const MemoBuilderAPI = {
@@ -97,14 +98,16 @@ export const MemoBuilderAPI = {
   list: (query: MemoBuilderQuery = {}) => {
     const params = new URLSearchParams();
     if (query.search) params.set("search", query.search);
-    if (query.status && query.status !== "all") params.set("status", query.status);
+    if (query.status && query.status !== "all")
+      params.set("status", query.status);
     if (query.page) params.set("page", String(query.page));
     if (query.limit) params.set("limit", String(query.limit));
     const suffix = params.toString();
     return apiHelper(`/api/memo-builder${suffix ? `?${suffix}` : ""}`, "GET");
   },
   get: (id: string) => apiHelper(`/api/memo-builder/${id}`, "GET"),
-  create: (body: MemoBuilderPayload) => apiHelper("/api/memo-builder", "POST", body),
+  create: (body: MemoBuilderPayload) =>
+    apiHelper("/api/memo-builder", "POST", body),
   update: (id: string, body: MemoBuilderPayload) =>
     apiHelper(`/api/memo-builder/${id}`, "PUT", body),
   setStatus: (id: string, status: "draft" | "published" | "archived") =>
