@@ -1,4 +1,5 @@
 import { MemoBuilderAPI, MemoBuilderPayload } from "@/API/endpoint";
+import axios from "axios";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ import {
   X,
 } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { Label } from "@/components/ui/label";
 
 type MemoStatus = "draft" | "published" | "archived";
 
@@ -81,6 +83,7 @@ const EMPTY_FORM: MemoBuilderPayload = {
   targetGroups: [],
   targetEmployee: null,
   targetEmployees: [],
+  file: "",
 };
 
 const errorMessage = (error: unknown) => {
@@ -130,6 +133,8 @@ export default function MemoBuilder() {
   const [targetsLoading, setTargetsLoading] = useState(false);
   const [targetsError, setTargetsError] = useState<string | null>(null);
   const [employeeTargetSearch, setEmployeeTargetSearch] = useState("");
+  const [filename, setFilename] = useState("");
+
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -206,28 +211,26 @@ export default function MemoBuilder() {
       status: memo.status,
       targetType: memo.targetType || "all",
       targetGroup: memo.targetGroup || null,
-      targetGroups:
-        memo.targetGroups?.length
-          ? memo.targetGroups
-          : memo.targetGroup
-            ? [memo.targetGroup]
-            : [],
+      targetGroups: memo.targetGroups?.length
+        ? memo.targetGroups
+        : memo.targetGroup
+          ? [memo.targetGroup]
+          : [],
       targetEmployee:
         typeof memo.targetEmployee === "string"
           ? memo.targetEmployee
           : memo.targetEmployee?._id || null,
-      targetEmployees:
-        memo.targetEmployees?.length
-          ? memo.targetEmployees.map((employee) =>
-              typeof employee === "string" ? employee : employee._id,
-            )
-          : memo.targetEmployee
-            ? [
-                typeof memo.targetEmployee === "string"
-                  ? memo.targetEmployee
-                  : memo.targetEmployee._id,
-              ]
-            : [],
+      targetEmployees: memo.targetEmployees?.length
+        ? memo.targetEmployees.map((employee) =>
+            typeof employee === "string" ? employee : employee._id,
+          )
+        : memo.targetEmployee
+          ? [
+              typeof memo.targetEmployee === "string"
+                ? memo.targetEmployee
+                : memo.targetEmployee._id,
+            ]
+          : [],
     });
     setEmployeeTargetSearch("");
     setDialog("form");
@@ -367,7 +370,8 @@ export default function MemoBuilder() {
   };
 
   const targetLocked = Boolean(
-    editingId && memos.find((memo) => memo._id === editingId)?.status !== "draft",
+    editingId &&
+    memos.find((memo) => memo._id === editingId)?.status !== "draft",
   );
 
   const filteredTargetEmployees = targetOptions.employees.filter((employee) => {
@@ -379,6 +383,36 @@ export default function MemoBuilder() {
       employee.group?.toLowerCase().includes(query)
     );
   });
+
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const fileInput = event.target;
+    const file = fileInput.files && fileInput.files[0];
+
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_UPLOADFILES_URL}/upload`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        },
+      );
+      console.log("Upload response:", response.data);
+      const uploadedFilename = response.data.filename;
+      setFilename(uploadedFilename);
+      setForm((current) => ({ ...current, file: uploadedFilename }));
+    } catch (error) {
+      console.error("Error uploading file:", error);
+    }
+  };
 
   return (
     <main className="mx-auto w-full max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
@@ -673,6 +707,25 @@ export default function MemoBuilder() {
                       required
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="picture"
+                      className="text-md font-medium text-black flex items-center gap-2"
+                    >
+                      Upload file
+                    </Label>
+                    <Input
+                      id="picture"
+                      type="file"
+                      className="block w-full max-w-md text-sm text-gray-700"
+                      onChange={handleFileUpload}
+                    />
+                    {filename && (
+                      <p className="text-sm text-emerald-700">
+                        Attached file: {filename}
+                      </p>
+                    )}
+                  </div>
                   <div className="space-y-3 rounded-lg border bg-muted/20 p-4">
                     <div>
                       <label
@@ -682,7 +735,8 @@ export default function MemoBuilder() {
                         Publish to
                       </label>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        Choose all employees, multiple groups, or multiple employees.
+                        Choose all employees, multiple groups, or multiple
+                        employees.
                       </p>
                     </div>
 
@@ -736,7 +790,9 @@ export default function MemoBuilder() {
                         </div>
                         <div className="max-h-52 space-y-1 overflow-y-auto rounded-md border bg-background p-2">
                           {targetsLoading && (
-                            <p className="p-2 text-sm text-muted-foreground">Loading groups…</p>
+                            <p className="p-2 text-sm text-muted-foreground">
+                              Loading groups…
+                            </p>
                           )}
                           {targetOptions.groups.map((group) => (
                             <label
@@ -745,12 +801,19 @@ export default function MemoBuilder() {
                             >
                               <input
                                 type="checkbox"
-                                checked={form.targetGroups?.includes(group) || false}
+                                checked={
+                                  form.targetGroups?.includes(group) || false
+                                }
                                 disabled={targetLocked || Boolean(targetsError)}
                                 onChange={() => {
-                                  const selectedGroups = form.targetGroups || [];
-                                  const targetGroups = selectedGroups.includes(group)
-                                    ? selectedGroups.filter((item) => item !== group)
+                                  const selectedGroups =
+                                    form.targetGroups || [];
+                                  const targetGroups = selectedGroups.includes(
+                                    group,
+                                  )
+                                    ? selectedGroups.filter(
+                                        (item) => item !== group,
+                                      )
                                     : [...selectedGroups, group];
                                   setForm({
                                     ...form,
@@ -763,9 +826,12 @@ export default function MemoBuilder() {
                               {group}
                             </label>
                           ))}
-                          {!targetsLoading && targetOptions.groups.length === 0 && (
-                            <p className="p-2 text-sm text-muted-foreground">No groups available.</p>
-                          )}
+                          {!targetsLoading &&
+                            targetOptions.groups.length === 0 && (
+                              <p className="p-2 text-sm text-muted-foreground">
+                                No groups available.
+                              </p>
+                            )}
                         </div>
                       </div>
                     )}
@@ -780,13 +846,17 @@ export default function MemoBuilder() {
                         </div>
                         <Input
                           value={employeeTargetSearch}
-                          onChange={(event) => setEmployeeTargetSearch(event.target.value)}
+                          onChange={(event) =>
+                            setEmployeeTargetSearch(event.target.value)
+                          }
                           placeholder="Search employees"
                           disabled={targetLocked || targetsLoading}
                         />
                         <div className="max-h-60 space-y-1 overflow-y-auto rounded-md border bg-background p-2">
                           {targetsLoading && (
-                            <p className="p-2 text-sm text-muted-foreground">Loading employees…</p>
+                            <p className="p-2 text-sm text-muted-foreground">
+                              Loading employees…
+                            </p>
                           )}
                           {filteredTargetEmployees.map((employee) => (
                             <label
@@ -795,13 +865,21 @@ export default function MemoBuilder() {
                             >
                               <input
                                 type="checkbox"
-                                checked={form.targetEmployees?.includes(employee._id) || false}
+                                checked={
+                                  form.targetEmployees?.includes(
+                                    employee._id,
+                                  ) || false
+                                }
                                 disabled={targetLocked || Boolean(targetsError)}
                                 onChange={() => {
-                                  const selectedEmployees = form.targetEmployees || [];
-                                  const targetEmployees = selectedEmployees.includes(employee._id)
-                                    ? selectedEmployees.filter((id) => id !== employee._id)
-                                    : [...selectedEmployees, employee._id];
+                                  const selectedEmployees =
+                                    form.targetEmployees || [];
+                                  const targetEmployees =
+                                    selectedEmployees.includes(employee._id)
+                                      ? selectedEmployees.filter(
+                                          (id) => id !== employee._id,
+                                        )
+                                      : [...selectedEmployees, employee._id];
                                   setForm({
                                     ...form,
                                     targetEmployees,
@@ -811,7 +889,9 @@ export default function MemoBuilder() {
                                 className="mt-0.5 h-4 w-4"
                               />
                               <span>
-                                <span className="block font-medium">{employee.name}</span>
+                                <span className="block font-medium">
+                                  {employee.name}
+                                </span>
                                 <span className="block text-xs text-muted-foreground">
                                   {employee.email}
                                   {employee.group ? ` — ${employee.group}` : ""}
@@ -819,9 +899,12 @@ export default function MemoBuilder() {
                               </span>
                             </label>
                           ))}
-                          {!targetsLoading && filteredTargetEmployees.length === 0 && (
-                            <p className="p-2 text-sm text-muted-foreground">No employees found.</p>
-                          )}
+                          {!targetsLoading &&
+                            filteredTargetEmployees.length === 0 && (
+                              <p className="p-2 text-sm text-muted-foreground">
+                                No employees found.
+                              </p>
+                            )}
                         </div>
                       </div>
                     )}
