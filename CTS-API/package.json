@@ -9,7 +9,10 @@
     "client": "npm start --prefix frontend",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm install --prefix frontend && npm run build --prefix frontend",
-    "lint": "eslint . --fix"
+    "lint": "eslint . --fix",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "author": "Mohammad Arif",
   "license": "MIT",
@@ -33,8 +36,11 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@types/jest": "^30.0.0",
     "eslint": "^9.39.1",
     "globals": "^16.5.0",
-    "nodeman": "^1.1.2"
+    "jest": "^30.4.2",
+    "nodeman": "^1.1.2",
+    "vitest": "^4.1.10"
   }
 }

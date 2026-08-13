@@ -177,15 +177,35 @@ export const ChangePasswordAPI = {
 
 export const TimeRecordAPI = {
   getTimeRecordsByNameAndDate: (name: string, date: string) =>
-    apiHelper(`/api/employeeTimes/search?name=${name}&date=${date}`, "GET"),
+    apiHelper(
+      `/api/employeeTimes/search?name=${encodeURIComponent(name)}&date=${date}`,
+      "GET",
+    ),
+
+  getTimeRecordsByNameAndDateRange: (
+    name: string,
+    startDate: string,
+    endDate: string,
+  ) =>
+    apiHelper(
+      `/api/employeeTimes/search?name=${encodeURIComponent(
+        name,
+      )}&startDate=${startDate}&endDate=${endDate}`,
+      "GET",
+    ),
+
   updateTimeRecord: (id: string, body: object) =>
     apiHelper(`/api/employeeTimes/${id}`, "PATCH", body),
+
   deleteTimeRecord: (id: string) =>
     apiHelper(`/api/employeeTimes/${id}`, "DELETE"),
+
   getEmployeeTimeByEmployeeIdandDate: (id: string, date: string) =>
     apiHelper(`/api/employeeTimes/search/${id}?date=${date}`, "GET"),
+
   getAllEmployeeOnBreak: () =>
     apiHelper("/api/employeeTimes/incomplete", "GET"),
+
   getAllEmployeeLogins: () =>
     apiHelper("/api/employeeTimes/incompleteLogins", "GET"),
 };
