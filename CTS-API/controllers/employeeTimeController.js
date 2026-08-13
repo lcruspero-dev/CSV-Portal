@@ -253,20 +253,36 @@ const getEmployeeTimeWithNullTimeOut = async (req, res) => {
 
 const searchByNameAndDate = async (req, res) => {
   try {
-    const { name, date } = req.query;
+    const { name, date, startDate, endDate } = req.query;
 
-    // Basic validation
-    if (!name || !date) {
+    // Support both single date and date range queries
+    if (!name || (!date && (!startDate || !endDate))) {
       return res.status(400).json({ message: "Name and date are required" });
     }
 
-    // Convert the date format from 'YYYY-MM-DD' to 'MM/DD/YYYY'
-    const parsedDate = new Date(date);
-    const formattedDate = `${
-      parsedDate.getMonth() + 1
-    }/${parsedDate.getDate()}/${parsedDate.getFullYear()}`;
+    let query = {};
 
-    let query = { date: formattedDate };
+    // Helper function to convert date format from 'YYYY-MM-DD' to 'MM/DD/YYYY'
+    const formatDate = (dateStr) => {
+      const parsedDate = new Date(dateStr);
+      return `${parsedDate.getMonth() + 1}/${parsedDate.getDate()}/${parsedDate.getFullYear()}`;
+    };
+
+    // Handle date range or single date
+    if (startDate && endDate) {
+      // Date range query
+      const startFormatted = formatDate(startDate);
+      const endFormatted = formatDate(endDate);
+
+      query.date = {
+        $gte: startFormatted,
+        $lte: endFormatted,
+      };
+    } else if (date) {
+      // Single date query
+      const formattedDate = formatDate(date);
+      query.date = formattedDate;
+    }
 
     // Handle special CSV filter cases
     const nameLower = name.toLowerCase();
@@ -293,7 +309,7 @@ const searchByNameAndDate = async (req, res) => {
       }
     }
 
-    const employeeTimes = await EmployeeTime.find(query);
+    const employeeTimes = await EmployeeTime.find(query).sort({ date: 1 });
 
     // Handle no records found
     if (employeeTimes.length === 0) {
@@ -384,20 +400,48 @@ const updateEmployeeTimelunch = async (req, res) => {
 
 const getEmployeeTimeByEmployeeIdandDate = async (req, res) => {
   try {
-    const { date } = req.query;
-    const employeeTime = await EmployeeTime.findOne({
-      employeeId: new mongoose.Types.ObjectId(req.params.id),
-      date,
-    });
+    const { startDate, endDate } = req.query;
+    const { id } = req.params;
 
-    if (!employeeTime) {
-      return res.status(404).json({ message: "Employee time not found" });
+    if (!startDate || !endDate) {
+      return res.status(400).json({
+        message: "startDate and endDate are required",
+      });
     }
 
-    res.status(200).json(employeeTime);
+    if (startDate > endDate) {
+      return res.status(400).json({
+        message: "startDate cannot be later than endDate",
+      });
+    }
+
+    const employeeTime = await EmployeeTime.find({
+      employeeId: new mongoose.Types.ObjectId(id),
+      date: {
+        $gte: startDate,
+        $lte: endDate,
+      },
+    }).sort({ date: 1 });
+
+    if (!employeeTime.length) {
+      return res.status(404).json({
+        message: "No employee time records found for the selected date range",
+      });
+    }
+
+    return res.status(200).json({
+      employeeId: id,
+      startDate,
+      endDate,
+      count: employeeTime.length,
+      data: employeeTime,
+    });
   } catch (error) {
     console.error("Error fetching employee time:", error.message);
-    res.status(500).json({ message: error.message });
+
+    return res.status(500).json({
+      message: error.message,
+    });
   }
 };
 
