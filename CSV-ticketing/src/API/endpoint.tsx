@@ -201,7 +201,10 @@ export const TimeRecordAPI = {
     apiHelper(`/api/employeeTimes/${id}`, "DELETE"),
 
   getEmployeeTimeByEmployeeIdandDate: (id: string, date: string) =>
-    apiHelper(`/api/employeeTimes/search/${id}?date=${date}`, "GET"),
+    apiHelper(
+      `/api/employeeTimes/search/${id}?startDate=${date}&endDate=${date}`,
+      "GET",
+    ),
 
   getAllEmployeeOnBreak: () =>
     apiHelper("/api/employeeTimes/incomplete", "GET"),

@@ -749,7 +749,7 @@ const ScheduleAndAttendance: React.FC = () => {
                 selectedEmployee.id,
                 formattedDate,
               );
-            timeRecordData = response.data;
+            timeRecordData = response.data?.data?.[0] || null;
           } catch (err) {
             console.error("Error fetching time record:", err);
           }
