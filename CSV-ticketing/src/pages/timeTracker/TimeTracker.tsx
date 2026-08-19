@@ -33,6 +33,7 @@ import {
   Utensils,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import { SecureConfirmButton } from "./SecureconfirmButton";
 
 interface AttendanceEntry {
   id: string;
@@ -867,6 +868,18 @@ export const AttendanceTracker: React.FC = () => {
 
   const timerMeta = getTimerMeta();
 
+  // Combined "busy" flag shared by the secure confirm button — while any of
+  // these are in flight, the button shows its loading state and can't be
+  // re-triggered.
+  const isConfirmBusy =
+    isLoadingBreakStart ||
+    isLoadingBreakEnd ||
+    isLoadingSecondBreakStart ||
+    isLoadingSecondBreakEnd ||
+    isLoadingLunchStart ||
+    isLoadingLunchEnd ||
+    isLoadingTimeOut;
+
   if (isLoadingInitial) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-[#f5f5f8]">
@@ -994,6 +1007,7 @@ export const AttendanceTracker: React.FC = () => {
           padding: 0.6rem 1.25rem; border-radius: 11px;
           border: none; cursor: pointer;
           transition: background 0.2s, transform 0.15s;
+          min-width: 190px; justify-content: center;
         }
         .at-confirm-btn:hover { background: #4338ca; transform: translateY(-1px); }
         .at-confirm-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
@@ -1216,31 +1230,12 @@ export const AttendanceTracker: React.FC = () => {
                     </SelectContent>
                   </Select>
                   {selectedAction && (
-                    <button
-                      className="at-confirm-btn"
-                      onClick={handleConfirmAction}
-                      disabled={
-                        isLoadingBreakStart ||
-                        isLoadingBreakEnd ||
-                        isLoadingSecondBreakStart ||
-                        isLoadingSecondBreakEnd ||
-                        isLoadingLunchStart ||
-                        isLoadingLunchEnd ||
-                        isLoadingTimeOut
-                      }
-                    >
-                      {isLoadingBreakStart ||
-                      isLoadingBreakEnd ||
-                      isLoadingSecondBreakStart ||
-                      isLoadingSecondBreakEnd ||
-                      isLoadingLunchStart ||
-                      isLoadingLunchEnd ||
-                      isLoadingTimeOut ? (
-                        <LoadingSpinner />
-                      ) : (
-                        "Confirm"
-                      )}
-                    </button>
+                    <SecureConfirmButton
+                      onConfirm={handleConfirmAction}
+                      loading={isConfirmBusy}
+                      loadingLabel="Processing..."
+                      label="Confirm"
+                    />
                   )}
                 </div>
               )}

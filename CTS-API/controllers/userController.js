@@ -4,11 +4,9 @@ const bcrypt = require("bcryptjs");
 
 const User = require("../models/userModel");
 
-// @desc    Register a new user
-// @route   /api/users
-// @access  Public
+// Register a new user
 const registerUser = asyncHandler(async (req, res) => {
-  const { name, email, password, isAdmin } = req.body;
+  const { name, email, password } = req.body;
 
   // Validation
   if (!name || !email || !password) {
@@ -33,7 +31,7 @@ const registerUser = asyncHandler(async (req, res) => {
     name,
     email,
     password: hashedPassword,
-    isAdmin: isAdmin || false, // Set isAdmin, default to false if not provided
+    isAdmin: false,
     role: "user",
   });
 
@@ -45,7 +43,7 @@ const registerUser = asyncHandler(async (req, res) => {
       email: user.email,
       isAdmin: user.isAdmin,
       role: user.role,
-      token: generateToken(user._id, user.isAdmin, user.name),
+      token: generateToken(user._id, user.name),
       loginLimit: user.loginLimit,
     });
   } else {
@@ -210,6 +208,7 @@ const setUserToInactive = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(userId, { status: "inactive" });
   res.status(200).json({ message: "User set to inactive" });
 });
+
 const setUserToActive = asyncHandler(async (req, res) => {
   const { userId } = req.params;
   const user = await User.findById(userId);
@@ -242,7 +241,7 @@ const changePassword = asyncHandler(async (req, res) => {
 
 //update login limit
 const updateLoginLimit = asyncHandler(async (req, res) => {
-  const { userId } = req.params; // Destructure userId from params
+  const { userId } = req.params;
   const { loginLimit } = req.body;
 
   const user = await User.findById(userId);
