@@ -77,7 +77,7 @@ const Login = () => {
         JSON.stringify({
           isAuthenticated: true,
           isAdmin: response.data.isAdmin,
-        })
+        }),
       );
 
       login(userData);
@@ -160,12 +160,12 @@ const Login = () => {
                 >
                   Password
                 </label>
-                <Link
+                {/* <Link
                   to="/forgot-password"
                   className="text-sm text-purple-600 hover:text-purple-800 hover:underline"
                 >
                   Forgot password?
-                </Link>
+                </Link> */}
               </div>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -240,7 +240,7 @@ const Login = () => {
         </div>
 
         {/* Footer */}
-        <div className="mt-8 text-center">
+        {/* <div className="mt-8 text-center">
           <p className="text-xs text-gray-500">
             By signing in, you agree to our{" "}
             <Link to="/terms" className="text-purple-600 hover:underline">
@@ -251,7 +251,7 @@ const Login = () => {
               Privacy Policy
             </Link>
           </p>
-        </div>
+        </div> */}
       </div>
     </div>
   );
