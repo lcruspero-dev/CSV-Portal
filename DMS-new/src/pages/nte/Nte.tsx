@@ -85,7 +85,7 @@ const Nte: React.FC = () => {
         try {
           const response = await UserAPI.searchUser(searchQuery);
           const filteredUsers = response.data.filter(
-            (user: { status: string }) => user.status !== "inactive"
+            (user: { status: string }) => user.status !== "inactive",
           );
           setUsers(filteredUsers);
         } catch (error) {
@@ -102,7 +102,7 @@ const Nte: React.FC = () => {
 
   const handleNteSubmission = async (
     data: any,
-    submitStatus: "PER" | "DRAFT"
+    submitStatus: "PER" | "DRAFT",
   ) => {
     if (!selectedUser && submitStatus === "PER") {
       toast({
@@ -339,6 +339,13 @@ const Nte: React.FC = () => {
                                 "Insubordination",
                                 "Record Keeping",
                                 "Safety and Security",
+                                "Negligence, Work Output & Performance",
+                                "Property, Facility, Locker & Claygo Offenses",
+                                "Information Security (ISO, PCI, HIPAA)",
+                                "Professional Conduct & Company Harmony",
+                                "Safety, Security & Emergency Offenses",
+                                "Moral Turpitude, Theft & Dishonesty",
+                                "Leadership Performance & Accountability",
                               ]
                           ).map((desc) => (
                             <SelectItem key={desc} value={desc.toLowerCase()}>
@@ -411,7 +418,7 @@ const Nte: React.FC = () => {
               <div className="flex gap-4">
                 <Button
                   onClick={handleSubmit((data) =>
-                    handleNteSubmission(data, "PER")
+                    handleNteSubmission(data, "PER"),
                   )}
                   className="bg-blue-500 text-white hover:bg-blue-600"
                   disabled={loading}
@@ -421,7 +428,7 @@ const Nte: React.FC = () => {
                 <Button
                   variant="destructive"
                   onClick={handleSubmit((data) =>
-                    handleNteSubmission(data, "DRAFT")
+                    handleNteSubmission(data, "DRAFT"),
                   )}
                   disabled={loading}
                 >
