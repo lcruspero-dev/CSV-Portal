@@ -7,24 +7,13 @@ interface SecureConfirmButtonProps {
   label?: string;
   loadingLabel?: string;
   className?: string;
-  // How long (ms) the user must hold. Randomized slightly each mount so a
-  // fixed-delay auto-clicker script can't be tuned to match it.
   minHoldMs?: number;
   maxHoldMs?: number;
 }
 
-/**
- * Drop-in replacement for a plain <button onClick={...}>Confirm</button>.
- *
- * Defends against auto-clicker extensions by requiring three things a
- * scripted single-click can't easily fake:
- *  1. event.isTrusted === true (rejects DOM-dispatched synthetic clicks)
- *  2. Real mouse movement in the ~1.5s before interaction is allowed
- *  3. A press-and-hold of randomized duration, not a single click
- *
- * Note: this raises the bar significantly but isn't a hard guarantee —
- * pair it with server-side timing/pattern checks (see notes at bottom).
- */
+const DEFAULT_BUTTON_CLASSES =
+  "inline-flex items-center justify-center gap-2 min-w-[190px] px-5 py-[0.6rem] rounded-[11px] border-none text-white text-[0.85rem] font-bold font-['Outfit',sans-serif] cursor-pointer select-none bg-[#4f46e5] hover:bg-[#4338ca] disabled:opacity-60 disabled:cursor-not-allowed transition-colors";
+
 export const SecureConfirmButton: React.FC<SecureConfirmButtonProps> = ({
   onConfirm,
   disabled = false,
@@ -52,9 +41,6 @@ export const SecureConfirmButton: React.FC<SecureConfirmButtonProps> = ({
       minHoldMs + Math.random() * (maxHoldMs - minHoldMs);
   }, [minHoldMs, maxHoldMs]);
 
-  // Track real mouse movement over the button before allowing a hold to start.
-  // Auto-clicker extensions almost always dispatch a click with no preceding
-  // pointer movement.
   const handlePointerMove = useCallback(() => {
     moveCountRef.current += 1;
     if (moveCountRef.current >= 3 && !mouseMoveDetected) {
@@ -118,38 +104,41 @@ export const SecureConfirmButton: React.FC<SecureConfirmButtonProps> = ({
   const isBusy = loading;
 
   return (
-    <div style={{ display: "inline-flex", flexDirection: "column", gap: 4 }}>
+    <div className="inline-flex flex-col gap-1 w-full sm:w-auto">
       <button
         ref={btnRef}
         type="button"
-        className={className || "at-confirm-btn"}
+        className={`relative overflow-hidden select-none w-full sm:w-auto ${
+          className || DEFAULT_BUTTON_CLASSES
+        }`}
         disabled={disabled || isBusy}
         onPointerMove={handlePointerMove}
         onPointerDown={startHold}
         onPointerUp={cancelHold}
         onPointerLeave={cancelHold}
         onPointerCancel={cancelHold}
-        style={{
-          position: "relative",
-          overflow: "hidden",
-          userSelect: "none",
-          WebkitUserSelect: "none",
-        }}
       >
         {/* Fill indicator showing hold progress */}
         <span
           aria-hidden
+          className="absolute inset-y-0 left-0 bg-white/40 pointer-events-none"
           style={{
-            position: "absolute",
-            inset: 0,
-            left: 0,
             width: `${progress * 100}%`,
-            background: "rgba(255,255,255,0.28)",
             transition: holding ? "none" : "width 0.15s ease",
-            pointerEvents: "none",
           }}
         />
-        <span style={{ position: "relative", zIndex: 1 }}>
+        {/* Distinct progress strip along the bottom edge — stays legible
+            even on lighter button colors where the full-fill overlay above
+            is subtle. */}
+        <span
+          aria-hidden
+          className="absolute bottom-0 left-0 h-[3px] bg-white pointer-events-none"
+          style={{
+            width: `${progress * 100}%`,
+            transition: holding ? "none" : "width 0.15s ease",
+          }}
+        />
+        <span className="relative z-10">
           {isBusy
             ? loadingLabel || "..."
             : holding
@@ -161,12 +150,12 @@ export const SecureConfirmButton: React.FC<SecureConfirmButtonProps> = ({
       </button>
 
       {!mouseMoveDetected && !isBusy && (
-        <span style={{ fontSize: "0.68rem", color: "#9090a8" }}>
+        <span className="text-[0.68rem] text-[#9090a8]">
           Move your mouse over the button, then press and hold to confirm.
         </span>
       )}
       {flaggedUntrusted && (
-        <span style={{ fontSize: "0.68rem", color: "#dc2626" }}>
+        <span className="text-[0.68rem] text-red-600">
           Couldn't verify this as a manual action. Please click directly on the
           button with your mouse.
         </span>

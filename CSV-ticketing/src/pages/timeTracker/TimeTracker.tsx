@@ -24,10 +24,12 @@ import { useToast } from "@/components/ui/use-toast";
 import {
   AlertCircle,
   Calendar,
+  CheckCircle2,
   Clock,
   Coffee,
   Filter,
   Home,
+  Inbox,
   RefreshCw,
   TrendingUp,
   Utensils,
@@ -79,9 +81,11 @@ interface AlertState {
 
 type CutoffPeriod = "1-15" | "16-31";
 
-const LoadingSpinner = () => (
+const LoadingSpinner = ({ className = "" }: { className?: string }) => (
   <div className="flex items-center justify-center">
-    <div className="h-5 w-5 border-2 border-indigo-200 border-t-indigo-500 rounded-full animate-spin" />
+    <div
+      className={`h-5 w-5 rounded-full border-2 border-white/30 border-t-white animate-spin ${className}`}
+    />
   </div>
 );
 
@@ -855,15 +859,35 @@ export const AttendanceTracker: React.FC = () => {
     return actions;
   };
 
-  // Determine current timer label & color
+  // Determine current timer label & Tailwind color classes
   const getTimerMeta = () => {
     if (currentEntry.breakStart && !currentEntry.breakEnd)
-      return { label: "Break 1 Timer", color: "#0284c7", bg: "#f0f9ff" };
+      return {
+        label: "Break 1 Timer",
+        text: "text-sky-600",
+        bg: "bg-sky-50",
+        ring: "ring-sky-200",
+      };
     if (currentEntry.secondBreakStart && !currentEntry.secondBreakEnd)
-      return { label: "Break 2 Timer", color: "#4f46e5", bg: "#eef2ff" };
+      return {
+        label: "Break 2 Timer",
+        text: "text-indigo-600",
+        bg: "bg-indigo-50",
+        ring: "ring-indigo-200",
+      };
     if (currentEntry.lunchStart && !currentEntry.lunchEnd)
-      return { label: "Lunch Timer", color: "#d97706", bg: "#fffbeb" };
-    return { label: "Work Timer", color: "#7c3aed", bg: "#f5f3ff" };
+      return {
+        label: "Lunch Timer",
+        text: "text-amber-600",
+        bg: "bg-amber-50",
+        ring: "ring-amber-200",
+      };
+    return {
+      label: "Work Timer",
+      text: "text-violet-600",
+      bg: "bg-violet-50",
+      ring: "ring-violet-200",
+    };
   };
 
   const timerMeta = getTimerMeta();
@@ -882,13 +906,10 @@ export const AttendanceTracker: React.FC = () => {
 
   if (isLoadingInitial) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-[#f5f5f8]">
-        <div
-          style={{ fontFamily: "'Outfit', sans-serif" }}
-          className="text-center"
-        >
-          <div className="w-12 h-12 border-2 border-indigo-200 border-t-indigo-500 rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-sm text-gray-500 font-medium">
+      <div className="flex min-h-screen items-center justify-center bg-[#f5f5f8] font-[Outfit,sans-serif]">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-2 border-indigo-200 border-t-indigo-500" />
+          <p className="text-sm font-medium text-gray-500">
             Loading time tracker...
           </p>
         </div>
@@ -896,334 +917,246 @@ export const AttendanceTracker: React.FC = () => {
     );
   }
 
+  type SessionCardColor = "violet" | "sky" | "emerald" | "indigo" | "amber";
+
+  const sessionCardColors: Record<
+    SessionCardColor,
+    { bar: string; chip: string; icon: string; badge: string }
+  > = {
+    violet: {
+      bar: "bg-violet-500",
+      chip: "bg-violet-50",
+      icon: "text-violet-600",
+      badge: "bg-violet-50 text-violet-600",
+    },
+    sky: {
+      bar: "bg-sky-500",
+      chip: "bg-sky-50",
+      icon: "text-sky-600",
+      badge: "bg-sky-50 text-sky-600",
+    },
+    emerald: {
+      bar: "bg-emerald-500",
+      chip: "bg-emerald-50",
+      icon: "text-emerald-600",
+      badge: "bg-emerald-50 text-emerald-600",
+    },
+    indigo: {
+      bar: "bg-indigo-500",
+      chip: "bg-indigo-50",
+      icon: "text-indigo-600",
+      badge: "bg-indigo-50 text-indigo-600",
+    },
+    amber: {
+      bar: "bg-amber-500",
+      chip: "bg-amber-50",
+      icon: "text-amber-600",
+      badge: "bg-amber-50 text-amber-600",
+    },
+  };
+
+  const sessionCards = [
+    currentEntry.timeIn && {
+      key: "timeIn",
+      icon: Clock,
+      color: "violet" as SessionCardColor,
+      label: "Time In",
+      main: formatTime(currentEntry.timeIn),
+      endLabel: null as string | null,
+      totalLabel: null as string | null,
+      status: null as "ongoing" | "done" | null,
+    },
+    currentEntry.shift && {
+      key: "shift",
+      icon: TrendingUp,
+      color: "sky" as SessionCardColor,
+      label: "Shift",
+      main: currentEntry.shift,
+      endLabel: null as string | null,
+      totalLabel: null as string | null,
+      status: null as "ongoing" | "done" | null,
+    },
+    currentEntry.breakStart && {
+      key: "break1",
+      icon: Coffee,
+      color: "emerald" as SessionCardColor,
+      label: "Break 1",
+      main: formatTime(currentEntry.breakStart),
+      endLabel: currentEntry.breakEnd
+        ? formatTime(currentEntry.breakEnd)
+        : null,
+      totalLabel:
+        currentEntry.totalBreakTime !== undefined
+          ? formatMinutesToHoursMinutes(
+              Math.round(currentEntry.totalBreakTime * 60),
+            )
+          : null,
+      status: currentEntry.breakEnd ? ("done" as const) : ("ongoing" as const),
+    },
+    currentEntry.secondBreakStart && {
+      key: "break2",
+      icon: Coffee,
+      color: "indigo" as SessionCardColor,
+      label: "Break 2",
+      main: formatTime(currentEntry.secondBreakStart),
+      endLabel: currentEntry.secondBreakEnd
+        ? formatTime(currentEntry.secondBreakEnd)
+        : null,
+      totalLabel:
+        currentEntry.totalSecondBreakTime !== undefined
+          ? formatMinutesToHoursMinutes(
+              Math.round(currentEntry.totalSecondBreakTime * 60),
+            )
+          : null,
+      status: currentEntry.secondBreakEnd
+        ? ("done" as const)
+        : ("ongoing" as const),
+    },
+    currentEntry.lunchStart && {
+      key: "lunch",
+      icon: Utensils,
+      color: "amber" as SessionCardColor,
+      label: "Lunch",
+      main: formatTime(currentEntry.lunchStart),
+      endLabel: currentEntry.lunchEnd
+        ? formatTime(currentEntry.lunchEnd)
+        : null,
+      totalLabel:
+        currentEntry.totalLunchTime !== undefined
+          ? formatMinutesToHoursMinutes(
+              Math.round(currentEntry.totalLunchTime * 60),
+            )
+          : null,
+      status: currentEntry.lunchEnd ? ("done" as const) : ("ongoing" as const),
+    },
+  ].filter(Boolean) as {
+    key: string;
+    icon: any;
+    color: SessionCardColor;
+    label: string;
+    main: string;
+    endLabel: string | null;
+    totalLabel: string | null;
+    status: "ongoing" | "done" | null;
+  }[];
+
+  const tableColumns = [
+    "Date",
+    "Time In",
+    "Time Out",
+    "Total Hrs",
+    "Break 1",
+    "Lunch",
+    "Break 2",
+    "Overbreak 1",
+    "Overbreak 2",
+    "Overlunch",
+    "Notes",
+  ];
+
   return (
     <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');`}</style>
 
-        .at-root { font-family: 'Outfit', sans-serif; background: #f5f5f8; min-height: 100vh; }
-
-        /* HEADER */
-        .at-header {
-          background: #fff;
-          border-bottom: 1px solid #e8e8f0;
-          padding: 1.5rem 2rem 1.4rem;
-        }
-        .at-header-inner {
-          max-width: 1200px; margin: 0 auto;
-          display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
-        }
-        .at-tag {
-          display: inline-flex; align-items: center; gap: 0.4rem;
-          background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 100px;
-          padding: 0.22rem 0.7rem; margin-bottom: 0.6rem;
-        }
-        .at-tag-dot { width: 5px; height: 5px; border-radius: 50%; background: #7c3aed; }
-        .at-tag-text { font-size: 0.63rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #7c3aed; }
-        .at-heading { font-size: 1.75rem; font-weight: 800; color: #0f0f1a; letter-spacing: -0.03em; line-height: 1; }
-        .at-subheading { font-size: 0.85rem; color: #8888a0; margin-top: 0.3rem; }
-
-        /* BODY */
-        .at-body { max-width: 1200px; margin: 0 auto; padding: 1.75rem 2rem 3rem; }
-        @media (max-width: 640px) { .at-header { padding: 1.25rem; } .at-body { padding: 1.25rem; } .at-heading { font-size: 1.4rem; } }
-
-        /* SECTION */
-        .at-section-label { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: #9090a8; margin-bottom: 0.9rem; }
-
-        /* TIMER CARD */
-        .at-timer-card {
-          background: #fff; border: 1px solid #e8e8f0; border-radius: 20px; overflow: hidden;
-        }
-        .at-timer-top {
-          padding: 1.5rem 1.75rem 0;
-          display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
-        }
-        .at-date-row { display: flex; align-items: center; gap: 0.5rem; }
-        .at-date-text { font-size: 0.85rem; font-weight: 500; color: #5050708; }
-
-        /* CLOCK DISPLAY */
-        .at-clock-wrap {
-          display: flex; flex-direction: column; align-items: center;
-          padding: 2rem 1.75rem 1.5rem;
-        }
-        .at-clock-label {
-          font-size: 0.65rem; font-weight: 700; letter-spacing: 0.14em;
-          text-transform: uppercase; margin-bottom: 0.75rem;
-          padding: 0.25rem 0.75rem; border-radius: 100px;
-          background: var(--timer-bg); color: var(--timer-color);
-        }
-        .at-clock {
-          font-family: 'JetBrains Mono', monospace;
-          font-size: clamp(2.8rem, 8vw, 5rem);
-          font-weight: 700;
-          letter-spacing: -0.02em;
-          color: var(--timer-color);
-          line-height: 1;
-          opacity: var(--timer-opacity, 1);
-          transition: color 0.4s ease;
-        }
-        .at-clock-dimmed { opacity: 0.3; }
-
-        /* STATUS PILLS */
-        .at-status-row {
-          display: flex; align-items: center; justify-content: center;
-          gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; padding-bottom: 0.25rem;
-        }
-        .at-status-pill {
-          display: inline-flex; align-items: center; gap: 0.35rem;
-          padding: 0.25rem 0.65rem; border-radius: 100px;
-          font-size: 0.68rem; font-weight: 600;
-          background: #f5f3ff; color: #7c3aed; border: 1px solid #ddd6fe;
-        }
-        .at-status-pill-dot { width: 5px; height: 5px; border-radius: 50%; background: #10b981; animation: at-blink 1.5s ease infinite; }
-        @keyframes at-blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
-        /* CONTROLS */
-        .at-controls {
-          display: flex; align-items: center; justify-content: center;
-          gap: 0.75rem; flex-wrap: wrap;
-          border-top: 1px solid #f0f0f6;
-          padding: 1.25rem 1.75rem;
-        }
-        .at-time-in-btn {
-          display: inline-flex; align-items: center; gap: 0.5rem;
-          background: #7c3aed; color: white;
-          font-family: 'Outfit', sans-serif;
-          font-size: 0.88rem; font-weight: 700;
-          padding: 0.65rem 1.5rem; border-radius: 12px;
-          border: none; cursor: pointer;
-          transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
-          box-shadow: 0 2px 12px rgba(124,58,237,0.25);
-          min-width: 140px; justify-content: center;
-        }
-        .at-time-in-btn:hover { background: #6d28d9; transform: translateY(-1px); box-shadow: 0 4px 18px rgba(124,58,237,0.3); }
-        .at-time-in-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-
-        .at-confirm-btn {
-          display: inline-flex; align-items: center; gap: 0.5rem;
-          background: #4f46e5; color: white;
-          font-family: 'Outfit', sans-serif;
-          font-size: 0.85rem; font-weight: 700;
-          padding: 0.6rem 1.25rem; border-radius: 11px;
-          border: none; cursor: pointer;
-          transition: background 0.2s, transform 0.15s;
-          min-width: 190px; justify-content: center;
-        }
-        .at-confirm-btn:hover { background: #4338ca; transform: translateY(-1px); }
-        .at-confirm-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-
-        /* SESSION CARDS */
-        .at-session-section { padding: 0 1.75rem 1.75rem; }
-        .at-session-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.75rem; }
-        .at-session-card {
-          background: #f8f8fb; border: 1px solid #ededf5; border-radius: 14px; padding: 1rem 1.1rem;
-          transition: border-color 0.2s;
-        }
-        .at-session-card:hover { border-color: #d0d0e8; }
-        .at-session-card-header { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.65rem; }
-        .at-session-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
-        .at-session-card-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #9090a8; }
-        .at-session-main { font-size: 1rem; font-weight: 700; color: #1a1a2e; }
-        .at-session-sub { font-size: 0.72rem; color: #9090a8; margin-top: 0.15rem; }
-
-        /* HISTORY CARD */
-        .at-history-card {
-          background: #fff; border: 1px solid #e8e8f0; border-radius: 20px; overflow: hidden; margin-top: 1.25rem;
-        }
-        .at-history-header {
-          padding: 1.3rem 1.75rem 1rem;
-          border-bottom: 1px solid #f0f0f6;
-          display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
-        }
-        .at-history-title { font-size: 0.95rem; font-weight: 700; color: #1a1a2e; }
-        .at-history-sub { font-size: 0.73rem; color: #9090a8; margin-top: 0.15rem; }
-
-        .at-filter-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
-        .at-filter-icon { color: #9090a8; }
-
-        .at-refresh-btn {
-          display: inline-flex; align-items: center; gap: 0.4rem;
-          font-family: 'Outfit', sans-serif;
-          font-size: 0.75rem; font-weight: 600; color: #4f46e5;
-          background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 9px;
-          padding: 0.4rem 0.8rem; cursor: pointer;
-          transition: background 0.2s, border-color 0.2s;
-        }
-        .at-refresh-btn:hover { background: #e0e7ff; border-color: #a5b4fc; }
-        .at-refresh-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-
-        .at-history-body { padding: 0; }
-
-        /* TABLE */
-        .at-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
-        .at-table thead tr { border-bottom: 1px solid #f0f0f6; }
-        .at-table th {
-          padding: 0.75rem 1rem; text-align: left;
-          font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
-          color: #9090a8; white-space: nowrap; background: #fafafa;
-        }
-        .at-table tbody tr { border-bottom: 1px solid #f5f5fa; transition: background 0.12s; }
-        .at-table tbody tr:last-child { border-bottom: none; }
-        .at-table tbody tr:hover { background: #f8f8fb; }
-        .at-table td { padding: 0.75rem 1rem; color: #3a3a5a; vertical-align: middle; white-space: nowrap; }
-        .at-table td:first-child { font-weight: 600; color: #1a1a2e; }
-
-        .at-in-progress {
-          display: inline-flex; align-items: center; gap: 0.3rem;
-          font-size: 0.65rem; font-weight: 700; color: #059669;
-          background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 100px;
-          padding: 0.15rem 0.5rem;
-        }
-
-        .at-overbreak {
-          color: #dc2626; font-weight: 600;
-        }
-
-        .at-empty-row td { text-align: center; padding: 3rem 1rem; }
-        .at-empty-icon { width: 48px; height: 48px; background: #f5f5f8; border-radius: 14px; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem; }
-        .at-empty-title { font-size: 0.88rem; font-weight: 700; color: #1a1a2e; }
-        .at-empty-sub { font-size: 0.75rem; color: #9090a8; margin-top: 0.2rem; }
-
-        .at-table-footer { padding: 0.75rem 1.75rem; font-size: 0.72rem; color: #9090a8; border-top: 1px solid #f0f0f6; }
-
-        /* ALERT OVERLAY */
-        .at-alert-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.25); backdrop-filter: blur(4px); z-index: 50; display: flex; align-items: center; justify-content: center; }
-        .at-alert-box {
-          background: #fff; border-radius: 18px; padding: 1.75rem; max-width: 420px; margin: 1rem;
-          box-shadow: 0 20px 60px rgba(0,0,0,0.12); border: 1px solid #e8e8f0;
-          animation: at-pop 0.25s ease;
-        }
-        @keyframes at-pop { from{transform:scale(0.94);opacity:0} to{transform:scale(1);opacity:1} }
-        .at-alert-icon { width: 44px; height: 44px; background: #fffbeb; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; }
-        .at-alert-title { font-size: 1rem; font-weight: 800; color: #1a1a2e; margin-bottom: 0.4rem; }
-        .at-alert-msg { font-size: 0.83rem; color: #6060808; line-height: 1.5; margin-bottom: 1.25rem; }
-        .at-alert-btn {
-          background: #7c3aed; color: white; border: none; border-radius: 10px;
-          padding: 0.6rem 1.25rem; font-size: 0.82rem; font-weight: 700;
-          cursor: pointer; font-family: 'Outfit', sans-serif;
-          transition: background 0.2s; float: right;
-        }
-        .at-alert-btn:hover { background: #6d28d9; }
-
-        .at-overflow-x { overflow-x: auto; }
-      `}</style>
-
-      <div className="at-root">
+      <div className="min-h-screen bg-[#f5f5f8] font-[Outfit,sans-serif]">
         {/* ALERT */}
         {alert.show && (
-          <div className="at-alert-overlay">
-            <div className="at-alert-box">
-              <div className="at-alert-icon">
-                <AlertCircle
-                  style={{ width: 22, height: 22, color: "#d97706" }}
-                />
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-sm animate-[at-pop_0.25s_ease] rounded-2xl border border-[#e8e8f0] bg-white p-6 shadow-[0_20px_60px_rgba(0,0,0,0.12)]">
+              <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50">
+                <AlertCircle className="h-[22px] w-[22px] text-amber-600" />
               </div>
-              <p className="at-alert-title">Time Alert</p>
-              <p className="at-alert-msg">{alert.message}</p>
-              <button className="at-alert-btn" onClick={hideAlert}>
-                Got it!
-              </button>
-              <div style={{ clear: "both" }} />
+              <p className="mb-1.5 text-base font-extrabold text-[#1a1a2e]">
+                Time Alert
+              </p>
+              <p className="mb-5 text-sm leading-relaxed text-[#606080]">
+                {alert.message}
+              </p>
+              <div className="flex justify-end">
+                <button
+                  className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-violet-700"
+                  onClick={hideAlert}
+                >
+                  Got it!
+                </button>
+              </div>
             </div>
           </div>
         )}
 
-        <div className="at-body">
+        <div className="mx-auto max-w-[1200px] px-4 py-6 sm:px-6 sm:py-8">
+          <div className="mb-4">
+            <BackButton />
+          </div>
+
+          <p className="mb-3 text-[0.66rem] font-bold uppercase tracking-widest text-[#9090a8]">
+            Today's Session
+          </p>
+
           {/* TIMER CARD */}
-          <p className="at-section-label">Today's Session</p>
-          <BackButton />
-          <div className="at-timer-card">
-            <div className="at-timer-top">
-              <div className="at-date-row">
-                <Calendar style={{ width: 15, height: 15, color: "#9090a8" }} />
-                <span
-                  style={{
-                    fontSize: "0.83rem",
-                    color: "#6060a0",
-                    fontWeight: 500,
-                  }}
-                >
+          <div className="overflow-hidden rounded-2xl border border-[#e8e8f0] bg-white">
+            <div className="flex flex-wrap items-center justify-between gap-3 px-4 pt-5 sm:px-7">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-[15px] w-[15px] text-[#9090a8]" />
+                <span className="text-sm font-medium text-[#6060a0]">
                   {currentFormattedDate || "Loading..."}
                 </span>
               </div>
-              {isTimeIn && (
-                <div className="at-status-pill">
-                  <div className="at-status-pill-dot" />
-                  Active Session
-                </div>
-              )}
-              <ViewScheduleButton />
+              <div className="flex items-center gap-2">
+                {isTimeIn && (
+                  <div className="inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-xs font-semibold text-violet-600">
+                    <span className="h-[5px] w-[5px] animate-pulse rounded-full bg-emerald-500" />
+                    Active Session
+                  </div>
+                )}
+                <ViewScheduleButton />
+              </div>
             </div>
 
             {/* CLOCK */}
-            <div className="at-clock-wrap">
+            <div className="flex flex-col items-center px-4 pb-6 pt-8 sm:px-7">
               <span
-                className="at-clock-label"
-                style={
-                  {
-                    "--timer-bg": timerMeta.bg,
-                    "--timer-color": timerMeta.color,
-                  } as any
-                }
+                className={`mb-3 rounded-full px-3 py-1 text-[0.65rem] font-bold uppercase tracking-wider ${timerMeta.bg} ${timerMeta.text}`}
               >
                 {timerMeta.label}
               </span>
               <div
-                className={`at-clock ${!isTimeIn ? "at-clock-dimmed" : ""}`}
-                style={{ "--timer-color": timerMeta.color } as any}
+                className={`font-mono text-5xl font-bold leading-none tracking-tight transition-colors sm:text-6xl md:text-7xl ${timerMeta.text} ${
+                  !isTimeIn ? "opacity-30" : ""
+                }`}
               >
                 {formatElapsedTime(elapsedTime)}
               </div>
             </div>
 
             {/* CONTROLS */}
-            <div className="at-controls">
+            <div className="flex flex-wrap items-center justify-center gap-3 border-t border-[#f0f0f6] px-4 py-5 sm:px-7">
               {!isTimeIn ? (
                 <button
-                  className="at-time-in-btn"
+                  className="inline-flex w-full min-w-[140px] items-center justify-center gap-2 rounded-xl bg-violet-600 px-6 py-3 text-sm font-bold text-white shadow-[0_2px_12px_rgba(124,58,237,0.25)] transition hover:-translate-y-px hover:bg-violet-700 hover:shadow-[0_4px_18px_rgba(124,58,237,0.3)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 sm:w-auto"
                   onClick={handleTimeIn}
                   disabled={isLoadingTimeIn}
                 >
                   {isLoadingTimeIn ? (
-                    <LoadingSpinner />
+                    <LoadingSpinner className="border-white/30 border-t-white" />
                   ) : (
                     <>
-                      <Home style={{ width: 16, height: 16 }} /> Clock In
+                      <Home className="h-4 w-4" /> Clock In
                     </>
                   )}
                 </button>
               ) : (
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.65rem",
-                    flexWrap: "wrap",
-                    justifyContent: "center",
-                  }}
-                >
+                <div className="flex w-full flex-col items-stretch justify-center gap-2.5 sm:w-auto sm:flex-row sm:items-center">
                   <Select
                     value={selectedAction || undefined}
                     onValueChange={handleActionChange}
                   >
-                    <SelectTrigger
-                      style={{
-                        width: "200px",
-                        fontFamily: "'Outfit', sans-serif",
-                        fontSize: "0.83rem",
-                        borderRadius: "11px",
-                        borderColor: "#e0e0f0",
-                      }}
-                    >
+                    <SelectTrigger className="w-full rounded-xl border-[#e0e0f0] text-sm sm:w-[200px]">
                       <SelectValue placeholder="Select Action" />
                     </SelectTrigger>
                     <SelectContent>
                       {getAvailableActions().map((action) => (
-                        <SelectItem
-                          key={action.value}
-                          value={action.value}
-                          style={{ fontFamily: "'Outfit', sans-serif" }}
-                        >
+                        <SelectItem key={action.value} value={action.value}>
                           {action.label}
                         </SelectItem>
                       ))}
@@ -1242,148 +1175,83 @@ export const AttendanceTracker: React.FC = () => {
             </div>
 
             {/* SESSION SUMMARY */}
-            {isTimeIn && (
-              <div className="at-session-section">
-                <p
-                  style={{
-                    fontSize: "0.65rem",
-                    fontWeight: 700,
-                    letterSpacing: "0.12em",
-                    textTransform: "uppercase",
-                    color: "#9090a8",
-                    marginBottom: "0.75rem",
-                  }}
-                >
+            {isTimeIn && sessionCards.length > 0 && (
+              <div className="px-4 pb-6 sm:px-7">
+                <p className="mb-3 text-[0.65rem] font-bold uppercase tracking-widest text-[#9090a8]">
                   Session Summary
                 </p>
-                <div className="at-session-grid">
-                  {currentEntry.timeIn && (
-                    <div className="at-session-card">
-                      <div className="at-session-card-header">
+                <div className="grid grid-cols gap-5 sm:grid-cols-2 md:grid-cols-4">
+                  {sessionCards.map((card) => {
+                    const c = sessionCardColors[card.color];
+                    return (
+                      <div
+                        key={card.key}
+                        className="group relative overflow-hidden rounded-xl border border-[#ededf5] bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#d8d8ec] hover:shadow-md"
+                      >
                         <div
-                          className="at-session-icon"
-                          style={{ background: "#f5f3ff" }}
-                        >
-                          <Clock
-                            style={{ width: 14, height: 14, color: "#7c3aed" }}
-                          />
-                        </div>
-                        <span className="at-session-card-label">Time In</span>
-                      </div>
-                      <p className="at-session-main">
-                        {formatTime(currentEntry.timeIn)}
-                      </p>
-                    </div>
-                  )}
-                  {currentEntry.shift && (
-                    <div className="at-session-card">
-                      <div className="at-session-card-header">
-                        <div
-                          className="at-session-icon"
-                          style={{ background: "#f0f9ff" }}
-                        >
-                          <TrendingUp
-                            style={{ width: 14, height: 14, color: "#0284c7" }}
-                          />
-                        </div>
-                        <span className="at-session-card-label">Shift</span>
-                      </div>
-                      <p className="at-session-main">{currentEntry.shift}</p>
-                    </div>
-                  )}
-                  {currentEntry.breakStart && (
-                    <div className="at-session-card">
-                      <div className="at-session-card-header">
-                        <div
-                          className="at-session-icon"
-                          style={{ background: "#f0fdf4" }}
-                        >
-                          <Coffee
-                            style={{ width: 14, height: 14, color: "#059669" }}
-                          />
-                        </div>
-                        <span className="at-session-card-label">Break 1</span>
-                      </div>
-                      <p className="at-session-main">
-                        {formatTime(currentEntry.breakStart)}
-                      </p>
-                      {currentEntry.breakEnd && (
-                        <p className="at-session-sub">
-                          End: {formatTime(currentEntry.breakEnd)}
-                        </p>
-                      )}
-                      {currentEntry.totalBreakTime !== undefined && (
-                        <p className="at-session-sub">
-                          Total:{" "}
-                          {formatMinutesToHoursMinutes(
-                            Math.round(currentEntry.totalBreakTime * 60),
+                          className={`absolute inset-x-0 top-0 h-1 ${c.bar}`}
+                        />
+                        <div className="mb-3 flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={`flex h-8 w-8 items-center justify-center rounded-lg ${c.chip}`}
+                            >
+                              <card.icon className={`h-4 w-4 ${c.icon}`} />
+                            </div>
+                            <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[#9090a8]">
+                              {card.label}
+                            </span>
+                          </div>
+                          {card.status && (
+                            <span
+                              className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[0.6rem] font-bold ${
+                                card.status === "ongoing"
+                                  ? c.badge
+                                  : "bg-[#f5f5f8] text-[#19ce01]"
+                              }`}
+                            >
+                              {card.status === "ongoing" ? (
+                                <>
+                                  <span
+                                    className={`h-[5px] w-[5px] animate-pulse rounded-full ${c.bar}`}
+                                  />
+                                  Ongoing
+                                </>
+                              ) : (
+                                <>
+                                  <CheckCircle2 className="h-2.5 w-2.5 text-green-500" />
+                                  Done
+                                </>
+                              )}
+                            </span>
                           )}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                  {currentEntry.secondBreakStart && (
-                    <div className="at-session-card">
-                      <div className="at-session-card-header">
-                        <div
-                          className="at-session-icon"
-                          style={{ background: "#eef2ff" }}
-                        >
-                          <Coffee
-                            style={{ width: 14, height: 14, color: "#4f46e5" }}
-                          />
                         </div>
-                        <span className="at-session-card-label">Break 2</span>
+                        <p className="text-lg font-bold leading-tight text-[#1a1a2e]">
+                          {card.main}
+                        </p>
+                        {(card.endLabel || card.totalLabel) && (
+                          <div className="mt-2.5 flex items-center gap-3 border-t border-[#f0f0f6] pt-2.5 text-xs">
+                            {card.endLabel && (
+                              <div>
+                                <p className="text-[#b0b0c0]">End</p>
+                                <p className="font-semibold text-[#3a3a5a]">
+                                  {card.endLabel}
+                                </p>
+                              </div>
+                            )}
+                            {card.totalLabel && (
+                              <div>
+                                <p className="text-[#b0b0c0]">Total</p>
+                                <p className="font-semibold text-[#3a3a5a]">
+                                  {card.totalLabel}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
-                      <p className="at-session-main">
-                        {formatTime(currentEntry.secondBreakStart)}
-                      </p>
-                      {currentEntry.secondBreakEnd && (
-                        <p className="at-session-sub">
-                          End: {formatTime(currentEntry.secondBreakEnd)}
-                        </p>
-                      )}
-                      {currentEntry.totalSecondBreakTime !== undefined && (
-                        <p className="at-session-sub">
-                          Total:{" "}
-                          {formatMinutesToHoursMinutes(
-                            Math.round(currentEntry.totalSecondBreakTime * 60),
-                          )}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                  {currentEntry.lunchStart && (
-                    <div className="at-session-card">
-                      <div className="at-session-card-header">
-                        <div
-                          className="at-session-icon"
-                          style={{ background: "#fffbeb" }}
-                        >
-                          <Utensils
-                            style={{ width: 14, height: 14, color: "#d97706" }}
-                          />
-                        </div>
-                        <span className="at-session-card-label">Lunch</span>
-                      </div>
-                      <p className="at-session-main">
-                        {formatTime(currentEntry.lunchStart)}
-                      </p>
-                      {currentEntry.lunchEnd && (
-                        <p className="at-session-sub">
-                          End: {formatTime(currentEntry.lunchEnd)}
-                        </p>
-                      )}
-                      {currentEntry.totalLunchTime !== undefined && (
-                        <p className="at-session-sub">
-                          Total:{" "}
-                          {formatMinutesToHoursMinutes(
-                            Math.round(currentEntry.totalLunchTime * 60),
-                          )}
-                        </p>
-                      )}
-                    </div>
-                  )}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -1391,58 +1259,28 @@ export const AttendanceTracker: React.FC = () => {
 
           {/* TIME OUT DIALOG */}
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogContent
-              style={{
-                fontFamily: "'Outfit', sans-serif",
-                borderRadius: "18px",
-              }}
-            >
+            <DialogContent className="rounded-2xl font-[Outfit,sans-serif]">
               <DialogHeader>
-                <DialogTitle style={{ fontWeight: 800, fontSize: "1.05rem" }}>
+                <DialogTitle className="text-lg font-extrabold">
                   Complete Your Work Day
                 </DialogTitle>
               </DialogHeader>
-              <div style={{ paddingTop: "0.5rem" }}>
+              <div className="pt-2">
                 <Label
                   htmlFor="notes"
-                  style={{
-                    fontSize: "0.78rem",
-                    fontWeight: 600,
-                    color: "#6060a0",
-                  }}
+                  className="text-sm font-semibold text-[#6060a0]"
                 >
                   Notes (Optional)
                 </Label>
                 <Input
                   id="notes"
                   placeholder="Add any notes about your work day..."
-                  style={{
-                    marginTop: "0.4rem",
-                    borderRadius: "10px",
-                    fontFamily: "'Outfit', sans-serif",
-                  }}
+                  className="mt-2 rounded-lg"
                 />
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    gap: "0.6rem",
-                    marginTop: "1rem",
-                  }}
-                >
+                <div className="mt-4 flex flex-col-reverse justify-end gap-2.5 sm:flex-row">
                   <button
                     onClick={() => setDialogOpen(false)}
-                    style={{
-                      fontFamily: "'Outfit', sans-serif",
-                      fontSize: "0.82rem",
-                      fontWeight: 600,
-                      padding: "0.55rem 1.1rem",
-                      borderRadius: "10px",
-                      border: "1px solid #e0e0f0",
-                      background: "#f8f8fb",
-                      cursor: "pointer",
-                      color: "#6060a0",
-                    }}
+                    className="rounded-lg border border-[#e0e0f0] bg-[#f8f8fb] px-4 py-2.5 text-sm font-semibold text-[#6060a0] transition hover:bg-[#f0f0f6]"
                   >
                     Cancel
                   </button>
@@ -1454,14 +1292,13 @@ export const AttendanceTracker: React.FC = () => {
                       handleTimeOut({ notes: notesInput?.value });
                     }}
                     disabled={isLoadingTimeOut}
-                    className="at-time-in-btn"
-                    style={{
-                      minWidth: "auto",
-                      padding: "0.55rem 1.1rem",
-                      fontSize: "0.82rem",
-                    }}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {isLoadingTimeOut ? <LoadingSpinner /> : "Complete Day"}
+                    {isLoadingTimeOut ? (
+                      <LoadingSpinner className="border-white/30 border-t-white" />
+                    ) : (
+                      "Complete Day"
+                    )}
                   </button>
                 </div>
               </div>
@@ -1469,39 +1306,29 @@ export const AttendanceTracker: React.FC = () => {
           </Dialog>
 
           {/* HISTORY */}
-          <div className="at-history-card">
-            <div className="at-history-header">
+          <div className="mt-5 overflow-hidden rounded-2xl border border-[#e8e8f0] bg-white">
+            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#f0f0f6] px-4 py-5 sm:px-7">
               <div>
-                <p className="at-history-title">Attendance History</p>
-                <p className="at-history-sub">
+                <p className="text-sm font-bold text-[#1a1a2e]">
+                  Attendance History
+                </p>
+                <p className="mt-0.5 text-xs text-[#9090a8]">
                   {months.find((m) => m.value === selectedMonth)?.label}{" "}
                   {selectedYear} · {selectedCutoff} cut-off
                 </p>
               </div>
-              <div className="at-filter-row">
-                <Filter style={{ width: 13, height: 13, color: "#9090a8" }} />
+              <div className="flex flex-wrap items-center gap-2">
+                <Filter className="h-[13px] w-[13px] shrink-0 text-[#9090a8]" />
                 <Select
                   value={selectedYear.toString()}
                   onValueChange={(v) => setSelectedYear(parseInt(v))}
                 >
-                  <SelectTrigger
-                    style={{
-                      width: "90px",
-                      fontFamily: "'Outfit', sans-serif",
-                      fontSize: "0.78rem",
-                      borderRadius: "9px",
-                      borderColor: "#e0e0f0",
-                    }}
-                  >
+                  <SelectTrigger className="w-[88px] rounded-lg border-[#e0e0f0] text-xs">
                     <SelectValue placeholder="Year" />
                   </SelectTrigger>
                   <SelectContent>
                     {years.map((year) => (
-                      <SelectItem
-                        key={year}
-                        value={year.toString()}
-                        style={{ fontFamily: "'Outfit', sans-serif" }}
-                      >
+                      <SelectItem key={year} value={year.toString()}>
                         {year}
                       </SelectItem>
                     ))}
@@ -1511,24 +1338,12 @@ export const AttendanceTracker: React.FC = () => {
                   value={selectedMonth.toString()}
                   onValueChange={(v) => setSelectedMonth(parseInt(v))}
                 >
-                  <SelectTrigger
-                    style={{
-                      width: "120px",
-                      fontFamily: "'Outfit', sans-serif",
-                      fontSize: "0.78rem",
-                      borderRadius: "9px",
-                      borderColor: "#e0e0f0",
-                    }}
-                  >
+                  <SelectTrigger className="w-[118px] rounded-lg border-[#e0e0f0] text-xs">
                     <SelectValue placeholder="Month" />
                   </SelectTrigger>
                   <SelectContent>
                     {months.map((m) => (
-                      <SelectItem
-                        key={m.value}
-                        value={m.value.toString()}
-                        style={{ fontFamily: "'Outfit', sans-serif" }}
-                      >
+                      <SelectItem key={m.value} value={m.value.toString()}>
                         {m.label}
                       </SelectItem>
                     ))}
@@ -1538,200 +1353,246 @@ export const AttendanceTracker: React.FC = () => {
                   value={selectedCutoff}
                   onValueChange={(v: CutoffPeriod) => setSelectedCutoff(v)}
                 >
-                  <SelectTrigger
-                    style={{
-                      width: "120px",
-                      fontFamily: "'Outfit', sans-serif",
-                      fontSize: "0.78rem",
-                      borderRadius: "9px",
-                      borderColor: "#e0e0f0",
-                    }}
-                  >
+                  <SelectTrigger className="w-[118px] rounded-lg border-[#e0e0f0] text-xs">
                     <SelectValue placeholder="Cut-off" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem
-                      value="1-15"
-                      style={{ fontFamily: "'Outfit', sans-serif" }}
-                    >
-                      1st – 15th
-                    </SelectItem>
-                    <SelectItem
-                      value="16-31"
-                      style={{ fontFamily: "'Outfit', sans-serif" }}
-                    >
-                      16th – 31st
-                    </SelectItem>
+                    <SelectItem value="1-15">1st – 15th</SelectItem>
+                    <SelectItem value="16-31">16th – 31st</SelectItem>
                   </SelectContent>
                 </Select>
                 <button
-                  className="at-refresh-btn"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-600 transition hover:border-indigo-300 hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-60"
                   onClick={getAttendance}
                   disabled={isLoadingHistory}
                 >
-                  <RefreshCw style={{ width: 12, height: 12 }} />
+                  <RefreshCw className="h-3 w-3" />
                   Refresh
                 </button>
               </div>
             </div>
 
-            <div className="at-history-body">
-              {isLoadingHistory ? (
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    padding: "3rem 1rem",
-                  }}
-                >
-                  <LoadingSpinner />
+            {isLoadingHistory ? (
+              <div className="flex justify-center py-12">
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-indigo-200 border-t-indigo-500" />
+              </div>
+            ) : filteredEntries.length === 0 ? (
+              <div className="flex flex-col items-center px-4 py-14 text-center">
+                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f5f5f8]">
+                  <Inbox className="h-5 w-5 text-[#c0c0d0]" />
                 </div>
-              ) : (
-                <div className="at-overflow-x">
-                  <table className="at-table">
+                <p className="text-sm font-bold text-[#1a1a2e]">
+                  No records found
+                </p>
+                <p className="mt-1 text-xs text-[#9090a8]">
+                  {months.find((m) => m.value === selectedMonth)?.label}{" "}
+                  {selectedYear} · {selectedCutoff} cut-off
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* MOBILE: card list (readable without horizontal scrolling) */}
+                <div className="flex flex-col gap-3 p-4 md:hidden">
+                  {filteredEntries.map((entry, index) => (
+                    <div
+                      key={entry.id || `entry-${index}`}
+                      className="rounded-xl border border-[#ededf5] bg-[#f8f8fb] p-4"
+                    >
+                      <div className="mb-3 flex items-center justify-between">
+                        <span className="text-sm font-bold text-[#1a1a2e]">
+                          {entry.date}
+                        </span>
+                        {entry.timeOut ? (
+                          <span className="text-xs font-medium text-[#9090a8]">
+                            {formatHoursToHoursMinutes(
+                              String(entry.totalHours || ""),
+                            )}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[0.65rem] font-bold text-emerald-600">
+                            <span className="h-[5px] w-[5px] rounded-full bg-emerald-500" />
+                            Active
+                          </span>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+                        <div>
+                          <p className="text-[#9090a8]">Time In</p>
+                          <p className="font-semibold text-[#3a3a5a]">
+                            {formatTime(entry.timeIn)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[#9090a8]">Time Out</p>
+                          <p className="font-semibold text-[#3a3a5a]">
+                            {entry.timeOut ? formatTime(entry.timeOut) : "—"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[#9090a8]">Break 1</p>
+                          <p className="font-semibold text-[#3a3a5a]">
+                            {formatHoursToHoursMinutes(
+                              String(entry.totalBreakTime || ""),
+                            )}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[#9090a8]">Break 2</p>
+                          <p className="font-semibold text-[#3a3a5a]">
+                            {formatHoursToHoursMinutes(
+                              String(entry.totalSecondBreakTime || ""),
+                            )}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[#9090a8]">Lunch</p>
+                          <p className="font-semibold text-[#3a3a5a]">
+                            {formatHoursToHoursMinutes(
+                              String(entry.totalLunchTime || ""),
+                            )}
+                          </p>
+                        </div>
+                        {entry.overbreak1 ||
+                        entry.overbreak2 ||
+                        entry.overlunch ? (
+                          <div>
+                            <p className="text-[#9090a8]">Overtime</p>
+                            <p className="font-semibold text-red-600">
+                              {[
+                                entry.overbreak1 && entry.overbreak1 > 0
+                                  ? `B1 +${entry.overbreak1}m`
+                                  : null,
+                                entry.overbreak2 && entry.overbreak2 > 0
+                                  ? `B2 +${entry.overbreak2}m`
+                                  : null,
+                                entry.overlunch && entry.overlunch > 0
+                                  ? `Lunch +${entry.overlunch}m`
+                                  : null,
+                              ]
+                                .filter(Boolean)
+                                .join(", ")}
+                            </p>
+                          </div>
+                        ) : null}
+                      </div>
+                      {entry.notes && (
+                        <p className="mt-3 border-t border-[#ededf5] pt-2 text-xs text-[#6060a0]">
+                          {entry.notes}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* DESKTOP / TABLET: table */}
+                <div className="hidden overflow-x-auto md:block">
+                  <table className="w-full border-collapse text-sm">
                     <thead>
-                      <tr>
-                        {[
-                          "Date",
-                          "Time In",
-                          "Time Out",
-                          "Total Hrs",
-                          "Break 1",
-                          "Lunch",
-                          "Break 2",
-                          "Overbreak 1",
-                          "Overbreak 2",
-                          "Overlunch",
-                          "Notes",
-                        ].map((h) => (
-                          <th key={h}>{h}</th>
+                      <tr className="border-b border-[#f0f0f6] bg-[#fafafa]">
+                        {tableColumns.map((h) => (
+                          <th
+                            key={h}
+                            className="whitespace-nowrap px-4 py-3 text-left text-[0.62rem] font-bold uppercase tracking-wider text-[#9090a8]"
+                          >
+                            {h}
+                          </th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredEntries.length > 0 ? (
-                        filteredEntries.map((entry, index) => (
-                          <tr key={entry.id || `entry-${index}`}>
-                            <td>{entry.date}</td>
-                            <td>{formatTime(entry.timeIn)}</td>
-                            <td>
-                              {entry.timeOut ? (
-                                formatTime(entry.timeOut)
-                              ) : (
-                                <span className="at-in-progress">
-                                  <span
-                                    style={{
-                                      width: 5,
-                                      height: 5,
-                                      borderRadius: "50%",
-                                      background: "#10b981",
-                                      display: "inline-block",
-                                    }}
-                                  />
-                                  Active
-                                </span>
-                              )}
-                            </td>
-                            <td>
-                              {formatHoursToHoursMinutes(
-                                String(entry.totalHours || ""),
-                              )}
-                            </td>
-                            <td>
-                              {formatHoursToHoursMinutes(
-                                String(entry.totalBreakTime || ""),
-                              )}
-                            </td>
-                            <td>
-                              {formatHoursToHoursMinutes(
-                                String(entry.totalLunchTime || ""),
-                              )}
-                            </td>
-                            <td>
-                              {formatHoursToHoursMinutes(
-                                String(entry.totalSecondBreakTime || ""),
-                              )}
-                            </td>
-                            <td
-                              className={
-                                entry.overbreak1 && entry.overbreak1 > 0
-                                  ? "at-overbreak"
-                                  : ""
-                              }
-                            >
-                              {entry.overbreak1 && entry.overbreak1 > 0
-                                ? `${entry.overbreak1}m`
-                                : "—"}
-                            </td>
-                            <td
-                              className={
-                                entry.overbreak2 && entry.overbreak2 > 0
-                                  ? "at-overbreak"
-                                  : ""
-                              }
-                            >
-                              {entry.overbreak2 && entry.overbreak2 > 0
-                                ? `${entry.overbreak2}m`
-                                : "—"}
-                            </td>
-                            <td
-                              className={
-                                entry.overlunch && entry.overlunch > 0
-                                  ? "at-overbreak"
-                                  : ""
-                              }
-                            >
-                              {entry.overlunch && entry.overlunch > 0
-                                ? `${entry.overlunch}m`
-                                : "—"}
-                            </td>
-                            <td
-                              style={{
-                                maxWidth: 160,
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                              }}
-                              title={entry.notes || ""}
-                            >
-                              {entry.notes || "—"}
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr className="at-empty-row">
-                          <td colSpan={11}>
-                            <div className="at-empty-icon">
-                              <Clock
-                                style={{
-                                  width: 20,
-                                  height: 20,
-                                  color: "#c0c0d0",
-                                }}
-                              />
-                            </div>
-                            <p className="at-empty-title">No records found</p>
-                            <p className="at-empty-sub">
-                              {
-                                months.find((m) => m.value === selectedMonth)
-                                  ?.label
-                              }{" "}
-                              {selectedYear} · {selectedCutoff} cut-off
-                            </p>
+                      {filteredEntries.map((entry, index) => (
+                        <tr
+                          key={entry.id || `entry-${index}`}
+                          className="border-b border-[#f5f5fa] transition-colors last:border-none hover:bg-[#f8f8fb]"
+                        >
+                          <td className="whitespace-nowrap px-4 py-3 font-semibold text-[#1a1a2e]">
+                            {entry.date}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-[#3a3a5a]">
+                            {formatTime(entry.timeIn)}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-[#3a3a5a]">
+                            {entry.timeOut ? (
+                              formatTime(entry.timeOut)
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[0.65rem] font-bold text-emerald-600">
+                                <span className="h-[5px] w-[5px] rounded-full bg-emerald-500" />
+                                Active
+                              </span>
+                            )}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-[#3a3a5a]">
+                            {formatHoursToHoursMinutes(
+                              String(entry.totalHours || ""),
+                            )}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-[#3a3a5a]">
+                            {formatHoursToHoursMinutes(
+                              String(entry.totalBreakTime || ""),
+                            )}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-[#3a3a5a]">
+                            {formatHoursToHoursMinutes(
+                              String(entry.totalLunchTime || ""),
+                            )}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-[#3a3a5a]">
+                            {formatHoursToHoursMinutes(
+                              String(entry.totalSecondBreakTime || ""),
+                            )}
+                          </td>
+                          <td
+                            className={`whitespace-nowrap px-4 py-3 ${
+                              entry.overbreak1 && entry.overbreak1 > 0
+                                ? "font-semibold text-red-600"
+                                : "text-[#3a3a5a]"
+                            }`}
+                          >
+                            {entry.overbreak1 && entry.overbreak1 > 0
+                              ? `${entry.overbreak1}m`
+                              : "—"}
+                          </td>
+                          <td
+                            className={`whitespace-nowrap px-4 py-3 ${
+                              entry.overbreak2 && entry.overbreak2 > 0
+                                ? "font-semibold text-red-600"
+                                : "text-[#3a3a5a]"
+                            }`}
+                          >
+                            {entry.overbreak2 && entry.overbreak2 > 0
+                              ? `${entry.overbreak2}m`
+                              : "—"}
+                          </td>
+                          <td
+                            className={`whitespace-nowrap px-4 py-3 ${
+                              entry.overlunch && entry.overlunch > 0
+                                ? "font-semibold text-red-600"
+                                : "text-[#3a3a5a]"
+                            }`}
+                          >
+                            {entry.overlunch && entry.overlunch > 0
+                              ? `${entry.overlunch}m`
+                              : "—"}
+                          </td>
+                          <td
+                            className="max-w-[160px] overflow-hidden text-ellipsis whitespace-nowrap px-4 py-3 text-[#3a3a5a]"
+                            title={entry.notes || ""}
+                          >
+                            {entry.notes || "—"}
                           </td>
                         </tr>
-                      )}
+                      ))}
                     </tbody>
                   </table>
-                  {filteredEntries.length > 0 && (
-                    <div className="at-table-footer">
-                      Showing {filteredEntries.length} record(s) ·{" "}
-                      {months.find((m) => m.value === selectedMonth)?.label}{" "}
-                      {selectedYear} · {selectedCutoff} cut-off
-                    </div>
-                  )}
                 </div>
-              )}
-            </div>
+
+                <div className="border-t border-[#f0f0f6] px-4 py-3 text-xs text-[#9090a8] sm:px-7">
+                  Showing {filteredEntries.length} record(s) ·{" "}
+                  {months.find((m) => m.value === selectedMonth)?.label}{" "}
+                  {selectedYear} · {selectedCutoff} cut-off
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
