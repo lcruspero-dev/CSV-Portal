@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NteAPI, TicketAPi } from "@/API/endpoint";
-import SurveyModal from "@/components/kit/Survey";
-import { motion } from "framer-motion";
+// import SurveyModal from "@/components/kit/Survey";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   Clock,
   FileText,
@@ -12,10 +12,29 @@ import {
   Briefcase,
   Shield,
   ArrowUpRight,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import TitleCase from "@/utils/titleCase";
+
+interface Feature {
+  id: number;
+  title: string;
+  description: string;
+  icon: React.ComponentType<{
+    className?: string;
+    style?: React.CSSProperties;
+  }>;
+  path: string;
+  accent: string;
+  softBg: string;
+  label: string;
+  notification: number;
+  exclamation?: boolean;
+  tooltip?: string;
+}
 
 const UserHome = () => {
   const navigate = useNavigate();
@@ -97,7 +116,15 @@ const UserHome = () => {
     }
   }, [user]);
 
-  const features = [
+  // An NTE can need attention via a numeric count (PER: sign / submit
+  // explanation) OR via the exclamation-only case (PNODA: acknowledge
+  // decision, no count attached to it). Both should count as one pending
+  // action so the header stat and the card badge agree with each other.
+  const ntePendingActions =
+    nteNotificationCount > 0 ? nteNotificationCount : showExclamation ? 1 : 0;
+  const totalPendingActions = unacknowledgedCount + ntePendingActions;
+
+  const features: Feature[] = [
     {
       id: 1,
       title: "Time Tracker",
@@ -182,509 +209,357 @@ const UserHome = () => {
     },
   };
 
+  // Time Tracker is the default hero. Hovering (or focusing, for keyboard
+  // users) a carousel card previews that service in the hero instead;
+  // moving away reverts to the default. All services live in the carousel,
+  // including Time Tracker itself.
+  const DEFAULT_FEATURED_ID = 1;
+  const defaultFeatured =
+    features.find((f) => f.id === DEFAULT_FEATURED_ID) ?? features[0];
+  const [hoveredId, setHoveredId] = useState<number | null>(null);
+  const heroFeature =
+    features.find((f) => f.id === hoveredId) ?? defaultFeatured;
+  const carouselFeatures = features;
+
+  // Carousel: tracks which card is centered so the arrow buttons and dot
+  // indicator stay in sync with whatever the person scrolled or swiped to.
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    const container = carouselRef.current;
+    if (!container) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && entry.intersectionRatio > 0.6) {
+            const idx = Number((entry.target as HTMLElement).dataset.index);
+            if (!Number.isNaN(idx)) setActiveIndex(idx);
+          }
+        });
+      },
+      { root: container, threshold: [0.6] },
+    );
+    cardRefs.current.forEach((el) => el && observer.observe(el));
+    return () => observer.disconnect();
+  }, [carouselFeatures.length]);
+
+  const scrollToIndex = (index: number) => {
+    cardRefs.current[index]?.scrollIntoView({
+      behavior: "smooth",
+      inline: "center",
+      block: "nearest",
+    });
+  };
+
+  const scrollByCard = (direction: 1 | -1) => {
+    const container = carouselRef.current;
+    const card = cardRefs.current[0];
+    if (!container) return;
+    const amount = (card?.offsetWidth ?? 260) + 16;
+    container.scrollBy({ left: amount * direction, behavior: "smooth" });
+  };
+
   return (
     <>
-      <SurveyModal />
+      {/* <SurveyModal /> */}
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');`}</style>
 
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
-
-        .uh-root {
-          font-family: 'Outfit', sans-serif;
-          background: #f5f5f8;
-          min-height: 100vh;
-          color: #1a1a2e;
-        }
-
-        .uh-header {
-          background: #ffffff;
-          border-bottom: 1px solid #e8e8f0;
-          padding: 2rem 2.5rem 1.8rem;
-        }
-
-        .uh-header-inner {
-          max-width: 1200px;
-          margin: 0 auto;
-          display: flex;
-          align-items: flex-end;
-          justify-content: space-between;
-          gap: 1rem;
-        }
-
-        .uh-tag {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.4rem;
-          background: #f3f0ff;
-          border: 1px solid #ddd6fe;
-          border-radius: 100px;
-          padding: 0.25rem 0.75rem;
-          margin-bottom: 0.75rem;
-        }
-
-        .uh-tag-dot {
-          width: 5px;
-          height: 5px;
-          border-radius: 50%;
-          background: #7c3aed;
-        }
-
-        .uh-tag-text {
-          font-size: 0.65rem;
-          font-weight: 600;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          color: #7c3aed;
-        }
-
-        .uh-heading {
-          font-size: 2rem;
-          font-weight: 800;
-          color: #0f0f1a;
-          letter-spacing: -0.03em;
-          line-height: 1;
-        }
-
-        .uh-subheading {
-          font-size: 0.88rem;
-          color: #8888a0;
-          margin-top: 0.4rem;
-          font-weight: 400;
-        }
-
-        .uh-home-btn {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          background: #f3f0ff;
-          border: 1px solid #ddd6fe;
-          border-radius: 10px;
-          padding: 0.5rem 0.9rem;
-          font-size: 0.8rem;
-          font-weight: 600;
-          color: #7c3aed;
-        }
-
-        .uh-body {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 2rem 2.5rem 3rem;
-        }
-
-        @media (max-width: 640px) {
-          .uh-header { padding: 1.5rem; }
-          .uh-body { padding: 1.5rem; }
-          .uh-heading { font-size: 1.6rem; }
-          .uh-stats-grid { grid-template-columns: 1fr !important; }
-          .uh-features-grid { grid-template-columns: 1fr !important; }
-        }
-        @media (min-width: 641px) and (max-width: 960px) {
-          .uh-features-grid { grid-template-columns: repeat(2, 1fr) !important; }
-          .uh-stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
-        }
-
-        /* STATS */
-        .uh-stats-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 1rem;
-          margin-bottom: 2rem;
-        }
-
-        .uh-stat-card {
-          background: #ffffff;
-          border: 1px solid #e8e8f0;
-          border-radius: 16px;
-          padding: 1.4rem 1.6rem;
-          position: relative;
-          overflow: hidden;
-          transition: box-shadow 0.2s, border-color 0.2s;
-        }
-
-        .uh-stat-card:hover {
-          box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-          border-color: #d0d0e8;
-        }
-
-        .uh-stat-label {
-          font-size: 0.68rem;
-          font-weight: 600;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          color: #9090a8;
-          margin-bottom: 0.5rem;
-        }
-
-        .uh-stat-value {
-          font-size: 2rem;
-          font-weight: 800;
-          color: #0f0f1a;
-          line-height: 1;
-        }
-
-        .uh-stat-icon-pill {
-          margin-top: 0.9rem;
-          display: inline-flex;
-          align-items: center;
-          gap: 0.4rem;
-          padding: 0.3rem 0.65rem;
-          border-radius: 100px;
-          font-size: 0.7rem;
-          font-weight: 600;
-        }
-
-        .uh-stat-watermark {
-          position: absolute;
-          bottom: -8px;
-          right: -4px;
-          opacity: 0.05;
-          pointer-events: none;
-        }
-
-        /* SECTION */
-        .uh-section-row {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 1rem;
-        }
-
-        .uh-section-label {
-          font-size: 0.68rem;
-          font-weight: 700;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          color: #9090a8;
-        }
-
-        .uh-section-sub {
-          font-size: 0.75rem;
-          color: #c0c0d0;
-        }
-
-        /* FEATURE CARDS */
-        .uh-features-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 1rem;
-        }
-
-        .uh-feature-card {
-          background: #ffffff;
-          border: 1px solid #e8e8f0;
-          border-radius: 18px;
-          padding: 1.5rem;
-          cursor: pointer;
-          position: relative;
-          overflow: hidden;
-          transition: box-shadow 0.22s, border-color 0.22s, transform 0.18s;
-          display: flex;
-          flex-direction: column;
-        }
-
-        .uh-feature-card:hover {
-          box-shadow: 0 8px 32px rgba(0,0,0,0.08);
-          border-color: var(--accent-light);
-          transform: translateY(-2px);
-        }
-
-        .uh-feature-card-top {
-          display: flex;
-          align-items: flex-start;
-          justify-content: space-between;
-          margin-bottom: 1rem;
-        }
-
-        .uh-feature-icon-wrap {
-          width: 44px;
-          height: 44px;
-          border-radius: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: var(--soft-bg);
-          transition: transform 0.2s;
-          position: relative;
-        }
-
-        .uh-feature-card:hover .uh-feature-icon-wrap {
-          transform: scale(1.1);
-        }
-
-        .uh-icon-badge {
-          position: absolute;
-          top: -6px;
-          right: -6px;
-          background: #dc2626;
-          color: white;
-          font-size: 0.58rem;
-          font-weight: 800;
-          min-width: 18px;
-          height: 18px;
-          border-radius: 100px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 0 4px;
-          border: 2px solid #ffffff;
-          line-height: 1;
-          animation: uh-badge-pop 0.3s ease;
-        }
-
-        @keyframes uh-badge-pop {
-          0% { transform: scale(0); }
-          70% { transform: scale(1.2); }
-          100% { transform: scale(1); }
-        }
-
-        .uh-feature-arrow {
-          color: #d8d8e8;
-          transition: color 0.2s, transform 0.2s;
-        }
-
-        .uh-feature-card:hover .uh-feature-arrow {
-          color: var(--accent);
-          transform: translate(2px, -2px);
-        }
-
-        .uh-feature-cat {
-          font-size: 0.6rem;
-          font-weight: 700;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          color: var(--accent);
-          margin-bottom: 0.3rem;
-          opacity: 0.8;
-        }
-
-        .uh-feature-title {
-          font-size: 0.95rem;
-          font-weight: 700;
-          color: #1a1a2e;
-          margin-bottom: 0.3rem;
-          transition: color 0.2s;
-        }
-
-        .uh-feature-card:hover .uh-feature-title {
-          color: var(--accent);
-        }
-
-        .uh-feature-desc {
-          font-size: 0.78rem;
-          color: #9090a8;
-          line-height: 1.5;
-        }
-
-        .uh-feature-footer {
-          margin-top: 1.2rem;
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-        }
-
-        .uh-progress-bar {
-          flex: 1;
-          height: 3px;
-          background: #f0f0f6;
-          border-radius: 10px;
-          overflow: hidden;
-        }
-
-        .uh-progress-fill {
-          height: 100%;
-          width: 0%;
-          background: var(--accent);
-          border-radius: 10px;
-          transition: width 0.35s ease;
-          opacity: 0.45;
-        }
-
-        .uh-feature-card:hover .uh-progress-fill {
-          width: 100%;
-        }
-
-        .uh-badge {
-          background: #fef2f2;
-          color: #dc2626;
-          border: 1px solid #fecaca;
-          font-size: 0.6rem;
-          font-weight: 700;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-          padding: 0.2rem 0.55rem;
-          border-radius: 100px;
-          white-space: nowrap;
-        }
-
-        .uh-badge-warn {
-          background: #fffbeb;
-          color: #d97706;
-          border: 1px solid #fde68a;
-        }
-      `}</style>
-
-      <div className="uh-root">
+      <div className=" bg-[#f5f5f8] font-[Outfit,sans-serif] text-[#1a1a2e]">
         {/* HEADER */}
         <motion.div
-          className="uh-header"
+          className="border-b border-[#e8e8f0] bg-white px-4 py-6 sm:px-6 md:px-10 md:py-8"
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
         >
-          <div className="uh-header-inner">
-            <div>
-              <div className="uh-tag">
-                <div className="uh-tag-dot" />
-                <span className="uh-tag-text">Employee Portal</span>
-              </div>
-              <h1 className="uh-heading">Dashboard</h1>
-              <p className="uh-subheading">
-                Welcome back, {TitleCase(user?.name) || "Employee"}
-              </p>
+          <div className="mx-auto max-w-[1200px]">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-3 py-1">
+              <span className="h-[5px] w-[5px] rounded-full bg-violet-600" />
+              <span className="text-[0.65rem] font-semibold uppercase tracking-widest text-violet-600">
+                Employee Portal
+              </span>
             </div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-[#0f0f1a] sm:text-3xl">
+              Dashboard
+            </h1>
+            <p className="mt-1 text-sm text-[#8888a0]">
+              Welcome back, {TitleCase(user?.name) || "Employee"}
+            </p>
           </div>
         </motion.div>
 
-        <div className="uh-body">
-          {/* STATS */}
+        <div className="mx-auto max-w-[1200px] px-4 py-6 sm:px-6 md:px-10 md:py-8">
+          {/* SLIM STATS STRIP */}
           <motion.div
-            className="uh-stats-grid"
+            className="mb-6 flex flex-wrap gap-2.5"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
           >
-            <motion.div className="uh-stat-card" variants={itemVariants}>
-              <p className="uh-stat-label">Pending Actions</p>
-              <p className="uh-stat-value">
-                {unacknowledgedCount + nteNotificationCount}
-              </p>
-              <div
-                className="uh-stat-icon-pill"
-                style={{ background: "#f3f0ff", color: "#7c3aed" }}
-              >
-                <Bell style={{ width: 12, height: 12 }} />
-                Notifications
-              </div>
-              <div className="uh-stat-watermark">
-                <Bell style={{ width: 80, height: 80, color: "#7c3aed" }} />
-              </div>
+            <motion.div
+              variants={itemVariants}
+              className="inline-flex items-center gap-2 rounded-full border border-[#e8e8f0] bg-white py-1.5 pl-1.5 pr-4"
+            >
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-violet-50">
+                <Bell className="h-3.5 w-3.5 text-violet-600" />
+              </span>
+              <span className="text-sm">
+                <span className="font-bold text-[#0f0f1a]">
+                  {totalPendingActions}
+                </span>{" "}
+                <span className="text-[#9090a8]">pending</span>
+              </span>
             </motion.div>
 
-            <motion.div className="uh-stat-card" variants={itemVariants}>
-              <p className="uh-stat-label">Services</p>
-              <p className="uh-stat-value">6</p>
-              <div
-                className="uh-stat-icon-pill"
-                style={{ background: "#eef2ff", color: "#4f46e5" }}
-              >
-                <Briefcase style={{ width: 12, height: 12 }} />
-                Modules
-              </div>
-              <div className="uh-stat-watermark">
-                <Briefcase
-                  style={{ width: 80, height: 80, color: "#4f46e5" }}
-                />
-              </div>
+            <motion.div
+              variants={itemVariants}
+              className="inline-flex items-center gap-2 rounded-full border border-[#e8e8f0] bg-white py-1.5 pl-1.5 pr-4"
+            >
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-50">
+                <Briefcase className="h-3.5 w-3.5 text-indigo-600" />
+              </span>
+              <span className="text-sm">
+                <span className="font-bold text-[#0f0f1a]">
+                  {features.length}
+                </span>{" "}
+                <span className="text-[#9090a8]">services</span>
+              </span>
             </motion.div>
 
-            <motion.div className="uh-stat-card" variants={itemVariants}>
-              <p className="uh-stat-label">Account Status</p>
-              <p
-                className="uh-stat-value"
-                style={{
-                  color: "#059669",
-                  fontSize: "1.6rem",
-                  paddingTop: "0.1rem",
-                }}
-              >
-                Active
-              </p>
-              <div
-                className="uh-stat-icon-pill"
-                style={{ background: "#f0fdf4", color: "#059669" }}
-              >
-                <Shield style={{ width: 12, height: 12 }} />
-                Verified
-              </div>
-              <div className="uh-stat-watermark">
-                <Shield style={{ width: 80, height: 80, color: "#059669" }} />
-              </div>
+            <motion.div
+              variants={itemVariants}
+              className="inline-flex items-center gap-2 rounded-full border border-[#e8e8f0] bg-white py-1.5 pl-1.5 pr-4"
+            >
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-50">
+                <Shield className="h-3.5 w-3.5 text-emerald-600" />
+              </span>
+              <span className="text-sm">
+                <span className="font-bold text-emerald-600">Active</span>{" "}
+                <span className="text-[#9090a8]">account</span>
+              </span>
             </motion.div>
           </motion.div>
 
-          {/* SECTION LABEL */}
-          <div className="uh-section-row">
-            <span className="uh-section-label">Services</span>
-            <span className="uh-section-sub">6 modules available</span>
-          </div>
-
-          {/* FEATURES */}
-          <motion.div
-            className="uh-features-grid"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
+          {/* HERO: default is Time Tracker; hovering/focusing a carousel
+              card below previews that service here instead. */}
+          <motion.button
+            type="button"
+            onClick={() => navigate(heroFeature.path)}
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.38, ease: "easeOut" }}
+            title={heroFeature.tooltip || undefined}
+            aria-label={
+              heroFeature.tooltip
+                ? `${heroFeature.title}: ${heroFeature.tooltip}`
+                : heroFeature.title
+            }
+            style={
+              {
+                "--accent": heroFeature.accent,
+                "--soft-bg": heroFeature.softBg,
+              } as React.CSSProperties
+            }
+            className="group relative mb-8 w-full overflow-hidden rounded-3xl border border-[#e8e8f0] bg-white p-6 text-left transition-colors duration-300 hover:-translate-y-0.5 hover:border-[var(--accent)]/30 hover:shadow-[0_12px_40px_rgba(0,0,0,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 sm:p-10"
           >
-            {features.map((feature) => (
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -right-10 -top-16 h-56 w-56 rounded-full bg-[var(--soft-bg)] opacity-70 blur-2xl transition-colors duration-300"
+            />
+            <AnimatePresence mode="wait">
               <motion.div
-                key={feature.id}
-                className="uh-feature-card"
-                style={
-                  {
-                    "--accent": feature.accent,
-                    "--soft-bg": feature.softBg,
-                    "--accent-light": feature.softBg,
-                  } as any
-                }
-                onClick={() => navigate(feature.path)}
-                variants={itemVariants}
-                title={feature.tooltip || ""}
+                key={heroFeature.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.22, ease: "easeOut" }}
+                className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between"
               >
-                <div className="uh-feature-card-top">
-                  <div className="uh-feature-icon-wrap">
-                    <feature.icon
-                      style={{ width: 20, height: 20, color: feature.accent }}
-                    />
-                    {feature.notification > 0 && (
-                      <span className="uh-icon-badge">
-                        {feature.notification}
-                      </span>
-                    )}
-                    {feature.exclamation && !feature.notification && (
-                      <span
-                        className="uh-icon-badge"
-                        style={{ background: "#d97706" }}
-                      >
-                        !
-                      </span>
-                    )}
+                <div className="flex items-start gap-4 sm:gap-5">
+                  <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[var(--soft-bg)] transition-transform duration-200 group-hover:scale-105 sm:h-16 sm:w-16">
+                    <heroFeature.icon className="h-6 w-6 text-[var(--accent)] sm:h-7 sm:w-7" />
                   </div>
-                  <ArrowUpRight
-                    className="uh-feature-arrow"
-                    style={{ width: 16, height: 16 }}
-                  />
+                  <div>
+                    <div className="mb-2 flex flex-wrap items-center gap-2">
+                      <span className="text-[0.65rem] font-bold uppercase tracking-widest text-[var(--accent)] opacity-80">
+                        {heroFeature.label}
+                      </span>
+                      {heroFeature.notification > 0 && (
+                        <span className="rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-wide text-red-600">
+                          {heroFeature.notification} pending
+                        </span>
+                      )}
+                      {heroFeature.exclamation && !heroFeature.notification && (
+                        <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-wide text-amber-600">
+                          Action needed
+                        </span>
+                      )}
+                    </div>
+                    <h2 className="text-xl font-extrabold tracking-tight text-[#0f0f1a] sm:text-2xl">
+                      {heroFeature.title}
+                    </h2>
+                    <p className="mt-1.5 max-w-md text-sm text-[#8888a0]">
+                      {heroFeature.description}
+                    </p>
+                  </div>
                 </div>
 
-                <p className="uh-feature-cat">{feature.label}</p>
-                <h3 className="uh-feature-title">{feature.title}</h3>
-                <p className="uh-feature-desc">{feature.description}</p>
-
-                <div className="uh-feature-footer">
-                  <div className="uh-progress-bar">
-                    <div className="uh-progress-fill" />
-                  </div>
-                  {feature.notification > 0 && (
-                    <span className="uh-badge">{feature.notification} new</span>
-                  )}
-                  {feature.exclamation && !feature.notification && (
-                    <span className="uh-badge uh-badge-warn">
-                      Action needed
-                    </span>
-                  )}
+                <div
+                  className="inline-flex items-center gap-2 self-start rounded-xl px-5 py-3 text-sm font-bold text-white transition-transform duration-200 group-hover:translate-x-1 sm:self-auto"
+                  style={{ backgroundColor: heroFeature.accent }}
+                >
+                  Open
+                  <ArrowUpRight className="h-4 w-4" />
                 </div>
               </motion.div>
+            </AnimatePresence>
+          </motion.button>
+
+          {/* SECTION LABEL */}
+          <div className="mb-4 flex items-center justify-between">
+            <span className="text-[0.68rem] font-bold uppercase tracking-widest text-[#9090a8]">
+              All services
+            </span>
+            <span className="text-xs text-[#c0c0d0]">
+              Swipe or use the arrows
+            </span>
+          </div>
+
+          {/* FEATURES: carousel */}
+          <div className="relative">
+            {/* edge fades hint there's more to scroll */}
+            <div className="pointer-events-none absolute bottom-0 left-0 top-0 z-10 w-8 bg-gradient-to-r from-[#f5f5f8] to-transparent sm:w-12" />
+            <div className="pointer-events-none absolute bottom-0 right-0 top-0 z-10 w-8 bg-gradient-to-l from-[#f5f5f8] to-transparent sm:w-12" />
+
+            <button
+              type="button"
+              onClick={() => scrollByCard(-1)}
+              disabled={activeIndex === 0}
+              aria-label="Scroll to previous service"
+              className="absolute left-0 top-1/2 z-20 hidden h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[#e8e8f0] bg-white text-[#6060a0] shadow-md transition hover:bg-[#f8f8fb] disabled:cursor-not-allowed disabled:opacity-30 sm:flex"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollByCard(1)}
+              disabled={activeIndex === carouselFeatures.length - 1}
+              aria-label="Scroll to next service"
+              className="absolute right-0 top-1/2 z-20 hidden h-9 w-9 -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full border border-[#e8e8f0] bg-white text-[#6060a0] shadow-md transition hover:bg-[#f8f8fb] disabled:cursor-not-allowed disabled:opacity-30 sm:flex"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+
+            <motion.div
+              ref={carouselRef}
+              className="flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {carouselFeatures.map((feature, index) => {
+                const isPreviewed = feature.id === heroFeature.id;
+                return (
+                  <motion.button
+                    key={feature.id}
+                    ref={(el) => (cardRefs.current[index] = el)}
+                    data-index={index}
+                    type="button"
+                    onClick={() => navigate(feature.path)}
+                    onMouseEnter={() => setHoveredId(feature.id)}
+                    onMouseLeave={() => setHoveredId(null)}
+                    onFocus={() => setHoveredId(feature.id)}
+                    onBlur={() => setHoveredId(null)}
+                    variants={itemVariants}
+                    whileHover={{ y: -6 }}
+                    whileTap={{ scale: 0.97 }}
+                    title={feature.tooltip || undefined}
+                    aria-label={
+                      feature.tooltip
+                        ? `${feature.title}: ${feature.tooltip}`
+                        : feature.title
+                    }
+                    style={
+                      {
+                        "--accent": feature.accent,
+                        "--soft-bg": feature.softBg,
+                      } as React.CSSProperties
+                    }
+                    className={`group relative flex h-[280px] w-[260px] shrink-0 snap-start flex-col rounded-2xl border bg-white p-6 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 sm:h-[300px] sm:w-[320px] md:w-[340px] ${
+                      isPreviewed
+                        ? "border-[var(--accent)]/40 shadow-[0_8px_28px_rgba(0,0,0,0.08)]"
+                        : "border-[#e8e8f0] hover:border-[var(--accent)]/30"
+                    }`}
+                  >
+                    <div className="mb-4 flex items-start justify-between">
+                      <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--soft-bg)] transition-transform duration-200 group-hover:scale-110">
+                        <feature.icon className="h-6 w-6 text-[var(--accent)]" />
+                        {feature.notification > 0 && (
+                          <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-[20px] items-center justify-center rounded-full border-2 border-white bg-red-600 px-1 text-[0.62rem] font-extrabold leading-none text-white">
+                            {feature.notification}
+                          </span>
+                        )}
+                        {feature.exclamation && !feature.notification && (
+                          <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-[20px] items-center justify-center rounded-full border-2 border-white bg-amber-500 px-1 text-[0.62rem] font-extrabold leading-none text-white">
+                            !
+                          </span>
+                        )}
+                      </div>
+                      <ArrowUpRight className="h-4 w-4 text-[#d8d8e8] transition-all duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--accent)]" />
+                    </div>
+
+                    <p className="mb-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-[var(--accent)] opacity-80">
+                      {feature.label}
+                      {feature.id === DEFAULT_FEATURED_ID && (
+                        <span className="ml-1.5 rounded-full bg-[var(--soft-bg)] px-1.5 py-0.5 text-[0.55rem] normal-case tracking-normal text-[var(--accent)] opacity-100">
+                          Default
+                        </span>
+                      )}
+                    </p>
+                    <h3 className="mb-1.5 text-base font-bold text-[#1a1a2e] transition-colors group-hover:text-[var(--accent)]">
+                      {feature.title}
+                    </h3>
+                    <p className="line-clamp-3 text-xs leading-relaxed text-[#9090a8]">
+                      {feature.description}
+                    </p>
+
+                    <div className="mt-auto pt-4">
+                      {feature.notification > 0 ? (
+                        <span className="whitespace-nowrap rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-wide text-red-600">
+                          {feature.notification} new
+                        </span>
+                      ) : feature.exclamation ? (
+                        <span className="whitespace-nowrap rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-wide text-amber-600">
+                          Action needed
+                        </span>
+                      ) : null}
+                    </div>
+                  </motion.button>
+                );
+              })}
+            </motion.div>
+          </div>
+
+          {/* DOT INDICATOR */}
+          <div className="mt-4 flex items-center justify-center gap-1.5">
+            {carouselFeatures.map((feature, index) => (
+              <button
+                key={feature.id}
+                type="button"
+                onClick={() => scrollToIndex(index)}
+                aria-label={`Go to ${feature.title}`}
+                aria-current={index === activeIndex}
+                className="h-1.5 rounded-full transition-all duration-300"
+                style={{
+                  width: index === activeIndex ? 20 : 6,
+                  backgroundColor:
+                    index === activeIndex ? feature.accent : "#e0e0f0",
+                }}
+              />
             ))}
-          </motion.div>
+          </div>
         </div>
       </div>
     </>

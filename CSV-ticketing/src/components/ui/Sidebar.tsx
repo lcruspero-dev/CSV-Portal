@@ -270,17 +270,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         open={isPasswordDialogOpen}
         onOpenChange={setIsPasswordDialogOpen}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="rounded-2xl sm:max-w-md">
           <DialogHeader>
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-lg">
-                <Shield className="h-6 w-6 text-white" />
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-50">
+                <Shield className="h-5 w-5 text-violet-600" />
               </div>
               <div>
-                <DialogTitle className="text-gray-900 font-semibold">
+                <DialogTitle className="font-semibold text-gray-900">
                   Protected Section
                 </DialogTitle>
-                <div className="text-gray-600 text-sm mt-1">
+                <div className="mt-0.5 text-sm text-gray-500">
                   This section requires additional authentication.
                 </div>
               </div>
@@ -297,27 +297,27 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className="w-full pl-10"
+                  className="w-full rounded-lg pl-10"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       verifyPassword();
                     }
                   }}
                 />
-                <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Key className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               </div>
             </div>
-            <div className="flex gap-3 justify-end">
+            <div className="flex justify-end gap-3">
               <Button
                 variant="outline"
                 onClick={() => setIsPasswordDialogOpen(false)}
-                className="border-gray-300"
+                className="rounded-lg border-gray-300"
               >
                 Cancel
               </Button>
               <Button
                 onClick={verifyPassword}
-                className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
+                className="rounded-lg bg-violet-600 text-white hover:bg-violet-700"
               >
                 Verify & Continue
               </Button>
@@ -332,25 +332,25 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
           <SheetTrigger asChild>
             <Button
               size="icon"
-              className="fixed top-4 left-4 z-50 bg-gradient-to-r from-purple-600 to-indigo-600 shadow-lg rounded-full border border-white hover:bg-gradient-to-r hover:from-purple-700 hover:to-indigo-700"
+              className="fixed left-4 top-4 z-50 rounded-full border border-white bg-violet-600 shadow-lg hover:bg-violet-700"
             >
               <Menu className="h-5 w-5 text-white" />
             </Button>
           </SheetTrigger>
 
-          <SheetContent side="left" className="w-80 p-0 bg-white z-[100] fixed">
-            <div className="flex flex-col h-full">
+          <SheetContent side="left" className="fixed z-[100] w-80 bg-white p-0">
+            <div className="flex h-full flex-col">
               {/* Header */}
-              <div className="p-6 border-b border-gray-200">
+              <div className="border-b border-[#e8e8f0] p-5">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-lg">
-                    <Home className="h-6 w-6 text-purple-600" />
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-50">
+                    <Home className="h-5 w-5 text-violet-600" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-semibold text-gray-900">
+                    <h2 className="text-base font-bold text-[#0f0f1a]">
                       Admin Panel
                     </h2>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-xs text-[#9090a8]">
                       Management Dashboard
                     </p>
                   </div>
@@ -358,67 +358,65 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
               </div>
 
               {/* Navigation */}
-              <div className="flex-1 overflow-y-auto py-4">
-                <nav className="px-4">
+              <div className="flex-1 overflow-y-auto px-3 py-4">
+                <nav>
                   {navGroups.map((group, groupIndex) => (
-                    <div key={groupIndex} className="mb-6">
-                      <Button
-                        variant="ghost"
+                    <div key={groupIndex} className="mb-5">
+                      <button
                         onClick={() => toggleDropdown(group.name)}
-                        className="w-full justify-between px-2 py-3 rounded-lg hover:bg-gray-50 transition-colors"
+                        className="flex w-full items-center justify-between rounded-xl px-2.5 py-2.5 text-left transition-colors hover:bg-[#f8f8fb]"
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-gray-100 rounded-lg text-gray-600">
+                        <div className="flex items-center gap-2.5">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f5f5f8] text-[#6060a0]">
                             {group.icon}
                           </div>
-                          <span className="text-sm font-medium text-gray-900">
+                          <span className="text-sm font-semibold text-[#1a1a2e]">
                             {group.name}
                           </span>
                         </div>
                         <ChevronDown
                           className={cn(
-                            "h-4 w-4 text-gray-400 transition-transform duration-200",
+                            "h-4 w-4 text-[#c0c0d0] transition-transform duration-200",
                             openDropdowns[group.name] ? "rotate-180" : "",
                           )}
                         />
-                      </Button>
+                      </button>
 
                       {openDropdowns[group.name] && (
-                        <div className="ml-2 mt-2 space-y-1">
+                        <div className="ml-1.5 mt-1.5 space-y-0.5 border-l border-[#f0f0f6] pl-3">
                           {group.items.map((item, index) => {
                             const isActive = location.pathname === item.path;
                             return (
-                              <Button
+                              <button
                                 key={index}
-                                variant="ghost"
                                 onClick={() => {
                                   handleNavigation(item);
                                   closeMobileSheet();
                                 }}
                                 className={cn(
-                                  "w-full justify-start gap-3 px-2 py-2.5 rounded-lg transition-colors",
+                                  "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2.5 text-left transition-colors",
                                   isActive
-                                    ? "bg-purple-50 text-purple-700 border border-purple-200"
-                                    : "text-gray-700 hover:bg-gray-50 hover:text-gray-900",
+                                    ? "bg-violet-50 text-violet-700"
+                                    : "text-[#5a5a7a] hover:bg-[#f8f8fb] hover:text-[#1a1a2e]",
                                 )}
                               >
                                 <div
                                   className={cn(
-                                    "p-1.5 rounded-md",
+                                    "flex h-7 w-7 shrink-0 items-center justify-center rounded-md [&>svg]:h-4 [&>svg]:w-4",
                                     isActive
-                                      ? "bg-gradient-to-br from-purple-600 to-indigo-600 text-white"
-                                      : "bg-gray-100 text-gray-600",
+                                      ? "bg-violet-600 text-white"
+                                      : "bg-[#f5f5f8] text-[#8080a0]",
                                   )}
                                 >
                                   {item.icon}
                                 </div>
-                                <span className="text-sm flex-1 text-left">
+                                <span className="flex-1 text-sm font-medium">
                                   {item.title}
                                 </span>
                                 {item.protected && (
-                                  <Shield className="h-3.5 w-3.5 text-purple-500" />
+                                  <Shield className="h-3.5 w-3.5 text-violet-500" />
                                 )}
-                              </Button>
+                              </button>
                             );
                           })}
                         </div>
@@ -429,10 +427,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
               </div>
 
               {/* Footer */}
-              <div className="p-4 border-t border-gray-200">
-                <div className="text-center">
-                  <p className="text-xs text-gray-500">CSV Now Admin</p>
-                </div>
+              <div className="border-t border-[#e8e8f0] p-4 text-center">
+                <p className="text-xs text-[#b0b0c8]">CSV Now Admin</p>
               </div>
             </div>
           </SheetContent>
@@ -440,10 +436,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       </div>
 
       {/* Desktop Sidebar */}
-      <div className="hidden lg:block fixed inset-y-0 left-0 z-40">
+      <div className="fixed inset-y-0 left-0 z-40 hidden lg:block">
         <div
           className={cn(
-            "flex flex-col transition-all duration-300 ease-in-out h-full bg-white border-r border-gray-200 shadow-sm",
+            "flex h-full flex-col border-r border-[#e8e8f0] bg-white shadow-sm transition-all duration-300 ease-in-out",
             isOpen ? "w-64" : "w-20",
             isMounted ? "opacity-100" : "opacity-0",
           )}
@@ -451,41 +447,39 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
           {/* Header */}
           <div
             className={cn(
-              "flex items-center border-b border-gray-200 transition-all duration-300 flex-shrink-0",
-              isOpen ? "justify-between p-6" : "justify-center p-4",
+              "flex shrink-0 items-center border-b border-[#e8e8f0] transition-all duration-300",
+              isOpen ? "justify-between p-5" : "justify-center p-4",
             )}
           >
             {isOpen && (
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-lg">
-                  <Home className="h-6 w-6 text-purple-600" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50">
+                  <Home className="h-5 w-5 text-violet-600" />
                 </div>
-                <div>
-                  <h2 className="font-semibold text-gray-900">Admin Panel</h2>
-                </div>
+                <h2 className="text-sm font-bold text-[#0f0f1a]">
+                  Admin Panel
+                </h2>
               </div>
             )}
-            <Button
-              variant="ghost"
-              size="icon"
+            <button
               className={cn(
-                "rounded-lg transition-all duration-200 hover:bg-gray-100 border border-gray-300",
+                "flex items-center justify-center rounded-lg border border-[#e8e8f0] text-[#6060a0] transition-colors hover:bg-[#f8f8fb]",
                 isOpen ? "h-8 w-8" : "h-9 w-9",
               )}
               onClick={handleToggle}
             >
               {isOpen ? (
-                <ChevronLeft className="h-4 w-4 text-gray-600" />
+                <ChevronLeft className="h-4 w-4" />
               ) : (
-                <ChevronRight className="h-4 w-4 text-gray-600" />
+                <ChevronRight className="h-4 w-4" />
               )}
-            </Button>
+            </button>
           </div>
 
           {/* Navigation */}
-          <div className="flex-1 overflow-y-auto py-4">
+          <div className="flex-1 overflow-y-auto px-3 py-4">
             <TooltipProvider delayDuration={300}>
-              <nav className="flex flex-col px-3">
+              <nav className="flex flex-col">
                 {navGroups.map((group, groupIndex) => {
                   // In collapsed state
                   if (!isOpen) {
@@ -496,33 +490,32 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                           return (
                             <Tooltip key={index}>
                               <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
+                                <button
                                   onClick={() => handleNavigation(item)}
                                   className={cn(
-                                    "w-full p-2 justify-center rounded-lg mb-1 transition-colors",
+                                    "mb-1 flex w-full items-center justify-center rounded-xl p-2 transition-colors",
                                     isActive
-                                      ? "bg-purple-50 text-purple-700"
-                                      : "text-gray-600 hover:text-purple-700 hover:bg-gray-50",
+                                      ? "bg-violet-50"
+                                      : "hover:bg-[#f8f8fb]",
                                   )}
                                 >
                                   <div
                                     className={cn(
-                                      "p-1.5 rounded-md",
+                                      "flex h-8 w-8 items-center justify-center rounded-lg [&>svg]:h-4 [&>svg]:w-4",
                                       isActive
-                                        ? "bg-gradient-to-br from-purple-600 to-indigo-600 text-white"
-                                        : "bg-gray-100 text-gray-600",
+                                        ? "bg-violet-600 text-white"
+                                        : "bg-[#f5f5f8] text-[#8080a0]",
                                     )}
                                   >
                                     {item.icon}
                                   </div>
-                                </Button>
+                                </button>
                               </TooltipTrigger>
                               <TooltipContent side="right">
                                 <div className="flex items-center gap-2">
                                   <span>{item.title}</span>
                                   {item.protected && (
-                                    <Shield className="h-3 w-3 text-purple-500" />
+                                    <Shield className="h-3 w-3 text-violet-500" />
                                   )}
                                 </div>
                               </TooltipContent>
@@ -536,63 +529,61 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                   // In expanded state
                   return (
                     <div key={groupIndex} className="mb-4">
-                      <Button
-                        variant="ghost"
+                      <button
                         onClick={() => toggleDropdown(group.name)}
                         className={cn(
-                          "w-full justify-between px-3 py-3 rounded-lg hover:bg-gray-50 transition-colors",
-                          openDropdowns[group.name] ? "bg-gray-50" : "",
+                          "flex w-full items-center justify-between rounded-xl px-2.5 py-2.5 text-left transition-colors hover:bg-[#f8f8fb]",
+                          openDropdowns[group.name] ? "bg-[#f8f8fb]" : "",
                         )}
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-gray-100 rounded-lg text-gray-600">
+                        <div className="flex items-center gap-2.5">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f5f5f8] text-[#6060a0]">
                             {group.icon}
                           </div>
-                          <span className="text-sm font-medium text-gray-900">
+                          <span className="text-sm font-semibold text-[#1a1a2e]">
                             {group.name}
                           </span>
                         </div>
                         <ChevronDown
                           className={cn(
-                            "h-4 w-4 text-gray-400 transition-transform duration-200",
+                            "h-4 w-4 text-[#c0c0d0] transition-transform duration-200",
                             openDropdowns[group.name] ? "rotate-180" : "",
                           )}
                         />
-                      </Button>
+                      </button>
 
                       {openDropdowns[group.name] && (
-                        <div className="ml-2 mt-2 space-y-1">
+                        <div className="ml-1.5 mt-1.5 space-y-0.5 border-l border-[#f0f0f6] pl-3">
                           {group.items.map((item, index) => {
                             const isActive = location.pathname === item.path;
                             return (
-                              <Button
+                              <button
                                 key={index}
-                                variant="ghost"
                                 onClick={() => handleNavigation(item)}
                                 className={cn(
-                                  "w-full justify-start gap-3 px-3 py-2.5 rounded-lg transition-colors",
+                                  "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2.5 text-left transition-colors",
                                   isActive
-                                    ? "bg-purple-50 text-purple-700 border border-purple-200"
-                                    : "text-gray-700 hover:bg-gray-50 hover:text-gray-900",
+                                    ? "bg-violet-50 text-violet-700"
+                                    : "text-[#5a5a7a] hover:bg-[#f8f8fb] hover:text-[#1a1a2e]",
                                 )}
                               >
                                 <div
                                   className={cn(
-                                    "p-1.5 rounded-md",
+                                    "flex h-7 w-7 shrink-0 items-center justify-center rounded-md [&>svg]:h-4 [&>svg]:w-4",
                                     isActive
-                                      ? "bg-gradient-to-br from-purple-600 to-indigo-600 text-white"
-                                      : "bg-gray-100 text-gray-600",
+                                      ? "bg-violet-600 text-white"
+                                      : "bg-[#f5f5f8] text-[#8080a0]",
                                   )}
                                 >
                                   {item.icon}
                                 </div>
-                                <span className="text-sm flex-1 text-left">
+                                <span className="flex-1 text-sm font-medium">
                                   {item.title}
                                 </span>
                                 {item.protected && (
-                                  <Shield className="h-3.5 w-3.5 text-purple-500" />
+                                  <Shield className="h-3.5 w-3.5 text-violet-500" />
                                 )}
-                              </Button>
+                              </button>
                             );
                           })}
                         </div>
